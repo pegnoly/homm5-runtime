@@ -1,0 +1,19 @@
+[package]
+name = "homm5-scaner"
+version = "0.1.2"
+edition = "2021"
+description = "This crate is used for lua scripts generation from homm5 files"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quick-xml = {version = "0.30.0", features = ["serialize", "serde-types"]}
+serde = { version = "1.0", features = ["derive"] }
+rc-zip = "2.0.1"
+strum = "0.25.0"
+strum_macros = "0.25.2"
+utf16_reader = "0.1.0"
+zip = "0.6.6"
+homm5-types = { path = "../homm5-types"}
+serde_json = "1.0.111"

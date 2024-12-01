@@ -1,0 +1,9 @@
+[package]
+name = "runtime-main"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+frida = { version = "0.13.7", features = ["auto-download"] }
+#frida-gum = { version = "0.15.1", features = ["auto-download"] }
+#frida-build = "0.15.1"
