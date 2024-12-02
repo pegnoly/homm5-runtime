@@ -23,4 +23,6 @@ tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 homm5-scaner = { path = "../homm5-scaner"}
+homm5-repacker = { path = "../homm5-repacker"}
 runtime-main = { path = "../runtime-main"}
+strum = { version = "0.26.3", features = ["derive"] }

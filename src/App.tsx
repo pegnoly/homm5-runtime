@@ -1,51 +1,92 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useEffect, useState } from "react";
+
+enum AppState {
+    NotReady,
+    Ready
+}
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+    const [repackers, setRepackers] = useState<string[]>([]);
+    const [state, setState] = useState<AppState>(AppState.NotReady);
 
-  return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    useEffect(() => {
+        if (state == AppState.NotReady) {
+            setState(AppState.Ready)
+            invoke("load_repackers")
+                .then((rs) => setRepackers(rs as string[]))
+        }
+    }, [state])
 
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+    async function executeScan() {
+        await invoke("execute_scan")
+    }
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
-  );
+    async function runGame() {
+        await invoke("run_game")
+    }
+
+    return <div style={{display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center'}}>
+        <button style={{width: '50%', height: 30}} onClick={runGame}>Запустить игру</button>
+        <button style={{width: '50%', height: 30}} onClick={executeScan}>Сканировать файлы</button>
+        <div style={{paddingTop: 30, justifyItems: 'center'}}>{repackers.map((r, i) => (
+            <RepackController key={i} label={r}/>
+        ))}</div>
+    </div>
+}
+
+
+enum RepackStage {
+    Inactive,
+    Active,
+    Done
+}
+
+const repackStagesLabels = new Map<RepackStage, string>([
+    [RepackStage.Inactive, "Неактивно"],
+    [RepackStage.Active, "В процессе"],
+    [RepackStage.Done, "Готово"]
+])
+
+function getLabelColor(stage: RepackStage): string {
+    switch (stage) {
+        case RepackStage.Inactive:
+            return "black"
+            break;
+        case RepackStage.Active:
+            return "red"
+            break;
+        case RepackStage.Done:
+            return "green"
+            break
+        default:
+            return "black"
+            break;
+    }
+}
+
+function RepackController({label}: {label: string}) {
+    
+    const [stage, setStage] = useState<RepackStage>(RepackStage.Inactive)
+
+    async function runRepack() {
+        setStage(RepackStage.Active);
+        invoke("repack", {repackerLabel: label})
+            .then(() => {
+                setStage(RepackStage.Done)
+                setTimeout(() => {
+                    setStage(RepackStage.Inactive)
+                }, 2500)
+            })
+    }
+
+    return <div style={{display: 'flex', flexDirection: 'row', gap: 10}}>
+        <button
+        disabled={stage != RepackStage.Inactive}
+        onClick={runRepack}>{`Запаковать ${label}`}</button>
+        <label style={{color: getLabelColor(stage)}}>{repackStagesLabels.get(stage)}</label>
+    </div>
 }
 
 export default App;

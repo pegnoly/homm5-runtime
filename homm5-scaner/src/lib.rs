@@ -22,7 +22,7 @@ impl ScanExecutor {
         }
     }
 
-    pub fn run(&self) {
+    pub async fn run(&self) {
         let mut files: HashMap<String, FileStructure> = HashMap::new();
         let entries = std::fs::read_dir(&self.data_path).unwrap();
         let mut paks: Vec<String> = vec![];
