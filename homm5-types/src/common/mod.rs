@@ -11,25 +11,25 @@ pub struct Pos {
 }
 
 /// Reference to file(<Shared href="some_path"/>)
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct FileRef {
     #[serde(rename = "@href")]
     pub href: Option<String>
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Action {
     #[serde(rename = "FunctionName")]
     pub function_name: String
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Trigger {
     #[serde(rename = "Action")]
     pub action: Action
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct ArmySlot {
     #[serde(rename = "Creature")]
     pub creature: String,
@@ -37,7 +37,7 @@ pub struct ArmySlot {
     pub count: u16
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct SkillMastery {
     #[serde(rename = "Mastery")]
     pub mastery: String,

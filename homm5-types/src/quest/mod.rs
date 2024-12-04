@@ -1,21 +1,21 @@
 use serde::{Serialize, Deserialize};
-use crate::common::{ArmySlot, SkillMastery, FileRef, Trigger};
+use crate::{common::{ArmySlot, FileRef, SkillMastery, Trigger}, Homm5Type};
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[serde(rename = "cell")]
 pub struct Cell {
     pub x: u8,
     pub y: u8
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Coordinates {
     #[serde(rename = "FloorID")]
     pub floor_id: u8,
     pub cell: Cell
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Target {
     #[serde(rename = "Type")]
     pub _type: String,
@@ -25,7 +25,7 @@ pub struct Target {
     pub coords: Coordinates
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct TargetGlance {
     #[serde(rename = "Target")]
     pub target: Target,
@@ -35,7 +35,7 @@ pub struct TargetGlance {
     pub duration: u32
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Resource {
     #[serde(rename = "Wood")]
     pub wood: u16,
@@ -53,7 +53,7 @@ pub struct Resource {
     pub gold: u16
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Award {
     #[serde(rename = "Type")]
     pub _type: String,
@@ -81,7 +81,7 @@ pub struct Award {
     pub skill_with_mastery: SkillMastery,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[serde(rename = "Item")]
 #[allow(non_snake_case)]
 pub struct Quest {
@@ -94,7 +94,7 @@ pub struct Quest {
     #[serde(rename = "DescriptionFileRef")]
     pub description_file_ref: FileRef,
     #[serde(rename = "ProgressCommentsFileRef")]
-    pub progress_comments_file_ref: FileRef,
+    pub progress_comments_file_ref: Vec<FileRef>,
     #[serde(rename = "Kind")]
     pub kind: String,
     #[serde(rename = "Parameters")]
@@ -155,4 +155,8 @@ pub struct QuestList {
     pub objectives: Option<Objectives>,
     #[serde(rename = "DieInWeekWithoutTowns")]
     pub die_in_week_without_towns: bool
+}
+
+impl Homm5Type for Quest {
+    
 }

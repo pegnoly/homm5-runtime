@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "homm5-runtime",
-        "width": 364,
-        "height": 210,
+        "width": 900,
+        "height": 700,
         "resizable": false
       }
     ],
