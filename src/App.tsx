@@ -1,10 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Button, Carousel, Col, Grid, Input, Row, Typography } from "antd";
-import TextArea from "antd/es/input/TextArea";
+import { Button, Col, Row, Select, Typography } from "antd";
 import { useEffect, useState } from "react";
-import { useQuestStore } from "./stores/QuestStore";
-import { useShallow } from "zustand/shallow";
-import { listen } from "@tauri-apps/api/event";
+import { MapData } from "./types";
+import QuestMain from "./components/quest/main";
 
 enum AppState {
     NotReady,
@@ -32,16 +30,60 @@ function App() {
         await invoke("run_game")
     }
 
-    return <div style={{display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center'}}>
+    return <div style={{display: 'flex', flexDirection: 'column', gap: 10}}>
         <Button style={{width: '50%', height: 30}} onClick={runGame}>Запустить игру</Button>
         <Button style={{width: '50%', height: 30}} onClick={executeScan}>Сканировать файлы</Button>
-        <div style={{paddingTop: 30, justifyItems: 'center'}}>{repackers.map((r, i) => (
-            <RepackController key={i} label={r}/>
-        ))}</div>
-        <QuestGenerator/>
+        <Row>
+            <Col span={12}>
+                <div style={{paddingTop: 15}}>{repackers.map((r, i) => (
+                    <RepackController key={i} label={r}/>
+                ))}</div>
+            </Col>
+            <Col span={12}>
+                <div style={{paddingTop: 15}}>
+                    <MapSelector/>
+                </div>
+            </Col>
+        </Row>
+        <QuestMain/>
     </div>
 }
 
+function MapSelector() {
+
+    const [maps, setMaps] = useState<MapData[]>([])
+    const [currentMapId, setCurrentMapId] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (maps.length == 0) {
+            invoke("load_maps")
+                .then((maps_value) => {
+                    setMaps(maps_value as MapData[]);
+                    invoke("load_current_map")
+                        .then((id_value) => {
+                            if (id_value != null) {
+                                setCurrentMapId(id_value as number);
+                            }
+                        })
+                })
+        }
+    }, [maps])
+
+    async function selectMap(map_id: number) {
+        setCurrentMapId(map_id)
+        await invoke("select_map", {id: map_id});
+    }
+
+    return <>
+        <Typography.Text>Текущая карта</Typography.Text>
+        <Select 
+            value={currentMapId}
+            onChange={selectMap}
+        >{maps.map((m) => (
+            <Select.Option value={m.id}>{m.name}</Select.Option>
+        ))}</Select>
+    </>
+}
 
 enum RepackStage {
     Inactive,
@@ -93,79 +135,6 @@ function RepackController({label}: {label: string}) {
         onClick={runRepack}>{`Запаковать ${label}`}</Button>
         <Typography.Text style={{color: getLabelColor(stage), textAlign: 'center'}}>{repackStagesLabels.get(stage)}</Typography.Text>
     </div>
-}
-
-function QuestGenerator() {
-    return <>
-        <Row gutter={10}>
-            <Col span={10}>
-                <QuestDataDisplayer/>
-            </Col>
-            <Col span={14}>
-                <QuestProgressDisplayer/>
-            </Col>
-        </Row>
-    </>
-}
-
-function QuestDataDisplayer() {
-
-    const [script_name, name, desc, directory, progresses, set_script_name, set_name, set_desc, set_directory] = useQuestStore(useShallow((state) => [
-        state.script_name, state.name, state.desc, state.directory, state.progresses, state.set_script_name, state.set_name, state.set_desc, state.set_directory
-    ]))
-
-    function initNewQuest() {
-        set_script_name("")
-        set_name("")
-        set_desc("")
-        set_directory("")
-    }
-
-    function tryPickDirectory() {
-        invoke("pick_quest_directory")
-    }
-
-    function tryGenerate() {
-        invoke("generate_quest", {directory: directory, scriptName: script_name, name: name, desc: desc, progresses: progresses})
-    }
-
-    listen<string>("quest_directory_picked", (event) => {
-        set_directory(event.payload)
-    })
-
-    return <>   
-        <div style={{paddingBottom: 2}}>
-            <Button onClick={initNewQuest}>Новый</Button> 
-        </div>
-        <Typography.Text>Скриптовое имя квеста</Typography.Text>
-        <Input onChange={(e) => set_script_name(e.currentTarget.value)} value={script_name}/>
-        <Button onClick={tryPickDirectory}>Указать путь к папке с квестом</Button>
-        <div style={{paddingTop: 2}}>
-            <Typography.Text>Имя квеста</Typography.Text>
-            <Input onChange={(e) => set_name(e.currentTarget.value)} value={name}/>
-        </div>
-        <Typography.Text>Описание квеста</Typography.Text>
-        <TextArea onChange={(e) => set_desc(e.currentTarget.value)} value={desc} rows={10}/>
-        <Button onClick={tryGenerate}>Сгенерировать</Button>
-    </>
-}
-
-function QuestProgressDisplayer() {
-    const [progress, setProgress] = useState<number>(0);
-
-    return <>
-        <TextArea rows={15}/>
-        <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 10, paddingTop: 15}}>
-            <Button 
-                disabled={progress == 0}
-                onClick={() => setProgress(progress - 1)}
-            >Предыдущий</Button>
-            <Typography.Text>{progress}</Typography.Text>
-            <Button
-                onClick={() => setProgress(progress + 1)}
-            >Следующий</Button>
-        </div>
-    </>
 }
 
 export default App;

@@ -28,3 +28,6 @@ map-modifier = { path = "../map-modifier"}
 runtime-main = { path = "../runtime-main"}
 strum = { version = "0.26.3", features = ["derive"] }
 tauri-plugin-dialog = "2"
+sqlx = { version = "0.8.2", features = ["sqlite", "runtime-tokio", "uuid"] }
+tokio = { version = "1.42.0", features = ["macros"] }
+uuid = { version = "1.11.0", features = ["v4"] }

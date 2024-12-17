@@ -11,6 +11,12 @@ pub fn test_convert(quest: Quest) {
     println!("Quest string is: {}", s);
 }
 
+#[derive(Default)]
+pub struct QuestProgress {
+    pub number: u32,
+    pub text: String
+}
+
 // frontend send this when user wants to create a new quest with given params
 #[derive(Default)]
 pub struct QuestCreationRequest {
@@ -20,7 +26,7 @@ pub struct QuestCreationRequest {
     name: String,
     script_name: String,
     desc: String,
-    progresses: Vec<String>,
+    progresses: Vec<QuestProgress>,
     secondary: bool,
     initialy_active: bool
 }
@@ -44,8 +50,14 @@ impl QuestCreationRequest {
         self
     }
 
-    pub fn with_progresses(mut self, progresses: Vec<String>) -> Self {
+    pub fn with_progresses(mut self, progresses: Vec<QuestProgress>) -> Self {
         self.progresses = progresses;
+        self
+    }
+
+    pub fn with_mission_data(mut self, campaign: u8, mission: u8) -> Self {
+        self.campaign_number = campaign;
+        self.mission_number = mission;
         self
     }
 
@@ -80,16 +92,23 @@ impl QuestCreationRequest {
     }
 
     pub fn generate_progresses(&self, directory: &PathBuf, quest: &mut Quest) {
-        let mut progress_count = 0;
+
+        let mut previous_progresses = String::new();
+
         for progress in &self.progresses {
-            let file_name = directory.join(format!("{}.txt", progress_count));
+            let file_name = directory.join(format!("{}.txt", progress.number));
             let mut file = std::fs::File::create(&file_name).unwrap();
             file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
-            for utf16 in progress.encode_utf16() {
+
+            let current_progress = format!("<color=grey>{}<color=white>{}", &previous_progresses, &progress.text);
+
+            for utf16 in current_progress.encode_utf16() {
                 file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
             }
+
+            previous_progresses += &format!("{}\n\n", progress.text);
+
             quest.progress_comments_file_ref.push(FileRef {href: Some(file_name.to_str().unwrap().to_string())});
-            progress_count += 1;
         }
     }
 }
