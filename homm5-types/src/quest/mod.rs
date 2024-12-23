@@ -138,8 +138,10 @@ pub struct Quest {
     #[serde(rename = "SoundFailed")]
     pub sound_failed: String,
     #[serde(rename = "AllowMultipleActivations")]
+    #[serde(default)]
     pub allow_multiple_activations: bool,
     #[serde(rename = "AllowMultipleCompletions")]
+    #[serde(default)]
     pub allow_multiple_completions: bool
 }
 

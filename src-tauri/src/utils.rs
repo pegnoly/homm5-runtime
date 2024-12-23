@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use map_modifier::Map;
+use map_modifier::{Map, Quest};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use tokio::sync::{Mutex, RwLock};
@@ -10,6 +10,7 @@ use uuid::Uuid;
 pub struct Config {
     pub bin_path: String,
     pub data_path: String,
+    pub mod_path: String,
     pub repackers: HashMap<String, RepackerPathsData>,
     pub maps: Vec<Map>
 }
@@ -47,8 +48,16 @@ pub struct QuestProgressDBModel {
     pub id: Uuid,
     pub quest_id: Uuid,
     pub number: u32,
-    pub text: String
+    pub text: String,
+    pub concatenate: bool
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct QuestProgressFrontendModel {
+    pub text: String,
+    pub concatenate: bool
+}
+
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct QuestDBModel {
@@ -58,7 +67,10 @@ pub struct QuestDBModel {
     pub mission_number: u32,
     pub name: String,
     pub desc: String,
-    pub script_name: String
+    pub script_name: String,
+    pub is_active: bool,
+    pub is_secondary: bool,
+    pub is_first_init: bool
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

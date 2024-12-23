@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, PropsWithChildren, useContext } from "react";
+import { useState, createContext, PropsWithChildren, useContext } from "react";
 
 type QuestCreationData = {
     directory: string,
@@ -19,10 +19,6 @@ const QuestCreationProvider = ({children} : PropsWithChildren<{}>) => {
         script_name: "",
         name: ""
     });
-
-    // useEffect(() => {
-    //     localStorage.setItem("global_game_mode", JSON.stringify(state))
-    // }, [state])
 
     return(
         <QuestCreationContext.Provider value={{state, setState}}>

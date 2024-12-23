@@ -31,3 +31,5 @@ tauri-plugin-dialog = "2"
 sqlx = { version = "0.8.2", features = ["sqlite", "runtime-tokio", "uuid"] }
 tokio = { version = "1.42.0", features = ["macros"] }
 uuid = { version = "1.11.0", features = ["v4"] }
+derive_more = { version = "1.0.0", features = ["full"] }
+thiserror = "2.0.9"

@@ -3,6 +3,7 @@ import QuestScriptName from "./script"
 import QuestDirectory from "./directory"
 import QuestName from "./name"
 import QuestDesc from "./desc"
+import QuestProps from "./props"
 
 function QuestData() {
 
@@ -12,6 +13,7 @@ function QuestData() {
         <QuestDirectory/>
         <QuestName/>
         <QuestDesc/>
+        <QuestProps/>
     </>
 }
 

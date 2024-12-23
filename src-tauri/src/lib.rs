@@ -1,8 +1,10 @@
 use tokio::sync::{RwLock, Mutex};
 use utils::{Config, LocalAppManager, RuntimeConfig};
 
-pub mod commands;
-pub mod utils;
+mod commands;
+mod utils;
+mod source;
+mod error;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
@@ -36,7 +38,7 @@ pub async fn run() {
             commands::run_game,
             commands::load_repackers,
             commands::repack,
-            commands::generate_quest,
+            commands::add_quest_to_queue,
             commands::pick_quest_directory,
             commands::load_maps,
             commands::load_current_map,
@@ -44,10 +46,14 @@ pub async fn run() {
             commands::create_quest,
             commands::save_progress,
             commands::load_progress,
+            commands::update_progress_concatenation,
             commands::update_quest_directory,
             commands::update_quest_script_name,
             commands::update_quest_name,
-            commands::update_quest_desc
+            commands::update_quest_desc,
+            commands::apply_modifications,
+            commands::update_is_secondary,
+            commands::update_is_active
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

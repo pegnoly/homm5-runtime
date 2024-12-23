@@ -6,6 +6,8 @@ type Quest = {
     directory: string,
     name: string,
     desc: string,
+    secondary: boolean,
+    active: boolean
 }
 
 type Actions = {
@@ -13,7 +15,9 @@ type Actions = {
     set_name: (s: string) => void,
     set_desc: (s: string) => void,
     set_directory: (s: string) => void,
-    set_id: (s: string) => void
+    set_id: (s: string) => void,
+    set_secondary: (b: boolean) => void,
+    set_active: (b: boolean) => void
 }
 
 export const useQuestStore = create<Quest & Actions>((set, get) => ({
@@ -22,6 +26,8 @@ export const useQuestStore = create<Quest & Actions>((set, get) => ({
     directory: "",
     name: "",
     desc: "",
+    secondary: false,
+    active: false,
 
     set_id(s) {
         set({ id: s })
@@ -41,5 +47,13 @@ export const useQuestStore = create<Quest & Actions>((set, get) => ({
 
     set_directory(s) {
         set({ directory: s })
-    }
+    },
+
+    set_secondary(b) {
+        set({ secondary: b })
+    },
+
+    set_active(b) {
+        set({ active: b })
+    },
 }))

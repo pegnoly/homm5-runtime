@@ -1,4 +1,4 @@
-use std::{io::Write, path::PathBuf};
+use std::{io::Write, marker::PhantomData, path::PathBuf};
 
 use homm5_types::{common::FileRef, quest::Quest, Homm5Type};
 use quick_xml::se;
@@ -14,7 +14,8 @@ pub fn test_convert(quest: Quest) {
 #[derive(Default)]
 pub struct QuestProgress {
     pub number: u32,
-    pub text: String
+    pub text: String,
+    pub concatenate: bool
 }
 
 // frontend send this when user wants to create a new quest with given params
@@ -28,7 +29,7 @@ pub struct QuestCreationRequest {
     desc: String,
     progresses: Vec<QuestProgress>,
     secondary: bool,
-    initialy_active: bool
+    initialy_active: bool,
 }
 
 impl QuestCreationRequest {
@@ -71,27 +72,33 @@ impl QuestCreationRequest {
         self
     }
 
-    pub fn generate_name(&self, quest: &mut Quest) {
+    fn generate_name(&self, quest: &mut Quest, mod_path: &String) {
         let file_name = self.path.join("name.txt");
         let mut file = std::fs::File::create(&file_name).unwrap();
         file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.name.encode_utf16() {
             file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
-        quest.caption_file_ref = FileRef {href: Some(file_name.to_str().unwrap().to_string())};
+
+        let local_file_name = file_name.to_str().unwrap().replace(mod_path, "");
+
+        quest.caption_file_ref = FileRef {href: Some(local_file_name)};
     }
 
-    pub fn generate_desc(&self, quest: &mut Quest) {
+    fn generate_desc(&self, quest: &mut Quest, mod_path: &String) {
         let file_name = self.path.join("desc.txt");
         let mut file = std::fs::File::create(&file_name).unwrap();
         file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.desc.encode_utf16() {
             file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
-        quest.description_file_ref = FileRef {href: Some(file_name.to_str().unwrap().to_string())};
+
+        let local_file_name = file_name.to_str().unwrap().replace(mod_path, "");
+
+        quest.description_file_ref = FileRef {href: Some(local_file_name)};
     }
 
-    pub fn generate_progresses(&self, directory: &PathBuf, quest: &mut Quest) {
+    fn generate_progresses(&self, directory: &PathBuf, quest: &mut Quest, mod_path: &String) {
 
         let mut previous_progresses = String::new();
 
@@ -106,20 +113,26 @@ impl QuestCreationRequest {
                 file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
             }
 
-            previous_progresses += &format!("{}\n\n", progress.text);
+            if progress.concatenate {
+                previous_progresses += &format!("{}\n\n", progress.text);
+            }
 
-            quest.progress_comments_file_ref.push(FileRef {href: Some(file_name.to_str().unwrap().to_string())});
+            let local_file_name = file_name.to_str().unwrap().replace(mod_path, "");
+
+            quest.progress_comments_file_ref.push(FileRef {href: Some(local_file_name)});
         }
     }
 }
 
-
 impl GenerateBoilerplate for QuestCreationRequest {
     type Output = Quest;
+    type Additional = String;
 
-    fn generate(&self) -> Quest {
+    fn generate(&self, additional_data: Option<&String>) -> Quest {
         let mut quest = Quest::default();
         quest.name = self.script_name.clone();
+        quest.is_hidden = false;
+        quest.is_initialy_active = self.initialy_active;
 
         let texts_path = self.path.join("Texts\\");
         let dialogs_path = self.path.join("Dialogs\\");
@@ -129,9 +142,9 @@ impl GenerateBoilerplate for QuestCreationRequest {
         std::fs::create_dir(&dialogs_path).unwrap();
         std::fs::create_dir(&progress_path).unwrap();
 
-        self.generate_name(&mut quest);
-        self.generate_desc(&mut quest);
-        self.generate_progresses(&progress_path, &mut quest);
+        self.generate_name(&mut quest, additional_data.unwrap());
+        self.generate_desc(&mut quest, additional_data.unwrap());
+        self.generate_progresses(&progress_path, &mut quest, additional_data.unwrap());
 
         let script_boilerplate = format!("
 c{}m{}_{} = {{
@@ -150,10 +163,10 @@ c{}m{}_{} = {{
             self.mission_number, 
             self.script_name.to_lowercase(), 
             self.script_name, 
-            texts_path.to_str().unwrap().replace("\\", "/"),
-            dialogs_path.to_str().unwrap().replace("\\", "/"),
+            texts_path.to_str().unwrap().replace(additional_data.unwrap(), "").replace("\\", "/"),
+            dialogs_path.to_str().unwrap().replace(additional_data.unwrap(), "").replace("\\", "/"),
             self.script_name,
-            self.path.join("name.txt").to_str().unwrap().replace("\\", "/")
+            self.path.join("name.txt").to_str().unwrap().replace(additional_data.unwrap(), "").replace("\\", "/")
         );
 
         let mut script_file = std::fs::File::create(self.path.join("script.lua")).unwrap();
