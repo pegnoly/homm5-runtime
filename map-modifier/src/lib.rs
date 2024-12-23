@@ -98,14 +98,52 @@ impl ModifiersQueue {
             }
             buf.clear();
         }
-    
-        let mut file = std::fs::File::create("C:\\test.xml").unwrap();
+        
+        std::fs::remove_file(&map.xdb).unwrap();
+        let mut file = std::fs::File::create(&map.xdb).unwrap();
         file.write_all(&output_map).unwrap();
     }
 
 
     fn apply_quests(&self, writer: &mut Writer<&mut Vec<u8>>, objectives_data: &mut ObjectivesInfo) {
-        println!("Quest data: {:?}", self.secondary_quests[0]);
+        let primary_quests_items = &mut objectives_data.primary.player_specific.items.as_mut().unwrap()[0];
+        let secondary_quests_items = &mut objectives_data.secondary.player_specific.items.as_mut().unwrap()[0];
+
+        if self.primary_quests.len() > 0 {
+            if primary_quests_items.objectives.as_mut().unwrap().items.is_none() {
+                primary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
+            }
+            for quest in &self.primary_quests {
+                primary_quests_items.objectives.as_mut().unwrap().items.as_mut().unwrap().push(quest.clone());
+            }
+        }
+
+        if self.secondary_quests.len() > 0 {
+            if secondary_quests_items.objectives.as_mut().unwrap().items.is_none() {
+                secondary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
+            }
+            for quest in &self.secondary_quests {
+                secondary_quests_items.objectives.as_mut().unwrap().items.as_mut().unwrap().push(quest.clone());
+            }
+        }
+
+        if objectives_data.primary.common.as_ref().unwrap().objectives.as_ref().unwrap().items.is_none() {
+            objectives_data.primary.common.as_mut().unwrap().objectives = None;
+        }
+
+        if objectives_data.primary.player_specific.items.as_ref().unwrap()[0].objectives.as_ref().unwrap().items.is_none() {
+            objectives_data.primary.player_specific.items.as_mut().unwrap()[0].objectives = None;
+        }
+
+        if objectives_data.secondary.common.as_ref().unwrap().objectives.as_ref().unwrap().items.is_none() {
+            objectives_data.secondary.common.as_mut().unwrap().objectives = None;
+        }
+
+        if objectives_data.secondary.player_specific.items.as_ref().unwrap()[0].objectives.as_ref().unwrap().items.is_none() {
+            objectives_data.secondary.player_specific.items.as_mut().unwrap()[0].objectives = None;
+        }
+
+        writer.write_serializable("Objectives", objectives_data).unwrap();
     }
 }
 

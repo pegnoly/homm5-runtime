@@ -20,7 +20,7 @@ type Actions = {
     set_active: (b: boolean) => void
 }
 
-export const useQuestStore = create<Quest & Actions>((set, get) => ({
+export const useQuestStore = create<Quest & Actions>((set) => ({
     id: "",
     script_name: "",
     directory: "",

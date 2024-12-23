@@ -20,7 +20,7 @@ pub struct FileRef {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Action {
     #[serde(rename = "FunctionName")]
-    pub function_name: String
+    pub function_name: Option<String>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -29,7 +29,7 @@ pub struct Trigger {
     pub action: Action
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ArmySlot {
     #[serde(rename = "Creature")]
     pub creature: String,
@@ -37,10 +37,22 @@ pub struct ArmySlot {
     pub count: u16
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+impl Default for ArmySlot {
+    fn default() -> Self {
+        ArmySlot { creature: "CREATURE_UNKNOWN".to_string(), count: 0 }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SkillMastery {
     #[serde(rename = "Mastery")]
     pub mastery: String,
     #[serde(rename = "SkillID")]
     pub skill_id: String
+}
+
+impl Default for SkillMastery {
+    fn default() -> Self {
+        SkillMastery { mastery: "MASTERY_NONE".to_string(), skill_id: "HERO_SKILL_NONE".to_string() }
+    }
 }

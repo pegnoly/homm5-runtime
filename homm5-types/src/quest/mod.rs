@@ -15,17 +15,27 @@ pub struct Coordinates {
     pub cell: Cell
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Target {
     #[serde(rename = "Type")]
     pub _type: String,
     #[serde(rename = "Name")]
-    pub name: String,
+    pub name: Option<String>,
     #[serde(rename = "Coords")]
     pub coords: Coordinates
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+impl Default for Target {
+    fn default() -> Self {
+        Target { 
+            _type: "ADV_TARGET_NONE".to_string(), 
+            name: None, 
+            coords: Coordinates::default() 
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TargetGlance {
     #[serde(rename = "Target")]
     pub target: Target,
@@ -33,6 +43,16 @@ pub struct TargetGlance {
     pub radius: u16,
     #[serde(rename = "Duration")]
     pub duration: u32
+}
+
+impl Default for TargetGlance {
+    fn default() -> Self {
+        TargetGlance { 
+            target: Target::default(), 
+            radius: 10, 
+            duration: 5000 
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
@@ -53,7 +73,7 @@ pub struct Resource {
     pub gold: u16
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Award {
     #[serde(rename = "Type")]
     pub _type: String,
@@ -81,7 +101,32 @@ pub struct Award {
     pub skill_with_mastery: SkillMastery,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+impl Default for Award {
+    fn default() -> Self {
+        Award {
+            _type: "AWARD_NONE".to_string(),
+            attribute: "HERO_ATTRIB_DEFENCE".to_string(),
+            artifact_id: "ARTIFACT_NONE".to_string(),
+            spell_id: "SPELL_NONE".to_string(),
+            resources: Resource::default(),
+            army_slot: ArmySlot::default(),
+            skill_with_mastery: SkillMastery::default(),
+            attribute_amount: 0,
+            experience: 0,
+            spell_points: 0,
+            morale: 0,
+            luck: 0
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct ProgressFilesRefs {
+    #[serde(rename = "Item")]
+    pub items: Option<Vec<FileRef>>
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename = "Item")]
 #[allow(non_snake_case)]
 pub struct Quest {
@@ -94,11 +139,11 @@ pub struct Quest {
     #[serde(rename = "DescriptionFileRef")]
     pub description_file_ref: FileRef,
     #[serde(rename = "ProgressCommentsFileRef")]
-    pub progress_comments_file_ref: Vec<FileRef>,
+    pub progress_comments_file_ref: ProgressFilesRefs,
     #[serde(rename = "Kind")]
     pub kind: String,
     #[serde(rename = "Parameters")]
-    pub parameters: String,
+    pub parameters: Option<String>,
     #[serde(rename = "Timeout")]
     pub timeout: i8,
     #[serde(rename = "Holdout")]
@@ -106,7 +151,7 @@ pub struct Quest {
     #[serde(rename = "CheckDelay")]
     pub check_delay: i8,
     #[serde(rename = "Dependencies")]
-    pub dependencies: String,
+    pub dependencies: Option<String>,
     #[serde(rename = "InstantVictory")]
     pub instant_victory: bool,
     #[serde(rename = "TargetGlance")]
@@ -132,17 +177,52 @@ pub struct Quest {
     #[serde(rename = "StateChangeTrigger")]
     pub state_change_trigger: Trigger,
     #[serde(rename = "SoundActivated")]
-    pub sound_activated: String,
+    pub sound_activated: Option<String>,
     #[serde(rename = "SoundComplete")]
-    pub sound_complete: String,
+    pub sound_complete: Option<String>,
     #[serde(rename = "SoundFailed")]
-    pub sound_failed: String,
+    pub sound_failed: Option<String>,
     #[serde(rename = "AllowMultipleActivations")]
     #[serde(default)]
     pub allow_multiple_activations: bool,
     #[serde(rename = "AllowMultipleCompletions")]
     #[serde(default)]
     pub allow_multiple_completions: bool
+}
+
+impl Default for Quest {
+    fn default() -> Self {
+        Quest {
+            name: String::new(),
+            kind: "OBJECTIVE_KIND_MANUAL".to_string(),
+            caption_file_ref: FileRef { href: None },
+            obscure_caption_file_ref: FileRef { href: None },
+            description_file_ref: FileRef { href: None },
+            progress_comments_file_ref: ProgressFilesRefs::default(),
+            parameters: None,
+            timeout: -1,
+            holdout: -1,
+            check_delay: -1,
+            dependencies: None,
+            instant_victory: false,
+            target_glance: TargetGlance::default(),
+            award: Award::default(),
+            take_contribution: false,
+            can_uncomplete: false,
+            is_initialy_active: false,
+            is_initialy_visible: false,
+            is_hidden: false,
+            ignore: false,
+            show_completed: false,
+            need_complete: false,
+            state_change_trigger: Trigger::default(),
+            sound_activated: None,
+            sound_complete: None,
+            sound_failed: None,
+            allow_multiple_activations: false,
+            allow_multiple_completions: false
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -5,7 +5,7 @@ use derive_more::derive::From;
 use homm5_repacker::Repacker;
 use homm5_scaner::ScanExecutor;
 use map_modifier::{quest, FileRef, GenerateBoilerplate, ModifiersQueue, Quest};
-use map_modifier::quest::{QuestCreationRequest, QuestProgress};
+use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use runtime_main::RuntimeRunner;
 use serde::{Deserialize, Serialize, Serializer};
 use sqlx::Error;
@@ -13,7 +13,7 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use uuid::Uuid;
 
-use crate::utils::{Config, LocalAppManager, MapFrontendModel, QuestDBModel, QuestFrontendModel, QuestProgressDBModel, RuntimeConfig};
+use crate::utils::{Config, LocalAppManager, MapFrontendModel, QuestDBModel, QuestFrontendModel, QuestProgressDBModel, QuestProgressFrontendModel};
 
 #[tauri::command]
 pub async fn execute_scan(
@@ -521,7 +521,7 @@ pub async fn apply_modifications(
             .secondary(model.is_secondary)
             .initialy_active(model.is_active);
 
-        let quest = request.generate(Some(mod_path));
+        let quest = request.generate(Some(&QuestBoilerplateHelper {mod_path: mod_path.clone(), map_data_path: map.data_path.clone()}));
         if model.is_secondary {
             modifiers_queue.secondary_quests.push(quest);
         }
@@ -529,6 +529,9 @@ pub async fn apply_modifications(
             modifiers_queue.primary_quests.push(quest);
         }
     }
+
+    println!("Primary quests: {:?}", &modifiers_queue.primary_quests);
+    println!("Secondary quests: {:?}", &modifiers_queue.secondary_quests);
 
     modifiers_queue.apply_changes_to_map(map);
 

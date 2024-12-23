@@ -72,7 +72,7 @@ impl QuestCreationRequest {
         self
     }
 
-    fn generate_name(&self, quest: &mut Quest, mod_path: &String) {
+    fn generate_name(&self, quest: &mut Quest, map_data_path: &String) {
         let file_name = self.path.join("name.txt");
         let mut file = std::fs::File::create(&file_name).unwrap();
         file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
@@ -80,12 +80,12 @@ impl QuestCreationRequest {
             file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
-        let local_file_name = file_name.to_str().unwrap().replace(mod_path, "");
+        let local_file_name = file_name.to_str().unwrap().replace(map_data_path, "").replace("\\", "/");
 
         quest.caption_file_ref = FileRef {href: Some(local_file_name)};
     }
 
-    fn generate_desc(&self, quest: &mut Quest, mod_path: &String) {
+    fn generate_desc(&self, quest: &mut Quest, map_data_path: &String) {
         let file_name = self.path.join("desc.txt");
         let mut file = std::fs::File::create(&file_name).unwrap();
         file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
@@ -93,14 +93,16 @@ impl QuestCreationRequest {
             file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
-        let local_file_name = file_name.to_str().unwrap().replace(mod_path, "");
+        let local_file_name = file_name.to_str().unwrap().replace(map_data_path, "").replace("\\", "/");
 
         quest.description_file_ref = FileRef {href: Some(local_file_name)};
     }
 
-    fn generate_progresses(&self, directory: &PathBuf, quest: &mut Quest, mod_path: &String) {
+    fn generate_progresses(&self, directory: &PathBuf, quest: &mut Quest, map_data_path: &String) {
 
         let mut previous_progresses = String::new();
+
+        quest.progress_comments_file_ref.items = Some(vec![]);
 
         for progress in &self.progresses {
             let file_name = directory.join(format!("{}.txt", progress.number));
@@ -117,18 +119,23 @@ impl QuestCreationRequest {
                 previous_progresses += &format!("{}\n\n", progress.text);
             }
 
-            let local_file_name = file_name.to_str().unwrap().replace(mod_path, "");
+            let local_file_name = file_name.to_str().unwrap().replace(map_data_path, "").replace("\\", "/");
 
-            quest.progress_comments_file_ref.push(FileRef {href: Some(local_file_name)});
+            quest.progress_comments_file_ref.items.as_mut().unwrap().push(FileRef {href: Some(local_file_name)});
         }
     }
 }
 
+pub struct QuestBoilerplateHelper {
+    pub mod_path: String,
+    pub map_data_path: String
+}
+
 impl GenerateBoilerplate for QuestCreationRequest {
     type Output = Quest;
-    type Additional = String;
+    type Additional = QuestBoilerplateHelper;
 
-    fn generate(&self, additional_data: Option<&String>) -> Quest {
+    fn generate(&self, additional_data: Option<&QuestBoilerplateHelper>) -> Quest {
         let mut quest = Quest::default();
         quest.name = self.script_name.clone();
         quest.is_hidden = false;
@@ -142,9 +149,9 @@ impl GenerateBoilerplate for QuestCreationRequest {
         std::fs::create_dir(&dialogs_path).unwrap();
         std::fs::create_dir(&progress_path).unwrap();
 
-        self.generate_name(&mut quest, additional_data.unwrap());
-        self.generate_desc(&mut quest, additional_data.unwrap());
-        self.generate_progresses(&progress_path, &mut quest, additional_data.unwrap());
+        self.generate_name(&mut quest, &additional_data.unwrap().map_data_path);
+        self.generate_desc(&mut quest, &additional_data.unwrap().map_data_path);
+        self.generate_progresses(&progress_path, &mut quest, &additional_data.unwrap().map_data_path);
 
         let script_boilerplate = format!("
 c{}m{}_{} = {{
@@ -163,10 +170,10 @@ c{}m{}_{} = {{
             self.mission_number, 
             self.script_name.to_lowercase(), 
             self.script_name, 
-            texts_path.to_str().unwrap().replace(additional_data.unwrap(), "").replace("\\", "/"),
-            dialogs_path.to_str().unwrap().replace(additional_data.unwrap(), "").replace("\\", "/"),
+            texts_path.to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
+            dialogs_path.to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
             self.script_name,
-            self.path.join("name.txt").to_str().unwrap().replace(additional_data.unwrap(), "").replace("\\", "/")
+            self.path.join("name.txt").to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/")
         );
 
         let mut script_file = std::fs::File::create(self.path.join("script.lua")).unwrap();
