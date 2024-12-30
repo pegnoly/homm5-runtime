@@ -535,5 +535,13 @@ pub async fn apply_modifications(
 
     modifiers_queue.apply_changes_to_map(map);
 
+    let _queue_deletion_result = sqlx::query(r#"
+            DELETE FROM quest_modifiers WHERE map_id=?
+        "#)
+        .bind(current_map_id)
+        .execute(&*pool)
+        .await
+        .unwrap();
+
     Ok(())
 }

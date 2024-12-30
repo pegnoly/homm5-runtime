@@ -1,5 +1,5 @@
 import { useShallow } from "zustand/shallow"
-import { useQuestStore } from "../../stores/QuestStore"
+import { useCurrentQuestStore } from "../../../stores/QuestStore"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
 import { Button, Typography } from "antd"
@@ -7,7 +7,7 @@ import { EditOutlined } from "@ant-design/icons"
 
 function QuestDirectory() {
     
-    const [id, directory, setDirectory] = useQuestStore(useShallow((state) => [state.id, state.directory, state.set_directory]))
+    const [id, directory, setDirectory] = useCurrentQuestStore(useShallow((state) => [state.id, state.directory, state.set_directory]))
 
     async function tryUpdateDirectory() {
         await invoke("pick_quest_directory", {initial: false})

@@ -1,5 +1,5 @@
 import { useShallow } from "zustand/shallow";
-import { useQuestStore } from "../../stores/QuestStore";
+import { useCurrentQuestStore } from "../../../stores/QuestStore";
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button, Input, Typography } from "antd";
@@ -7,7 +7,7 @@ import { EditOutlined } from "@ant-design/icons";
 
 function QuestScriptName() {
 
-    const [id, scriptName, setScriptName] = useQuestStore(useShallow((state) => [state.id, state.script_name, state.set_script_name]))
+    const [id, scriptName, setScriptName] = useCurrentQuestStore(useShallow((state) => [state.id, state.script_name, state.set_script_name]))
     const [editable, setEditable] = useState<boolean>(false);
 
     async function tryEditScriptName() {

@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Button, Col, Row, Select, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { MapData } from "./types";
-import QuestMain from "./components/quest/main";
+import Editor from "./components/editor/Editor";
 
 enum AppState {
     NotReady,
@@ -45,7 +45,7 @@ function App() {
                 </div>
             </Col>
         </Row>
-        <QuestMain/>
+        <Editor/>
     </div>
 }
 
@@ -79,8 +79,8 @@ function MapSelector() {
         <Select 
             value={currentMapId}
             onChange={selectMap}
-        >{maps.map((m) => (
-            <Select.Option value={m.id}>{m.name}</Select.Option>
+        >{maps.map((m, i) => (
+            <Select.Option key={i} value={m.id}>{m.name}</Select.Option>
         ))}</Select>
     </>
 }

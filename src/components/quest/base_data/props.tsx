@@ -1,5 +1,5 @@
 import { Checkbox } from "antd";
-import { useQuestStore } from "../../stores/QuestStore";
+import { useCurrentQuestStore } from "../../../stores/QuestStore";
 import { useShallow } from "zustand/shallow";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -12,7 +12,7 @@ function QuestProps() {
 
 function SecondarySelector() {
 
-    const [id, secondary, setSecondary] = useQuestStore(useShallow((state) => [state.id, state.secondary, state.set_secondary]))
+    const [id, secondary, setSecondary] = useCurrentQuestStore(useShallow((state) => [state.id, state.secondary, state.set_secondary]))
 
     async function updateIsSecondary(checked: boolean) {
         setSecondary(checked)
@@ -26,7 +26,7 @@ function SecondarySelector() {
 
 function InitiallyActiveSelector() {
 
-    const [id, active, setActive] = useQuestStore(useShallow((state) => [state.id, state.active, state.set_active]))
+    const [id, active, setActive] = useCurrentQuestStore(useShallow((state) => [state.id, state.active, state.set_active]))
 
     async function updateIsActive(checked: boolean) {
         setActive(checked)

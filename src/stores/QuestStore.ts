@@ -1,7 +1,7 @@
 import { create } from "zustand"
 
 type Quest = {
-    id: string,
+    id: string | null,
     script_name: string,
     directory: string,
     name: string,
@@ -20,8 +20,8 @@ type Actions = {
     set_active: (b: boolean) => void
 }
 
-export const useQuestStore = create<Quest & Actions>((set) => ({
-    id: "",
+export const useCurrentQuestStore = create<Quest & Actions>((set) => ({
+    id: null,
     script_name: "",
     directory: "",
     name: "",

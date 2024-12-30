@@ -1,4 +1,3 @@
-import QuestInitializator from "./initialize"
 import QuestScriptName from "./script"
 import QuestDirectory from "./directory"
 import QuestName from "./name"
@@ -8,7 +7,6 @@ import QuestProps from "./props"
 function QuestData() {
 
     return <>   
-        <QuestInitializator/>
         <QuestScriptName/>
         <QuestDirectory/>
         <QuestName/>

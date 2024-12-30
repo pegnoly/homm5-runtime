@@ -1,9 +1,9 @@
 import { Button } from "antd";
-import { useQuestStore } from "../../stores/QuestStore";
+import { useCurrentQuestStore } from "../../stores/QuestStore";
 import { invoke } from "@tauri-apps/api/core";
 
 function QuestGenerator() {
-    const questId = useQuestStore(state => state.id);
+    const questId = useCurrentQuestStore(state => state.id);
 
     async function addQuestToQueue() {
         await invoke("add_quest_to_queue", {questId: questId})
@@ -13,9 +13,9 @@ function QuestGenerator() {
         await invoke("apply_modifications")
     }
 
-    return <div style={{display: 'flex', justifyContent: 'right', bottom: 70, position: 'relative', left: 440, width: 400, gap: 10}}>
-        <Button size="large" onClick={addQuestToQueue}>Добавить квест в очередь</Button>
-        <Button size="large" onClick={applyModifications}>Применить к карте</Button>
+    return <div style={{display: 'flex', alignItems: 'center', flexDirection: 'column', gap: 8}}>
+        <Button size="large" onClick={addQuestToQueue} disabled={questId == null}>Add quest to queue</Button>
+        <Button size="large" onClick={applyModifications}>Apply quests to map</Button>
     </div>
 }
 

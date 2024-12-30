@@ -1,5 +1,5 @@
 import { useShallow } from "zustand/shallow";
-import { useQuestStore } from "../../stores/QuestStore";
+import { useCurrentQuestStore } from "../../../stores/QuestStore";
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button, Typography } from "antd";
@@ -7,7 +7,7 @@ import TextArea from "antd/es/input/TextArea";
 import { EditOutlined } from "@ant-design/icons";
 
 function QuestDesc() {
-    const [id, desc, setDesc] = useQuestStore(useShallow((state) => [state.id, state.desc, state.set_desc]))
+    const [id, desc, setDesc] = useCurrentQuestStore(useShallow((state) => [state.id, state.desc, state.set_desc]))
     const [editable, setEditable] = useState<boolean>(false);
 
     async function tryEditDesc() {

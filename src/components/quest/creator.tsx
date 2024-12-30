@@ -4,7 +4,7 @@ import { useQuestCreationContext } from "../../contexts/questCreation";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { EditOutlined } from "@ant-design/icons";
-import { useQuestStore } from "../../stores/QuestStore";
+import { useCurrentQuestStore } from "../../stores/QuestStore";
 import { useShallow } from "zustand/shallow";
 import { Quest } from "../../types";
 
@@ -12,7 +12,7 @@ function QuestCreator() {
 
     const [open, setOpen] = useState<boolean>(false);
 
-    const [setId, setDirectory, setName, setScriptName, setDesc] = useQuestStore(useShallow((state) => [
+    const [setId, setDirectory, setName, setScriptName, setDesc] = useCurrentQuestStore(useShallow((state) => [
         state.set_id,
         state.set_directory,
         state.set_name,
@@ -45,9 +45,9 @@ function QuestCreator() {
 
     return <div style={{width: '45%'}}>
         <Button
+            size="large"
             onClick={() => setOpen(true)} 
-            style={{height: 25}}
-        >Создать квест</Button>
+        >Create new quest</Button>
         <Modal
             centered={true}
             open={open}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuestStore } from "../../../stores/QuestStore";
+import { useCurrentQuestStore } from "../../../stores/QuestStore";
 import { invoke } from "@tauri-apps/api/core";
 import TextArea from "antd/es/input/TextArea";
 import { Button, Checkbox, Typography } from "antd";
@@ -11,7 +11,7 @@ type ProgressData = {
 
 function QuestProgressMain() {
 
-    const questId = useQuestStore((state) => state.id);
+    const questId = useCurrentQuestStore((state) => state.id);
     const [progress, setProgress] = useState<number>(0);
     const [progressText, setProgressText] = useState<string>("");
     const [concatenate, setConcatenate] = useState<boolean>(true);
