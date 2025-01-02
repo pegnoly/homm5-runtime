@@ -1,4 +1,4 @@
-use services::QuestService;
+use services::quest_creator::prelude::*;
 use tokio::sync::Mutex;
 use utils::{Config, LocalAppManager, RuntimeConfig};
 
@@ -42,31 +42,32 @@ pub async fn run() {
             commands::run_game,
             commands::load_repackers,
             commands::repack,
-            commands::add_quest_to_queue,
-            commands::pick_quest_directory,
             commands::load_maps,
             commands::load_current_map,
             commands::select_map,
-            commands::create_quest,
-            commands::save_progress,
-            commands::load_progress,
-            commands::update_progress_concatenation,
-            commands::update_quest_directory,
-            commands::update_quest_script_name,
-            commands::update_quest_name,
-            commands::update_quest_desc,
             commands::apply_modifications,
-            commands::update_is_secondary,
-            commands::update_is_active,
-            commands::save_quest_text,
 
-            commands::collect_quests_for_selection,
-            commands::load_quest_name,
-            commands::load_quest_desc,
-            commands::load_quest_directory,
-            commands::load_quest_script_name,
-            commands::load_quest_is_secondary,
-            commands::load_quest_is_active
+            // quest commands
+            collect_quests_for_selection,
+            pick_quest_directory,
+            create_quest,
+            save_progress,
+            load_progress,
+            update_progress_concatenation,
+            update_quest_directory,
+            update_quest_script_name,
+            update_quest_name,
+            update_quest_desc,
+            update_is_secondary,
+            update_is_active,
+            load_quest_name,
+            load_quest_desc,
+            load_quest_directory,
+            load_quest_script_name,
+            load_quest_is_secondary,
+            load_quest_is_active,
+            save_quest_text,
+            add_quest_to_queue,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
