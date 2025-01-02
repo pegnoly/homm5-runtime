@@ -1,19 +1,18 @@
 use std::io::Write;
 use std::path::PathBuf;
 
-use derive_more::derive::From;
 use homm5_repacker::Repacker;
 use homm5_scaner::ScanExecutor;
-use map_modifier::{quest, FileRef, GenerateBoilerplate, ModifiersQueue, Quest};
-use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
+use map_modifier::{GenerateBoilerplate, ModifiersQueue};
+use map_modifier::quest::{write_quest_text_file, QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use runtime_main::RuntimeRunner;
-use serde::{Deserialize, Serialize, Serializer};
-use sqlx::Error;
+use serde::{Serialize, Serializer};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use uuid::Uuid;
 
-use crate::utils::{Config, LocalAppManager, MapFrontendModel, QuestDBModel, QuestFrontendModel, QuestProgressDBModel, QuestProgressFrontendModel};
+use crate::services::{QuestLoadingModel, QuestProgressFrontendModel, QuestService};
+use crate::utils::{Config, LocalAppManager, MapFrontendModel};
 
 #[tauri::command]
 pub async fn execute_scan(
@@ -92,49 +91,135 @@ pub async fn repack(
 }
 
 #[tauri::command]
+pub async fn collect_quests_for_selection(
+    app_manager: State<'_, LocalAppManager>,
+    config: State<'_, Config>,
+    quest_service: State<'_, QuestService>
+) -> Result<Vec<QuestLoadingModel>, ()> {
+
+    let current_map_id = app_manager.runtime_config.lock().await.current_selected_map.unwrap();
+    let current_map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
+
+    match quest_service.get_quests_by_mission_data(current_map.campaign as u32, current_map.mission as u32).await {
+        Ok(quests) => {
+            Ok(quests.into_iter().map(|q| QuestLoadingModel::from(q)).collect())
+        },
+        Err(_error) => {
+            Err(())
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn load_quest_name(
+    quest_service: State<'_, QuestService>,
+    quest_id: Uuid
+) -> Result<String, ()> {
+
+    match quest_service.get_quest_name(quest_id).await {
+        Ok(name) => {
+            Ok(name)
+        },
+        Err(_error) => {
+            Err(())
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn load_quest_desc(
+    quest_service: State<'_, QuestService>,
+    quest_id: Uuid
+) -> Result<String, ()> {
+    match quest_service.get_quest_desc(quest_id).await {
+        Ok(desc) => {
+            Ok(desc)
+        },
+        Err(_error) => {
+            Err(())
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn load_quest_script_name(
+    quest_service: State<'_, QuestService>,
+    quest_id: Uuid
+) -> Result<String, ()> {
+    match quest_service.get_quest_script_name(quest_id).await {
+        Ok(script_name) => {
+            Ok(script_name)
+        },
+        Err(_error) => {
+            Err(())
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn load_quest_directory(
+    quest_service: State<'_, QuestService>,
+    quest_id: Uuid
+) -> Result<String, ()> {
+    match quest_service.get_quest_directory(quest_id).await {
+        Ok(directory) => {
+            Ok(directory)
+        },
+        Err(_error) => {
+            Err(())
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn load_quest_is_secondary(
+    quest_service: State<'_, QuestService>,
+    quest_id: Uuid
+) -> Result<bool, ()> {
+    match quest_service.is_secondary_quest(quest_id).await {
+        Ok(is_secondary) => {
+            Ok(is_secondary)
+        },
+        Err(_error) => {
+            Err(())
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn load_quest_is_active(
+    quest_service: State<'_, QuestService>,
+    quest_id: Uuid
+) -> Result<bool, ()> {
+    match quest_service.is_active_quest(quest_id).await {
+        Ok(is_active) => {
+            Ok(is_active)
+        },
+        Err(_error) => {
+            Err(())
+        }
+    }
+}
+
+#[tauri::command]
 pub async fn create_quest(
     config: State<'_, Config>,
     app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     directory: String,
     script_name: String,
     name: String
-) -> Result<QuestFrontendModel, ()> {
-    let pool = app_manager.db_pool.read().await;
+) -> Result<Uuid, ()> {
     let runtime_config = app_manager.runtime_config.lock().await;
     let map = config.maps.iter().find(|m| {
         m.id == runtime_config.current_selected_map.unwrap()
     }).unwrap();
-    let quest = QuestDBModel {
-        id: Uuid::new_v4(),
-        directory: directory,
-        name: name,
-        desc: String::new(),
-        script_name: script_name,
-        campaign_number: map.campaign as u32,
-        mission_number: map.mission as u32,
-        is_active: false,
-        is_secondary: false,
-        is_first_init: false
-    };
-    let quest_insert_result = sqlx::query(r#"
-        INSERT INTO quests (id, directory, campaign_number, mission_number, name, desc, script_name) VALUES (?, ?, ?, ?, ?, ?, ?)
-    "#)
-        .bind(&quest.id)
-        .bind(&quest.directory)
-        .bind(&quest.campaign_number)
-        .bind(&quest.mission_number)
-        .bind(&quest.name)
-        .bind(&quest.desc)
-        .bind(&quest.script_name)
-        .execute(&*pool)
-        .await;
 
-    match quest_insert_result {
-        Ok(_) => {
-            Ok(QuestFrontendModel::from(quest))
+    match quest_service.create_quest(&directory, &script_name, &name, map.campaign as u32, map.mission as u32).await {
+        Ok(id) => {
+            Ok(id)
         },
-        Err(insert_failure) => {
-            println!("Failed to create new quest: {}", insert_failure.to_string());
+        Err(_error) => {
             Err(())
         }
     }
@@ -147,7 +232,6 @@ pub async fn pick_quest_directory(
     app_manager: State<'_, LocalAppManager>,
     initial: bool
 ) -> Result<(), ()> {
-
     let current_map_id = app_manager.runtime_config.lock().await.current_selected_map.unwrap();
     let map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
 
@@ -163,276 +247,151 @@ pub async fn pick_quest_directory(
                 app.emit("quest_directory_updated", f.unwrap().to_string()).unwrap();
             }
         });
+
     Ok(())
 }
 
 #[tauri::command]
 pub async fn update_quest_directory(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     directory: String
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
-    let directory_update_result: Result<QuestDBModel, Error> = sqlx::query_as(r#"
-            UPDATE quests 
-            SET directory=?
-            WHERE id=?
-            RETURNING *;
-        "#)
-        .bind(directory)
-        .bind(quest_id)
-        .fetch_one(&*pool)
-        .await;
-
-    match directory_update_result {
-        Ok(_) => {
-            Ok(())
-        },
-        Err(update_failure) => {
-            println!("Failed to update quest directory: {}", update_failure.to_string());
-            Err(())
-        }
+    if let Ok(()) = quest_service.update_quest_directory(quest_id, &directory).await {
+        Ok(())
+    }
+    else {
+        Err(())
     }
 }
 
 #[tauri::command]
 pub async fn update_quest_script_name(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     script_name: String
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
-    let script_name_update_result: Result<QuestDBModel, Error> = sqlx::query_as(r#"
-            UPDATE quests 
-            SET script_name=?
-            WHERE id=?
-            RETURNING *;
-        "#)
-        .bind(script_name)
-        .bind(quest_id)
-        .fetch_one(&*pool)
-        .await;
-
-    match script_name_update_result {
-        Ok(_) => {
-            Ok(())
-        },
-        Err(update_failure) => {
-            println!("Failed to update quest script name: {}", update_failure.to_string());
-            Err(())
-        }
+    if let Ok(()) = quest_service.update_quest_script_name(quest_id, &script_name).await {
+        Ok(())
+    }
+    else {
+        Err(())
     }
 }
 
 #[tauri::command]
 pub async fn update_quest_name(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     name: String
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
-    let name_update_result: Result<QuestDBModel, Error> = sqlx::query_as(r#"
-            UPDATE quests 
-            SET name=?
-            WHERE id=?
-            RETURNING *;
-        "#)
-        .bind(name)
-        .bind(quest_id)
-        .fetch_one(&*pool)
-        .await;
-
-    match name_update_result {
-        Ok(_) => {
-            Ok(())
-        },
-        Err(update_failure) => {
-            println!("Failed to update quest name: {}", update_failure.to_string());
-            Err(())
-        }
+    if let Ok(()) = quest_service.update_quest_name(quest_id, &name).await {
+        Ok(())
+    }
+    else {
+        Err(())
     }
 }
 
 #[tauri::command]
 pub async fn update_quest_desc(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     desc: String
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
-    let desc_update_result: Result<QuestDBModel, Error> = sqlx::query_as(r#"
-            UPDATE quests 
-            SET desc=?
-            WHERE id=?
-            RETURNING *;
-        "#)
-        .bind(desc)
-        .bind(quest_id)
-        .fetch_one(&*pool)
-        .await;
-
-    match desc_update_result {
-        Ok(_) => {
-            Ok(())
-        },
-        Err(update_failure) => {
-            println!("Failed to update quest desc: {}", update_failure.to_string());
-            Err(())
-        }
+    if let Ok(()) = quest_service.update_quest_desc(quest_id, &desc).await {
+        Ok(())
+    }
+    else {
+        Err(())
     }
 }
 
 #[tauri::command]
 pub async fn update_is_secondary(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     is_secondary: bool
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
-    let update_result: Result<QuestDBModel, Error> = sqlx::query_as(r#"
-            UPDATE quests 
-            SET is_secondary=?
-            WHERE id=?
-            RETURNING *;
-        "#)
-        .bind(is_secondary)
-        .bind(quest_id)
-        .fetch_one(&*pool)
-        .await;
-
-    match update_result {
-        Ok(_) => Ok(()),
-        Err(update_failure) => {
-            println!("Failed to update is_secondary quest param: {}", update_failure.to_string());
-            Err(())
-        }
+    if let Ok(()) = quest_service.update_quest_is_secondary(quest_id, is_secondary).await {
+        Ok(())
+    }
+    else {
+        Err(())
     }
 }
 
 #[tauri::command]
 pub async fn update_is_active(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     is_active: bool
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
-    let update_result: Result<QuestDBModel, Error> = sqlx::query_as(r#"
-            UPDATE quests 
-            SET is_active=?
-            WHERE id=?
-            RETURNING *;
-        "#)
-        .bind(is_active)
-        .bind(quest_id)
-        .fetch_one(&*pool)
-        .await;
-
-    match update_result {
-        Ok(_) => Ok(()),
-        Err(update_failure) => {
-            println!("Failed to update is_active quest param: {}", update_failure.to_string());
-            Err(())
-        }
+    if let Ok(()) = quest_service.update_quest_is_active(quest_id, is_active).await {
+        Ok(())
+    }
+    else {
+        Err(())
     }
 }
 
 #[tauri::command]
 pub async fn load_progress(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     number: u32
 ) -> Result<QuestProgressFrontendModel, ()> {
-    let pool = app_manager.db_pool.read().await;
-    if let Ok::<Option<QuestProgressDBModel>, _>(existing_progress) = 
-        sqlx::query_as("SELECT * FROM progresses WHERE quest_id=? AND number=?")
-            .bind(quest_id)
-            .bind(number)
-            .fetch_optional(&*pool)
-            .await {
-        if let Some(progress) = existing_progress {
-            return Ok(QuestProgressFrontendModel {
-                text: progress.text,
-                concatenate: progress.concatenate
-            });
-        }
-        else {
-            let progress_id = Uuid::new_v4();
-            let progress_creation_result = sqlx::query(r#"
-                    INSERT INTO progresses (id, quest_id, number, text) VALUES (?, ?, ?, ?) 
-                "#)
-                .bind(progress_id)
-                .bind(quest_id)
-                .bind(number)
-                .bind(String::new())
-                .execute(&*pool)
-                .await;
-            match progress_creation_result {
-                Ok(_creation_success) => {
-                    return Ok(QuestProgressFrontendModel {text: String::new(), concatenate: true});
-                }
-                Err(creation_failure) => {
-                    println!("Failed to create quest progress: {}", creation_failure.to_string());
-                    return Err(())
-                }
-            }
-        }
+    if let Ok(progress) = quest_service.get_quest_progress(quest_id, number).await {
+        Ok(QuestProgressFrontendModel::from(progress))
     }
     else {
-        return Err(());
-    } 
+        Err(())
+    }
 }
 
 #[tauri::command]
 pub async fn save_progress(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     number: u32,
     text: String
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
-    let progress_update_result: Result<QuestProgressDBModel, Error> = sqlx::query_as(r#"
-            UPDATE progresses 
-            SET text=?
-            WHERE quest_id=? AND number=?
-            RETURNING *;
-        "#)
-        .bind(text)
-        .bind(quest_id)
-        .bind(number)
-        .fetch_one(&*pool)
-        .await;
-
-    match progress_update_result {
-        Ok(_) => {
-            Ok(())
-        },
-        Err(update_failure) => {
-            println!("Failed to update progress: {}", update_failure.to_string());
-            Err(())
-        }
+    if let Ok(_) = quest_service.save_progress(quest_id, number, &text).await {
+        Ok(())
+    }
+    else {
+        Err(())
     }
 }
 
 #[tauri::command]
 pub async fn update_progress_concatenation(
-    app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid,
     number: u32,
     concatenate: bool
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
-    let _update_result: Result<QuestProgressDBModel, Error> = sqlx::query_as(r#"
-            UPDATE progresses
-            SET concatenate=?
-            WHERE quest_id=? AND number=?
-            RETURNING *;
-        "#)
-        .bind(concatenate)
-        .bind(quest_id)
-        .bind(number)
-        .fetch_one(&*pool)
-        .await;
+    if let Ok(_) = quest_service.update_progress_concatenation(quest_id, number, concatenate).await {
+        Ok(())
+    }
+    else {
+        Err(())
+    }
+}
 
+#[tauri::command]
+pub async fn save_quest_text(
+    config: State<'_, Config>,
+    quest_directory: String,
+    text_name: String,
+    text: String
+) -> Result<(), ()> {
+    let dir_relative_path = quest_directory.replace(&config.mod_path, "");
+    println!("Directory relative path: {}", &dir_relative_path);
+    let text_directory = format!("{}{}\\Texts\\", &config.texts_path, &dir_relative_path);
+    std::fs::create_dir_all(&text_directory).unwrap();
+    let mut file = std::fs::File::create(format!("{}{}.txt", &text_directory, &text_name)).unwrap();
+    write_quest_text_file(&mut file, text);
     Ok(())
 }
 
@@ -440,30 +399,18 @@ pub async fn update_progress_concatenation(
 #[tauri::command]
 pub async fn add_quest_to_queue(
     app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>,
     quest_id: Uuid
 ) -> Result<(), ()> {
-    let pool = app_manager.db_pool.read().await;
     let current_map_id = app_manager.runtime_config.lock().await.current_selected_map.unwrap();
 
-    let quest_add_result = sqlx::query(r#"
-            INSERT INTO quest_modifiers (quest_id, map_id) VALUES (?, ?)
-            ON CONFLICT
-            DO NOTHING;
-        "#)
-        .bind(quest_id)
-        .bind(current_map_id)
-        .execute(&*pool)
-        .await;
-
-    match quest_add_result {
-        Ok(_) => {
-            Ok(())
-        },
-        Err(add_failure) => {
-            println!("Failed to add quest to queue: {}", add_failure);
-            Err(())
-        }
+    if let Ok(_) = quest_service.add_quest_to_queue(quest_id, current_map_id).await {
+        Ok(())
     }
+    else {
+        Err(())
+    }
+
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -484,8 +431,8 @@ impl Serialize for ModificationsError {
 pub async fn apply_modifications(
     config: State<'_, Config>,
     app_manager: State<'_, LocalAppManager>,
+    quest_service: State<'_, QuestService>
 ) -> Result<(), ModificationsError> {
-    let pool = app_manager.db_pool.read().await;
     let current_map_id = app_manager.runtime_config.lock().await.current_selected_map.unwrap();
     let map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
     let mod_path = &config.mod_path;
@@ -496,23 +443,10 @@ pub async fn apply_modifications(
 
     // get all quests data for these ids and convert db models to quests
     
-    let quests_models: Vec<QuestDBModel> = sqlx::query_as(r#"
-            SELECT * FROM quests 
-            WHERE id IN
-            (SELECT quest_id FROM quest_modifiers WHERE map_id=?)
-        "#)
-        .bind(current_map_id)
-        .fetch_all(&*pool)
-        .await?;
+    let models = quest_service.get_quests_to_apply(current_map_id).await?;
 
-    for model in quests_models {
-        let progresses: Vec<QuestProgressDBModel> = sqlx::query_as(r#"
-            SELECT * FROM progresses WHERE quest_id=?
-        "#)
-        .bind(model.id)
-        .fetch_all(&*pool)
-        .await?;
-
+    for model in models {
+        let progresses = quest_service.get_quest_progresses(model.id).await?;
         let request = QuestCreationRequest::new(PathBuf::from(model.directory), model.script_name)
             .with_name(model.name)
             .with_desc(model.desc)
@@ -521,7 +455,11 @@ pub async fn apply_modifications(
             .secondary(model.is_secondary)
             .initialy_active(model.is_active);
 
-        let quest = request.generate(Some(&QuestBoilerplateHelper {mod_path: mod_path.clone(), map_data_path: map.data_path.clone()}));
+        let quest = request.generate(Some(&QuestBoilerplateHelper {
+            mod_path: mod_path.clone(), 
+            map_data_path: map.data_path.clone(), 
+            texts_path: config.texts_path.clone()
+        }));
         if model.is_secondary {
             modifiers_queue.secondary_quests.push(quest);
         }
@@ -534,14 +472,7 @@ pub async fn apply_modifications(
     println!("Secondary quests: {:?}", &modifiers_queue.secondary_quests);
 
     modifiers_queue.apply_changes_to_map(map);
-
-    let _queue_deletion_result = sqlx::query(r#"
-            DELETE FROM quest_modifiers WHERE map_id=?
-        "#)
-        .bind(current_map_id)
-        .execute(&*pool)
-        .await
-        .unwrap();
+    quest_service.delete_quests_from_queue(current_map_id).await?;
 
     Ok(())
 }

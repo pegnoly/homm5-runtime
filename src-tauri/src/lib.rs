@@ -1,6 +1,8 @@
-use tokio::sync::{RwLock, Mutex};
+use services::QuestService;
+use tokio::sync::Mutex;
 use utils::{Config, LocalAppManager, RuntimeConfig};
 
+mod services;
 mod commands;
 mod utils;
 mod source;
@@ -25,13 +27,15 @@ pub async fn run() {
     let pool = sqlx::SqlitePool::connect(&db_path.to_str().unwrap()).await.unwrap();
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
+    let quest_service = QuestService::new(pool);
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(cfg)
         .manage(LocalAppManager {
             runtime_config: Mutex::new(runtime_cfg),
-            db_pool: RwLock::new(pool)
         })
+        .manage(quest_service)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             commands::execute_scan,
@@ -53,7 +57,16 @@ pub async fn run() {
             commands::update_quest_desc,
             commands::apply_modifications,
             commands::update_is_secondary,
-            commands::update_is_active
+            commands::update_is_active,
+            commands::save_quest_text,
+
+            commands::collect_quests_for_selection,
+            commands::load_quest_name,
+            commands::load_quest_desc,
+            commands::load_quest_directory,
+            commands::load_quest_script_name,
+            commands::load_quest_is_secondary,
+            commands::load_quest_is_active
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
