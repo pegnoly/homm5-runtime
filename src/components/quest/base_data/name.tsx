@@ -23,7 +23,7 @@ function QuestName() {
     return <div style={{display: 'flex', paddingTop: '3%', flexDirection: 'row', gap: 3}}>
         <Typography.Text 
             style={{fontFamily: 'fantasy', position: 'relative', bottom: -3}}
-        >Имя: </Typography.Text>
+        >Name: </Typography.Text>
         <Input 
             style={{height: 30, width: '80%', fontFamily: 'cursive', fontWeight: 'bold', fontSize: 13}} 
             disabled={!editable} 

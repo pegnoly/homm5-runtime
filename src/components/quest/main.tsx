@@ -6,6 +6,8 @@ import QuestInitializator from "./initialize";
 import { useCurrentQuestStore } from "../../stores/QuestStore";
 import { useShallow } from "zustand/shallow";
 import QuestTextEditor from "./texts/QuestTextEditor";
+import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 
 function QuestMain() {
 
@@ -33,7 +35,17 @@ function QuestMain() {
 
 function CurrentQuest() {
 
-    const [questId, questName] = useCurrentQuestStore(useShallow((state) => [state.id, state.name]))
+    const [questId, questName, setQuestName] = useCurrentQuestStore(useShallow((state) => [state.id, state.name, state.set_name]))
+
+    useEffect(() => {
+        if (questId != null) {
+            loadName()
+        }
+    }, [questId])
+
+    const loadName = async () => {
+        await invoke<string>("load_quest_name", {questId: questId}).then((res) => setQuestName(res))
+    }
 
     function getQuestText() {
         return questId == null ? "Not selected" : questName

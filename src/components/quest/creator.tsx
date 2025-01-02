@@ -5,20 +5,11 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { EditOutlined } from "@ant-design/icons";
 import { useCurrentQuestStore } from "../../stores/QuestStore";
-import { useShallow } from "zustand/shallow";
-import { Quest } from "../../types";
 
 function QuestCreator() {
 
     const [open, setOpen] = useState<boolean>(false);
-
-    const [setId, setDirectory, setName, setScriptName, setDesc] = useCurrentQuestStore(useShallow((state) => [
-        state.set_id,
-        state.set_directory,
-        state.set_name,
-        state.set_script_name,
-        state.set_desc
-    ]));
+    const setQuestId = useCurrentQuestStore((state) => state.set_id)
 
     const questCreationContext = useQuestCreationContext();
 
@@ -28,18 +19,14 @@ function QuestCreator() {
 
     async function create() {
         setOpen(false)
-        await invoke("create_quest", {
+        await invoke<string>("create_quest", {
             directory: questCreationContext?.state.directory,
             scriptName: questCreationContext?.state.script_name,
             name: questCreationContext?.state.name
         })
-        .then((q) => {
-            const quest = q as Quest
-            setId(quest.id)
-            setName(quest.name)
-            setDesc(quest.desc)
-            setDirectory(quest.directory)
-            setScriptName(quest.script_name)
+        .then((id) => {
+            setQuestId(id)
+            invoke("load_progress", {questId: id, number: 0})
         })
     }
 

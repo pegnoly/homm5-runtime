@@ -10,6 +10,10 @@ type Quest = {
     active: boolean
 }
 
+type ProgressInfo = {
+    current_progress: number
+}
+
 type Actions = {
     set_script_name: (s: string) => void,
     set_name: (s: string) => void,
@@ -17,10 +21,11 @@ type Actions = {
     set_directory: (s: string) => void,
     set_id: (s: string) => void,
     set_secondary: (b: boolean) => void,
-    set_active: (b: boolean) => void
+    set_active: (b: boolean) => void,
+    set_current_progress: (p: number) => void
 }
 
-export const useCurrentQuestStore = create<Quest & Actions>((set) => ({
+export const useCurrentQuestStore = create<Quest & ProgressInfo & Actions>((set) => ({
     id: null,
     script_name: "",
     directory: "",
@@ -28,6 +33,7 @@ export const useCurrentQuestStore = create<Quest & Actions>((set) => ({
     desc: "",
     secondary: false,
     active: false,
+    current_progress: 0,
 
     set_id(s) {
         set({ id: s })
@@ -55,5 +61,9 @@ export const useCurrentQuestStore = create<Quest & Actions>((set) => ({
 
     set_active(b) {
         set({ active: b })
+    },
+
+    set_current_progress(p) {
+        set({ current_progress: p })
     },
 }))
