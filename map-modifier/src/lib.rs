@@ -113,7 +113,14 @@ impl ModifiersQueue {
             if primary_quests_items.objectives.as_mut().unwrap().items.is_none() {
                 primary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
             }
-            for quest in &self.primary_quests {
+
+            let quests_to_apply = self.primary_quests.iter().filter(|q| {
+                primary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name) == false
+            }).collect::<Vec<&Quest>>();
+
+            println!("Primary quests to apply: {:?}", &quests_to_apply);
+
+            for quest in quests_to_apply {
                 primary_quests_items.objectives.as_mut().unwrap().items.as_mut().unwrap().push(quest.clone());
             }
         }
@@ -122,7 +129,14 @@ impl ModifiersQueue {
             if secondary_quests_items.objectives.as_mut().unwrap().items.is_none() {
                 secondary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
             }
-            for quest in &self.secondary_quests {
+
+            let quests_to_apply = self.secondary_quests.iter().filter(|q| {
+                secondary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name) == false
+            }).collect::<Vec<&Quest>>();
+
+            println!("Secondary quests to apply: {:?}", &quests_to_apply);
+
+            for quest in quests_to_apply {
                 secondary_quests_items.objectives.as_mut().unwrap().items.as_mut().unwrap().push(quest.clone());
             }
         }

@@ -1,4 +1,4 @@
-use std::{io::Write, marker::PhantomData, path::PathBuf};
+use std::{fmt::format, fs::File, io::Write, marker::PhantomData, path::PathBuf};
 
 use homm5_types::{common::FileRef, quest::Quest, Homm5Type};
 use quick_xml::se;
@@ -72,41 +72,42 @@ impl QuestCreationRequest {
         self
     }
 
-    fn generate_name(&self, quest: &mut Quest, map_data_path: &String) {
-        let file_name = self.path.join("name.txt");
-        let mut file = std::fs::File::create(&file_name).unwrap();
+    fn generate_name(&self, quest: &mut Quest, base_texts_dir: &String, map_local_data: &String) {
+
+        let mut file = std::fs::File::create(format!("{}name.txt", base_texts_dir)).unwrap();
         file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.name.encode_utf16() {
             file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
-        let local_file_name = file_name.to_str().unwrap().replace(map_data_path, "").replace("\\", "/");
+        let local_file_name = format!("{}\\name.txt", map_local_data).replace("\\", "/");
+        println!("Name generator, local file name {:?}", &local_file_name);
 
         quest.caption_file_ref = FileRef {href: Some(local_file_name)};
     }
 
-    fn generate_desc(&self, quest: &mut Quest, map_data_path: &String) {
-        let file_name = self.path.join("desc.txt");
-        let mut file = std::fs::File::create(&file_name).unwrap();
+    fn generate_desc(&self, quest: &mut Quest, base_texts_dir: &String, map_local_data: &String) {
+
+        let mut file = std::fs::File::create(format!("{}desc.txt", base_texts_dir)).unwrap();
         file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.desc.encode_utf16() {
             file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
-        let local_file_name = file_name.to_str().unwrap().replace(map_data_path, "").replace("\\", "/");
+        let local_file_name = format!("{}\\desc.txt", map_local_data).replace("\\", "/");
+        println!("Desc generator, local file name {:?}", &local_file_name);
 
         quest.description_file_ref = FileRef {href: Some(local_file_name)};
     }
 
-    fn generate_progresses(&self, directory: &PathBuf, quest: &mut Quest, map_data_path: &String) {
+    fn generate_progresses(&self, quest: &mut Quest, progresses_texts_dir: &String, map_local_data: &String) {
 
         let mut previous_progresses = String::new();
 
         quest.progress_comments_file_ref.items = Some(vec![]);
 
         for progress in &self.progresses {
-            let file_name = directory.join(format!("{}.txt", progress.number));
-            let mut file = std::fs::File::create(&file_name).unwrap();
+            let mut file = std::fs::File::create(format!("{}{}.txt", progresses_texts_dir, progress.number)).unwrap();
             file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
 
             let current_progress = format!("<color=grey>{}<color=white>{}", &previous_progresses, &progress.text);
@@ -119,7 +120,8 @@ impl QuestCreationRequest {
                 previous_progresses += &format!("{}\n\n", progress.text);
             }
 
-            let local_file_name = file_name.to_str().unwrap().replace(map_data_path, "").replace("\\", "/");
+            let local_file_name = format!("{}\\Progress\\{}.txt", map_local_data, progress.number).replace("\\", "/");
+            println!("Progress generator, local file name {:?}", &local_file_name);
 
             quest.progress_comments_file_ref.items.as_mut().unwrap().push(FileRef {href: Some(local_file_name)});
         }
@@ -128,7 +130,8 @@ impl QuestCreationRequest {
 
 pub struct QuestBoilerplateHelper {
     pub mod_path: String,
-    pub map_data_path: String
+    pub map_data_path: String,
+    pub texts_path: String
 }
 
 impl GenerateBoilerplate for QuestCreationRequest {
@@ -141,17 +144,28 @@ impl GenerateBoilerplate for QuestCreationRequest {
         quest.is_hidden = false;
         quest.is_initialy_active = self.initialy_active;
 
+        let helper_data = additional_data.unwrap();
+        // represents path as game sees it
+        let local_quest_dir = self.path.to_str().unwrap().replace(&helper_data.mod_path, "");
+
+        let quest_texts_base = format!("{}{}\\", &helper_data.texts_path, &local_quest_dir);
+        let texts_dir = format!("{}Texts\\", &quest_texts_base);
+
+        let dialogs_texts_dir = format!("{}Dialogs\\", &quest_texts_base);
         let texts_path = self.path.join("Texts\\");
         let dialogs_path = self.path.join("Dialogs\\");
-        let progress_path = self.path.join("Progress\\");
+        let progresses_texts_dir = format!("{}Progress\\", &quest_texts_base);
 
-        std::fs::create_dir(&texts_path).unwrap();
+        let map_local_path = self.path.to_str().unwrap().replace(&helper_data.map_data_path, "");
+
+        std::fs::create_dir_all(&texts_dir).unwrap();
+        std::fs::create_dir_all(&dialogs_texts_dir).unwrap();
         std::fs::create_dir(&dialogs_path).unwrap();
-        std::fs::create_dir(&progress_path).unwrap();
+        std::fs::create_dir_all(&progresses_texts_dir).unwrap();
 
-        self.generate_name(&mut quest, &additional_data.unwrap().map_data_path);
-        self.generate_desc(&mut quest, &additional_data.unwrap().map_data_path);
-        self.generate_progresses(&progress_path, &mut quest, &additional_data.unwrap().map_data_path);
+        self.generate_name(&mut quest, &quest_texts_base, &map_local_path);
+        self.generate_desc(&mut quest, &quest_texts_base, &map_local_path);
+        self.generate_progresses(&mut quest, &progresses_texts_dir, &map_local_path);
 
         let script_boilerplate = format!("
 c{}m{}_{} = {{
@@ -179,5 +193,12 @@ c{}m{}_{} = {{
         let mut script_file = std::fs::File::create(self.path.join("script.lua")).unwrap();
         script_file.write_all(script_boilerplate.as_bytes()).unwrap();
         quest
+    }
+}
+
+pub fn write_quest_text_file(file: &mut File, text: String) {
+    file.write(&[255, 254]).unwrap(); 
+    for utf16 in text.encode_utf16() {
+        file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
     }
 }
