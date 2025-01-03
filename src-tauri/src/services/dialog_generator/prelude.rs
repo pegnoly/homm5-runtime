@@ -15,5 +15,6 @@ pub use super::commands::{
     load_dialog_variant,
     load_variant_speaker,
     load_variant_text,
-    save_dialog_variant
+    save_dialog_variant,
+    generate_dialog
 };

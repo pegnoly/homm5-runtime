@@ -1,13 +1,15 @@
 use serde::{Serialize, Deserialize};
+use strum::Display;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, sqlx::Type)]
+#[derive(Serialize, Deserialize, Clone, Debug, Display, PartialEq, sqlx::Type)]
 #[repr(i32)]
 pub enum SpeakerType {
-    //#[strum(to_string="SPEAKER_TYPE_HERO")]
+    #[strum(to_string="SPEAKER_TYPE_NO_SPEAKER")]
     NoSpeaker,
+    #[strum(to_string="SPEAKER_TYPE_HERO")]
     Hero,
-    //#[strum(to_string="SPEAKER_TYPE_CREATURE")]
+    #[strum(to_string="SPEAKER_TYPE_CREATURE")]
     Creature
 }
 

@@ -1757,6 +1757,7 @@ dependencies = [
 name = "homm5-runtime"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "derive_more 1.0.0",
  "homm5-repacker",
  "homm5-scaner",

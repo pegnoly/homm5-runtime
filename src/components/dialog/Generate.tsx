@@ -1,5 +1,6 @@
 import { Button } from "antd";
 import { useCurrentDialogStore } from "../../stores/CurrentDialogStore";
+import { invoke } from "@tauri-apps/api/core";
 
 function DialogFilesGenerator() {
 
@@ -8,6 +9,7 @@ function DialogFilesGenerator() {
     return <>
         <Button 
             disabled={!currentDialogId}
+            onClick={() => invoke("generate_dialog", {dialogId: currentDialogId})}
             size="large"
         >Generate Lua code</Button>
     </>

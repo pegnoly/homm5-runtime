@@ -52,7 +52,7 @@
 //     }
 // }
 
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
@@ -309,6 +309,53 @@ pub async fn save_dialog_variant(
             Err(())
         }
     }
+}
+
+#[tauri::command]
+pub async fn generate_dialog(
+    dialog_generator_service: State<'_, DialogGeneratorService>,
+    config: State<'_, Config>,
+    dialog_id: Uuid
+) -> Result<(), ()> {
+
+    // get dialog data
+    let dialog = dialog_generator_service.get_dialog(dialog_id).await.unwrap();
+    // get speakers
+    let speakers = dialog_generator_service.get_speakers_by_ids(&serde_json::from_str(&dialog.speakers_ids).unwrap()).await.unwrap();
+    // get all variants
+    let variants = dialog_generator_service.get_variants_for_dialog(dialog_id).await.unwrap();
+
+    let dialog_local_path = dialog.directory.replace(&config.mod_path, "");
+    let dialog_texts_path = format!("{}\\{}", &config.texts_path, dialog_local_path);
+
+    std::fs::create_dir_all(&dialog_texts_path).unwrap();
+
+    let mut script_file = std::fs::File::create(format!("{}\\script.lua", dialog.directory)).unwrap();
+    let mut script = format!("MiniDialog.Sets[\"{}\"] = {{\n", dialog.script_name);
+
+    for variant in &variants {
+        let file_name = format!("{}_{}.txt", &variant.step, &variant.label);
+        let mut variant_file = std::fs::File::create(format!("{}\\{}", dialog_texts_path, file_name)).unwrap();
+        if let Some(speaker) = speakers.iter().find(|s| s.id == variant.speaker_id) {
+            let text = format!("<color={}>{}<color=white>: {}", &speaker.color, &speaker.name, &variant.text);
+            variant_file.write(&[255, 254]).unwrap();
+            for utf16 in text.encode_utf16() {
+                variant_file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
+            }
+            let speaker_script = if speaker.speaker_type == SpeakerType::Hero {
+                format!("\"{}\"", speaker.script_name)
+            }
+            else {
+                format!("{}", speaker.script_name)
+            };
+            script += &format!("\t[\"{}_{}\"] = {{speaker = {}, speaker_type = {}}},\n", &variant.step, &variant.label, speaker_script, speaker.speaker_type.to_string());
+        }
+    }
+
+    script += "}";
+    script_file.write_all(&mut script.as_bytes()).unwrap();
+
+    Ok(())
 }
 // #[tauri::command]
 // pub async fn select_dialog(

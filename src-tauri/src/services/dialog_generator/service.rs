@@ -5,7 +5,7 @@
 use sqlx::{Pool, Sqlite};
 use uuid::Uuid;
 
-use super::data::{DialogDBModel, DialogFrontendModel, SpeakerDBModel, SpeakerFrontendModel, SpeakerType};
+use super::data::{DialogDBModel, DialogFrontendModel, DialogVariantModel, SpeakerDBModel, SpeakerFrontendModel, SpeakerType};
 
 pub struct DialogGeneratorService {
     db_pool: Pool<Sqlite>
@@ -15,6 +15,15 @@ impl DialogGeneratorService {
 
     pub fn new(pool: Pool<Sqlite>) -> Self {
         DialogGeneratorService { db_pool: pool }
+    }
+
+    pub async fn get_dialog(&self, id: Uuid) -> Result<DialogDBModel, sqlx::Error> {
+        Ok(sqlx::query_as(r#"
+                SELECT * FROM dialogs WHERE id=?;
+            "#)
+            .bind(id)
+            .fetch_one(&self.db_pool)
+            .await?)
     }
 
     pub async fn get_dialogs(&self) -> Result<Vec<DialogFrontendModel>, sqlx::Error> {
@@ -35,6 +44,30 @@ impl DialogGeneratorService {
             .await?;
 
         Ok(speakers.into_iter().map(|sp| SpeakerFrontendModel::from(sp)).collect()) 
+    }
+
+    pub async fn get_speakers_by_ids(&self, ids: &Vec<Uuid>) -> Result<Vec<SpeakerDBModel>, sqlx::Error> {
+        let ids_params = format!("?{}" , ", ?".repeat(ids.len() - 1));
+        let sql = format!("SELECT * FROM speakers WHERE id IN ({})", ids_params);
+        let mut query = sqlx::query_as(&sql);
+        for id in ids {
+            query = query.bind(id);
+        }
+
+        let res: Vec<SpeakerDBModel> = query.fetch_all(&self.db_pool).await?;
+
+        Ok(res)
+    }
+
+    pub async fn get_variants_for_dialog(&self, id: Uuid) -> Result<Vec<DialogVariantModel>, sqlx::Error> {
+        let variants: Vec<DialogVariantModel> = sqlx::query_as(r#"
+                SELECT * FROM variants WHERE dialog_id=?;
+            "#)
+            .bind(id)
+            .fetch_all(&self.db_pool)
+            .await?;
+
+        Ok(variants)
     }
  
     pub async fn create_dialog(&self, name: &String, script_name: &String, directory: &String, speakers: &Vec<String>) -> Result<DialogFrontendModel, sqlx::Error> {

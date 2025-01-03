@@ -88,7 +88,8 @@ pub async fn run() {
             load_dialog_variant,
             load_variant_speaker,
             load_variant_text,
-            save_dialog_variant
+            save_dialog_variant,
+            generate_dialog
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
