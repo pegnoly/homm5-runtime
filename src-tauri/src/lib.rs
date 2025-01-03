@@ -1,4 +1,6 @@
 use services::quest_creator::prelude::*;
+use services::dialog_generator::prelude::*;
+
 use tokio::sync::Mutex;
 use utils::{Config, LocalAppManager, RuntimeConfig};
 
@@ -27,7 +29,8 @@ pub async fn run() {
     let pool = sqlx::SqlitePool::connect(&db_path.to_str().unwrap()).await.unwrap();
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
-    let quest_service = QuestService::new(pool);
+    let quest_service = QuestService::new(pool.clone());
+    let dialog_generator_service = DialogGeneratorService::new(pool);
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -36,6 +39,7 @@ pub async fn run() {
             runtime_config: Mutex::new(runtime_cfg),
         })
         .manage(quest_service)
+        .manage(dialog_generator_service)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             commands::execute_scan,
@@ -68,6 +72,23 @@ pub async fn run() {
             load_quest_is_active,
             save_quest_text,
             add_quest_to_queue,
+
+            // dialog commands
+            load_dialogs,
+            load_speakers,
+            pick_dialog_directory,
+            create_new_dialog,
+            create_speaker,
+            update_dialog_labels,
+            load_dialog_directory,
+            load_dialog_labels,
+            load_dialog_name,
+            load_dialog_script_name,
+            load_dialog_speakers,
+            load_dialog_variant,
+            load_variant_speaker,
+            load_variant_text,
+            save_dialog_variant
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

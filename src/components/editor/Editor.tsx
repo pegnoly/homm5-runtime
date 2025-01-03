@@ -2,6 +2,8 @@ import { Col, Row, Segmented } from "antd";
 import { EditorState, useEditorStateStore } from "../../stores/EditorStateStore";
 import QuestMain from "../quest/main";
 import QuestGenerator from "../quest/generate";
+import DialogGeneratorMain from "../dialog/Main";
+import DialogGeneratorGlobals from "../dialog/Global";
 
 function Editor() {
     return <>
@@ -29,6 +31,7 @@ function EditorStateSelector() {
 
     return <div style={{display: 'flex', justifyContent: 'center'}}>
         <Segmented 
+            defaultValue={EditorState.Quest}
             onChange={editorStateChanged}
             vertical
             options={[
@@ -48,7 +51,7 @@ function EditorWindow() {
         case EditorState.Quest:
             return <QuestMain/>
         case EditorState.Dialog:
-            return <></>
+            return <DialogGeneratorMain/>
     }
 }
 
@@ -60,7 +63,7 @@ function EditorGlobals() {
         case EditorState.Quest:
             return <QuestGenerator/>
         case EditorState.Dialog:
-            return <></>
+            return <DialogGeneratorGlobals/>
     }
 }
 
