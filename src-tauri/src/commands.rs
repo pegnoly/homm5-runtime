@@ -107,7 +107,7 @@ pub async fn apply_modifications(
     config: State<'_, Config>,
     app_manager: State<'_, LocalAppManager>,
     quest_service: State<'_, QuestService>
-) -> Result<(), ModificationsError> {
+) -> Result<(), super::error::Error> {
     let current_map_id = app_manager.runtime_config.lock().await.current_selected_map.unwrap();
     let map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
     let mod_path = &config.mod_path;
@@ -130,16 +130,17 @@ pub async fn apply_modifications(
             .secondary(model.is_secondary)
             .initialy_active(model.is_active);
 
-        let quest = request.generate(Some(&QuestBoilerplateHelper {
+        if let Ok(quest) = request.generate(Some(&QuestBoilerplateHelper {
             mod_path: mod_path.clone(), 
             map_data_path: map.data_path.clone(), 
             texts_path: config.texts_path.clone()
-        }));
-        if model.is_secondary {
-            modifiers_queue.secondary_quests.push(quest);
-        }
-        else {
-            modifiers_queue.primary_quests.push(quest);
+        })) {
+            if model.is_secondary {
+                modifiers_queue.secondary_quests.push(quest);
+            }
+            else {
+                modifiers_queue.primary_quests.push(quest);
+            }
         }
     }
 

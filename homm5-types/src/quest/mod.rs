@@ -131,7 +131,7 @@ pub struct ProgressFilesRefs {
 #[allow(non_snake_case)]
 pub struct Quest {
     #[serde(rename = "Name")]
-    pub name: String,
+    pub name: Option<String>,
     #[serde(rename = "CaptionFileRef")]
     pub caption_file_ref: FileRef,
     #[serde(rename = "ObscureCaptionFileRef")]
@@ -193,7 +193,7 @@ pub struct Quest {
 impl Default for Quest {
     fn default() -> Self {
         Quest {
-            name: String::new(),
+            name: Some(String::new()),
             kind: "OBJECTIVE_KIND_MANUAL".to_string(),
             caption_file_ref: FileRef { href: None },
             obscure_caption_file_ref: FileRef { href: None },

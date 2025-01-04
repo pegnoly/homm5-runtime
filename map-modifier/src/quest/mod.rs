@@ -138,9 +138,9 @@ impl GenerateBoilerplate for QuestCreationRequest {
     type Output = Quest;
     type Additional = QuestBoilerplateHelper;
 
-    fn generate(&self, additional_data: Option<&QuestBoilerplateHelper>) -> Quest {
+    fn generate(&self, additional_data: Option<&QuestBoilerplateHelper>) -> Result<Quest, std::io::Error> {
         let mut quest = Quest::default();
-        quest.name = self.script_name.clone();
+        quest.name = Some(self.script_name.clone());
         quest.is_hidden = false;
         quest.is_initialy_active = self.initialy_active;
 
@@ -158,10 +158,10 @@ impl GenerateBoilerplate for QuestCreationRequest {
 
         let map_local_path = self.path.to_str().unwrap().replace(&helper_data.map_data_path, "");
 
-        std::fs::create_dir_all(&texts_dir).unwrap();
-        std::fs::create_dir_all(&dialogs_texts_dir).unwrap();
-        std::fs::create_dir(&dialogs_path).unwrap();
-        std::fs::create_dir_all(&progresses_texts_dir).unwrap();
+        std::fs::create_dir_all(&texts_dir)?;
+        std::fs::create_dir_all(&dialogs_texts_dir)?;
+        std::fs::create_dir(&dialogs_path)?;
+        std::fs::create_dir_all(&progresses_texts_dir)?;
 
         self.generate_name(&mut quest, &quest_texts_base, &map_local_path);
         self.generate_desc(&mut quest, &quest_texts_base, &map_local_path);
@@ -192,7 +192,7 @@ c{}m{}_{} = {{
 
         let mut script_file = std::fs::File::create(self.path.join("script.lua")).unwrap();
         script_file.write_all(script_boilerplate.as_bytes()).unwrap();
-        quest
+        Ok(quest)
     }
 }
 

@@ -42,7 +42,7 @@ pub trait GenerateBoilerplate {
     type Output: Homm5Type;
     type Additional;
 
-    fn generate(&self, additional_data: Option<&Self::Additional>) -> Self::Output;
+    fn generate(&self, additional_data: Option<&Self::Additional>) -> Result<Self::Output, std::io::Error>;
 }
 
 pub struct ModifiersQueue {
@@ -145,17 +145,21 @@ impl ModifiersQueue {
             objectives_data.primary.common.as_mut().unwrap().objectives = None;
         }
 
-        if objectives_data.primary.player_specific.items.as_ref().unwrap()[0].objectives.as_ref().unwrap().items.is_none() {
-            objectives_data.primary.player_specific.items.as_mut().unwrap()[0].objectives = None;
+        for i in 0..8 {
+            if objectives_data.primary.player_specific.items.as_ref().unwrap()[i].objectives.as_ref().unwrap().items.is_none() {
+                objectives_data.primary.player_specific.items.as_mut().unwrap()[i].objectives = None;
+            }
         }
 
         if objectives_data.secondary.common.as_ref().unwrap().objectives.as_ref().unwrap().items.is_none() {
             objectives_data.secondary.common.as_mut().unwrap().objectives = None;
         }
 
-        if objectives_data.secondary.player_specific.items.as_ref().unwrap()[0].objectives.as_ref().unwrap().items.is_none() {
-            objectives_data.secondary.player_specific.items.as_mut().unwrap()[0].objectives = None;
-        }
+        for i in 0..8 {
+            if objectives_data.secondary.player_specific.items.as_ref().unwrap()[i].objectives.as_ref().unwrap().items.is_none() {
+                objectives_data.secondary.player_specific.items.as_mut().unwrap()[i].objectives = None;
+            }
+        } 
 
         writer.write_serializable("Objectives", objectives_data).unwrap();
     }
