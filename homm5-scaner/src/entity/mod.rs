@@ -58,7 +58,7 @@ impl<T> ScanProcessor<T> {
     pub fn run(&mut self, files: &HashMap<String, FileStructure>) -> (String, String) {
         let mut actual_files = vec![];
         self.collector.collect(files, &mut actual_files);
-        println!("files collected: {:?}", &actual_files);
+        //println!("files collected: {:?}", &actual_files);
         let mut output_string = format!("{} = {{\n", &self.table_name);
         let mut json_string = String::from("[");
         for file in actual_files {
@@ -86,9 +86,13 @@ pub fn configure_path(path: Option<&String>, file_key: &String, files: &HashMap<
             println!("actual path is {}", &actual_path);
             if files.contains_key(&actual_path) == false {
                 println!("and it not in files");
-                let actual_name = file_key.rsplit_once("/").unwrap().0.to_string() + &format!("/{}", &actual_path);
-                //println!("name was {}, key {}, actual name {}", actual_path, file_key, &actual_name);
-                actual_name
+                if let Some(actual_name) = file_key.rsplit_once("/") {
+                    let final_name = actual_name.0.to_string() + &format!("/{}", &actual_path);
+                    final_name
+                }
+                else {
+                    String::new()
+                }
             }
             else {
                 actual_path

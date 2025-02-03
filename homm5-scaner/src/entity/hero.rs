@@ -104,7 +104,7 @@ impl Scan<String> for HeroScaner {
                                             break Some(Box::new(hero));
                                         }
                                         Err(e) => {
-                                            println!("error while deserializing {:?}", e.to_string());
+                                            println!("error while deserializing hero file {}: {:?}", file_key, e.to_string());
                                         }
                                     }
                                 },

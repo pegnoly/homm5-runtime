@@ -11,26 +11,30 @@ pub mod pak;
 pub mod entity;
 pub mod output;
 
+const EXTENSIONS: [&str; 4] = [".pak", ".h5m", ".h5c", ".h5u"];
+
 pub struct ScanExecutor {
-    data_path: PathBuf
+    output_path: PathBuf,
+    paths_to_scan: Vec<PathBuf>
 }
 
 impl ScanExecutor {
-    pub fn new(path: PathBuf) -> Self {
+    pub fn new(output: PathBuf, paths: Vec<PathBuf>) -> Self {
         ScanExecutor {
-            data_path: path
+            output_path: output,
+            paths_to_scan: paths
         }
     }
 
     pub async fn run(&self) {
         let mut files: HashMap<String, FileStructure> = HashMap::new();
-        let entries = std::fs::read_dir(&self.data_path).unwrap();
-        let mut paks: Vec<String> = vec![];
-        for f in entries {
-            let name = f.as_ref().unwrap().file_name();
-            paks.push(name.to_str().unwrap().to_string());
-            if name.to_str().unwrap().ends_with(".pak") {
-                pak::check_pak(self.data_path.join(&name), &mut files);
+        for dir in &self.paths_to_scan {
+            let entries = std::fs::read_dir(&dir).unwrap();
+            for f in entries {
+                let name = f.as_ref().unwrap().file_name();
+                if EXTENSIONS.iter().any(|e| name.to_str().unwrap().ends_with(e)) {
+                    pak::check_pak(dir.join(&name), &mut files);
+                }
             }
         }
         let art_collector = ArtFileCollector{};
@@ -74,7 +78,7 @@ impl ScanExecutor {
         let artifacts_generated_file = art_scan_processor.run(&files);
         let spells_generated_file = spell_scan_processor.run(&files);
         let zip_file = std::fs::File::create(
-            self.data_path.join("MCCS_GeneratedFiles.pak")
+            &self.output_path
         ).unwrap();
         let mut map_zipped = zip::ZipWriter::new(zip_file);
         map_zipped.start_file("scripts/generated/creatures.lua", FileOptions::default()).unwrap();

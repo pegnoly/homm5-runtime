@@ -16,8 +16,12 @@ use crate::utils::{Config, LocalAppManager, MapFrontendModel};
 pub async fn execute_scan(
     config: State<'_, Config>
 ) -> Result<(), ()> {
-    let data_path = &config.data_path;
-    let scan_executor = ScanExecutor::new(PathBuf::from(data_path));
+    let data_path = PathBuf::from(&config.data_path);
+    let root_folder = data_path.parent().unwrap();
+    let maps_path = root_folder.join("Maps\\");
+    let mods_path = root_folder.join("UserMODs\\");
+    let output_path = data_path.join("MCCS_GeneratedFiles.pak");
+    let scan_executor = ScanExecutor::new(output_path, vec![data_path, maps_path, mods_path]);
     scan_executor.run().await;
     Ok(())
 }

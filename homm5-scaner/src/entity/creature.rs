@@ -68,7 +68,7 @@ impl Output for AdvMapCreatureShared {
     fn to_lua(&self, id: Option<u16>) -> String {
         let is_generatable = if self.SubjectOfRandomGeneration == true {"1"} else {"nil"};
         let is_flying = if self.Flying == true {"1"} else {"nil"};
-        let is_upgrade = if self.Upgrade == true {"1"} else {"nil"};
+        let is_upgrade = if self.BaseCreature.is_some() && self.BaseCreature.as_ref().unwrap() != "CREATURE_UNKNOWN" { "1" } else { "nil "};
         let mut abilities_string = String::new();
         match &self.Abilities.Abilities {
             Some(abilities) => {
