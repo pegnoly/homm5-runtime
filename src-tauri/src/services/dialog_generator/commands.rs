@@ -326,7 +326,7 @@ pub async fn generate_dialog(
     let variants = dialog_generator_service.get_variants_for_dialog(dialog_id).await.unwrap();
 
     let dialog_local_path = dialog.directory.replace(&config.mod_path, "");
-    let dialog_texts_path = format!("{}\\{}", &config.texts_path, dialog_local_path);
+    let dialog_texts_path = format!("{}\\{}", &config.texts_path, &dialog_local_path);
 
     std::fs::create_dir_all(&dialog_texts_path).unwrap();
 
@@ -352,7 +352,8 @@ pub async fn generate_dialog(
         }
     }
 
-    script += "}";
+    script += "}\n\n";
+    script += &format!("MiniDialog.Paths[\"{}\"] = \"{}\"", dialog.script_name, &dialog_local_path.replace("\\", "/"));
     script_file.write_all(&mut script.as_bytes()).unwrap();
 
     Ok(())
