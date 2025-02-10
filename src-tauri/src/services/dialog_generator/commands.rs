@@ -1,58 +1,4 @@
-// use std::io::Write;
-
-// use itertools::Itertools;
-// use tauri::{AppHandle, Emitter, State};
-// use tauri_plugin_dialog::DialogExt;
-
-// use super::{source::create_variant, types::{
-//     AppManager, 
-//     Dialog, 
-//     DialogDBModel,  
-//     DialogStepVariant, 
-//     DialogStepVariantFrontendModel,
-//     Speaker, 
-//     SpeakerFrontendModel, 
-//     SpeakerType
-// }};
-
-
-// #[tauri::command]
-// pub async fn load_dialogs(
-//     app_manager: State<'_, AppManager>
-// ) -> Result<Vec<Dialog>, ()> {
-//     let res: Result<Vec<DialogDBModel>, sqlx::Error> = sqlx::query_as("SELECT * FROM dialogs").fetch_all(&app_manager.db_pool).await;
-//     match res {
-//         Ok(query_result) => {
-//             Ok(query_result.iter()
-//                 .map(|d| {
-//                     let dc: Dialog = From::from(d);
-//                     dc
-//                 }).collect())
-//         },
-//         Err(query_error) => {
-//             println!("Error fetching existing dialogs: {:?}", &query_error.to_string());
-//             Err(())
-//         }
-//     }
-// }
-
-// #[tauri::command]
-// pub async fn load_speakers(
-//     app_manager: State<'_, AppManager>
-// ) -> Result<Vec<Speaker>, ()> {
-//     let res: Result<Vec<Speaker>, sqlx::Error> = sqlx::query_as("SELECT * FROM speakers").fetch_all(&app_manager.db_pool).await;
-//     match res {
-//         Ok(query_result) => {
-//             Ok(query_result)
-//         },
-//         Err(query_error) => {
-//             println!("Error fetching existing speakers: {:?}", &query_error.to_string());
-//             Err(())
-//         }
-//     }
-// }
-
-use std::{io::Write, path::PathBuf};
+use std::{fs::OpenOptions, io::Write, path::PathBuf};
 
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
@@ -315,8 +261,13 @@ pub async fn save_dialog_variant(
 pub async fn generate_dialog(
     dialog_generator_service: State<'_, DialogGeneratorService>,
     config: State<'_, Config>,
+    app_manager: State<'_, LocalAppManager>,
     dialog_id: Uuid
 ) -> Result<(), ()> {
+
+    let current_map = app_manager.runtime_config.lock().await.current_selected_map.unwrap();
+    let map_data = config.maps.iter().find(|m| m.id == current_map).unwrap();
+    let map_data_path = &map_data.data_path;
 
     // get dialog data
     let dialog = dialog_generator_service.get_dialog(dialog_id).await.unwrap();
@@ -353,8 +304,17 @@ pub async fn generate_dialog(
     }
 
     script += "}\n\n";
-    script += &format!("MiniDialog.Paths[\"{}\"] = \"{}\"", dialog.script_name, &dialog_local_path.replace("\\", "/"));
     script_file.write_all(&mut script.as_bytes()).unwrap();
+
+    let path_script = &format!("MiniDialog.Paths[\"{}\"] = \"{}\"\n", dialog.script_name, &dialog_local_path.replace("\\", "/"));
+
+    let mut paths_file = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(format!("{}dialogs_paths.lua", map_data_path))
+        .unwrap();
+
+    paths_file.write(path_script.as_bytes()).unwrap();
 
     Ok(())
 }
