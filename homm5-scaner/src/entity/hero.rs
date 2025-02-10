@@ -1,9 +1,8 @@
 use crate::{
-    entity::{Scan, Output, configure_path, CollectFiles},
-    pak::FileStructure
+    entity::{configure_path, CollectFiles, Output, Scan}, output::OutputJson, pak::FileStructure
 };
 use quick_xml::{Reader, events::Event};
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Write, path::PathBuf};
 use homm5_types::{common::FileRef, hero::AdvMapHeroShared};
 
 impl Output for AdvMapHeroShared {
@@ -56,7 +55,15 @@ impl CollectFiles for HeroFileCollector {
     }
 }
 
-pub struct HeroScaner {}
+pub struct HeroScaner {
+    entities: Vec<AdvMapHeroShared>
+}
+
+impl HeroScaner {
+    pub fn new() -> Self {
+        HeroScaner { entities: vec![] }
+    }
+}
 
 impl Scan<String> for HeroScaner {
     fn scan(&mut self, file_key: &String, entity: &String, files: &HashMap<String, FileStructure>) -> Option<Box<dyn Output<ID = String>>> {
@@ -79,6 +86,7 @@ impl Scan<String> for HeroScaner {
                                     let de_res: Result<AdvMapHeroShared, quick_xml::DeError> = quick_xml::de::from_str(&format!("<AdvMapHeroShared>{}</AdvMapHeroShared>", text));
                                     match de_res {
                                         Ok(mut hero) => {
+                                            self.entities.push(hero.clone());
                                             let spec_name = configure_path(hero.SpecializationNameFileRef.as_ref().unwrap().href.as_ref(), file_key, files);
                                             let spec_desc = configure_path(hero.SpecializationDescFileRef.as_ref().unwrap().href.as_ref(), file_key, files);
                                             let spec_icon = configure_path(

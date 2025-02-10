@@ -237,7 +237,7 @@ impl Scan<u16> for CreatureScaner {
                                                         .replace("#xpointer(/CreatureVisual)", "")
                                                         .trim_start_matches("/")
                                                         .to_lowercase();
-                                                    println!("visual key: {}", &visual_key);
+                                                    //println!("visual key: {}", &visual_key);
                                                     let actual_visual_key = configure_path(Some(&visual_key), file_key, files);
                                                     let visual_file = files.get(&actual_visual_key);
                                                     match visual_file {

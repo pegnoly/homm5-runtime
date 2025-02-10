@@ -55,7 +55,7 @@ impl ScanExecutor {
         Box::new(creature_scaner)
         );
         //
-        let hero_scaner = HeroScaner{};
+        let hero_scaner = HeroScaner::new();
         let hero_collector = HeroFileCollector{};
         let mut hero_scan_processor = ScanProcessor::new(
             String::from("MCCS_GENERATED_HEROES_TABLE"), 
@@ -90,5 +90,8 @@ impl ScanExecutor {
         map_zipped.start_file("scripts/generated/spells.lua", FileOptions::default()).unwrap();
         map_zipped.write_all(spells_generated_file.0.as_bytes()).unwrap();
         map_zipped.finish().unwrap();
+
+        // let mut file = std::fs::File::create("C:\\H5ToE\\data\\heroes.json").unwrap();
+        // file.write_all(&mut heroes_generated_file.1.as_bytes()).unwrap();
     }
 }

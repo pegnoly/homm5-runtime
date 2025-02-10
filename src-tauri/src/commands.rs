@@ -21,7 +21,7 @@ pub async fn execute_scan(
     let maps_path = root_folder.join("Maps\\");
     let mods_path = root_folder.join("UserMODs\\");
     let output_path = data_path.join("MCCS_GeneratedFiles.pak");
-    let scan_executor = ScanExecutor::new(output_path, vec![data_path, maps_path, mods_path]);
+    let scan_executor = ScanExecutor::new(output_path, vec![data_path]);
     scan_executor.run().await;
     Ok(())
 }

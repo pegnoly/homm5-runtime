@@ -21,13 +21,56 @@ pub struct FileStructure {
 }
 
 pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
+    println!("Reading {:?}", &path);
     let file = std::fs::File::open(&path).unwrap();
     let archive = file.read_zip().unwrap();
     for entry in archive.entries() {
-        let name = entry.name().to_string();
-        if (IGNORED_PARTS.iter().any(|part| entry.name().contains(part)) == false) && (entry.name().ends_with("/") == false) {
-            if files.contains_key(entry.name().to_lowercase().as_str()) {
-                if files.get(entry.name().to_lowercase().as_str()).unwrap().modified < entry.modified().timestamp() {
+        let name = entry.name().to_string().replace("\\", "/");
+        if (IGNORED_PARTS.iter().any(|part| name.contains(part)) == false) && (name.ends_with("/") == false) {
+            let name = name.to_lowercase();
+            if files.contains_key(&name) {
+                //println!("Already written file {} found in {:?}", &name, &path);
+                if files.get(&name).unwrap().modified < entry.modified().timestamp() {
+                    //println!("Newer version of file {} found in {:?}", &name, &path);
+                    if name.ends_with(".txt") {
+                        //println!("Inserting without reading {}", &name.to_lowercase());
+                        files.insert(name.to_lowercase().replace("\\", "/"), FileStructure { 
+                            pak: path.to_str().unwrap().to_string(), 
+                            modified: entry.modified().timestamp(),
+                            content: String::new()
+                        });
+                    }
+                    else {
+                        let mut content = String::new();
+                        match entry.reader().read_to_string(&mut content) {
+                            Ok(_x) => {
+                                files.insert(name.to_lowercase(), FileStructure { 
+                                    pak: path.to_str().unwrap().to_string(), 
+                                    modified: entry.modified().timestamp(),
+                                    content: content
+                                });
+                            }
+                            Err(_x) => {
+                                files.insert(name.to_lowercase(), FileStructure { 
+                                    pak: path.to_str().unwrap().to_string(), 
+                                    modified: entry.modified().timestamp(),
+                                    content: content
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                if name.ends_with(".txt") {
+                    //println!("Inserting without reading {}", &name.to_lowercase());
+                    files.insert(name.to_lowercase().replace("\\", "/"), FileStructure { 
+                        pak: path.to_str().unwrap().to_string(), 
+                        modified: entry.modified().timestamp(),
+                        content: String::new()
+                    });
+                }
+                else {
                     let mut content = String::new();
                     match entry.reader().read_to_string(&mut content) {
                         Ok(x) => {
@@ -37,27 +80,13 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                 content: content
                             });
                         }
-                        Err(x) => {}
-                    }
-                }
-            }
-            else {
-                let mut content = String::new();
-                match entry.reader().read_to_string(&mut content) {
-                    Ok(x) => {
-                        files.insert(name.to_lowercase(), FileStructure { 
-                            pak: path.to_str().unwrap().to_string(), 
-                            modified: entry.modified().timestamp(),
-                            content: content
-                        });
-                    }
-                    Err(x) => {
-                        //content = utf16_reader::read_to_string(entry.reader());
-                        files.insert(name.to_lowercase(), FileStructure { 
-                            pak: path.to_str().unwrap().to_string(), 
-                            modified: entry.modified().timestamp(),
-                            content: content
-                        });
+                        Err(x) => {
+                            files.insert(name.to_lowercase(), FileStructure { 
+                                pak: path.to_str().unwrap().to_string(), 
+                                modified: entry.modified().timestamp(),
+                                content: content
+                            });
+                        }
                     }
                 }
             }

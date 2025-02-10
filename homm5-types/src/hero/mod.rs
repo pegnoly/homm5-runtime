@@ -1,26 +1,26 @@
 use serde::{Serialize, Deserialize};
 use crate::common::FileRef;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Coordinate {
     pub x: u8,
     pub y: u8
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PossessionMarkerTile {
     pub x: u8,
     pub y: u8
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[allow(non_snake_case)]
 pub struct Skill {
     pub Mastery: String,
     pub SkillID: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[allow(non_snake_case)]
 pub struct Editable {
     pub NameFileRef: Option<FileRef>,
@@ -41,7 +41,7 @@ pub struct Editable {
     //pub FavoriteEnemies: Option<Vec<String>>
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[allow(non_snake_case)]
 pub struct AdvMapHeroShared {
     pub Model: Option<FileRef>,

@@ -17,3 +17,6 @@ utf16_reader = "0.1.0"
 zip = "0.6.6"
 homm5-types = { path = "../homm5-types"}
 serde_json = "1.0.111"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
