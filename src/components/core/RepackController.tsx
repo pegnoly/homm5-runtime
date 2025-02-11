@@ -2,27 +2,27 @@ import { invoke } from "@tauri-apps/api/core";
 import { Button, Typography } from "antd";
 import { useEffect, useState } from "react";
 
-enum RepackStage {
+export enum WorkStage {
     Inactive,
     Active,
     Done
 }
 
-const repackStagesLabels = new Map<RepackStage, string>([
-    [RepackStage.Inactive, "Inactive"],
-    [RepackStage.Active, "In progress"],
-    [RepackStage.Done, "Done"]
+export const repackStagesLabels = new Map<WorkStage, string>([
+    [WorkStage.Inactive, "Inactive"],
+    [WorkStage.Active, "In progress"],
+    [WorkStage.Done, "Done"]
 ])
 
-function getLabelColor(stage: RepackStage): string {
+export function getLabelColor(stage: WorkStage): string {
     switch (stage) {
-        case RepackStage.Inactive:
+        case WorkStage.Inactive:
             return "black"
             break;
-        case RepackStage.Active:
+        case WorkStage.Active:
             return "red"
             break;
-        case RepackStage.Done:
+        case WorkStage.Done:
             return "green"
             break
         default:
@@ -48,22 +48,22 @@ function RepackController() {
 
 function Repacker({label} : {label: string}) {
 
-    const [stage, setStage] = useState<RepackStage>(RepackStage.Inactive)
+    const [stage, setStage] = useState<WorkStage>(WorkStage.Inactive)
 
     async function runRepack() {
-        setStage(RepackStage.Active);
+        setStage(WorkStage.Active);
         invoke("repack", {repackerLabel: label})
             .then(() => {
-                setStage(RepackStage.Done)
+                setStage(WorkStage.Done)
                 setTimeout(() => {
-                    setStage(RepackStage.Inactive)
+                    setStage(WorkStage.Inactive)
                 }, 2500)
             })
     }
 
     return <div style={{display: 'flex', flexDirection: 'column', gap: 3}}>
         <Button
-            disabled={stage != RepackStage.Inactive}
+            disabled={stage != WorkStage.Inactive}
             onClick={runRepack}
         >{`Repack ${label}`}</Button>
         <Typography.Text style={{fontFamily: 'fantasy', fontSize: 13, color: getLabelColor(stage), textAlign: 'center'}}>{repackStagesLabels.get(stage)}</Typography.Text>
