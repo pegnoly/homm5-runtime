@@ -306,15 +306,18 @@ pub async fn generate_dialog(
     script += "}\n\n";
     script_file.write_all(&mut script.as_bytes()).unwrap();
 
-    let path_script = &format!("MiniDialog.Paths[\"{}\"] = \"{}\"\n", dialog.script_name, &dialog_local_path.replace("\\", "/"));
+    if !dialog.was_generated {
+        dialog_generator_service.set_dialog_was_generated(dialog.id, true).await.unwrap();
 
-    let mut paths_file = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(format!("{}dialogs_paths.lua", map_data_path))
-        .unwrap();
-
-    paths_file.write(path_script.as_bytes()).unwrap();
+        let path_script = &format!("MiniDialog.Paths[\"{}\"] = \"{}\"\n", dialog.script_name, &dialog_local_path.replace("\\", "/"));
+        let mut paths_file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(format!("{}dialogs_paths.lua", map_data_path))
+            .unwrap();
+    
+        paths_file.write(path_script.as_bytes()).unwrap();
+    }
 
     Ok(())
 }

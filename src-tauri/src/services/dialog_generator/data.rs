@@ -41,7 +41,8 @@ pub struct DialogDBModel {
     pub script_name: String,
     pub directory: String,
     pub speakers_ids: String,
-    pub labels: String
+    pub labels: String,
+    pub was_generated: bool
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

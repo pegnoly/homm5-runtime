@@ -161,6 +161,21 @@ impl DialogGeneratorService {
         Ok(())
     }
 
+    pub async fn set_dialog_was_generated(&self, id: Uuid, was_generated: bool) -> Result<(), super::error::Error> {
+        let _res = sqlx::query_as(r#"
+            UPDATE dialogs
+            SET was_generated=?
+            WHERE id=?
+            RETURNING *;
+        "#)
+        .bind(was_generated)
+        .bind(id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn get_dialog_variant_id(&self, dialog_id: Uuid, dialog_step: u32, dialog_label: &String) -> Result<Uuid, sqlx::Error> {
         let existing_variant: Option<(Uuid, )> = sqlx::query_as(r#"
                 SELECT id FROM variants WHERE dialog_id=? AND step=? AND label=?;
