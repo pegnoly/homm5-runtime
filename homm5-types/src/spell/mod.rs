@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use crate::common::FileRef;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
@@ -11,5 +11,5 @@ pub struct SpellShared {
     pub Level: u8,
     pub MagicSchool: String,
     pub IsAimed: bool,
-    pub IsAreaAttack: bool
+    pub IsAreaAttack: bool,
 }

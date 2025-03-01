@@ -1,5 +1,8 @@
-use serde::{Serialize, Deserialize};
-use crate::{common::{FileRef, Pos}, Homm5Type};
+use crate::{
+    Homm5Type,
+    common::{FileRef, Pos},
+};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AdvMapTreasure {
@@ -22,8 +25,7 @@ pub struct AdvMapTreasure {
     #[serde(rename = "Amount")]
     pub amount: u32,
     #[serde(rename = "MessageFileRef")]
-    pub message_file_ref: FileRef
+    pub message_file_ref: FileRef,
 }
 
-impl Homm5Type for AdvMapTreasure {
-}
+impl Homm5Type for AdvMapTreasure {}

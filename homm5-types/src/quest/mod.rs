@@ -1,18 +1,21 @@
-use serde::{Serialize, Deserialize};
-use crate::{common::{ArmySlot, FileRef, SkillMastery, Trigger}, Homm5Type};
+use crate::{
+    Homm5Type,
+    common::{ArmySlot, FileRef, SkillMastery, Trigger},
+};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[serde(rename = "cell")]
 pub struct Cell {
     pub x: u8,
-    pub y: u8
+    pub y: u8,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Coordinates {
     #[serde(rename = "FloorID")]
     pub floor_id: u8,
-    pub cell: Cell
+    pub cell: Cell,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -22,15 +25,15 @@ pub struct Target {
     #[serde(rename = "Name")]
     pub name: Option<String>,
     #[serde(rename = "Coords")]
-    pub coords: Coordinates
+    pub coords: Coordinates,
 }
 
 impl Default for Target {
     fn default() -> Self {
-        Target { 
-            _type: "ADV_TARGET_NONE".to_string(), 
-            name: None, 
-            coords: Coordinates::default() 
+        Target {
+            _type: "ADV_TARGET_NONE".to_string(),
+            name: None,
+            coords: Coordinates::default(),
         }
     }
 }
@@ -42,15 +45,15 @@ pub struct TargetGlance {
     #[serde(rename = "Radius")]
     pub radius: u16,
     #[serde(rename = "Duration")]
-    pub duration: u32
+    pub duration: u32,
 }
 
 impl Default for TargetGlance {
     fn default() -> Self {
-        TargetGlance { 
-            target: Target::default(), 
-            radius: 10, 
-            duration: 5000 
+        TargetGlance {
+            target: Target::default(),
+            radius: 10,
+            duration: 5000,
         }
     }
 }
@@ -70,7 +73,7 @@ pub struct Resource {
     #[serde(rename = "Gem")]
     pub gem: u16,
     #[serde(rename = "Gold")]
-    pub gold: u16
+    pub gold: u16,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -115,7 +118,7 @@ impl Default for Award {
             experience: 0,
             spell_points: 0,
             morale: 0,
-            luck: 0
+            luck: 0,
         }
     }
 }
@@ -123,7 +126,7 @@ impl Default for Award {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ProgressFilesRefs {
     #[serde(rename = "Item")]
-    pub items: Option<Vec<FileRef>>
+    pub items: Option<Vec<FileRef>>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -187,7 +190,7 @@ pub struct Quest {
     pub allow_multiple_activations: bool,
     #[serde(rename = "AllowMultipleCompletions")]
     #[serde(default)]
-    pub allow_multiple_completions: bool
+    pub allow_multiple_completions: bool,
 }
 
 impl Default for Quest {
@@ -220,7 +223,7 @@ impl Default for Quest {
             sound_complete: None,
             sound_failed: None,
             allow_multiple_activations: false,
-            allow_multiple_completions: false
+            allow_multiple_completions: false,
         }
     }
 }
@@ -228,7 +231,7 @@ impl Default for Quest {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Objectives {
     #[serde(rename = "Item")]
-    pub items: Option<Vec<Quest>>
+    pub items: Option<Vec<Quest>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -236,9 +239,7 @@ pub struct QuestList {
     #[serde(rename = "Objectives")]
     pub objectives: Option<Objectives>,
     #[serde(rename = "DieInWeekWithoutTowns")]
-    pub die_in_week_without_towns: bool
+    pub die_in_week_without_towns: bool,
 }
 
-impl Homm5Type for Quest {
-    
-}
+impl Homm5Type for Quest {}

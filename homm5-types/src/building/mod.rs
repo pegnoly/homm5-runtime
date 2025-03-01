@@ -1,6 +1,10 @@
-use serde::{Serialize, Deserialize};
-use strum_macros::{EnumString, Display};
-use crate::{common::{FileRef, Pos, Trigger}, Homm5Type, town::CreaturesUpgradesFilter};
+use crate::{
+    Homm5Type,
+    common::{FileRef, Pos, Trigger},
+    town::CreaturesUpgradesFilter,
+};
+use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Hash, Eq, EnumString, Clone, Copy, Display)]
 #[allow(non_camel_case_types)]
@@ -20,7 +24,7 @@ pub enum BankType {
     BANK_GARGOYLE_STONEVAULT,
     BANK_NAMTARU_TEMPLE,
     BANK_SNOW_APE_CAVE,
-    BANK_BTDSUNKENTEMPLE
+    BANK_BTDSUNKENTEMPLE,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Hash, Eq, EnumString, Clone, Copy, Display)]
@@ -30,7 +34,7 @@ pub enum NewBuildingType {
     BTD_SUN_RIDER_MONUMENT,
     BTD_WARMEN_HOUSE,
     BTD_KNOWLEDGE_MEGALITH,
-    BTD_DWARVEN_MINE
+    BTD_DWARVEN_MINE,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -56,11 +60,10 @@ pub struct AdvMapBuilding {
     #[serde(rename = "GroupID")]
     pub group_id: u32,
     #[serde(rename = "showCameras")]
-    pub show_cameras: String
+    pub show_cameras: String,
 }
 
-impl Homm5Type for AdvMapBuilding {
-}
+impl Homm5Type for AdvMapBuilding {}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
@@ -72,11 +75,10 @@ pub struct AdvMapShrine {
     pub CombatScript: String,
     pub pointLights: String,
     pub Shared: FileRef,
-    pub SpellID: String
+    pub SpellID: String,
 }
 
-impl Homm5Type for AdvMapShrine {
-}
+impl Homm5Type for AdvMapShrine {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AdvMapHillFort {
@@ -95,7 +97,7 @@ pub struct AdvMapHillFort {
     #[serde(rename = "Shared")]
     pub shared: FileRef,
     #[serde(rename = "CreaturesUpgradesFilter")]
-    pub creatures_upgrades_filter: CreaturesUpgradesFilter
+    pub creatures_upgrades_filter: CreaturesUpgradesFilter,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -119,5 +121,5 @@ pub struct AdvMapStatic {
     #[serde(rename = "TerrainAligned")]
     pub terrain_aligned: bool,
     #[serde(rename = "ScalePercent")]
-    pub scale_percent: u16
+    pub scale_percent: u16,
 }

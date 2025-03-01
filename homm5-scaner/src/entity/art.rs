@@ -1,14 +1,18 @@
-use serde::{Serialize, Deserialize};
-use super::{Scan, Output, FileStructure, CollectFiles};
-use quick_xml::{Reader, events::Event};
-use std::collections::HashMap;
+use super::{CollectFiles, FileStructure, Output, Scan};
 use homm5_types::art::AdvMapArtifactShared;
+use quick_xml::{Reader, events::Event};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 impl Output for AdvMapArtifactShared {
     type ID = u16;
 
     fn to_lua(&self, id: Option<Self::ID>) -> String {
-        let is_sellable = if self.CanBeGeneratedToSell == true {"1"} else {"nil"};
+        let is_sellable = if self.CanBeGeneratedToSell == true {
+            "1"
+        } else {
+            "nil"
+        };
         format!(
             "\t[{}] = {{
         is_sellable = {},
@@ -18,12 +22,27 @@ impl Output for AdvMapArtifactShared {
         cost = {},
         slot = {},
         type = {}
-    }},\n", 
+    }},\n",
             id.unwrap() - 1,
             is_sellable,
-            self.NameFileRef.as_ref().unwrap().href.as_ref().unwrap_or(&String::new()), 
-            self.DescriptionFileRef.as_ref().unwrap().href.as_ref().unwrap_or(&String::new()),
-            self.Icon.as_ref().unwrap().href.as_ref().unwrap_or(&String::new()),
+            self.NameFileRef
+                .as_ref()
+                .unwrap()
+                .href
+                .as_ref()
+                .unwrap_or(&String::new()),
+            self.DescriptionFileRef
+                .as_ref()
+                .unwrap()
+                .href
+                .as_ref()
+                .unwrap_or(&String::new()),
+            self.Icon
+                .as_ref()
+                .unwrap()
+                .href
+                .as_ref()
+                .unwrap_or(&String::new()),
             self.CostOfGold,
             self.Slot,
             self.Type
@@ -39,21 +58,30 @@ impl Output for AdvMapArtifactShared {
 #[allow(non_snake_case)]
 pub struct ArtObject {
     pub ID: String,
-    pub obj: Option<String>
+    pub obj: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ArtObjects {
     #[serde(rename = "Item")]
-    pub arts: Vec<ArtObject>
+    pub arts: Vec<ArtObject>,
 }
 
 pub struct ArtFileCollector {}
 
 impl CollectFiles for ArtFileCollector {
-    fn collect(&self, files: &HashMap<String, FileStructure>, collected_files: &mut Vec<(String, FileStructure)>) {
-        let arts_xdb = files.iter()
-            .find(|f| f.0 == "GameMechanics/RefTables/Artifacts.xdb".to_lowercase().as_str())
+    fn collect(
+        &self,
+        files: &HashMap<String, FileStructure>,
+        collected_files: &mut Vec<(String, FileStructure)>,
+    ) {
+        let arts_xdb = files
+            .iter()
+            .find(|f| {
+                f.0 == "GameMechanics/RefTables/Artifacts.xdb"
+                    .to_lowercase()
+                    .as_str()
+            })
             .unwrap();
         //collected_files.push((arts_xdb.0.clone(), arts_xdb.1.clone()));
         let mut buf = Vec::new();
@@ -64,22 +92,23 @@ impl CollectFiles for ArtFileCollector {
             match reader.read_event_into(&mut buf) {
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
                 Ok(Event::Eof) => break,
-                Ok(Event::Start(e)) => {
-                    match e.name().as_ref() {
-                        b"obj" => {
-                            let end = e.to_end().into_owned();
-                            let text = reader.read_text(end.name()).unwrap().to_string();
-                            let text = format!("<obj>{}</obj>", text);
-                            collected_files.push(("GameMechanics/RefTables/Artifacts.xdb".to_lowercase(), FileStructure{
+                Ok(Event::Start(e)) => match e.name().as_ref() {
+                    b"obj" => {
+                        let end = e.to_end().into_owned();
+                        let text = reader.read_text(end.name()).unwrap().to_string();
+                        let text = format!("<obj>{}</obj>", text);
+                        collected_files.push((
+                            "GameMechanics/RefTables/Artifacts.xdb".to_lowercase(),
+                            FileStructure {
                                 pak: arts_xdb.1.pak.clone(),
                                 modified: arts_xdb.1.modified,
-                                content: text
-                            }));
-                        }
-                        _=> {}
+                                content: text,
+                            },
+                        ));
                     }
-                }
-                _ => ()
+                    _ => {}
+                },
+                _ => (),
             }
             buf.clear();
         }
@@ -96,8 +125,14 @@ impl Scan<u16> for ArtScaner {
     }
 
     #[allow(unused_variables)]
-    fn scan(&mut self, file_key: &String, entity: &String, files: &HashMap<String, FileStructure>) -> Option<Box<dyn Output<ID = u16>>> {
-        let art_de: Result<AdvMapArtifactShared, quick_xml::DeError> = quick_xml::de::from_str(entity);
+    fn scan(
+        &mut self,
+        file_key: &String,
+        entity: &String,
+        files: &HashMap<String, FileStructure>,
+    ) -> Option<Box<dyn Output<ID = u16>>> {
+        let art_de: Result<AdvMapArtifactShared, quick_xml::DeError> =
+            quick_xml::de::from_str(entity);
         match art_de {
             Ok(art) => {
                 self.id += 1;

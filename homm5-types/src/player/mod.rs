@@ -1,6 +1,10 @@
-use serde::{Serialize, Deserialize};
-use strum_macros::{EnumString, EnumIter};
-use crate::{common::{Trigger, FileRef}, Homm5Type, town::TownType};
+use crate::{
+    Homm5Type,
+    common::{FileRef, Trigger},
+    town::TownType,
+};
+use serde::{Deserialize, Serialize};
+use strum_macros::{EnumIter, EnumString};
 
 #[derive(Debug, Serialize, Deserialize, EnumString, Clone, EnumIter, Eq, PartialEq, Hash)]
 pub enum PlayerID {
@@ -27,19 +31,19 @@ pub enum PlayerID {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename = "Item")]
 pub struct BannedRace {
-    pub race: TownType
+    pub race: TownType,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BannedHeroesRaces {
     #[serde(rename = "Item")]
-    pub items: Option<Vec<String>>
+    pub items: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AllowedHeroes {
     #[serde(rename = "Item")]
-    pub items: Option<Vec<String>>
+    pub items: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -49,7 +53,7 @@ pub struct TavernFilter {
     #[serde(rename = "BannedHeroes")]
     pub banned_heroes: Vec<String>,
     #[serde(rename = "AllowedHeroes")]
-    pub allowed_heroes: Option<AllowedHeroes>
+    pub allowed_heroes: Option<AllowedHeroes>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -96,8 +100,7 @@ pub struct Player {
     #[serde(rename = "TavernFilter")]
     pub tavern_filter: TavernFilter,
     #[serde(rename = "DenyFogOfWarForAllies")]
-    pub deny_fog_of_war_for_allies: Vec<String>
+    pub deny_fog_of_war_for_allies: Vec<String>,
 }
 
-impl Homm5Type for Player {
-}
+impl Homm5Type for Player {}

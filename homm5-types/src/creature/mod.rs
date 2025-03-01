@@ -1,5 +1,8 @@
-use serde::{Serialize, Deserialize};
-use crate::{common::{FileRef, Pos}, Homm5Type};
+use crate::{
+    Homm5Type,
+    common::{FileRef, Pos},
+};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
@@ -24,7 +27,7 @@ pub struct Resources {
     pub Crystal: u16,
     pub Sulfur: u16,
     pub Gem: u16,
-    pub Gold: u32
+    pub Gold: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -45,7 +48,7 @@ pub struct KnownSpells {
 pub struct CreatureVisual {
     pub CreatureNameFileRef: Option<FileRef>,
     pub DescriptionFileRef: Option<FileRef>,
-    pub Icon128: Option<FileRef>
+    pub Icon128: Option<FileRef>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -79,7 +82,7 @@ pub struct AdvMapCreatureShared {
     #[serde(rename = "Item")]
     pub Upgrades: Option<Vec<String>>,
     pub Abilities: Abilities,
-    pub VisualExplained: Option<CreatureVisual>
+    pub VisualExplained: Option<CreatureVisual>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -91,13 +94,13 @@ pub struct Stack {
     #[serde(rename = "Amount")]
     pub min_count: u32,
     #[serde(rename = "Amount2")]
-    pub max_count: u32
+    pub max_count: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AdditionalStacks {
     #[serde(rename = "Item")]
-    pub items: Option<Vec<Stack>>
+    pub items: Option<Vec<Stack>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -153,8 +156,7 @@ pub struct AdvMapMonster {
     #[serde(rename = "RacesRandomGroupID")]
     pub race_random_group_id: u32,
     #[serde(rename = "relationsOverrides")]
-    pub relations_override: Option<String>
+    pub relations_override: Option<String>,
 }
 
-impl Homm5Type for AdvMapMonster {
-}
+impl Homm5Type for AdvMapMonster {}

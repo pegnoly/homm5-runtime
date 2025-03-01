@@ -5,12 +5,13 @@ use serde::{Serialize, Serializer};
 pub enum Error {
     SqlxError(sqlx::Error),
     JsonError(serde_json::Error),
-    IOError(std::io::Error)
+    IOError(std::io::Error),
 }
 
 impl Serialize for Error {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer 
+    where
+        S: Serializer,
     {
         serializer.serialize_str(self.to_string().as_ref())
     }

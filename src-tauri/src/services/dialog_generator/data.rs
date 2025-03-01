@@ -1,16 +1,16 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use strum::Display;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Display, PartialEq, sqlx::Type)]
 #[repr(i32)]
 pub enum SpeakerType {
-    #[strum(to_string="SPEAKER_TYPE_NO_SPEAKER")]
+    #[strum(to_string = "SPEAKER_TYPE_NO_SPEAKER")]
     NoSpeaker,
-    #[strum(to_string="SPEAKER_TYPE_HERO")]
+    #[strum(to_string = "SPEAKER_TYPE_HERO")]
     Hero,
-    #[strum(to_string="SPEAKER_TYPE_CREATURE")]
-    Creature
+    #[strum(to_string = "SPEAKER_TYPE_CREATURE")]
+    Creature,
 }
 
 #[derive(sqlx::FromRow, Serialize, Deserialize, Clone, Debug)]
@@ -19,18 +19,21 @@ pub struct SpeakerDBModel {
     pub name: String,
     pub script_name: String,
     pub color: String,
-    pub speaker_type: SpeakerType
+    pub speaker_type: SpeakerType,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SpeakerFrontendModel {
     pub id: Uuid,
-    pub name: String
+    pub name: String,
 }
 
 impl From<SpeakerDBModel> for SpeakerFrontendModel {
     fn from(value: SpeakerDBModel) -> Self {
-        SpeakerFrontendModel { id: value.id, name: value.name }
+        SpeakerFrontendModel {
+            id: value.id,
+            name: value.name,
+        }
     }
 }
 
@@ -42,7 +45,7 @@ pub struct DialogDBModel {
     pub directory: String,
     pub speakers_ids: String,
     pub labels: String,
-    pub was_generated: bool
+    pub was_generated: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -53,7 +56,10 @@ pub struct DialogFrontendModel {
 
 impl From<DialogDBModel> for DialogFrontendModel {
     fn from(value: DialogDBModel) -> Self {
-        DialogFrontendModel { id: value.id, name: value.name }
+        DialogFrontendModel {
+            id: value.id,
+            name: value.name,
+        }
     }
 }
 
@@ -64,5 +70,5 @@ pub struct DialogVariantModel {
     pub step: u32,
     pub label: String,
     pub speaker_id: Uuid,
-    pub text: String
+    pub text: String,
 }

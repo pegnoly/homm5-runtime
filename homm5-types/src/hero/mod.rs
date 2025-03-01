@@ -1,16 +1,16 @@
-use serde::{Serialize, Deserialize};
 use crate::common::FileRef;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Coordinate {
     pub x: u8,
-    pub y: u8
+    pub y: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PossessionMarkerTile {
     pub x: u8,
-    pub y: u8
+    pub y: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

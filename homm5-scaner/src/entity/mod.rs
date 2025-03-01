@@ -1,32 +1,41 @@
-pub mod hero;
-pub mod creature;
 pub mod art;
+pub mod creature;
+pub mod hero;
 pub mod spell;
 
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-use homm5_types::common::FileRef;
 use crate::pak::FileStructure;
+use homm5_types::common::FileRef;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct FileObject {
     pub ID: String,
-    pub Obj: Option<FileRef>
+    pub Obj: Option<FileRef>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileObjects {
     #[serde(rename = "Item")]
-    pub objects: Vec<FileObject>
+    pub objects: Vec<FileObject>,
 }
 
 pub trait CollectFiles {
-    fn collect(&self, files: &HashMap<String, FileStructure>, collected_files: &mut Vec<(String, FileStructure)>);
+    fn collect(
+        &self,
+        files: &HashMap<String, FileStructure>,
+        collected_files: &mut Vec<(String, FileStructure)>,
+    );
 }
 
 pub trait Scan<T> {
-    fn scan(&mut self, file_key: &String, entity: &String, files: &HashMap<String, FileStructure>) -> Option<Box<dyn Output<ID = T>>>;
+    fn scan(
+        &mut self,
+        file_key: &String,
+        entity: &String,
+        files: &HashMap<String, FileStructure>,
+    ) -> Option<Box<dyn Output<ID = T>>>;
     fn get_id(&self) -> Option<T>;
 }
 
@@ -40,16 +49,21 @@ pub struct ScanProcessor<T> {
     pub table_name: String,
     pub output_file_name: String,
     pub collector: Box<dyn CollectFiles>,
-    pub scaner: Box<dyn Scan<T>>
+    pub scaner: Box<dyn Scan<T>>,
 }
 
 impl<T> ScanProcessor<T> {
-    pub fn new(table: String, output: String, collector: Box<dyn CollectFiles>, processor: Box<dyn Scan<T>>) -> Self {
-        ScanProcessor { 
-            table_name: table, 
-            output_file_name: output, 
+    pub fn new(
+        table: String,
+        output: String,
+        collector: Box<dyn CollectFiles>,
+        processor: Box<dyn Scan<T>>,
+    ) -> Self {
+        ScanProcessor {
+            table_name: table,
+            output_file_name: output,
             collector: collector,
-            scaner: processor 
+            scaner: processor,
         }
     }
 }
@@ -68,7 +82,7 @@ impl<T> ScanProcessor<T> {
                 Some(actual_file) => {
                     output_string += &actual_file.to_lua(id);
                     json_string += &format!("{},\n", actual_file.to_json());
-                },
+                }
                 None => {}
             }
         }
@@ -79,7 +93,11 @@ impl<T> ScanProcessor<T> {
     }
 }
 
-pub fn configure_path(path: Option<&String>, file_key: &String, files: &HashMap<String, FileStructure>) -> String {
+pub fn configure_path(
+    path: Option<&String>,
+    file_key: &String,
+    files: &HashMap<String, FileStructure>,
+) -> String {
     match path {
         Some(actual_path) => {
             let actual_path = actual_path.trim_start_matches("/").to_lowercase();
@@ -89,17 +107,13 @@ pub fn configure_path(path: Option<&String>, file_key: &String, files: &HashMap<
                 if let Some(actual_name) = file_key.rsplit_once("/") {
                     let final_name = actual_name.0.to_string() + &format!("/{}", &actual_path);
                     final_name
-                }
-                else {
+                } else {
                     String::new()
                 }
-            }
-            else {
+            } else {
                 actual_path
             }
         }
-        None => {
-            String::new()
-        }
+        None => String::new(),
     }
 }

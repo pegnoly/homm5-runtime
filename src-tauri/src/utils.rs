@@ -15,17 +15,17 @@ pub struct Config {
     pub mod_path: String,
     pub texts_path: String,
     pub repackers: HashMap<String, RepackerPathsData>,
-    pub maps: Vec<Map>
+    pub maps: Vec<Map>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RuntimeConfig {
-    pub current_selected_map: Option<u16>
+    pub current_selected_map: Option<u16>,
 }
 
 #[derive(Debug)]
 pub struct LocalAppManager {
-    pub runtime_config: Mutex<RuntimeConfig>
+    pub runtime_config: Mutex<RuntimeConfig>,
 }
 
 pub enum AppMode {
@@ -42,5 +42,5 @@ pub struct RepackerPathsData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MapFrontendModel {
     pub id: u16,
-    pub name: String
+    pub name: String,
 }

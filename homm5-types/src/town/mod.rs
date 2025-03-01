@@ -1,8 +1,14 @@
-use serde::{Serialize, Deserialize};
-use crate::{common::{FileRef, Pos, Trigger, ArmySlot}, Homm5Type, player::PlayerID};
-use strum_macros::{EnumString, EnumIter, Display};
+use crate::{
+    Homm5Type,
+    common::{ArmySlot, FileRef, Pos, Trigger},
+    player::PlayerID,
+};
+use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumIter, EnumString};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, EnumString, PartialEq, Eq, Hash, EnumIter, Display)]
+#[derive(
+    Debug, Serialize, Deserialize, Clone, Copy, EnumString, PartialEq, Eq, Hash, EnumIter, Display,
+)]
 pub enum TownType {
     #[serde(rename = "TOWN_NO_TYPE")]
     #[strum(to_string = "TOWN_NO_TYPE")]
@@ -30,13 +36,13 @@ pub enum TownType {
     TownFortress,
     #[serde(rename = "TOWN_STRONGHOLD")]
     #[strum(to_string = "TOWN_STRONGHOLD")]
-    TownStronghold
+    TownStronghold,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TownBuildingType {
     #[serde(rename = "TB_TOWN_HALL")]
-    TownHall, 
+    TownHall,
     #[serde(rename = "TB_FORT")]
     Fort,
     #[serde(rename = "TB_MARKETPLACE")]
@@ -46,7 +52,7 @@ pub enum TownBuildingType {
     #[serde(rename = "TB_TAVERN")]
     Tavern,
     #[serde(rename = "TB_BLACKSMITH")]
-    Blacksmith, 
+    Blacksmith,
     #[serde(rename = "TB_MAGIC_GUILD")]
     MagicGuild,
     #[serde(rename = "TB_DWELLING_1")]
@@ -54,7 +60,7 @@ pub enum TownBuildingType {
     #[serde(rename = "TB_DWELLING_2")]
     Dwelling2,
     #[serde(rename = "TB_DWELLING_3")]
-    Dwelling3, 
+    Dwelling3,
     #[serde(rename = "TB_DWELLING_4")]
     Dwelling4,
     #[serde(rename = "TB_DWELLING_5")]
@@ -102,13 +108,13 @@ pub enum TownBuildingLevel {
     #[serde(rename = "BLD_UPG_4")]
     BldUpg4,
     #[serde(rename = "BLD_UPG_5")]
-    BldUpg5
+    BldUpg5,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ShipTile {
     pub x: u16,
-    pub y: u16
+    pub y: u16,
 }
 
 #[allow(non_snake_case)]
@@ -119,37 +125,36 @@ pub struct TownBuilding {
     #[serde(with = "quick_xml::serde_helpers::text_content")]
     pub InitialUpgrade: TownBuildingLevel,
     #[serde(with = "quick_xml::serde_helpers::text_content")]
-    pub MaxUpgrade: TownBuildingLevel
+    pub MaxUpgrade: TownBuildingLevel,
 }
 
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Editable {
     pub NameFileRef: crate::common::FileRef,
-    pub BiographyFileRef: crate::common::FileRef
+    pub BiographyFileRef: crate::common::FileRef,
 }
 
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CreaturesUpgradesFilter{
+pub struct CreaturesUpgradesFilter {
     pub ForbiddenBasicUpgradeTiers: String,
     pub ForbiddenAlterUpgradeTiers: String,
     pub NotUpgradeable: String,
-    pub ForbiddenUpgrades: String
+    pub ForbiddenUpgrades: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TownBuildings {
     #[serde(rename = "Item")]
-    pub items: Vec<TownBuilding>
+    pub items: Vec<TownBuilding>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ArmySlots {
     #[serde(rename = "Item")]
-    pub army_slots: Option<Vec<ArmySlot>>
+    pub army_slots: Option<Vec<ArmySlot>>,
 }
-
 
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
@@ -208,8 +213,7 @@ pub struct AdvMapTown {
     #[serde(rename = "GarrisonBlockedForAI")]
     pub garrison_blocked_for_ai: bool,
     #[serde(rename = "BannedRaces")]
-    pub banned_races: String
+    pub banned_races: String,
 }
 
-impl Homm5Type for AdvMapTown {
-}
+impl Homm5Type for AdvMapTown {}

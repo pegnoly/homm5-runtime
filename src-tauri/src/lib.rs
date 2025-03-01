@@ -1,14 +1,14 @@
-use services::quest_creator::prelude::*;
 use services::dialog_generator::prelude::*;
+use services::quest_creator::prelude::*;
 
 use tokio::sync::Mutex;
 use utils::{Config, LocalAppManager, RuntimeConfig};
 
-mod services;
 mod commands;
-mod utils;
-mod source;
 mod error;
+mod services;
+mod source;
+mod utils;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
@@ -26,7 +26,9 @@ pub async fn run() {
         std::fs::File::create(&db_path).unwrap();
     }
 
-    let pool = sqlx::SqlitePool::connect(&db_path.to_str().unwrap()).await.unwrap();
+    let pool = sqlx::SqlitePool::connect(&db_path.to_str().unwrap())
+        .await
+        .unwrap();
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
     let quest_service = QuestService::new(pool.clone());
@@ -50,7 +52,6 @@ pub async fn run() {
             commands::load_current_map,
             commands::select_map,
             commands::apply_modifications,
-
             // quest commands
             collect_quests_for_selection,
             pick_quest_directory,
@@ -72,7 +73,6 @@ pub async fn run() {
             load_quest_is_active,
             save_quest_text,
             add_quest_to_queue,
-
             // dialog commands
             load_dialogs,
             load_speakers,

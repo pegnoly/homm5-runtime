@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Common types suitable for any others.
 
@@ -14,19 +14,19 @@ pub struct Pos {
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct FileRef {
     #[serde(rename = "@href")]
-    pub href: Option<String>
+    pub href: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Action {
     #[serde(rename = "FunctionName")]
-    pub function_name: Option<String>
+    pub function_name: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Trigger {
     #[serde(rename = "Action")]
-    pub action: Action
+    pub action: Action,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -34,12 +34,15 @@ pub struct ArmySlot {
     #[serde(rename = "Creature")]
     pub creature: String,
     #[serde(rename = "Count")]
-    pub count: u16
+    pub count: u16,
 }
 
 impl Default for ArmySlot {
     fn default() -> Self {
-        ArmySlot { creature: "CREATURE_UNKNOWN".to_string(), count: 0 }
+        ArmySlot {
+            creature: "CREATURE_UNKNOWN".to_string(),
+            count: 0,
+        }
     }
 }
 
@@ -48,11 +51,14 @@ pub struct SkillMastery {
     #[serde(rename = "Mastery")]
     pub mastery: String,
     #[serde(rename = "SkillID")]
-    pub skill_id: String
+    pub skill_id: String,
 }
 
 impl Default for SkillMastery {
     fn default() -> Self {
-        SkillMastery { mastery: "MASTERY_NONE".to_string(), skill_id: "HERO_SKILL_NONE".to_string() }
+        SkillMastery {
+            mastery: "MASTERY_NONE".to_string(),
+            skill_id: "HERO_SKILL_NONE".to_string(),
+        }
     }
 }

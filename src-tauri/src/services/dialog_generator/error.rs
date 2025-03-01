@@ -4,5 +4,5 @@ use derive_more::derive::{Display, From};
 pub enum Error {
     SqlxError(sqlx::Error),
     JsonError(serde_json::Error),
-    IOError(std::io::Error)
+    IOError(std::io::Error),
 }
