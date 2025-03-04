@@ -7,7 +7,7 @@ use std::collections::HashMap;
 impl Output for AdvMapArtifactShared {
     type ID = u16;
 
-    fn to_lua(&self, id: Option<Self::ID>) -> String {
+    fn to_lua(&self, id: &Option<u16>) -> String {
         let is_sellable = if self.CanBeGeneratedToSell == true {
             "1"
         } else {
@@ -49,7 +49,7 @@ impl Output for AdvMapArtifactShared {
         )
     }
 
-    fn to_json(&self) -> String {
+    fn to_json(&self, id: &Option<u16>) -> String {
         serde_json::to_string_pretty(self).unwrap()
     }
 }

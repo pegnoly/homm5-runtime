@@ -39,6 +39,12 @@ pub struct SpellIds {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FavoriteEnemies {
+    #[serde(rename = "Item")]
+    pub items: Option<Vec<String>>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[allow(non_snake_case)]
 pub struct Editable {
     pub NameFileRef: Option<FileRef>,
@@ -53,8 +59,8 @@ pub struct Editable {
     pub Ballista: bool,
     pub FirstAidTent: bool,
     pub AmmoCart: bool,
-    pub FavoriteEnemies: Option<Vec<String>>,
-    pub TalismanLevel: u8
+    pub FavoriteEnemies: FavoriteEnemies,
+    pub TalismanLevel: Option<u8>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

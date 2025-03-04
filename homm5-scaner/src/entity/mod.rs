@@ -41,8 +41,8 @@ pub trait Scan<T> {
 
 pub trait Output {
     type ID;
-    fn to_lua(&self, id: Option<Self::ID>) -> String;
-    fn to_json(&self) -> String;
+    fn to_lua(&self, id: &Option<Self::ID>) -> String;
+    fn to_json(&self, id: &Option<Self::ID>) -> String;
 }
 
 pub struct ScanProcessor<T> {
@@ -80,8 +80,8 @@ impl<T> ScanProcessor<T> {
             let id = self.scaner.get_id();
             match scanned_file {
                 Some(actual_file) => {
-                    output_string += &actual_file.to_lua(id);
-                    json_string += &format!("{},\n", actual_file.to_json());
+                    output_string += &actual_file.to_lua(&id);
+                    json_string += &format!("{},\n", actual_file.to_json(&id));
                 }
                 None => {}
             }
@@ -89,7 +89,8 @@ impl<T> ScanProcessor<T> {
         output_string.trim_end_matches(",").to_string();
         output_string.push('}');
         json_string = json_string.trim_end_matches(",").to_owned();
-        (output_string, json_string)
+        json_string.push(']');
+        (output_string, format!("{{\n{}}}", json_string))
     }
 }
 

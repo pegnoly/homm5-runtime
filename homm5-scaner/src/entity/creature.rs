@@ -84,7 +84,7 @@ impl CollectFiles for CreatureFileCollector {
 
 impl Output for AdvMapCreatureShared {
     type ID = u16;
-    fn to_lua(&self, id: Option<u16>) -> String {
+    fn to_lua(&self, id: &Option<u16>) -> String {
         let is_generatable = if self.SubjectOfRandomGeneration == true {
             "1"
         } else {
@@ -199,7 +199,7 @@ impl Output for AdvMapCreatureShared {
         )
     }
 
-    fn to_json(&self) -> String {
+    fn to_json(&self, id: &Option<u16>) -> String {
         serde_json::to_string_pretty(self).unwrap()
     }
 }

@@ -5,11 +5,12 @@ use crate::{
 };
 use homm5_types::{common::FileRef, hero::AdvMapHeroShared};
 use quick_xml::{Reader, events::Event};
+use serde_json::json;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 
 impl Output for AdvMapHeroShared {
     type ID = String;
-    fn to_lua(&self, _id: Option<String>) -> String {
+    fn to_lua(&self, _id: &Option<String>) -> String {
         let is_scenario_lua = if self.ScenarioHero == true {
             "1"
         } else {
@@ -74,8 +75,8 @@ impl Output for AdvMapHeroShared {
         )
     }
 
-    fn to_json(&self) -> String {
-        serde_json::to_string_pretty(self).unwrap()
+    fn to_json(&self, id: &Option<String>) -> String {
+        format!("\"{}\": \"{}\"", self.InternalName, id.as_ref().unwrap())
     }
 }
 
@@ -97,12 +98,13 @@ impl CollectFiles for HeroFileCollector {
 }
 
 pub struct HeroScaner {
+    id: Option<String>,
     entities: Vec<AdvMapHeroShared>,
 }
 
 impl HeroScaner {
     pub fn new() -> Self {
-        HeroScaner { entities: vec![] }
+        HeroScaner { id: None, entities: vec![] }
     }
 }
 
@@ -135,6 +137,7 @@ impl Scan<String> for HeroScaner {
                                     ));
                                 match de_res {
                                     Ok(mut hero) => {
+                                        self.id = Some(file_key.clone());
                                         self.entities.push(hero.clone());
                                         let spec_name = configure_path(
                                             hero.SpecializationNameFileRef
@@ -243,6 +246,6 @@ impl Scan<String> for HeroScaner {
     }
 
     fn get_id(&self) -> Option<String> {
-        None
+        self.id.clone()
     }
 }

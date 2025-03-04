@@ -112,7 +112,7 @@ impl ScanExecutor {
             .unwrap();
         map_zipped.finish().unwrap();
 
-        // let mut file = std::fs::File::create("C:\\H5ToE\\data\\heroes.json").unwrap();
-        // file.write_all(&mut heroes_generated_file.1.as_bytes()).unwrap();
+        let mut file = std::fs::File::create("C:\\H5ToE\\data\\heroes.json").unwrap();
+        file.write_all(&mut heroes_generated_file.1.as_bytes()).unwrap();
     }
 }

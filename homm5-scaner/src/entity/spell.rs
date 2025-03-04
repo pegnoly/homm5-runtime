@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 impl Output for SpellShared {
     type ID = u16;
-    fn to_lua(&self, id: Option<Self::ID>) -> String {
+    fn to_lua(&self, id: &Option<u16>) -> String {
         let is_aimed = if self.IsAimed == true { "1" } else { "nil" };
         let is_area = if self.IsAreaAttack == true {
             "1"
@@ -50,7 +50,7 @@ impl Output for SpellShared {
         )
     }
 
-    fn to_json(&self) -> String {
+    fn to_json(&self, id: &Option<u16>) -> String {
         serde_json::to_string_pretty(self).unwrap()
     }
 }
