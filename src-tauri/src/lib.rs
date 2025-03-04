@@ -1,3 +1,5 @@
+use map_modifier::MapData;
+use serde::{Deserialize, Serialize};
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
 
@@ -10,6 +12,11 @@ mod services;
 mod source;
 mod utils;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RuntimeData {
+    pub current_selected_map: u16
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
     let exe_path = std::env::current_exe().unwrap();
@@ -19,7 +26,14 @@ pub async fn run() {
     let cfg: Config = serde_json::from_str(&cfg_string).unwrap();
 
     let runtime_cfg_string = std::fs::read_to_string(&cfg_path.join("runtime.json")).unwrap();
-    let runtime_cfg: RuntimeConfig = serde_json::from_str(&runtime_cfg_string).unwrap();
+    let runtime_data: RuntimeData = serde_json::from_str(&runtime_cfg_string).unwrap();
+    let current_map_string = std::fs::read_to_string(&cfg_path.join("current_map_data.json")).unwrap();
+    let current_map_data: MapData = serde_json::from_str(&current_map_string).unwrap();
+
+    let runtime_config = RuntimeConfig {
+        current_selected_map: Some(runtime_data.current_selected_map),
+        current_map_data: current_map_data
+    };
 
     let db_path = cfg_path.join("runtime_database.db");
     if db_path.exists() == false {
@@ -38,7 +52,7 @@ pub async fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(cfg)
         .manage(LocalAppManager {
-            runtime_config: Mutex::new(runtime_cfg),
+            runtime_config: Mutex::new(runtime_config),
         })
         .manage(quest_service)
         .manage(dialog_generator_service)
@@ -89,7 +103,11 @@ pub async fn run() {
             load_variant_speaker,
             load_variant_text,
             save_dialog_variant,
-            generate_dialog
+            generate_dialog,
+            //reserve heroes commands
+            services::reserve_hero_creator::commands::load_existing_reserve_heroes,
+            services::reserve_hero_creator::commands::remove_reserve_hero,
+            services::reserve_hero_creator::commands::add_reserve_hero
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

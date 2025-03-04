@@ -133,13 +133,13 @@ pub struct AdvMapHeroShared {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArtifactIds {
     #[serde(rename = "Item")]
-    items: Option<Vec<String>>
+    pub items: Option<Vec<String>>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct IsUntransferable {
     #[serde(rename = "Item")]
-    items: Option<Vec<u8>>
+    pub items: Option<Vec<u8>>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

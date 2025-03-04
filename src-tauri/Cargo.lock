@@ -1756,6 +1756,7 @@ dependencies = [
  "derive_more 1.0.0",
  "homm5-repacker",
  "homm5-scaner",
+ "homm5-types",
  "map-modifier",
  "runtime-main",
  "serde",

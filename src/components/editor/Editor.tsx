@@ -4,6 +4,7 @@ import QuestMain from "../quest/main";
 import QuestGenerator from "../quest/generate";
 import DialogGeneratorMain from "../dialog/Main";
 import DialogGeneratorGlobals from "../dialog/Global";
+import ReserveHeroesMain from "../reserve_heroes/main";
 
 function Editor() {
     return <>
@@ -36,7 +37,8 @@ function EditorStateSelector() {
             vertical
             options={[
                 {value: EditorState.Dialog, label: "Edit dialogs"},
-                {value: EditorState.Quest, label: "Edit quests"}
+                {value: EditorState.Quest, label: "Edit quests"},
+                {value: EditorState.ReserveHeroes, label: "Edit reserve heroes"}
             ]}>
 
         </Segmented>
@@ -52,6 +54,8 @@ function EditorWindow() {
             return <QuestMain/>
         case EditorState.Dialog:
             return <DialogGeneratorMain/>
+        case EditorState.ReserveHeroes:
+            return <ReserveHeroesMain/>
     }
 }
 

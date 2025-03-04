@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use map_modifier::{Map, Quest};
+use map_modifier::{Map, MapData, Quest};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use tokio::sync::{Mutex, RwLock};
@@ -15,17 +15,18 @@ pub struct Config {
     pub mod_path: String,
     pub texts_path: String,
     pub repackers: HashMap<String, RepackerPathsData>,
-    pub maps: Vec<Map>,
+    pub maps: Vec<Map>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RuntimeConfig {
     pub current_selected_map: Option<u16>,
+    pub current_map_data: MapData
 }
 
 #[derive(Debug)]
 pub struct LocalAppManager {
-    pub runtime_config: Mutex<RuntimeConfig>,
+    pub runtime_config: Mutex<RuntimeConfig>
 }
 
 pub enum AppMode {

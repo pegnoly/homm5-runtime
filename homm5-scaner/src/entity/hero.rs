@@ -76,7 +76,7 @@ impl Output for AdvMapHeroShared {
     }
 
     fn to_json(&self, id: &Option<String>) -> String {
-        format!("\"{}\": \"{}\"", self.InternalName, id.as_ref().unwrap())
+        format!("\"{}\": {}", id.as_ref().unwrap(), serde_json::to_string_pretty(self).unwrap())
     }
 }
 

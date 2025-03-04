@@ -2,28 +2,29 @@ use crate::{
     common::{FileRef, Trigger, XmlArray}, hero::AdvMapHero, town::TownType, Homm5Type
 };
 use serde::{Deserialize, Serialize};
-use strum_macros::{EnumIter, EnumString};
+use strum_macros::{EnumIter, EnumString, FromRepr};
 
-#[derive(Debug, Serialize, Deserialize, EnumString, Clone, EnumIter, Eq, PartialEq, Hash)]
+#[derive(Debug, Serialize, Deserialize, EnumString, Clone, EnumIter, Eq, PartialEq, Hash, FromRepr)]
+#[repr(i32)]
 pub enum PlayerID {
     #[serde(rename = "PLAYER_NONE")]
-    PlayerNone,
+    PlayerNone = 0,
     #[serde(rename = "PLAYER_1")]
-    Player1,
+    Player1 = 1,
     #[serde(rename = "PLAYER_2")]
-    Player2,
+    Player2 = 2,
     #[serde(rename = "PLAYER_3")]
-    Player3,
+    Player3 = 3,
     #[serde(rename = "PLAYER_4")]
-    Player4,
+    Player4 = 4,
     #[serde(rename = "PLAYER_5")]
-    Player5,
+    Player5 = 5,
     #[serde(rename = "PLAYER_6")]
-    Player6,
+    Player6 = 6,
     #[serde(rename = "PLAYER_7")]
-    Player7,
+    Player7 = 7,
     #[serde(rename = "PLAYER_8")]
-    Player8,
+    Player8 = 8,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

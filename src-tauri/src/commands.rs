@@ -11,6 +11,7 @@ use tauri::State;
 
 use crate::services::QuestService;
 use crate::utils::{Config, LocalAppManager, MapFrontendModel};
+use crate::RuntimeData;
 
 #[tauri::command]
 pub async fn execute_scan(config: State<'_, Config>) -> Result<(), ()> {
@@ -69,7 +70,7 @@ pub async fn select_map(
     config_locked.current_selected_map = Some(id);
     let exe_path = std::env::current_exe().unwrap();
     let runtime_cfg_path = exe_path.parent().unwrap().join("cfg\\runtime.json");
-    let new_runtime_data = serde_json::to_string_pretty(&*config_locked).unwrap();
+    let new_runtime_data = serde_json::to_string_pretty(&RuntimeData {current_selected_map: id}).unwrap();
     let mut file = std::fs::File::create(&runtime_cfg_path).unwrap();
     file.write_all(&new_runtime_data.as_bytes()).unwrap();
 
@@ -79,6 +80,7 @@ pub async fn select_map(
     let current_map_data_string = serde_json::to_string_pretty(&current_map_data).unwrap();
     let mut file = std::fs::File::create(&current_map_data_path).unwrap();
     file.write_all(&current_map_data_string.as_bytes()).unwrap();
+    config_locked.current_map_data = current_map_data;
     Ok(())
 }
 
