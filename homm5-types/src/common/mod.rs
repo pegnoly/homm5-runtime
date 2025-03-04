@@ -17,6 +17,12 @@ pub struct FileRef {
     pub href: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct XmlArray<T: Serialize + Clone> {
+    #[serde(rename = "Item")]
+    pub items: Vec<Option<T>>
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Action {
     #[serde(rename = "FunctionName")]

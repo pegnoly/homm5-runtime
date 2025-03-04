@@ -150,7 +150,7 @@ pub struct TownBuildings {
     pub items: Vec<TownBuilding>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArmySlots {
     #[serde(rename = "Item")]
     pub army_slots: Option<Vec<ArmySlot>>,

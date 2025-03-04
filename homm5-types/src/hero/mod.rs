@@ -1,4 +1,4 @@
-use crate::common::FileRef;
+use crate::{common::{FileRef, Pos, Trigger, XmlArray}, player::PlayerID, town::ArmySlots};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -21,6 +21,24 @@ pub struct Skill {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Skills {
+    #[serde(rename = "Item")]
+    pub items: Option<Vec<Skill>>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Perks {
+    #[serde(rename = "Item")]
+    pub items: Option<Vec<String>>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SpellIds {
+    #[serde(rename = "Item")]
+    pub items: Option<Vec<String>>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[allow(non_snake_case)]
 pub struct Editable {
     pub NameFileRef: Option<FileRef>,
@@ -29,16 +47,28 @@ pub struct Editable {
     pub Defence: u16,
     pub Spellpower: u16,
     pub Knowledge: u16,
-    // #[serde(rename = "Item")]
-    // pub skills: Option<Vec<Skill>>,
-    // #[serde(rename = "Item")]
-    // pub perkIDs: Option<Vec<String>>,
-    // #[serde(rename = "Item")]
-    // pub spellIDs: Option<Vec<String>>,
+    pub skills: Skills,
+    pub perkIDs: Perks,
+    pub spellIDs: SpellIds,
     pub Ballista: bool,
     pub FirstAidTent: bool,
     pub AmmoCart: bool,
-    //pub FavoriteEnemies: Option<Vec<String>>
+    pub FavoriteEnemies: Option<Vec<String>>,
+    pub TalismanLevel: u8
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Textures {
+    #[serde(rename = "Icon128x128")]
+    pub icon128: Option<String>,
+    #[serde(rename = "Icon64x64")]
+    pub icon64: Option<String>,
+    #[serde(rename = "RoundedFace")]
+    pub rounded_face: Option<String>,
+    #[serde(rename = "LeftFace")]
+    pub left_face: Option<String>,
+    #[serde(rename = "RightFace")]
+    pub right_face: Option<String>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -92,4 +122,60 @@ pub struct AdvMapHeroShared {
     pub ScenarioHero: bool,
     // pub AdventureMusic: Option<FileRef>,
     // pub HideInEditor: bool
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ArtifactIds {
+    #[serde(rename = "Item")]
+    items: Option<Vec<String>>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct IsUntransferable {
+    #[serde(rename = "Item")]
+    items: Option<Vec<u8>>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AdvMapHero {
+    #[serde(rename = "Pos")]
+    pub pos: Pos,
+    #[serde(rename = "Rot")]
+    pub rot: f32,
+    #[serde(rename = "Floor")]
+    pub floor: u8,
+    #[serde(rename = "Name")]
+    pub name: Option<String>,
+    #[serde(rename = "CombatScript")]
+    pub combat_script: Option<String>,
+    #[serde(rename = "pointLights")]
+    pub point_lights: Option<String>,
+    #[serde(rename = "Shared")]
+    pub shared: FileRef,
+    #[serde(rename = "PlayerID")]
+    pub player_id: PlayerID,
+    #[serde(rename = "Experience")]
+    pub experience: u32,
+    #[serde(rename = "armySlots")]
+    pub army_slots: ArmySlots,
+    #[serde(rename = "artifactIDs")]
+    pub artifact_ids: ArtifactIds,
+    #[serde(rename = "isUntransferable")]
+    pub is_untransferable: IsUntransferable,
+    #[serde(rename = "Editable")]
+    pub editable: Editable,
+    #[serde(rename = "OverrideMask")]
+    pub override_mask: u16,
+    #[serde(rename = "PrimarySkillMastery")]
+    pub primary_skill_mastery: String,
+    #[serde(rename = "LossTrigger")]
+    pub loss_trigger: Trigger,
+    #[serde(rename = "AllowQuickCombat")]
+    pub allow_quick_combat: bool,
+    #[serde(rename = "Textures")]
+    pub textures: Textures,
+    #[serde(rename = "PresetPrice")]
+    pub preset_price: u16,
+    #[serde(rename = "BannedRaces")]
+    pub banned_races: Option<String>
 }

@@ -1,7 +1,5 @@
 use crate::{
-    Homm5Type,
-    common::{FileRef, Trigger},
-    town::TownType,
+    common::{FileRef, Trigger, XmlArray}, hero::AdvMapHero, town::TownType, Homm5Type
 };
 use serde::{Deserialize, Serialize};
 use strum_macros::{EnumIter, EnumString};
@@ -56,13 +54,25 @@ pub struct TavernFilter {
     pub allowed_heroes: Option<AllowedHeroes>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ReserveHeroes {
+    pub items: Option<Vec<ReserveHero>>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename = "Item")]
+pub struct ReserveHero {
+    #[serde(rename = "AdvMapHero")]
+    pub adv_map_hero: AdvMapHero
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Player {
     #[serde(rename = "MainTown")]
-    pub main_town: String,
+    pub main_town: Option<String>,
     #[serde(rename = "MainHero")]
-    pub main_hero: String,
+    pub main_hero: Option<FileRef>,
     #[serde(rename = "ActivePlayer")]
     pub active_player: bool,
     #[serde(rename = "Team")]
@@ -76,11 +86,11 @@ pub struct Player {
     #[serde(rename = "CaptureAbility")]
     pub capture_ability: u8,
     #[serde(rename = "StartHero")]
-    pub start_hero: String,
+    pub start_hero: Option<FileRef>,
     #[serde(rename = "HeroInTown")]
     pub hero_in_town: bool,
     #[serde(rename = "ReserveHeroes")]
-    pub reserve_heroes: Vec<String>,
+    pub reserve_heroes: Option<ReserveHeroes>,
     #[serde(rename = "AddHeroTrigger")]
     pub add_hero_trigger: Trigger,
     #[serde(rename = "RemoveHeroTrigger")]

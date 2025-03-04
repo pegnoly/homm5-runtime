@@ -1,11 +1,13 @@
 use core::str;
-use std::io::Write;
+use std::{collections::HashMap, io::Write};
 
+use homm5_types::hero::AdvMapHero;
 pub use homm5_types::{common::FileRef, quest::{Objectives, Quest, QuestList}, Homm5Type};
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, Event}, Reader, Writer};
 use serde::{Deserialize, Serialize};
 
 pub mod quest;
+pub mod reserve_heroes;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct  PlayerSpecific {
@@ -66,7 +68,7 @@ impl ModifiersQueue {
         let mut buf: Vec<u8> = Vec::new();
     
         writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None))).unwrap();
-    
+        let mut players_count = 0;
         loop {
             match reader.read_event_into(&mut buf) {
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
@@ -74,17 +76,31 @@ impl ModifiersQueue {
                 Ok(Event::Start(e)) => {
                     // gets actual name of tag
                     let actual_tag = std::str::from_utf8(e.name().as_ref()).unwrap().to_string();
-                    if actual_tag == "Objectives" {
-                        println!("Objectives found");
-                        let end = e.to_end().into_owned();
-                        let text = reader.read_text(end.name()).unwrap().to_string();
-                        let mut objectives: ObjectivesInfo = quick_xml::de::from_str(&format!("<Objectives>{}</Objectives>", &text)).unwrap();
-                        self.apply_quests(&mut writer, &mut objectives);
-                    }
-                    else {
-                        let mut elem = BytesStart::new(str::from_utf8(e.name().0).unwrap());
-                        elem.extend_attributes(e.attributes().map(|attr| attr.unwrap()));
-                        writer.write_event(Event::Start(elem)).unwrap();
+                    match actual_tag.as_str() {
+                        // "Objectives" => {
+                        //     println!("Objectives found");
+                        //     let end = e.to_end().into_owned();
+                        //     let text = reader.read_text(end.name()).unwrap().to_string();
+                        //     let mut objectives: ObjectivesInfo = quick_xml::de::from_str(&format!("<Objectives>{}</Objectives>", &text)).unwrap();
+                        //     self.apply_quests(&mut writer, &mut objectives);
+                        // },
+                        "ReserveHeroes" => {
+                            players_count += 1;
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            println!("Reserve heroes for player {}: {:#}", players_count, &text);
+                            // let players: Vec<Player> = quick_xml::de::from_str(&text).unwrap();
+                            // if players.len() > 0 {
+                            //     let json_data = serde_json::to_string_pretty(&players).unwrap();
+                            //     let mut file = std::fs::File::create("C:\\H5ToE\\players.json").unwrap();
+                            //     file.write_all(json_data.as_bytes()).unwrap();
+                            // }
+                        },
+                        _=> {
+                            let mut elem = BytesStart::new(str::from_utf8(e.name().0).unwrap());
+                            elem.extend_attributes(e.attributes().map(|attr| attr.unwrap()));
+                            writer.write_event(Event::Start(elem)).unwrap();
+                        }
                     }
                 }
                 Ok(Event::Text(e)) => {
@@ -99,9 +115,9 @@ impl ModifiersQueue {
             buf.clear();
         }
         
-        std::fs::remove_file(&map.xdb).unwrap();
-        let mut file = std::fs::File::create(&map.xdb).unwrap();
-        file.write_all(&output_map).unwrap();
+        // std::fs::remove_file(&map.xdb).unwrap();
+        // let mut file = std::fs::File::create(&map.xdb).unwrap();
+        // file.write_all(&output_map).unwrap();
     }
 
 
@@ -174,3 +190,98 @@ pub struct Map {
     pub xdb: String,
     pub data_path: String
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MapData {
+    pub reserve_heroes: HashMap<i32, Vec<AdvMapHero>>
+}
+
+impl MapData {
+    pub fn read(map: &Map) -> Self {    
+        let map_string = std::fs::read_to_string(&map.xdb).unwrap();
+        let mut reader = Reader::from_str(&map_string);
+        let reader_config = reader.config_mut();
+        reader_config.expand_empty_elements = true;
+        reader_config.trim_text(true);
+        let mut buf: Vec<u8> = Vec::new();
+        let mut players_count = 0;
+        let mut map_data = MapData {reserve_heroes: HashMap::new()};
+        loop {
+            match reader.read_event_into(&mut buf) {
+                Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+                Ok(Event::Eof) => return map_data,
+                Ok(Event::Start(e)) => {
+                    // gets actual name of tag
+                    let actual_tag = std::str::from_utf8(e.name().as_ref()).unwrap().to_string();
+                    match actual_tag.as_str() {
+                        "ReserveHeroes" => {
+                            players_count += 1;
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            map_data.read_reserve_heroes(&text, players_count);
+                        },
+                        _=> {
+                            let mut elem = BytesStart::new(str::from_utf8(e.name().0).unwrap());
+                            elem.extend_attributes(e.attributes().map(|attr| attr.unwrap()));
+                        }
+                    }
+                }
+                Ok(Event::Text(e)) => {
+                },
+                Ok(Event::End(e)) => {
+                    let elem = BytesEnd::new(str::from_utf8(e.name().0).unwrap());
+                },
+                _ => ()
+            }
+            buf.clear();
+        }
+    }
+
+    fn read_reserve_heroes(&mut self, heroes_data: &String, player_number: i32) {
+        let mut reader = Reader::from_str(&heroes_data);
+        let reader_config = reader.config_mut();
+        reader_config.expand_empty_elements = true;
+        reader_config.trim_text(true);
+        let mut buf: Vec<u8> = Vec::new();
+        self.reserve_heroes.insert(player_number, vec![]);
+        loop {
+            match reader.read_event_into(&mut buf) {
+                Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+                Ok(Event::Eof) => break,
+                Ok(Event::Start(e)) => {
+                    // gets actual name of tag
+                    let actual_tag = std::str::from_utf8(e.name().as_ref()).unwrap().to_string();
+                    match actual_tag.as_str() {
+                        "AdvMapHero" => {
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            let adv_map_hero: Result<AdvMapHero, quick_xml::DeError> = quick_xml::de::from_str(&format!("<AdvMapHero>{}</AdvMapHero>", &text));
+                            match adv_map_hero {
+                                Ok(hero) => {
+                                    if let Some(heroes) = self.reserve_heroes.get_mut(&player_number) {
+                                        heroes.push(hero);
+                                    }
+                                },
+                                Err(de_error) => {
+                                    println!("Error deserializing AdvMapHero object: {}", de_error.to_string())
+                                }
+                            }
+                        },
+                        _=> {
+                            let mut elem = BytesStart::new(str::from_utf8(e.name().0).unwrap());
+                            elem.extend_attributes(e.attributes().map(|attr| attr.unwrap()));
+                        }
+                    }
+                }
+                Ok(Event::Text(e)) => {
+                },
+                Ok(Event::End(e)) => {
+                    let elem = BytesEnd::new(str::from_utf8(e.name().0).unwrap());
+                },
+                _ => ()
+            }
+            buf.clear();
+        }
+    }
+}
+

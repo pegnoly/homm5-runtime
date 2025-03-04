@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use homm5_repacker::Repacker;
 use homm5_scaner::ScanExecutor;
 use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
-use map_modifier::{GenerateBoilerplate, ModifiersQueue};
+use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
 use serde::{Serialize, Serializer};
 use tauri::State;
@@ -60,7 +60,11 @@ pub async fn load_current_map(app_manager: State<'_, LocalAppManager>) -> Result
 }
 
 #[tauri::command]
-pub async fn select_map(app_manager: State<'_, LocalAppManager>, id: u16) -> Result<(), ()> {
+pub async fn select_map(
+    app_manager: State<'_, LocalAppManager>, 
+    config: State<'_, Config>,
+    id: u16
+) -> Result<(), ()> {
     let mut config_locked = app_manager.runtime_config.lock().await;
     config_locked.current_selected_map = Some(id);
     let exe_path = std::env::current_exe().unwrap();
@@ -68,6 +72,13 @@ pub async fn select_map(app_manager: State<'_, LocalAppManager>, id: u16) -> Res
     let new_runtime_data = serde_json::to_string_pretty(&*config_locked).unwrap();
     let mut file = std::fs::File::create(&runtime_cfg_path).unwrap();
     file.write_all(&new_runtime_data.as_bytes()).unwrap();
+
+    let map = config.maps.iter().find(|m| m.id == config_locked.current_selected_map.unwrap()).unwrap();
+    let current_map_data = MapData::read(map);
+    let current_map_data_path = exe_path.parent().unwrap().join("cfg\\current_map_data.json");
+    let current_map_data_string = serde_json::to_string_pretty(&current_map_data).unwrap();
+    let mut file = std::fs::File::create(&current_map_data_path).unwrap();
+    file.write_all(&current_map_data_string.as_bytes()).unwrap();
     Ok(())
 }
 

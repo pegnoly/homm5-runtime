@@ -10,3 +10,4 @@ quick-xml = {version = "0.37.1", features = ["serde", "serde-types", "serialize"
 serde = { version = "1.0.215", features = ["derive"] }
 homm5-types = { path = "../homm5-types"}
 tokio = { version = "1.41.1", features = ["fs"] }
+serde_json = "1.0.139"
