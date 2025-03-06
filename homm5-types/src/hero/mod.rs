@@ -53,13 +53,13 @@ pub struct Editable {
     pub Defence: u16,
     pub Spellpower: u16,
     pub Knowledge: u16,
-    pub skills: Skills,
-    pub perkIDs: Perks,
-    pub spellIDs: SpellIds,
+    pub skills: Option<Skills>,
+    pub perkIDs: Option<Perks>,
+    pub spellIDs: Option<SpellIds>,
     pub Ballista: bool,
     pub FirstAidTent: bool,
     pub AmmoCart: bool,
-    pub FavoriteEnemies: FavoriteEnemies,
+    pub FavoriteEnemies: Option<FavoriteEnemies>,
     pub TalismanLevel: Option<u8>
 }
 
@@ -163,11 +163,11 @@ pub struct AdvMapHero {
     #[serde(rename = "Experience")]
     pub experience: u32,
     #[serde(rename = "armySlots")]
-    pub army_slots: ArmySlots,
+    pub army_slots: Option<ArmySlots>,
     #[serde(rename = "artifactIDs")]
-    pub artifact_ids: ArtifactIds,
+    pub artifact_ids: Option<ArtifactIds>,
     #[serde(rename = "isUntransferable")]
-    pub is_untransferable: IsUntransferable,
+    pub is_untransferable: Option<IsUntransferable>,
     #[serde(rename = "Editable")]
     pub editable: Editable,
     #[serde(rename = "OverrideMask")]

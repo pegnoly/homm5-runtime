@@ -54,7 +54,7 @@ pub struct ModifiersQueue {
 
 impl ModifiersQueue {
 
-    pub fn apply_changes_to_map(&self, map: &Map) {
+    pub fn apply_changes_to_map(&self, map: &Map, map_data: &mut MapData) {
         let mut output_map: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output_map, b' ', 4);
     
@@ -87,14 +87,47 @@ impl ModifiersQueue {
                         "ReserveHeroes" => {
                             players_count += 1;
                             let end = e.to_end().into_owned();
-                            let text = reader.read_text(end.name()).unwrap().to_string();
-                            println!("Reserve heroes for player {}: {:#}", players_count, &text);
-                            // let players: Vec<Player> = quick_xml::de::from_str(&text).unwrap();
-                            // if players.len() > 0 {
-                            //     let json_data = serde_json::to_string_pretty(&players).unwrap();
-                            //     let mut file = std::fs::File::create("C:\\H5ToE\\players.json").unwrap();
-                            //     file.write_all(json_data.as_bytes()).unwrap();
-                            // }
+                            reader.read_to_end(end.name()).unwrap();
+                            if let Some(mut heroes) = map_data.reserve_heroes.get_mut(&players_count) {
+                                writer.write_event(Event::Start(BytesStart::new("ReserveHeroes"))).unwrap();
+                                let mut heroes_count = 0;
+                                for hero in heroes {
+                                    heroes_count += 1;
+                                    if hero.army_slots.is_some() && hero.army_slots.as_ref().unwrap().army_slots.is_none() {
+                                        hero.army_slots = None;
+                                    }
+                                    if hero.is_untransferable.is_some() && hero.is_untransferable.as_ref().unwrap().items.is_none() {
+                                        hero.is_untransferable = None;
+                                    }
+                                    if hero.artifact_ids.is_some() && hero.artifact_ids.as_ref().unwrap().items.is_none() {
+                                        hero.artifact_ids = None;
+                                    }
+                                    if hero.editable.skills.is_some() && hero.editable.skills.as_ref().unwrap().items.is_none() {
+                                        hero.editable.skills = None;
+                                    }
+                                    if hero.editable.spellIDs.is_some() && hero.editable.spellIDs.as_ref().unwrap().items.is_none() {
+                                        hero.editable.spellIDs = None;
+                                    }
+                                    if hero.editable.perkIDs.is_some() && hero.editable.perkIDs.as_ref().unwrap().items.is_none() {
+                                        hero.editable.perkIDs = None;
+                                    }
+                                    if hero.editable.FavoriteEnemies.is_some() && hero.editable.FavoriteEnemies.as_ref().unwrap().items.is_none() {
+                                        hero.editable.FavoriteEnemies = None;
+                                    }
+                                    writer.create_element("Item")
+                                        .with_attributes(
+                                            vec![
+                                                ("href", "#n:inline(AdvMapHero)"),
+                                                ("id", &format!("item_P{}_H{}", players_count, heroes_count))
+                                            ]
+                                        )
+                                        .write_inner_content(|w| {
+                                            w.write_serializable("AdvMapHero", hero).unwrap();
+                                            Ok(())
+                                        }).unwrap();
+                                }
+                                writer.write_event(Event::End(BytesEnd::new("ReserveHeroes"))).unwrap();
+                            }
                         },
                         _=> {
                             let mut elem = BytesStart::new(str::from_utf8(e.name().0).unwrap());
@@ -115,9 +148,9 @@ impl ModifiersQueue {
             buf.clear();
         }
         
-        // std::fs::remove_file(&map.xdb).unwrap();
-        // let mut file = std::fs::File::create(&map.xdb).unwrap();
-        // file.write_all(&output_map).unwrap();
+        std::fs::remove_file(&map.xdb).unwrap();
+        let mut file = std::fs::File::create(&map.xdb).unwrap();
+        file.write_all(&output_map).unwrap();
     }
 
 

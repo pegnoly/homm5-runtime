@@ -116,12 +116,8 @@ pub async fn apply_modifications(
     app_manager: State<'_, LocalAppManager>,
     quest_service: State<'_, QuestService>,
 ) -> Result<(), super::error::Error> {
-    let current_map_id = app_manager
-        .runtime_config
-        .lock()
-        .await
-        .current_selected_map
-        .unwrap();
+    let mut config_locked = app_manager.runtime_config.lock().await;
+    let current_map_id = config_locked.current_selected_map.unwrap();
     let map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
     let mod_path = &config.mod_path;
 
@@ -171,7 +167,7 @@ pub async fn apply_modifications(
     println!("Primary quests: {:?}", &modifiers_queue.primary_quests);
     println!("Secondary quests: {:?}", &modifiers_queue.secondary_quests);
 
-    modifiers_queue.apply_changes_to_map(map);
+    modifiers_queue.apply_changes_to_map(map, &mut config_locked.current_map_data);
     quest_service
         .delete_quests_from_queue(current_map_id)
         .await?;
