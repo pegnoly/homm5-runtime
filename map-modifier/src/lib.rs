@@ -1,13 +1,17 @@
 use core::str;
 use std::{collections::HashMap, io::Write};
 
-use homm5_types::hero::AdvMapHero;
+use artifacts::ArtifactsModifier;
+use buildings::BuildingsModifier;
+use homm5_types::{art::AdvMapArtifact, building::AdvMapBuilding, hero::AdvMapHero};
 pub use homm5_types::{common::FileRef, quest::{Objectives, Quest, QuestList}, Homm5Type};
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, Event}, Reader, Writer};
 use serde::{Deserialize, Serialize};
 
 pub mod quest;
 pub mod reserve_heroes;
+pub mod artifacts;
+pub mod buildings;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct  PlayerSpecific {
@@ -46,15 +50,20 @@ pub trait GenerateBoilerplate {
 
     fn generate(&self, additional_data: Option<&Self::Additional>) -> Result<Self::Output, std::io::Error>;
 }
-
 pub struct ModifiersQueue {
     pub primary_quests: Vec<Quest>,
-    pub secondary_quests: Vec<Quest>
+    pub secondary_quests: Vec<Quest>,
+    buildings_modifier: BuildingsModifier,
+    artifacts_modifier: ArtifactsModifier
 }
 
 impl ModifiersQueue {
 
-    pub fn apply_changes_to_map(&self, map: &Map, map_data: &mut MapData) {
+    pub fn new() -> Self {
+        ModifiersQueue { primary_quests: vec![], secondary_quests: vec![], buildings_modifier: BuildingsModifier::new(), artifacts_modifier: ArtifactsModifier::new()}
+    }
+
+    pub fn apply_changes_to_map(&mut self, map: &Map, map_data: &mut MapData) {
         let mut output_map: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output_map, b' ', 4);
     
@@ -77,18 +86,31 @@ impl ModifiersQueue {
                     // gets actual name of tag
                     let actual_tag = std::str::from_utf8(e.name().as_ref()).unwrap().to_string();
                     match actual_tag.as_str() {
-                        // "Objectives" => {
-                        //     println!("Objectives found");
-                        //     let end = e.to_end().into_owned();
-                        //     let text = reader.read_text(end.name()).unwrap().to_string();
-                        //     let mut objectives: ObjectivesInfo = quick_xml::de::from_str(&format!("<Objectives>{}</Objectives>", &text)).unwrap();
-                        //     self.apply_quests(&mut writer, &mut objectives);
-                        // },
+                        "AdvMapBuilding" => { 
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            println!("Building text: {}", &text);
+                            let mut building: AdvMapBuilding = quick_xml::de::from_str(&format!("<AdvMapBuilding>{}</AdvMapBuilding>", &text)).unwrap();
+                            self.buildings_modifier.modify(&mut building, &mut writer);
+                        },
+                        "AdvMapArtifact" => { 
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            let mut artifact: AdvMapArtifact = quick_xml::de::from_str(&format!("<AdvMapArtifact>{}</AdvMapArtifact>", &text)).unwrap();
+                            self.artifacts_modifier.modify(&mut artifact, &mut writer);
+                        },
+                        "Objectives" => {
+                            println!("Objectives found");
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            let mut objectives: ObjectivesInfo = quick_xml::de::from_str(&format!("<Objectives>{}</Objectives>", &text)).unwrap();
+                            self.apply_quests(&mut writer, &mut objectives);
+                        },
                         "ReserveHeroes" => {
                             players_count += 1;
                             let end = e.to_end().into_owned();
                             reader.read_to_end(end.name()).unwrap();
-                            if let Some(mut heroes) = map_data.reserve_heroes.get_mut(&players_count) {
+                            if let Some(heroes) = map_data.reserve_heroes.get_mut(&players_count) {
                                 writer.write_event(Event::Start(BytesStart::new("ReserveHeroes"))).unwrap();
                                 let mut heroes_count = 0;
                                 for hero in heroes {
@@ -151,6 +173,10 @@ impl ModifiersQueue {
         std::fs::remove_file(&map.xdb).unwrap();
         let mut file = std::fs::File::create(&map.xdb).unwrap();
         file.write_all(&output_map).unwrap();
+        let mut lua_data = self.buildings_modifier.convert_to_lua();
+        lua_data += &self.artifacts_modifier.convert_to_lua();
+        let mut lua_data_file = std::fs::File::create(format!("{}{}", &map.data_path, "generated_data.lua")).unwrap();
+        lua_data_file.write_all(&mut lua_data.as_bytes()).unwrap();
     }
 
 

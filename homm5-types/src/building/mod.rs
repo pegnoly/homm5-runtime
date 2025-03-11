@@ -1,7 +1,5 @@
 use crate::{
-    Homm5Type,
-    common::{FileRef, Pos, Trigger},
-    town::CreaturesUpgradesFilter,
+    common::{FileRef, PointLights, Pos, Trigger}, town::CreaturesUpgradesFilter, Homm5Type
 };
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
@@ -50,7 +48,7 @@ pub struct AdvMapBuilding {
     #[serde(rename = "CombatScript")]
     pub combat_script: String,
     #[serde(rename = "pointLights")]
-    pub point_lights: String,
+    pub point_lights: Option<PointLights>,
     #[serde(rename = "Shared")]
     pub shared: FileRef,
     #[serde(rename = "PlayerID")]

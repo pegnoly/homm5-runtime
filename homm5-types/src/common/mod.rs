@@ -5,9 +5,16 @@ use serde::{Deserialize, Serialize};
 /// Position of object on the map
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Pos {
-    pub x: i32,
-    pub y: i32,
-    pub z: i32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Color {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32
 }
 
 /// Reference to file(<Shared href="some_path"/>)
@@ -41,6 +48,22 @@ pub struct ArmySlot {
     pub creature: String,
     #[serde(rename = "Count")]
     pub count: u16,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PointLight {
+    #[serde(rename = "Pos")]
+    pub pos: Pos,
+    #[serde(rename = "Color")]
+    pub color: Color,
+    #[serde(rename = "Radius")]
+    pub radius: u32
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PointLights {
+    #[serde(rename = "Item")]
+    pub items: Option<Vec<PointLight>>
 }
 
 impl Default for ArmySlot {

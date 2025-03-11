@@ -1,18 +1,25 @@
-import { Col, Row, Segmented } from "antd";
+import { Button, Col, Row, Segmented } from "antd";
 import { EditorState, useEditorStateStore } from "../../stores/EditorStateStore";
 import QuestMain from "../quest/main";
 import QuestGenerator from "../quest/generate";
 import DialogGeneratorMain from "../dialog/Main";
 import DialogGeneratorGlobals from "../dialog/Global";
 import ReserveHeroesMain from "../reserve_heroes/main";
+import { invoke } from "@tauri-apps/api/core";
 
 function Editor() {
+
+    async function applyModifications() {
+        await invoke("apply_modifications")
+    }
+
     return <>
         <Row>
             <Col span={6}>
                 <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 10}}>
                     <EditorStateSelector/>
                     <EditorGlobals/>
+                    <Button onClick={applyModifications}>Apply modifications to map</Button>
                 </div>
             </Col>
             <Col span={18}>

@@ -56,7 +56,7 @@ pub async fn add_reserve_hero(
     player: i32
 ) -> Result<(), ()> {
     let new_hero = AdvMapHero {
-        pos: Pos {x: 0, y: 0, z: 0},
+        pos: Pos {x: 0.0, y: 0.0, z: 0.0},
         rot: 0.0,
         floor: 0,
         name: None,

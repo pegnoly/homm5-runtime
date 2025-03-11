@@ -121,10 +121,7 @@ pub async fn apply_modifications(
     let map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
     let mod_path = &config.mod_path;
 
-    let mut modifiers_queue = ModifiersQueue {
-        primary_quests: vec![],
-        secondary_quests: vec![],
-    };
+    let mut modifiers_queue = ModifiersQueue::new();
 
     // get all ids of quest for current map
 
