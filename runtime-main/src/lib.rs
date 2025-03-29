@@ -1,6 +1,6 @@
 use std::{io::{stdin, Read}, path::PathBuf, sync::LazyLock};
 
-use frida::{Device, DeviceManager, Frida, Process, Script, ScriptHandler, ScriptOption, SpawnOptions};
+use frida::{Device, DeviceManager, Frida, Message, Process, Script, ScriptHandler, ScriptOption, SpawnOptions};
 
 static FRIDA: LazyLock<Frida> = LazyLock::new(|| unsafe { Frida::obtain() });
 const EXE_NAME: &'static str = "H5_Game_MCCS_PEST_SKILLS.exe";
@@ -8,8 +8,8 @@ const EXE_NAME: &'static str = "H5_Game_MCCS_PEST_SKILLS.exe";
 struct Homm5Handler;
 
 impl ScriptHandler for Homm5Handler {
-    fn on_message(&mut self, message: &str) {
-        println!("Message: {}", message)
+    fn on_message(&mut self, message: &Message, data: Option<Vec<u8>>) {
+        println!("Message: {:?}", message)
     }
 }
 
@@ -90,9 +90,9 @@ impl RuntimeRunner {
                                 }
                             });
                         "#;
-                        let script = session.create_script(&script_string, &mut ScriptOption::default()).unwrap();
+                        let mut script = session.create_script(&script_string, &mut ScriptOption::default()).unwrap();
                         script.load().unwrap();
-                        script.handle_message(&mut Homm5Handler{}).unwrap();
+                        script.handle_message(Homm5Handler{}).unwrap();
                         local_device.resume(pid).unwrap();
         
                         while let Some(process) = local_device.enumerate_processes().iter().find(|p| p.get_pid() == pid) {
