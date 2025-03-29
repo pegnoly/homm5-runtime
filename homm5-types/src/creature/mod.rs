@@ -1,6 +1,5 @@
 use crate::{
-    Homm5Type,
-    common::{FileRef, Pos},
+    common::{FileRef, PointLights, Pos}, Homm5Type
 };
 use serde::{Deserialize, Serialize};
 
@@ -116,7 +115,7 @@ pub struct AdvMapMonster {
     #[serde(rename = "CombatScript")]
     pub combat_script: Option<String>,
     #[serde(rename = "pointLights")]
-    pub point_lights: Option<String>,
+    pub point_lights: Option<PointLights>,
     #[serde(rename = "Shared")]
     pub shared: Option<FileRef>,
     #[serde(rename = "Custom")]
@@ -157,6 +156,14 @@ pub struct AdvMapMonster {
     pub race_random_group_id: u32,
     #[serde(rename = "relationsOverrides")]
     pub relations_override: Option<String>,
+    #[serde(rename = "RuntimeGenerated")]
+    pub runtime_generated: bool,
+    #[serde(rename = "GeneratedStacksMin")]
+    pub generated_stacks_min: u8,
+    #[serde(rename = "GeneratedStacksMax")]
+    pub generated_stacks_max: u8,
+    #[serde(rename = "TotalPower")]
+    pub total_power: u32
 }
 
 impl Homm5Type for AdvMapMonster {}

@@ -3,8 +3,9 @@ use std::{collections::HashMap, io::Write};
 
 use artifacts::ArtifactsModifier;
 use buildings::BuildingsModifier;
-use homm5_types::{art::AdvMapArtifact, building::AdvMapBuilding, hero::AdvMapHero};
+use homm5_types::{art::AdvMapArtifact, building::AdvMapBuilding, creature::AdvMapMonster, hero::AdvMapHero};
 pub use homm5_types::{common::FileRef, quest::{Objectives, Quest, QuestList}, Homm5Type};
+use monsters::MonstersModifier;
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, Event}, Reader, Writer};
 use serde::{Deserialize, Serialize};
 
@@ -12,6 +13,7 @@ pub mod quest;
 pub mod reserve_heroes;
 pub mod artifacts;
 pub mod buildings;
+pub mod monsters;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct  PlayerSpecific {
@@ -54,13 +56,20 @@ pub struct ModifiersQueue {
     pub primary_quests: Vec<Quest>,
     pub secondary_quests: Vec<Quest>,
     buildings_modifier: BuildingsModifier,
-    artifacts_modifier: ArtifactsModifier
+    artifacts_modifier: ArtifactsModifier,
+    monsters_modifier: MonstersModifier,
 }
 
 impl ModifiersQueue {
 
     pub fn new() -> Self {
-        ModifiersQueue { primary_quests: vec![], secondary_quests: vec![], buildings_modifier: BuildingsModifier::new(), artifacts_modifier: ArtifactsModifier::new()}
+        ModifiersQueue { 
+            primary_quests: vec![], 
+            secondary_quests: vec![], 
+            buildings_modifier: BuildingsModifier::new(), 
+            artifacts_modifier: ArtifactsModifier::new(),
+            monsters_modifier: MonstersModifier::new()
+        }
     }
 
     pub fn apply_changes_to_map(&mut self, map: &Map, map_data: &mut MapData) {
@@ -99,6 +108,12 @@ impl ModifiersQueue {
                             let mut artifact: AdvMapArtifact = quick_xml::de::from_str(&format!("<AdvMapArtifact>{}</AdvMapArtifact>", &text)).unwrap();
                             self.artifacts_modifier.modify(&mut artifact, &mut writer);
                         },
+                        "AdvMapMonster" => {
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            let mut monster: AdvMapMonster = quick_xml::de::from_str(&format!("<AdvMapMonster>{}</AdvMapMonster>", &text)).unwrap();
+                            self.monsters_modifier.modify(&mut monster, &mut writer);
+                        }
                         "Objectives" => {
                             println!("Objectives found");
                             let end = e.to_end().into_owned();
@@ -173,10 +188,15 @@ impl ModifiersQueue {
         std::fs::remove_file(&map.xdb).unwrap();
         let mut file = std::fs::File::create(&map.xdb).unwrap();
         file.write_all(&output_map).unwrap();
-        let mut lua_data = self.buildings_modifier.convert_to_lua();
-        lua_data += &self.artifacts_modifier.convert_to_lua();
-        let mut lua_data_file = std::fs::File::create(format!("{}{}", &map.data_path, "generated_data.lua")).unwrap();
-        lua_data_file.write_all(&mut lua_data.as_bytes()).unwrap();
+        let buildinds_lua_data = self.buildings_modifier.convert_to_lua();
+        let artifacts_lua_data = self.artifacts_modifier.convert_to_lua();
+        let monsters_lua_data = self.monsters_modifier.convert_to_lua();
+        let mut buildings_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "buildings_generated_data.lua")).unwrap();
+        let mut artifacts_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "artifacts_generated_data.lua")).unwrap();
+        let mut monsters_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "monsters_generated_data.lua")).unwrap();
+        buildings_lua_file.write_all(&mut buildinds_lua_data.as_bytes()).unwrap();
+        artifacts_lua_file.write_all(&mut artifacts_lua_data.as_bytes()).unwrap();
+        monsters_lua_file.write_all(&mut monsters_lua_data.as_bytes()).unwrap();
     }
 
 
