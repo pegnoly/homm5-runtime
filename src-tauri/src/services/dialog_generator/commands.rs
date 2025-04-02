@@ -310,10 +310,10 @@ pub async fn generate_dialog(
                 "<color={}>{}<color=white>: {}",
                 &speaker.color, &speaker.name, &variant.text
             );
-            variant_file.write(&[255, 254]).unwrap();
+            variant_file.write_all(&[255, 254]).unwrap();
             for utf16 in text.encode_utf16() {
                 variant_file
-                    .write(&(bincode::serialize(&utf16).unwrap()))
+                    .write_all(&(bincode::serialize(&utf16).unwrap()))
                     .unwrap();
             }
             let speaker_script = if speaker.speaker_type == SpeakerType::Hero {
@@ -351,7 +351,7 @@ pub async fn generate_dialog(
             .open(format!("{}dialogs_paths.lua", map_data_path))
             .unwrap();
 
-        paths_file.write(path_script.as_bytes()).unwrap();
+        paths_file.write_all(path_script.as_bytes()).unwrap();
     }
 
     Ok(())

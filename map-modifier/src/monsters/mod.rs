@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::LazyLock};
 
-use homm5_types::{common::FileRef, creature::AdvMapMonster};
+use homm5_types::{common::FileRef, creature::{AdvMapMonster, MonsterCourageType, MonsterMoodType}};
 use quick_xml::Writer;
 
 static RANDOM_STACKS: LazyLock<Vec<&str>> = LazyLock::new(|| {
@@ -54,6 +54,9 @@ impl MonstersModifier {
         if monster.point_lights.is_some() && monster.point_lights.as_ref().unwrap().items.is_none() {
             monster.point_lights = None;
         }
+        monster.does_not_depends_on_difficulty = false;
+        monster.courage = MonsterCourageType::AlwaysFight;
+        monster.mood = MonsterMoodType::Wild;
         writer.write_serializable("AdvMapMonster", monster).unwrap();
     }
 
@@ -64,5 +67,11 @@ impl MonstersModifier {
         }
         lua_string.push_str("}\n\n");
         lua_string
+    }
+}
+
+impl Default for MonstersModifier {
+    fn default() -> Self {
+        Self::new()
     }
 }

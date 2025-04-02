@@ -90,7 +90,7 @@ impl RuntimeRunner {
                                 }
                             });
                         "#;
-                        let mut script = session.create_script(&script_string, &mut ScriptOption::default()).unwrap();
+                        let mut script = session.create_script(script_string, &mut ScriptOption::default()).unwrap();
                         script.load().unwrap();
                         script.handle_message(Homm5Handler{}).unwrap();
                         local_device.resume(pid).unwrap();
@@ -98,7 +98,7 @@ impl RuntimeRunner {
                         while let Some(process) = local_device.enumerate_processes().iter().find(|p| p.get_pid() == pid) {
                             println!("Process exists: {}", process.get_name());
                             let mut v = vec![];
-                            stdin().read(&mut v).unwrap();
+                            stdin().read_exact(&mut v).unwrap();
                         }
                         println!("Process doesn't exist anymore");
                         script.unload().unwrap();

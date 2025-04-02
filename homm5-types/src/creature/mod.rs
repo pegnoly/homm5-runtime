@@ -2,6 +2,7 @@ use crate::{
     common::{FileRef, PointLights, Pos}, Homm5Type
 };
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
@@ -102,6 +103,28 @@ pub struct AdditionalStacks {
     pub items: Option<Vec<Stack>>,
 }
 
+#[derive(Debug, Serialize, Deserialize, EnumString, Display)]
+pub enum MonsterCourageType {
+    #[strum(serialize = "MONSTER_COURAGE_ALWAYS_FIGHT")]
+    AlwaysFight,
+    #[strum(serialize = "MONSTER_COURAGE_ALWAYS_JOIN")]
+    AlwaysJoin,
+    #[strum(serialize = "MONSTER_COURAGE_CAN_FLEE_JOIN")]
+    CanFleeJoin
+}
+
+#[derive(Debug, Serialize, Deserialize, EnumString, Display)]
+pub enum MonsterMoodType {
+    #[strum(serialize = "MONSTER_MOOD_WILD")]
+    Wild,
+    #[strum(serialize = "MONSTER_MOOD_FRIENDLY")]
+    Friendly,
+    #[strum(serialize = "MONSTER_MOOD_AGGRESSIVE")]
+    Aggressive,
+    #[strum(serialize = "MONSTER_MOOD_HOSTILE")]
+    Hostile
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AdvMapMonster {
     #[serde(rename = "Pos")]
@@ -139,9 +162,9 @@ pub struct AdvMapMonster {
     #[serde(rename = "ArtifactID")]
     pub art_id: String,
     #[serde(rename = "Mood")]
-    pub mood: String,
+    pub mood: MonsterMoodType,
     #[serde(rename = "Courage")]
-    pub courage: String,
+    pub courage: MonsterCourageType,
     #[serde(rename = "AllowQuickCombat")]
     pub allow_quick_combat: bool,
     #[serde(rename = "DoesNotDependOnDifficulty")]

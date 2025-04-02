@@ -75,9 +75,9 @@ impl QuestCreationRequest {
     fn generate_name(&self, quest: &mut Quest, base_texts_dir: &String, map_local_data: &String) {
 
         let mut file = std::fs::File::create(format!("{}name.txt", base_texts_dir)).unwrap();
-        file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
+        file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.name.encode_utf16() {
-            file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
+            file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
         let local_file_name = format!("{}\\name.txt", map_local_data).replace("\\", "/");
@@ -89,9 +89,9 @@ impl QuestCreationRequest {
     fn generate_desc(&self, quest: &mut Quest, base_texts_dir: &String, map_local_data: &String) {
 
         let mut file = std::fs::File::create(format!("{}desc.txt", base_texts_dir)).unwrap();
-        file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
+        file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.desc.encode_utf16() {
-            file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
+            file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
         let local_file_name = format!("{}\\desc.txt", map_local_data).replace("\\", "/");
@@ -108,12 +108,12 @@ impl QuestCreationRequest {
 
         for progress in &self.progresses {
             let mut file = std::fs::File::create(format!("{}{}.txt", progresses_texts_dir, progress.number)).unwrap();
-            file.write(&[255, 254]).unwrap(); // byte-order mask for homm encoding
+            file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
 
             let current_progress = format!("<color=grey>{}<color=white>{}", &previous_progresses, &progress.text);
 
             for utf16 in current_progress.encode_utf16() {
-                file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
+                file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
             }
 
             if progress.concatenate {
@@ -139,10 +139,12 @@ impl GenerateBoilerplate for QuestCreationRequest {
     type Additional = QuestBoilerplateHelper;
 
     fn generate(&self, additional_data: Option<&QuestBoilerplateHelper>) -> Result<Quest, std::io::Error> {
-        let mut quest = Quest::default();
-        quest.name = Some(self.script_name.clone());
-        quest.is_hidden = false;
-        quest.is_initialy_active = self.initialy_active;
+        let mut quest = Quest {
+            name: Some(self.script_name.clone()),
+            is_hidden: false,
+            is_initialy_active: self.initialy_active,
+            ..Default::default()
+        };
 
         let helper_data = additional_data.unwrap();
         // represents path as game sees it
@@ -197,8 +199,8 @@ c{}m{}_{} = {{
 }
 
 pub fn write_quest_text_file(file: &mut File, text: String) {
-    file.write(&[255, 254]).unwrap(); 
+    file.write_all(&[255, 254]).unwrap(); 
     for utf16 in text.encode_utf16() {
-        file.write(&(bincode::serialize(&utf16).unwrap())).unwrap();
+        file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
     }
 }
