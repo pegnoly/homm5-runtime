@@ -106,22 +106,29 @@ pub struct AdditionalStacks {
 #[derive(Debug, Serialize, Deserialize, EnumString, Display)]
 pub enum MonsterCourageType {
     #[strum(serialize = "MONSTER_COURAGE_ALWAYS_FIGHT")]
+    #[serde(rename = "MONSTER_COURAGE_ALWAYS_FIGHT")]
     AlwaysFight,
     #[strum(serialize = "MONSTER_COURAGE_ALWAYS_JOIN")]
+    #[serde(rename = "MONSTER_COURAGE_ALWAYS_JOIN")]
     AlwaysJoin,
     #[strum(serialize = "MONSTER_COURAGE_CAN_FLEE_JOIN")]
+    #[serde(rename = "MONSTER_COURAGE_CAN_FLEE_JOIN")]
     CanFleeJoin
 }
 
 #[derive(Debug, Serialize, Deserialize, EnumString, Display)]
 pub enum MonsterMoodType {
     #[strum(serialize = "MONSTER_MOOD_WILD")]
+    #[serde(rename = "MONSTER_MOOD_WILD")]
     Wild,
     #[strum(serialize = "MONSTER_MOOD_FRIENDLY")]
+    #[serde(rename = "MONSTER_MOOD_FRIENDLY")]
     Friendly,
     #[strum(serialize = "MONSTER_MOOD_AGGRESSIVE")]
+    #[serde(rename = "MONSTER_MOOD_AGGRESSIVE")]
     Aggressive,
     #[strum(serialize = "MONSTER_MOOD_HOSTILE")]
+    #[serde(rename = "MONSTER_MOOD_HOSTILE")]
     Hostile
 }
 

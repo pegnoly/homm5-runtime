@@ -194,9 +194,9 @@ impl ModifiersQueue {
         let mut buildings_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "buildings_generated_data.lua")).unwrap();
         let mut artifacts_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "artifacts_generated_data.lua")).unwrap();
         let mut monsters_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "monsters_generated_data.lua")).unwrap();
-        buildings_lua_file.write_all(&mut buildinds_lua_data.as_bytes()).unwrap();
-        artifacts_lua_file.write_all(&mut artifacts_lua_data.as_bytes()).unwrap();
-        monsters_lua_file.write_all(&mut monsters_lua_data.as_bytes()).unwrap();
+        buildings_lua_file.write_all(buildinds_lua_data.as_bytes()).unwrap();
+        artifacts_lua_file.write_all(artifacts_lua_data.as_bytes()).unwrap();
+        monsters_lua_file.write_all(monsters_lua_data.as_bytes()).unwrap();
     }
 
 
@@ -204,13 +204,13 @@ impl ModifiersQueue {
         let primary_quests_items = &mut objectives_data.primary.player_specific.items.as_mut().unwrap()[0];
         let secondary_quests_items = &mut objectives_data.secondary.player_specific.items.as_mut().unwrap()[0];
 
-        if self.primary_quests.len() > 0 {
+        if !self.primary_quests.is_empty() {
             if primary_quests_items.objectives.as_mut().unwrap().items.is_none() {
                 primary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
             }
 
             let quests_to_apply = self.primary_quests.iter().filter(|q| {
-                primary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name) == false
+                !primary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name)
             }).collect::<Vec<&Quest>>();
 
             println!("Primary quests to apply: {:?}", &quests_to_apply);
@@ -220,13 +220,13 @@ impl ModifiersQueue {
             }
         }
 
-        if self.secondary_quests.len() > 0 {
+        if !self.secondary_quests.is_empty() {
             if secondary_quests_items.objectives.as_mut().unwrap().items.is_none() {
                 secondary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
             }
 
             let quests_to_apply = self.secondary_quests.iter().filter(|q| {
-                secondary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name) == false
+                !secondary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name)
             }).collect::<Vec<&Quest>>();
 
             println!("Secondary quests to apply: {:?}", &quests_to_apply);
@@ -257,6 +257,12 @@ impl ModifiersQueue {
         } 
 
         writer.write_serializable("Objectives", objectives_data).unwrap();
+    }
+}
+
+impl Default for ModifiersQueue {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -316,8 +322,8 @@ impl MapData {
         }
     }
 
-    fn read_reserve_heroes(&mut self, heroes_data: &String, player_number: i32) {
-        let mut reader = Reader::from_str(&heroes_data);
+    fn read_reserve_heroes(&mut self, heroes_data: &str, player_number: i32) {
+        let mut reader = Reader::from_str(heroes_data);
         let reader_config = reader.config_mut();
         reader_config.expand_empty_elements = true;
         reader_config.trim_text(true);

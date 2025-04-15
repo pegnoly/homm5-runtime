@@ -104,7 +104,7 @@ impl RuntimeRunner {
                         script.unload().unwrap();
                         session.detach().unwrap();
                     },
-                    Err(e) => {println!("Error: {}", e.to_string())}
+                    Err(e) => {println!("Error: {}", e)}
                 }
             }
         } 
