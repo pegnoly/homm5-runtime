@@ -1,115 +1,118 @@
-use std::{collections::HashMap, sync::LazyLock};
+use std::collections::HashMap;
 
 use homm5_types::art::AdvMapArtifact;
 use quick_xml::Writer;
+use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 
-#[derive(Debug, PartialEq, Eq, Hash, EnumString, Display, EnumIter, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, EnumString, Display, EnumIter, Clone, Serialize, Deserialize)]
 pub enum NewArtifactType {
+    #[serde(rename = "ARTIFACT_PRIMARY_WEAPON_BLANK")]
     #[strum(serialize = "ARTIFACT_PRIMARY_WEAPON_BLANK")]
     PrimaryWeaponBlank,
+    #[serde(rename = "ARTIFACT_SECONDARY_WEAPON_BLANK")]
     #[strum(serialize = "ARTIFACT_SECONDARY_WEAPON_BLANK")]
     SecondaryWeaponBlank,
+    #[serde(rename = "ARTIFACT_ARMOR_BLANK")]
     #[strum(serialize = "ARTIFACT_ARMOR_BLANK")]
     ArmorBlank,
+    #[serde(rename = "ARTIFACT_HELMET_BLANK")]
     #[strum(serialize = "ARTIFACT_HELMET_BLANK")]
     HelmetBlank,
+    #[serde(rename = "ARTIFACT_BOOTS_BLANK")]
     #[strum(serialize = "ARTIFACT_BOOTS_BLANK")]
     BootsBlank,
+    #[serde(rename = "ARTIFACT_RING_BLANK")]
     #[strum(serialize = "ARTIFACT_RING_BLANK")]
     RingBlank,
+    #[serde(rename = "ARTIFACT_NECKLACE_BLANK")]
     #[strum(serialize = "ARTIFACT_NECKLACE_BLANK")]
     NeclaceBlank,
+    #[serde(rename = "ARTIFACT_CLOAK_BLANK")]
     #[strum(serialize = "ARTIFACT_CLOAK_BLANK")]
     CloakBlank,
+    #[serde(rename = "ARTIFACT_POCKET_BLANK")]
     #[strum(serialize = "ARTIFACT_POCKET_BLANK")]
     PocketBlank,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_POWER")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_POWER")]
     InsigniaOfPower,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_PROTECTION")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_PROTECTION")]
     InsigniaOfProtection,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_WIZARDY")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_WIZARDY")]
     InsigniaOfWizardy,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_ENLIGHTMENT")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_ENLIGHTMENT")]
     InsigniaOfEnlightment,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_HASTE")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_HASTE")]
     InsigniaOfHaste,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_SWIFTNESS")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_SWIFTNESS")]
     InsigniaOfSwiftness,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_VITALITY")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_VITALITY")]
     InsigniaOfVitality,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_FORTUNE")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_FORTUNE")]
     InsigniaOfFortune,
+    #[serde(rename = "ARTIFACT_INSIGNIA_OF_COURAGE")]
     #[strum(serialize = "ARTIFACT_INSIGNIA_OF_COURAGE")]
     InsigniaOfCourage,
+    #[serde(rename = "ARTIFACT_SEAL_OF_MIGHT")]
     #[strum(serialize = "ARTIFACT_SEAL_OF_MIGHT")]
     SealOfMight,
+    #[serde(rename = "ARTIFACT_SEAL_OF_MAGIC")]
     #[strum(serialize = "ARTIFACT_SEAL_OF_MAGIC")]
     SealOfMagic,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_STEPPE")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_STEPPE")]
     SigilOfSteppe,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_BLOOM")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_BLOOM")]
     SigilOfBloom,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_CALMNESS")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_CALMNESS")]
     SigilOfCalmness,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_DEATH")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_DEATH")]
     SigilOfDeath,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_BURNING_HEART")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_BURNING_HEART")]
     SigilOfBurningHeart,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_LIGHT")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_LIGHT")]
     SigilOfLight,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_PROGRESS")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_PROGRESS")]
     SigilOfProgress,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_RAGE")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_RAGE")]
     SigilOfRage,
+    #[serde(rename = "ARTIFACT_SIGIL_OF_DRAGONS")]
     #[strum(serialize = "ARTIFACT_SIGIL_OF_DRAGONS")]
     SigilOfDragons
 }
 
-static NEW_ARTIFACTS_XDBS: LazyLock<HashMap<NewArtifactType, &str>> = LazyLock::new(|| {
-    HashMap::from([
-        (NewArtifactType::PrimaryWeaponBlank, "/MapObjects/Artifacts/NAF/ART_175/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SecondaryWeaponBlank, "/MapObjects/Artifacts/NAF/ART_176/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::ArmorBlank, "/MapObjects/Artifacts/NAF/ART_177/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::HelmetBlank, "/MapObjects/Artifacts/NAF/ART_178/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::BootsBlank, "/MapObjects/Artifacts/NAF/ART_179/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::RingBlank, "/MapObjects/Artifacts/NAF/ART_180/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::NeclaceBlank, "/MapObjects/Artifacts/NAF/ART_181/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::CloakBlank, "/MapObjects/Artifacts/NAF/ART_182/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::PocketBlank, "/MapObjects/Artifacts/NAF/ART_183/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfPower, "/MapObjects/Artifacts/NAF/ART_184/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfProtection, "/MapObjects/Artifacts/NAF/ART_185/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfWizardy, "/MapObjects/Artifacts/NAF/ART_186/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfEnlightment, "/MapObjects/Artifacts/NAF/ART_187/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfHaste, "/MapObjects/Artifacts/NAF/ART_188/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfSwiftness, "/MapObjects/Artifacts/NAF/ART_189/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfVitality, "/MapObjects/Artifacts/NAF/ART_190/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfFortune, "/MapObjects/Artifacts/NAF/ART_191/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::InsigniaOfCourage, "/MapObjects/Artifacts/NAF/ART_192/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SealOfMight, "/MapObjects/Artifacts/NAF/ART_193/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SealOfMagic, "/MapObjects/Artifacts/NAF/ART_194/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfSteppe, "/MapObjects/Artifacts/NAF/ART_195/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfBloom, "/MapObjects/Artifacts/NAF/ART_196/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfCalmness, "/MapObjects/Artifacts/NAF/ART_197/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfDeath, "/MapObjects/Artifacts/NAF/ART_198/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfBurningHeart, "/MapObjects/Artifacts/NAF/ART_199/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfLight, "/MapObjects/Artifacts/NAF/ART_200/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfProgress, "/MapObjects/Artifacts/NAF/ART_201/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfRage, "/MapObjects/Artifacts/NAF/ART_202/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)"),
-        (NewArtifactType::SigilOfDragons, "/MapObjects/Artifacts/NAF/ART_203/Art.(AdvMapArtifactShared).xdb#xpointer(/AdvMapArtifactShared)")
-    ])
-});
-
-pub struct ArtifactsModifier {
-    new_artifacts: HashMap<NewArtifactType, Vec<String>>,
-    new_artifacts_count: HashMap<NewArtifactType, u32>
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ArtifactConfigEntity {
+    #[serde(rename = "type")]
+    pub _type: NewArtifactType,
+    pub shared: String
 }
 
-impl ArtifactsModifier {
-    pub fn new() -> Self {
+pub struct ArtifactsModifier<'a> {
+    artifacts_data: &'a Vec<ArtifactConfigEntity>,
+    new_artifacts: HashMap<NewArtifactType, Vec<String>>
+}
+
+impl<'a> ArtifactsModifier<'a> {
+    pub fn new(artifacts_config_data: &'a Vec<ArtifactConfigEntity>) -> Self {
         ArtifactsModifier {
-            new_artifacts: HashMap::new(),
-            new_artifacts_count: HashMap::new()
+            artifacts_data: artifacts_config_data,
+            new_artifacts: HashMap::new()
         }
     }
 
@@ -117,19 +120,13 @@ impl ArtifactsModifier {
         let empty = String::new();
         let artifact_shared = artifact.shared.href.as_ref().unwrap_or(&empty);
         if !artifact_shared.is_empty() {
-            if let Some(artifact_data) = NEW_ARTIFACTS_XDBS.iter().find(|(_type, shared)| **shared == artifact_shared.as_str()) {
-                let artifacts_count;
-                if let Some(current_count) = self.new_artifacts_count.get_mut(artifact_data.0) {
-                    artifacts_count = *current_count + 1;
+            if let Some(artifact_data) = self.artifacts_data.iter().find(|a| a.shared == artifact_shared.as_str()) {
+                if let Some(artifacts) = self.new_artifacts.get_mut(&artifact_data._type) {
+                    artifact.name = Some(format!("{}_{}", artifact_data._type, artifacts.len() + 1));
+                    artifacts.push(artifact.name.clone().unwrap());
                 } else {
-                    artifacts_count = 1;
-                }
-                artifact.name = Some(format!("{}_{}", &artifact_data.0.to_string(), artifacts_count));
-                self.new_artifacts_count.insert(artifact_data.0.clone(), artifacts_count);
-                if let Some(existing_artifacts) = self.new_artifacts.get_mut(artifact_data.0) {
-                    existing_artifacts.push(artifact.name.clone().unwrap());
-                } else {
-                    self.new_artifacts.insert(artifact_data.0.clone(), vec![artifact.name.clone().unwrap()]);
+                    artifact.name = Some(format!("{}_1", artifact_data._type));
+                    self.new_artifacts.insert(artifact_data._type.clone(), vec![artifact.name.clone().unwrap()]);
                 }
             }
         }
@@ -147,7 +144,7 @@ impl ArtifactsModifier {
         NewArtifactType::iter().for_each(|_type| {
             if let Some(artifacts) = self.new_artifacts.get(&_type) {
                 for artifact in artifacts {
-                    lua_code += &format!("\t[\"{}\"] = {},\n", artifact, _type.to_string());
+                    lua_code += &format!("\t[\"{}\"] = {},\n", artifact, _type);
                 }
             }
         });

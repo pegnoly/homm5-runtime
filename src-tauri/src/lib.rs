@@ -1,4 +1,4 @@
-use map_modifier::MapData;
+use map_modifier::{artifacts::ArtifactConfigEntity, buildings::{BankConfigEntity, BuildingConfigEntity}, MapData};
 use serde::{Deserialize, Serialize};
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
@@ -17,30 +17,40 @@ pub struct RuntimeData {
     pub current_selected_map: u16
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DataContainer {
+    pub banks: Vec<BankConfigEntity>,
+    pub buildings: Vec<BuildingConfigEntity>,
+    pub artifacts: Vec<ArtifactConfigEntity>
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
     let exe_path = std::env::current_exe().unwrap();
     let cfg_path = exe_path.parent().unwrap().join("cfg\\");
 
-    let cfg_string = std::fs::read_to_string(&cfg_path.join("main.json")).unwrap();
+    let cfg_string = std::fs::read_to_string(cfg_path.join("main.json")).unwrap();
     let cfg: Config = serde_json::from_str(&cfg_string).unwrap();
 
-    let runtime_cfg_string = std::fs::read_to_string(&cfg_path.join("runtime.json")).unwrap();
+    let runtime_cfg_string = std::fs::read_to_string(cfg_path.join("runtime.json")).unwrap();
     let runtime_data: RuntimeData = serde_json::from_str(&runtime_cfg_string).unwrap();
-    let current_map_string = std::fs::read_to_string(&cfg_path.join("current_map_data.json")).unwrap();
+    let current_map_string = std::fs::read_to_string(cfg_path.join("current_map_data.json")).unwrap();
     let current_map_data: MapData = serde_json::from_str(&current_map_string).unwrap();
 
     let runtime_config = RuntimeConfig {
         current_selected_map: Some(runtime_data.current_selected_map),
-        current_map_data: current_map_data
+        current_map_data
     };
 
+    let data_string = std::fs::read_to_string(cfg_path.join("objects_data.json")).unwrap();
+    let data: DataContainer = serde_json::from_str(&data_string).unwrap();
+
     let db_path = cfg_path.join("runtime_database.db");
-    if db_path.exists() == false {
+    if !db_path.exists() {
         std::fs::File::create(&db_path).unwrap();
     }
 
-    let pool = sqlx::SqlitePool::connect(&db_path.to_str().unwrap())
+    let pool = sqlx::SqlitePool::connect(db_path.to_str().unwrap())
         .await
         .unwrap();
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
@@ -56,6 +66,7 @@ pub async fn run() {
         })
         .manage(quest_service)
         .manage(dialog_generator_service)
+        .manage(data)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             commands::execute_scan,

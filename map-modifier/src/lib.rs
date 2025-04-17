@@ -1,8 +1,8 @@
 use core::str;
 use std::{collections::HashMap, io::Write};
 
-use artifacts::ArtifactsModifier;
-use buildings::BuildingsModifier;
+use artifacts::{ArtifactConfigEntity, ArtifactsModifier};
+use buildings::{BankConfigEntity, BuildingConfigEntity, BuildingsModifier};
 use homm5_types::{art::AdvMapArtifact, building::AdvMapBuilding, creature::AdvMapMonster, hero::AdvMapHero};
 pub use homm5_types::{common::FileRef, quest::{Objectives, Quest, QuestList}, Homm5Type};
 use monsters::MonstersModifier;
@@ -52,22 +52,26 @@ pub trait GenerateBoilerplate {
 
     fn generate(&self, additional_data: Option<&Self::Additional>) -> Result<Self::Output, std::io::Error>;
 }
-pub struct ModifiersQueue {
+pub struct ModifiersQueue<'a> {
     pub primary_quests: Vec<Quest>,
     pub secondary_quests: Vec<Quest>,
-    buildings_modifier: BuildingsModifier,
-    artifacts_modifier: ArtifactsModifier,
+    buildings_modifier: BuildingsModifier<'a>,
+    artifacts_modifier: ArtifactsModifier<'a>,
     monsters_modifier: MonstersModifier,
 }
 
-impl ModifiersQueue {
+impl<'a> ModifiersQueue<'a> {
 
-    pub fn new() -> Self {
+    pub fn new(
+        banks_data: &'a Vec<BankConfigEntity>, 
+        buildings_data: &'a Vec<BuildingConfigEntity>,
+        artifacts_data: &'a Vec<ArtifactConfigEntity>
+    ) -> Self {
         ModifiersQueue { 
             primary_quests: vec![], 
             secondary_quests: vec![], 
-            buildings_modifier: BuildingsModifier::new(), 
-            artifacts_modifier: ArtifactsModifier::new(),
+            buildings_modifier: BuildingsModifier::new(buildings_data, banks_data), 
+            artifacts_modifier: ArtifactsModifier::new(artifacts_data),
             monsters_modifier: MonstersModifier::new()
         }
     }
@@ -257,12 +261,6 @@ impl ModifiersQueue {
         } 
 
         writer.write_serializable("Objectives", objectives_data).unwrap();
-    }
-}
-
-impl Default for ModifiersQueue {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

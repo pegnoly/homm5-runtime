@@ -11,7 +11,7 @@ use tauri::State;
 
 use crate::services::QuestService;
 use crate::utils::{Config, LocalAppManager, MapFrontendModel};
-use crate::RuntimeData;
+use crate::{DataContainer, RuntimeData};
 
 #[tauri::command]
 pub async fn execute_scan(config: State<'_, Config>) -> Result<(), ()> {
@@ -115,13 +115,14 @@ pub async fn apply_modifications(
     config: State<'_, Config>,
     app_manager: State<'_, LocalAppManager>,
     quest_service: State<'_, QuestService>,
+    data_containter: State<'_, DataContainer>
 ) -> Result<(), super::error::Error> {
     let mut config_locked = app_manager.runtime_config.lock().await;
     let current_map_id = config_locked.current_selected_map.unwrap();
     let map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
     let mod_path = &config.mod_path;
 
-    let mut modifiers_queue = ModifiersQueue::new();
+    let mut modifiers_queue = ModifiersQueue::new(&data_containter.banks, &data_containter.buildings, &data_containter.artifacts);
 
     // get all ids of quest for current map
 
