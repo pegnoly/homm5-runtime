@@ -7,11 +7,12 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 
 #[derive(
-    Debug, Serialize, Deserialize, Clone, Copy, EnumString, PartialEq, Eq, Hash, EnumIter, Display,
+    Debug, Serialize, Deserialize, Clone, Copy, EnumString, PartialEq, Eq, Hash, EnumIter, Display, Default
 )]
 pub enum TownType {
     #[serde(rename = "TOWN_NO_TYPE")]
     #[strum(to_string = "TOWN_NO_TYPE")]
+    #[default]
     TownNoType,
     #[serde(rename = "TOWN_HEAVEN")]
     #[strum(to_string = "TOWN_HEAVEN")]

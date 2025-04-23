@@ -1,11 +1,16 @@
 use derive_more::derive::{Display, From};
 use serde::{Serialize, Serializer};
 
-#[derive(From, Display)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    SqlxError(sqlx::Error),
-    JsonError(serde_json::Error),
-    IOError(std::io::Error),
+    #[error(transparent)]
+    Sqlx(#[from]sqlx::Error),
+    #[error(transparent)]
+    Json(#[from]serde_json::Error),
+    #[error(transparent)]
+    IO(#[from]std::io::Error),
+    #[error(transparent)]
+    EditorTools(#[from]editor_tools::error::EditorToolsError)
 }
 
 impl Serialize for Error {

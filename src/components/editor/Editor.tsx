@@ -6,6 +6,7 @@ import DialogGeneratorMain from "../dialog/Main";
 import DialogGeneratorGlobals from "../dialog/Global";
 import ReserveHeroesMain from "../reserve_heroes/main";
 import { invoke } from "@tauri-apps/api/core";
+import BanksConfiguratorMain from "../bank_configurator/main";
 
 function Editor() {
 
@@ -45,7 +46,8 @@ function EditorStateSelector() {
             options={[
                 {value: EditorState.Dialog, label: "Edit dialogs"},
                 {value: EditorState.Quest, label: "Edit quests"},
-                {value: EditorState.ReserveHeroes, label: "Edit reserve heroes"}
+                {value: EditorState.ReserveHeroes, label: "Edit reserve heroes"},
+                {value: EditorState.Banks, label: "Configure banks"}
             ]}>
 
         </Segmented>
@@ -63,6 +65,8 @@ function EditorWindow() {
             return <DialogGeneratorMain/>
         case EditorState.ReserveHeroes:
             return <ReserveHeroesMain/>
+        case EditorState.Banks:
+            return <BanksConfiguratorMain/>
     }
 }
 

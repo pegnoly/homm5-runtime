@@ -1,3 +1,4 @@
+use editor_tools::services::banks::service::BanksService;
 use map_modifier::{artifacts::ArtifactConfigEntity, buildings::{BankConfigEntity, BuildingConfigEntity}, MapData};
 use serde::{Deserialize, Serialize};
 use services::dialog_generator::prelude::*;
@@ -56,7 +57,7 @@ pub async fn run() {
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
     let quest_service = QuestService::new(pool.clone());
-    let dialog_generator_service = DialogGeneratorService::new(pool);
+    let dialog_generator_service = DialogGeneratorService::new(pool.clone());
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -66,6 +67,7 @@ pub async fn run() {
         })
         .manage(quest_service)
         .manage(dialog_generator_service)
+        .manage(BanksService::new(pool.clone()))
         .manage(data)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -118,7 +120,16 @@ pub async fn run() {
             //reserve heroes commands
             services::reserve_hero_creator::commands::load_existing_reserve_heroes,
             services::reserve_hero_creator::commands::remove_reserve_hero,
-            services::reserve_hero_creator::commands::add_reserve_hero
+            services::reserve_hero_creator::commands::add_reserve_hero,
+            //banks
+            services::banks_configurator::commands::get_all_banks,
+            services::banks_configurator::commands::load_bank,
+            services::banks_configurator::commands::create_variant,
+            services::banks_configurator::commands::load_variant,
+            services::banks_configurator::commands::load_bank_variants,
+            services::banks_configurator::commands::create_creature_slot,
+            services::banks_configurator::commands::load_creature_slots_ids,
+            services::banks_configurator::commands::load_creature_slot
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

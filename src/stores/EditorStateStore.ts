@@ -3,7 +3,8 @@ import { create } from "zustand"
 export enum EditorState {
     Quest,
     Dialog,
-    ReserveHeroes
+    ReserveHeroes,
+    Banks
 }
 
 type State = {

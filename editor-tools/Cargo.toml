@@ -1,0 +1,14 @@
+[package]
+name = "editor-tools"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+homm5-types = { path = "../homm5-types"}
+itertools = "0.14.0"
+sea-orm = {version = "1.1.10", features = ["sqlx-sqlite"]}
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140", features = ["raw_value"] }
+strum = { version = "0.27.1", features = ["derive"] }
+thiserror = "2.0.12"
+tokio = { version = "1.44.2", features = ["macros"] }
