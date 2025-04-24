@@ -1,8 +1,11 @@
+use std::io::Write;
+
+use homm5_types::town::TownType;
 use itertools::Itertools;
 use tauri::State;
-use editor_tools::services::banks::{models::{self, bank_creature_entry::CreatureTownType}, service::{payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload}, BanksService}};
+use editor_tools::services::banks::{models::{self, bank_creature_entry::{self, BankCreatureSlotType, CreatureTownType}}, service::{payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload}, BanksService}};
 use crate::{error::Error, services::banks_configurator::types::{BankModel, BankSimpleModel}};
-use super::types::{BankDifficultyType, BankVariantModel, CreatureSlotType};
+use super::types::{BankDifficultyType, BankType, BankVariantModel, CreatureSlotType};
 
 #[tauri::command]
 pub async fn get_all_banks(
@@ -32,7 +35,7 @@ pub async fn update_bank_recharges_count(
     id: i32,
     count: String
 ) -> Result<i32, Error> {
-    let actual_count = i32::from_str_radix(&count, 10)?;
+    let actual_count = count.parse::<i32>()?;
     let payload = UpdateBankPayload::new(id).with_recharge_count(actual_count);
     bank_service.update_bank(payload).await?;
     Ok(actual_count)
@@ -44,7 +47,7 @@ pub async fn update_bank_recharge_timer(
     id: i32,
     timer: String
 ) -> Result<i32, Error> {
-    let actual_timer = i32::from_str_radix(&timer, 10)?;
+    let actual_timer = timer.parse::<i32>()?;
     let payload = UpdateBankPayload::new(id).with_recharge_timer(actual_timer);
     bank_service.update_bank(payload).await?;
     Ok(actual_timer)
@@ -56,7 +59,7 @@ pub async fn update_bank_morale_loss(
     id: i32,
     loss: String
 ) -> Result<i32, Error> {
-    let actual_loss = i32::from_str_radix(&loss, 10)?;
+    let actual_loss = loss.parse::<i32>()?;
     let payload = UpdateBankPayload::new(id).with_morale_loss(actual_loss);
     bank_service.update_bank(payload).await?;
     Ok(actual_loss)
@@ -68,7 +71,7 @@ pub async fn update_bank_luck_loss(
     id: i32,
     loss: String
 ) -> Result<i32, Error> {
-    let actual_loss = i32::from_str_radix(&loss, 10)?;
+    let actual_loss = loss.parse::<i32>()?;
     let payload = UpdateBankPayload::new(id).with_luck_loss(actual_loss);
     bank_service.update_bank(payload).await?;
     Ok(actual_loss)
@@ -115,7 +118,7 @@ pub async fn update_bank_variant_chance(
     variant_id: i32,
     chance: String
 ) -> Result<i32, Error> {
-    let actual_chance = i32::from_str_radix(&chance, 10)?;
+    let actual_chance = chance.parse::<i32>()?;
     let payload = UpdateBankVariantPayload::new(variant_id).with_chance(actual_chance);
     bank_service.update_variant(payload).await?;
     Ok(actual_chance)
@@ -171,7 +174,7 @@ pub async fn update_creature_slot_base_power(
     slot_id: i32,
     power: String
 ) -> Result<i32, Error> {
-    let actual_power = i32::from_str_radix(&power, 10)?;
+    let actual_power = power.parse::<i32>()?;
     let payload = UpdateCreatureEntryPayload::new(slot_id).with_base_power(actual_power);
     bank_service.update_creature_entry(payload).await?;
     Ok(actual_power)
@@ -183,7 +186,7 @@ pub async fn update_creature_slot_power_grow(
     slot_id: i32,
     grow: String
 ) -> Result<i32, Error> {
-    let actual_grow = i32::from_str_radix(&grow, 10)?;
+    let actual_grow = grow.parse::<i32>()?;
     let payload = UpdateCreatureEntryPayload::new(slot_id).with_power_grow(actual_grow);
     bank_service.update_creature_entry(payload).await?;
     Ok(actual_grow)
@@ -209,4 +212,81 @@ pub async fn update_creature_slot_tier(
     let payload = UpdateCreatureEntryPayload::new(slot_id).with_tier(tier);
     bank_service.update_creature_entry(payload).await?;
     Ok(())
+}
+
+#[tauri::command]
+pub async fn generate_banks_script(
+    bank_service: State<'_, BanksService>
+) -> Result<(), Error> {
+    let banks = bank_service.get_banks().await?;
+    for bank in banks {
+        let bank_local_type = BankType::from(bank._type.clone());
+        let bank_file_name = bank_service.path.join(format!("{}.lua", bank_local_type.to_string().replace("BTD_BANK_", "").to_lowercase()));
+        let mut bank_file = std::fs::File::create(bank_file_name)?;
+        // loading data
+        let mut bank_data_string = format!("while not {} and BTD_BANKS_DATA do\n\tsleep()\nend\n\n", bank_local_type);
+        // base bank info
+        bank_data_string += &format!("BTD_BANKS_DATA[{}] = {{\n", bank_local_type);
+        bank_data_string += &format!(
+            "\trecharges_count = {},\n\trecharge_timer = {},\n\tmorale_loss = {},\n\tluck_loss = {},\n",
+            bank.recharge_count,
+            bank.recharge_timer,
+            bank.morale_loss,
+            bank.luck_loss
+        );
+        // bank variants info
+        let bank_variants = bank_service.get_variants(bank.id).await?;
+        bank_data_string += "\tvariants = {\n";
+        for (variants_count, variant) in bank_variants.into_iter().enumerate() {
+            bank_data_string += &format!(
+                "\t\t[{}] = {{\n\t\t\tdifficulty = {},\n\t\t\tchance = {},\n", 
+                variants_count, 
+                BankDifficultyType::from(variant.difficulty), 
+                variant.chance
+            );
+            let creature_slots = bank_service.load_full_creature_entries(variant.id).await?;
+            bank_data_string += "\t\t\tcreatures = {\n";
+            for slot in creature_slots {
+                bank_data_string += &format!("\t\t\t\t{{\n\t\t\t\t\ttype = {},\n", bank_slot_type_to_lua(slot._type.clone()));
+                if let Some(town) = slot.data.creature_town {
+                    bank_data_string += &format!("\t\t\t\t\ttown = {},\n", creature_slot_town_to_lua(town));
+                }
+                if let Some(tier) = slot.data.creature_tier {
+                    bank_data_string += &format!("\t\t\t\t\ttier = {},\n", tier);
+                }
+                if let Some(base_power) = slot.data.base_power {
+                    bank_data_string += &format!("\t\t\t\t\tbase_power = {},\n", base_power);
+                }
+                if let Some(power_grow) = slot.data.power_grow {
+                    bank_data_string += &format!("\t\t\t\t\tpower_grow = {}, \n", power_grow);
+                }
+                bank_data_string.push_str("\t\t\t\t},\n");
+            }
+            bank_data_string.push_str("\t\t\t}\n\t\t},\n");
+        }
+        bank_data_string.push_str("\t}\n}");
+        bank_file.write_all(bank_data_string.as_bytes())?;
+    }
+    Ok(())
+} 
+
+fn bank_slot_type_to_lua(slot_type: BankCreatureSlotType) -> &'static str {
+    match slot_type {
+        BankCreatureSlotType::Concrete => "BANK_SLOT_TYPE_CONCRETE_CREATURE",
+        BankCreatureSlotType::Tier => "BANK_SLOT_TYPE_CREATURE_TIER"
+    }
+}
+
+fn creature_slot_town_to_lua(slot_town_type: CreatureTownType) -> TownType {
+    match slot_town_type {
+        CreatureTownType::TownAcademy => TownType::TownAcademy,
+        CreatureTownType::TownDungeon => TownType::TownDungeon,
+        CreatureTownType::TownFortress => TownType::TownFortress,
+        CreatureTownType::TownHeaven => TownType::TownHeaven,
+        CreatureTownType::TownInferno => TownType::TownInferno,
+        CreatureTownType::TownNecromancy => TownType::TownNecromancy,
+        CreatureTownType::TownNoType => TownType::TownNoType,
+        CreatureTownType::TownPreserve => TownType::TownPreserve,
+        CreatureTownType::TownStronghold => TownType::TownStronghold
+    }
 }

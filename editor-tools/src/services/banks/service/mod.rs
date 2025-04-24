@@ -8,12 +8,13 @@ use super::models::{bank, bank_creature_entry::{self, BankCreatureSlotType, Crea
 pub mod payloads;
 
 pub struct BanksService {
-    db: DatabaseConnection
+    db: DatabaseConnection,
+    pub path: PathBuf
 }
 
 impl BanksService {
-    pub fn new(pool: SqlitePool) -> Self {
-        BanksService { db: DatabaseConnection::SqlxSqlitePoolConnection(SqlxSqlitePoolConnection::from(pool)) }
+    pub fn new(pool: SqlitePool, path: PathBuf) -> Self {
+        BanksService { db: DatabaseConnection::SqlxSqlitePoolConnection(SqlxSqlitePoolConnection::from(pool)), path }
     }
 
     pub async fn get_banks(&self) -> Result<Vec<super::models::bank::Model>, EditorToolsError> {
@@ -105,6 +106,10 @@ impl BanksService {
         Ok(query_result.into_iter().map(|e| {
             e.id
         }).collect_vec())
+    }
+
+    pub async fn load_full_creature_entries(&self, variant_id: i32) -> Result<Vec<bank_creature_entry::Model>, EditorToolsError> {
+        Ok(bank_creature_entry::Entity::find().filter(bank_creature_entry::Column::VariantId.eq(variant_id)).all(&self.db).await?)
     }
 
     pub async fn load_creature_entry(&self, id: i32) -> Result<Option<bank_creature_entry::Model>, EditorToolsError> {

@@ -6,7 +6,7 @@ import DialogGeneratorMain from "../dialog/Main";
 import DialogGeneratorGlobals from "../dialog/Global";
 import ReserveHeroesMain from "../reserve_heroes/main";
 import { invoke } from "@tauri-apps/api/core";
-import BanksConfiguratorMain from "../bank_configurator/main";
+import BanksConfiguratorMain, { BanksConfiguratorGlobals } from "../bank_configurator/main";
 
 function Editor() {
 
@@ -79,6 +79,8 @@ function EditorGlobals() {
             return <QuestGenerator/>
         case EditorState.Dialog:
             return <DialogGeneratorGlobals/>
+        case EditorState.Banks: 
+            return <BanksConfiguratorGlobals/>
     }
 }
 

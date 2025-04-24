@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use editor_tools::services::banks::service::BanksService;
 use map_modifier::{artifacts::ArtifactConfigEntity, buildings::{BankConfigEntity, BuildingConfigEntity}, MapData};
 use serde::{Deserialize, Serialize};
@@ -67,7 +69,7 @@ pub async fn run() {
         })
         .manage(quest_service)
         .manage(dialog_generator_service)
-        .manage(BanksService::new(pool.clone()))
+        .manage(BanksService::new(pool.clone(), PathBuf::from("C:/H5ToE/Mods/GOG/scripts/advmap/Banks/Data/")))
         .manage(data)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -138,7 +140,8 @@ pub async fn run() {
             services::banks_configurator::commands::update_creature_slot_base_power,
             services::banks_configurator::commands::update_creature_slot_power_grow,
             services::banks_configurator::commands::update_creature_slot_tier,
-            services::banks_configurator::commands::update_creature_slot_town
+            services::banks_configurator::commands::update_creature_slot_town,
+            services::banks_configurator::commands::generate_banks_script
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

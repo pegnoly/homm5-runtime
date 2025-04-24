@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { List} from "antd";
+import { Button, List} from "antd";
 import { useEffect, useState } from "react";
 import { Link, Route, Routes } from "react-router";
 import BankFocused, { BankModel } from "./Bank";
@@ -30,5 +30,10 @@ function BanksList(props: {banks: BankModel[]}) {
     </>
 }
 
-export default BanksConfiguratorMain;
+export function BanksConfiguratorGlobals() {
+    return <>
+        <Button onClick={() => invoke("generate_banks_script")}>Generate banks script</Button>
+    </>
+}
 
+export default BanksConfiguratorMain;
