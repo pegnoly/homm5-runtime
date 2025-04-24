@@ -1,6 +1,4 @@
-use sea_orm::ActiveValue::Set;
-
-use crate::services::banks::models::bank_variant::BankDifficultyType;
+use crate::services::banks::models::{bank_creature_entry::CreatureTownType, bank_variant::BankDifficultyType};
 
 pub struct CreateVariantPayload {
     pub bank_id: i32,
@@ -68,6 +66,56 @@ impl UpdateBankVariantPayload {
 
     pub fn with_difficulty(mut self, difficulty: BankDifficultyType) -> Self {
         self.difficulty = Some(difficulty);
+        self
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct UpdateCreatureEntryPayload {
+    pub id: i32,
+    pub base_power: Option<i32>,
+    pub power_grow: Option<i32>,
+    pub creature_town: Option<CreatureTownType>,
+    pub creature_tier: Option<i32>,
+    pub creature_id: Option<i32>,
+    pub creature_count: Option<i32>
+}
+
+impl UpdateCreatureEntryPayload {
+    pub fn new(id: i32) -> Self {
+        UpdateCreatureEntryPayload {
+            id,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_base_power(mut self, power: i32) -> Self {
+        self.base_power = Some(power);
+        self
+    }
+
+    pub fn with_power_grow(mut self, grow: i32) -> Self {
+        self.power_grow = Some(grow);
+        self
+    }
+
+    pub fn with_town(mut self, town: CreatureTownType) -> Self {
+        self.creature_town = Some(town);
+        self
+    }
+
+    pub fn with_tier(mut self, tier: i32) -> Self {
+        self.creature_tier = Some(tier);
+        self
+    }
+
+    pub fn with_creature_id(mut self, id: i32) -> Self {
+        self.creature_id = Some(id);
+        self
+    }
+
+    pub fn with_count(mut self, count: i32) -> Self {
+        self.creature_count = Some(count);
         self
     }
 }

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use itertools::Itertools;
-use payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload};
+use payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload};
 use sea_orm::{sqlx::{types::Json, SqlitePool}, ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityOrSelect, EntityTrait, FromQueryResult, InsertResult, IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, QueryTrait, Related, SqlxSqlitePoolConnection};
 use crate::error::EditorToolsError;
 use super::models::{bank, bank_creature_entry::{self, BankCreatureSlotType, CreatureSlotData}, bank_variant};
@@ -109,5 +109,33 @@ impl BanksService {
 
     pub async fn load_creature_entry(&self, id: i32) -> Result<Option<bank_creature_entry::Model>, EditorToolsError> {
         Ok(bank_creature_entry::Entity::find_by_id(id).one(&self.db).await?)
+    }
+
+    pub async fn update_creature_entry(&self, payload: UpdateCreatureEntryPayload) -> Result<(), EditorToolsError> {
+        if let Some(current_model) = bank_creature_entry::Entity::find_by_id(payload.id).one(&self.db).await? {
+            let mut entry_data = current_model.data.clone();
+            let mut model_to_update = current_model.into_active_model();
+            if let Some(power) = payload.base_power {
+                entry_data.base_power = Some(power);
+            }
+            if let Some(grow) = payload.power_grow {
+                entry_data.power_grow = Some(grow);
+            }
+            if let Some(town) = payload.creature_town {
+                entry_data.creature_town = Some(town);
+            }
+            if let Some(tier) = payload.creature_tier {
+                entry_data.creature_tier = Some(tier);
+            }
+            if let Some(creature_id) = payload.creature_id {
+                entry_data.creature_id = Some(creature_id);
+            }
+            if let Some(count) = payload.creature_count {
+                entry_data.creature_count = Some(count);
+            }
+            model_to_update.data = Set(entry_data);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
     }
 }

@@ -4,6 +4,20 @@ use sea_orm::{prelude::*, FromJsonQueryResult, FromQueryResult};
 
 #[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize, DeriveActiveEnum, EnumIter, PartialEq, Eq)]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
+pub enum CreatureTownType {
+    TownNoType = -1,
+    TownHeaven = 0,
+    TownInferno = 1,
+    TownNecromancy = 2,
+    TownPreserve = 3,
+    TownDungeon = 4,
+    TownAcademy = 5,
+    TownFortress = 6,
+    TownStronghold = 7
+}
+
+#[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize, DeriveActiveEnum, EnumIter, PartialEq, Eq)]
+#[sea_orm(rs_type = "i32", db_type = "Integer")]
 pub enum BankCreatureSlotType {
     Tier = 0,
     Concrete = 1
@@ -24,7 +38,7 @@ pub struct Model {
 pub struct CreatureSlotData {
     pub base_power: Option<i32>,
     pub power_grow: Option<i32>,
-    pub creature_town: Option<i32>,
+    pub creature_town: Option<CreatureTownType>,
     pub creature_tier: Option<i32>,
     pub creature_id: Option<i32>,
     pub creature_count: Option<i32>
