@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Button, Input, InputRef, Modal, Segmented, Select, Typography } from "antd";
+import { Button, ConfigProvider, Input, InputRef, Modal, Segmented, Select, Typography } from "antd";
 import { useEffect, useRef, useState } from "react";
 
 export enum BankDifficultyType {
@@ -16,7 +16,7 @@ export type BankVariantModel = {
     difficulty: BankDifficultyType
 }
 
-const difficultyNames = new Map<BankDifficultyType, string>([
+const difficultiesData = new Map<BankDifficultyType, string>([
     [BankDifficultyType.Easy, "Easy"],
     [BankDifficultyType.Medium, "Medium"],
     [BankDifficultyType.Hard, "Hard"],
@@ -50,11 +50,21 @@ function BankVariants(data: {bankId: number | undefined, onVariantSelected: (var
         <Typography.Text style={{fontFamily: 'fantasy', fontStretch: 'expanded', fontSize: 15, color: 'darkorchid'}}>Variants</Typography.Text>
         <BankVariantCreator bankId={data.bankId!} onVariantCreated={variantCreated}/>
         <Typography.Text style={{fontFamily: 'cursive', fontSize: 14}}>Existing</Typography.Text>
-        <Segmented 
-            vertical 
-            options={variants.map((v) => ({value: v.id, label: difficultyNames.get(v.difficulty)}))}
-            onChange={selectVariant}
-        />
+        <ConfigProvider
+            theme={{
+                components: {
+                    Segmented: {
+                        itemSelectedBg: "violet"
+                    }
+                }
+            }}
+        >
+            <Segmented 
+                vertical 
+                options={variants.map((v) => ({value: v.id, label: difficultiesData.get(v.difficulty)}))}
+                onChange={selectVariant}
+            />
+        </ConfigProvider>
     </div>
 }
 
@@ -94,8 +104,8 @@ function BankVariantCreator(params: {bankId: number, onVariantCreated: (created:
                 <Typography.Text>Input variant chance</Typography.Text>
                 <Input type="number" ref={variantChanceRef}/>
                 <Typography.Text>Select variant difficulty</Typography.Text>
-                <Select value={diff} onChange={updateDiff}>{Object.keys(BankDifficultyType).map((value, index) => (
-                    <Select.Option key={index} value={value as BankDifficultyType}>{difficultyNames.get(value as BankDifficultyType)}</Select.Option>
+                <Select value={diff} onChange={updateDiff}>{Array.from(difficultiesData.entries()).map((value, index) => (
+                    <Select.Option key={index} value={value[0]}>{value[1]}</Select.Option>
                 ))}</Select>
             </div>
         </Modal>
