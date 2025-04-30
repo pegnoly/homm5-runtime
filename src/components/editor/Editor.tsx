@@ -16,14 +16,14 @@ function Editor() {
 
     return <>
         <Row>
-            <Col span={6}>
+            <Col span={5}>
                 <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 10}}>
                     <EditorStateSelector/>
                     <EditorGlobals/>
                     <Button onClick={applyModifications}>Apply modifications to map</Button>
                 </div>
             </Col>
-            <Col span={18}>
+            <Col span={18} offset={1}>
                 <EditorWindow/>
             </Col>
         </Row>

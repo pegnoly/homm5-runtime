@@ -15,16 +15,17 @@ use super::{data::QuestLoadingModel, service::QuestService};
 #[tauri::command]
 pub async fn collect_quests_for_selection(
     app_manager: State<'_, LocalAppManager>,
-    config: State<'_, Config>,
     quest_service: State<'_, QuestService>,
 ) -> Result<Vec<QuestLoadingModel>, ()> {
     let current_map_id = app_manager
         .runtime_config
-        .lock()
+        .read()
         .await
         .current_selected_map
         .unwrap();
-    let current_map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
+
+    let base_config_locked = app_manager.base_config.read().await;
+    let current_map = base_config_locked.maps.iter().find(|m| m.id == current_map_id).unwrap();
 
     match quest_service
         .get_quests_by_mission_data(current_map.campaign as u32, current_map.mission as u32)
@@ -106,18 +107,18 @@ pub async fn load_quest_is_active(
 
 #[tauri::command]
 pub async fn create_quest(
-    config: State<'_, Config>,
     app_manager: State<'_, LocalAppManager>,
     quest_service: State<'_, QuestService>,
     directory: String,
     script_name: String,
     name: String,
 ) -> Result<Uuid, ()> {
-    let runtime_config = app_manager.runtime_config.lock().await;
-    let map = config
+    let runtime_config_locked = app_manager.runtime_config.read().await;
+    let base_config_locked = app_manager.base_config.read().await;
+    let map = base_config_locked
         .maps
         .iter()
-        .find(|m| m.id == runtime_config.current_selected_map.unwrap())
+        .find(|m| m.id == runtime_config_locked.current_selected_map.unwrap())
         .unwrap();
 
     match quest_service
@@ -138,17 +139,18 @@ pub async fn create_quest(
 #[tauri::command]
 pub async fn pick_quest_directory(
     app: AppHandle,
-    config: State<'_, Config>,
     app_manager: State<'_, LocalAppManager>,
     initial: bool,
 ) -> Result<(), ()> {
     let current_map_id = app_manager
         .runtime_config
-        .lock()
+        .read()
         .await
         .current_selected_map
         .unwrap();
-    let map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
+
+    let base_config_locked = app_manager.base_config.read().await;
+    let map = base_config_locked.maps.iter().find(|m| m.id == current_map_id).unwrap();
 
     app.dialog()
         .file()
@@ -317,7 +319,7 @@ pub async fn add_quest_to_queue(
 ) -> Result<(), ()> {
     let current_map_id = app_manager
         .runtime_config
-        .lock()
+        .read()
         .await
         .current_selected_map
         .unwrap();

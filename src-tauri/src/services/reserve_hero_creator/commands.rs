@@ -1,6 +1,4 @@
 use std::io::Write;
-
-use homm5_scaner::entity::hero;
 use map_modifier::FileRef;
 use tauri::State;
 use crate::utils::LocalAppManager;
@@ -11,10 +9,10 @@ pub async fn load_existing_reserve_heroes(
     app_manager: State<'_, LocalAppManager>,
     player: i32
 ) -> Result<Vec<String>, ()> {
-    let config_locked = app_manager.runtime_config.lock().await;
+    let config_locked = app_manager.runtime_config.read().await;
     let current_map_data = &config_locked.current_map_data;
     if let Some(heroes) = current_map_data.reserve_heroes.get(&player) {
-        Ok(heroes.into_iter().map(|h| {
+        Ok(heroes.iter().map(|h| {
             h.shared.href.as_ref().unwrap().clone()
         }).collect::<Vec<String>>())
     } else {
@@ -28,15 +26,12 @@ pub async fn remove_reserve_hero(
     hero: String,
     player: i32
 ) -> Result<(), ()> {
-    let mut config_locked = app_manager.runtime_config.lock().await;
+    let mut config_locked = app_manager.runtime_config.write().await;
     let current_map_data = &mut config_locked.current_map_data;
     let updated_heroes: Vec<AdvMapHero> = current_map_data.reserve_heroes.get(&player).unwrap().iter()
         .filter(|h| {
             *h.shared.href.as_ref().unwrap() != hero
-        })
-        .map(|h| {
-            h.clone()
-        })
+        }).cloned()
         .collect();
 
     current_map_data.reserve_heroes.insert(player, updated_heroes);
@@ -99,7 +94,7 @@ pub async fn add_reserve_hero(
         banned_races: None
     };
 
-    let mut config_locked = app_manager.runtime_config.lock().await;
+    let mut config_locked = app_manager.runtime_config.write().await;
     let current_map_data = &mut config_locked.current_map_data;
     if let Some(heroes) = current_map_data.reserve_heroes.get_mut(&player) {
         heroes.push(new_hero);

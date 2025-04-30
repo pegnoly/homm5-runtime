@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Button, List} from "antd";
+import { Button, List, Typography} from "antd";
 import { useEffect, useState } from "react";
 import { Link, Route, Routes } from "react-router";
 import BankFocused, { BankModel } from "./Bank";
@@ -24,7 +24,9 @@ function BanksList(props: {banks: BankModel[]}) {
     return <>
         <List>{props.banks.map((b, i) => (
             <Link key={i} to={`bank/${b.id}`}>
-                <List.Item>{b.name}</List.Item>
+                <List.Item>
+                    <Typography.Text style={{fontFamily: 'cursive', fontWeight: 'bold', fontSize: 17}}>{b.name}</Typography.Text>
+                </List.Item>
             </Link>
         ))}</List>
     </>

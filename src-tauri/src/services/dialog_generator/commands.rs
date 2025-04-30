@@ -39,7 +39,7 @@ pub async fn pick_dialog_directory(
 ) -> Result<(), ()> {
     let current_map_id = app_manager
         .runtime_config
-        .lock()
+        .read()
         .await
         .current_selected_map
         .unwrap();
@@ -263,17 +263,18 @@ pub async fn save_dialog_variant(
 #[tauri::command]
 pub async fn generate_dialog(
     dialog_generator_service: State<'_, DialogGeneratorService>,
-    config: State<'_, Config>,
     app_manager: State<'_, LocalAppManager>,
     dialog_id: Uuid,
 ) -> Result<(), ()> {
     let current_map = app_manager
         .runtime_config
-        .lock()
+        .read()
         .await
         .current_selected_map
         .unwrap();
-    let map_data = config.maps.iter().find(|m| m.id == current_map).unwrap();
+
+    let base_config_data = app_manager.base_config.read().await;
+    let map_data = base_config_data.maps.iter().find(|m| m.id == current_map).unwrap();
     let map_data_path = &map_data.data_path;
 
     // get dialog data
@@ -292,8 +293,8 @@ pub async fn generate_dialog(
         .await
         .unwrap();
 
-    let dialog_local_path = dialog.directory.replace(&config.mod_path, "");
-    let dialog_texts_path = format!("{}\\{}", &config.texts_path, &dialog_local_path);
+    let dialog_local_path = dialog.directory.replace(&base_config_data.mod_path, "");
+    let dialog_texts_path = format!("{}\\{}", &base_config_data.texts_path, &dialog_local_path);
 
     std::fs::create_dir_all(&dialog_texts_path).unwrap();
 

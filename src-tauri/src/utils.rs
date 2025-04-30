@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::Local;
 use map_modifier::{Map, MapData, Quest};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -26,7 +27,8 @@ pub struct RuntimeConfig {
 
 #[derive(Debug)]
 pub struct LocalAppManager {
-    pub runtime_config: Mutex<RuntimeConfig>
+    pub base_config: RwLock<Config>,
+    pub runtime_config: RwLock<RuntimeConfig>
 }
 
 pub enum AppMode {
@@ -34,10 +36,17 @@ pub enum AppMode {
     User,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct RepackerPathsData {
     pub from: String,
     pub to: String,
+    pub last_update: String
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RepackerFrontendData {
+    pub label: String,
+    pub update_time: String
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

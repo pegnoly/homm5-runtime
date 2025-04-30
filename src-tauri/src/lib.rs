@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
 
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use utils::{Config, LocalAppManager, RuntimeConfig};
 
 mod commands;
@@ -63,9 +63,9 @@ pub async fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .manage(cfg)
         .manage(LocalAppManager {
-            runtime_config: Mutex::new(runtime_config),
+            base_config: RwLock::new(cfg),
+            runtime_config: RwLock::new(runtime_config)
         })
         .manage(quest_service)
         .manage(dialog_generator_service)
