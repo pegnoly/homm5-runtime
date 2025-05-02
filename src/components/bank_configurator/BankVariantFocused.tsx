@@ -10,8 +10,10 @@ function BankVariantFocused(params: {variantId: number | undefined}) {
     const [variant, setVariant] = useState<BankVariantModel | null>(null);
 
     useEffect(() => {
-        invoke<BankVariantModel | null>("load_bank_variant", {id: params.variantId})
-            .then((data) => setVariant(data));
+        if (params.variantId != undefined) {
+            invoke<BankVariantModel | null>("load_bank_variant", {id: params.variantId})
+                .then((data) => setVariant(data));
+        }
     }, [params.variantId])
 
     async function updateVariantChance(newDifficulty: BankDifficultyType) {
