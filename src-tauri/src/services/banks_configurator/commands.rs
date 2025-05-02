@@ -3,7 +3,7 @@ use std::io::Write;
 use homm5_types::town::TownType;
 use itertools::Itertools;
 use tauri::State;
-use editor_tools::services::banks::{models::{self, bank_creature_entry::{BankCreatureSlotType, CreatureTownType}, bank_difficulty}, service::{payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload}, BanksService}};
+use editor_tools::services::banks::{models::{self, bank_creature_entry::{BankCreatureSlotType, CreatureTownType}}, service::{payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload}, BanksService}};
 use crate::{error::Error, services::banks_configurator::types::{BankDifficultyModel, BankModel, BankSimpleModel}};
 use super::types::{BankDifficultyType, BankType, BankVariantModel, CreatureSlotType};
 
@@ -264,16 +264,21 @@ pub async fn generate_banks_script(
             bank.morale_loss,
             bank.luck_loss
         );
+        // bank difficulties info 
+        let bank_difficulties_data = bank_service.get_difficulties(bank.id).await?;
+        bank_data_string += "\tgeneration_chances = {\n";
+        for difficulty in bank_difficulties_data {
+            bank_data_string += &format!("\t\t[{}] = {},\n", BankDifficultyType::from(difficulty.difficulty_type), difficulty.chance)
+        }
+        bank_data_string += "\t},\n";
         // bank variants info
         let bank_variants = bank_service.get_variants(bank.id).await?;
         bank_data_string += "\tvariants = {\n";
         for (variants_count, variant) in bank_variants.into_iter().enumerate() {
             bank_data_string += &format!(
-                "\t\t[{}] = {{\n\t\t\tdifficulty = {},\n\t\t\tchance = {},\n", 
+                "\t\t[{}] = {{\n\t\t\tdifficulty = {},\n", 
                 variants_count, 
-                BankDifficultyType::from(variant.difficulty),
-                0  
-                // TODO UPDATE WITH ACTUAL DIFFICULTY CHANCE
+                BankDifficultyType::from(variant.difficulty)
             );
             let creature_slots = bank_service.load_full_creature_entries(variant.id).await?;
             bank_data_string += "\t\t\tcreatures = {\n";
