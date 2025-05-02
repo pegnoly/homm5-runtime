@@ -1,8 +1,8 @@
-use crate::services::banks::models::{bank_creature_entry::CreatureTownType, bank_variant::BankDifficultyType};
+use crate::services::banks::models::{bank_creature_entry::CreatureTownType, bank_difficulty::BankDifficultyType};
 
 pub struct CreateVariantPayload {
     pub bank_id: i32,
-    pub chance: i32,
+    pub label: String,
     pub difficulty: BankDifficultyType
 }
 
@@ -47,7 +47,7 @@ impl UpdateBankPayload {
 #[derive(Debug, Default)]
 pub struct UpdateBankVariantPayload {
     pub id: i32,
-    pub chance: Option<i32>,
+    pub label: Option<String>,
     pub difficulty: Option<BankDifficultyType>
 }
 
@@ -59,13 +59,13 @@ impl UpdateBankVariantPayload {
         }
     }
 
-    pub fn with_chance(mut self, chance: i32) -> Self {
-        self.chance = Some(chance);
+    pub fn with_difficulty(mut self, difficulty: BankDifficultyType) -> Self {
+        self.difficulty = Some(difficulty);
         self
     }
 
-    pub fn with_difficulty(mut self, difficulty: BankDifficultyType) -> Self {
-        self.difficulty = Some(difficulty);
+    pub fn with_label(mut self, label: String) -> Self {
+        self.label = Some(label);
         self
     }
 }

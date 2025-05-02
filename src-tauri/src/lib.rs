@@ -126,6 +126,8 @@ pub async fn run() {
             //banks
             services::banks_configurator::commands::get_all_banks,
             services::banks_configurator::commands::load_bank,
+            services::banks_configurator::commands::load_bank_difficulties,
+            services::banks_configurator::commands::update_bank_difficulty_chance,
             services::banks_configurator::commands::create_bank_variant,
             services::banks_configurator::commands::update_bank_recharges_count,
             services::banks_configurator::commands::update_bank_recharge_timer,
@@ -133,7 +135,8 @@ pub async fn run() {
             services::banks_configurator::commands::update_bank_luck_loss,
             services::banks_configurator::commands::load_bank_variant,
             services::banks_configurator::commands::load_bank_variants,
-            services::banks_configurator::commands::update_bank_variant_chance,
+            services::banks_configurator::commands::update_bank_variant_label,
+            services::banks_configurator::commands::update_bank_variant_difficulty,
             services::banks_configurator::commands::create_creature_slot,
             services::banks_configurator::commands::load_creature_slots_ids,
             services::banks_configurator::commands::load_creature_slot,

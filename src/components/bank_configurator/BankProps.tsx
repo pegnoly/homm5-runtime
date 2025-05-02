@@ -6,8 +6,8 @@ import { Typography } from "antd";
 
 function BankProps(params: {bank: BankModel | null}) {
     return (
-        <div style={{display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center'}}>
-            <Typography.Text style={{fontFamily: 'fantasy', fontStretch: 'expanded', fontSize: 15, color: 'darkorchid'}}>Props</Typography.Text>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center', height: '50%'}}>
+            <Typography.Text style={{fontFamily: 'fantasy', fontStretch: 'expanded', fontSize: 20, color: 'darkorchid'}}>Props</Typography.Text>
             {
                 params.bank == null ? <h1>Bank undefined</h1> : 
                 <>
@@ -25,7 +25,7 @@ function BankRechargesCount(params: {id: number, initial: number}) {
     const [count, setCount] = useState<number>(params.initial);
 
     async function updateRechargesCount(newCount: string) {
-        await invoke<number>("update_bank_recharges_count", {bankId: params.id, count: newCount})
+        await invoke<number>("update_bank_recharges_count", {id: params.id, count: newCount})
             .then((data) => setCount(data));
     }
 
@@ -36,7 +36,7 @@ function BankRechargeTimer(params: {id: number, initial: number}) {
     const [timer, setTimer] = useState<number>(params.initial);
 
     async function updateRechargeTimer(newTimer: string) {
-        await invoke<number>("update_bank_recharge_timer", {bankId: params.id, timer: newTimer})
+        await invoke<number>("update_bank_recharge_timer", {id: params.id, timer: newTimer})
             .then((data) => setTimer(data));
     }
 
@@ -47,7 +47,7 @@ function BankMoraleLoss(params: {id: number, initial: number}) {
     const [loss, setLoss] = useState<number>(params.initial);
 
     async function updateMoraleLoss(newLoss: string) {
-        await invoke<number>("update_bank_morale_loss", {bankId: params.id, loss: newLoss})
+        await invoke<number>("update_bank_morale_loss", {id: params.id, loss: newLoss})
             .then((data) => setLoss(data));
     }
 
@@ -58,7 +58,7 @@ function BankLuckLoss(params: {id: number, initial: number}) {
     const [loss, setLoss] = useState<number>(params.initial);
 
     async function updateLuckLoss(newLoss: string) {
-        await invoke<number>("update_bank_luck_loss", {bankId: params.id, loss: newLoss})
+        await invoke<number>("update_bank_luck_loss", {id: params.id, loss: newLoss})
             .then((data) => setLoss(data));
     }
 

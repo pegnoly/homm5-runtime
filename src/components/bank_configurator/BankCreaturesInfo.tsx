@@ -18,9 +18,9 @@ function VariantCreaturesSlots(params: {variantId: number}) {
         setSlotsIds([...slotsIds, newSlotId])
     }
 
-    return <div style={{paddingTop: '10%'}}>
+    return <div style={{paddingTop: '2%'}}>
         <div style={{display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center'}}>
-            <Typography.Text style={{fontFamily: 'cursive', fontStretch: 'expanded'}}>Creatures info</Typography.Text>
+        <Typography.Text style={{fontFamily: 'cursive', fontSize: 16, fontWeight: 'bold'}}>Variant creatures slots</Typography.Text>
             <CreatureSlotCreator variantId={params.variantId} onSlotCreated={slotCreated}/>
         </div>
         <Carousel adaptiveHeight arrows vertical>{slotsIds.map((id, i) => (

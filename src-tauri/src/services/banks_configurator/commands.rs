@@ -3,8 +3,8 @@ use std::io::Write;
 use homm5_types::town::TownType;
 use itertools::Itertools;
 use tauri::State;
-use editor_tools::services::banks::{models::{self, bank_creature_entry::{self, BankCreatureSlotType, CreatureTownType}}, service::{payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload}, BanksService}};
-use crate::{error::Error, services::banks_configurator::types::{BankModel, BankSimpleModel}};
+use editor_tools::services::banks::{models::{self, bank_creature_entry::{BankCreatureSlotType, CreatureTownType}, bank_difficulty}, service::{payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload}, BanksService}};
+use crate::{error::Error, services::banks_configurator::types::{BankDifficultyModel, BankModel, BankSimpleModel}};
 use super::types::{BankDifficultyType, BankType, BankVariantModel, CreatureSlotType};
 
 #[tauri::command]
@@ -77,15 +77,35 @@ pub async fn update_bank_luck_loss(
     Ok(actual_loss)
 }
 
+#[tauri::command]
+pub async fn load_bank_difficulties(
+    bank_service: State<'_, BanksService>,
+    bank_id: i32
+) -> Result<Vec<BankDifficultyModel>, Error> {
+    Ok(bank_service.get_difficulties(bank_id).await?.into_iter().map(|d| {
+        BankDifficultyModel::from(d)
+    }).collect_vec())
+}
+
+#[tauri::command]
+pub async fn update_bank_difficulty_chance(
+    bank_service: State<'_, BanksService>,
+    id: i32,
+    chance: String
+) -> Result<i32, Error> {
+    let actual_chance = chance.parse::<i32>()?;
+    bank_service.update_difficulty(id, actual_chance).await?;
+    Ok(actual_chance)
+}
 
 #[tauri::command]
 pub async fn create_bank_variant(
     bank_service: State<'_, BanksService>,
     bank_id: i32,
-    chance: i32,
+    label: String,
     difficulty: BankDifficultyType 
 ) -> Result<BankVariantModel, Error> {
-    let new_variant = bank_service.create_variant(CreateVariantPayload { bank_id, chance, difficulty: difficulty.into() }).await?;
+    let new_variant = bank_service.create_variant(CreateVariantPayload { bank_id, label, difficulty: difficulty.into() }).await?;
     Ok(BankVariantModel::from(new_variant))
 }
 
@@ -113,15 +133,25 @@ pub async fn load_bank_variants(
 }
 
 #[tauri::command]
-pub async fn update_bank_variant_chance(
+pub async fn update_bank_variant_label(
     bank_service: State<'_, BanksService>,
-    variant_id: i32,
-    chance: String
-) -> Result<i32, Error> {
-    let actual_chance = chance.parse::<i32>()?;
-    let payload = UpdateBankVariantPayload::new(variant_id).with_chance(actual_chance);
+    id: i32,
+    label: String
+) -> Result<(), Error> {
+    let payload = UpdateBankVariantPayload::new(id).with_label(label);
     bank_service.update_variant(payload).await?;
-    Ok(actual_chance)
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_bank_variant_difficulty(
+    bank_service: State<'_, BanksService>,
+    id: i32,
+    difficulty: BankDifficultyType
+) -> Result<(), Error> {
+    let payload = UpdateBankVariantPayload::new(id).with_difficulty(difficulty.into());
+    bank_service.update_variant(payload).await?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -241,8 +271,9 @@ pub async fn generate_banks_script(
             bank_data_string += &format!(
                 "\t\t[{}] = {{\n\t\t\tdifficulty = {},\n\t\t\tchance = {},\n", 
                 variants_count, 
-                BankDifficultyType::from(variant.difficulty), 
-                variant.chance
+                BankDifficultyType::from(variant.difficulty),
+                0  
+                // TODO UPDATE WITH ACTUAL DIFFICULTY CHANCE
             );
             let creature_slots = bank_service.load_full_creature_entries(variant.id).await?;
             bank_data_string += "\t\t\tcreatures = {\n";

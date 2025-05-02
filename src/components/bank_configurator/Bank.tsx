@@ -1,10 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Col, Typography } from "antd";
+import { Col, Segmented, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import BankVariants from "./BankVariants";
-import BankVariantFocused from "./BankVariantFocused";
 import BankProps from "./BankProps";
+import BankDifficulties from "./BankDifficulties";
 
 enum BankType {
     Crypt = "BTD_BANK_CRYPT",
@@ -17,6 +17,11 @@ enum BankType {
     TreantThicket = "BTD_BANK_TREANT_THICKET",
     GargoyleStonevault = "BTD_BANK_GARGOYLE_STONEVAULT",
     SunkenTemple = "BTD_BANK_SUNKEN_TEMPLE"
+}
+
+enum BankDisplayMode {
+    Difficulty,
+    Variant
 }
 
 export type BankModel = {
@@ -33,18 +38,13 @@ function BankFocused() {
     const { id } = useParams();
 
     const [bank, setBank] = useState<BankModel | null>(null);
-    const [currentVariant, setCurrentVariant] = useState<number | null>();
-
-    function variantSelected(newVariant: number) {
-        setCurrentVariant(newVariant);
-    }
 
     useEffect(() => {
         if (id != undefined) {
             invoke<BankModel>("load_bank", {id: parseInt(id)})
                 .then((data) => setBank(data));
         }
-    }, [id])
+    }, [id]);
 
     return <div style={{paddingLeft: '5%'}}>
         <div style={{justifyContent: 'center', display: 'flex'}}>
@@ -52,12 +52,12 @@ function BankFocused() {
         </div>
         <div style={{display: 'flex', flexDirection: 'row', gap: 10}}>
             <Col span={11}>
-                <BankProps bank={bank}/>
-                <BankVariants bankId={bank?.id} onVariantSelected={variantSelected}/>
+                <div style={{display: 'flex', flexDirection: 'column', gap: 50, height: '100%'}}>
+                    <BankProps bank={bank}/>
+                    <BankDifficulties bankId={bank?.id}/>
+                </div>
             </Col>
-            <Col span={11}>{
-                currentVariant != null ? <BankVariantFocused variantId={currentVariant}/> : null
-            }</Col>
+            <Col span={11}><BankVariants bankId={bank?.id}/></Col>
         </div>
     </div>
 }

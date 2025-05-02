@@ -1,7 +1,7 @@
 use derive_more::derive::Debug;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
-use editor_tools::services::banks::models::{self, bank_variant};
+use editor_tools::services::banks::models::{self, bank_difficulty, bank_variant};
 
 #[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize)]
 pub enum BankType {
@@ -111,26 +111,43 @@ pub enum BankDifficultyType {
     Boss    
 }
 
-impl Into<bank_variant::BankDifficultyType> for BankDifficultyType {
-    fn into(self) -> bank_variant::BankDifficultyType {
-        match self {
-            BankDifficultyType::Boss => bank_variant::BankDifficultyType::Boss,
-            BankDifficultyType::Critical => bank_variant::BankDifficultyType::Critical,
-            BankDifficultyType::Easy => bank_variant::BankDifficultyType::Easy,
-            BankDifficultyType::Hard => bank_variant::BankDifficultyType::Hard,
-            BankDifficultyType::Medium => bank_variant::BankDifficultyType::Medium
+impl From<BankDifficultyType> for bank_difficulty::BankDifficultyType {
+    fn from(val: BankDifficultyType) -> Self {
+        match val {
+            BankDifficultyType::Boss => bank_difficulty::BankDifficultyType::Boss,
+            BankDifficultyType::Critical => bank_difficulty::BankDifficultyType::Critical,
+            BankDifficultyType::Easy => bank_difficulty::BankDifficultyType::Easy,
+            BankDifficultyType::Hard => bank_difficulty::BankDifficultyType::Hard,
+            BankDifficultyType::Medium => bank_difficulty::BankDifficultyType::Medium
         }
     }
 }
 
-impl From<bank_variant::BankDifficultyType> for BankDifficultyType {
-    fn from(value: bank_variant::BankDifficultyType) -> Self {
+impl From<bank_difficulty::BankDifficultyType> for BankDifficultyType {
+    fn from(value: bank_difficulty::BankDifficultyType) -> Self {
         match value {
-            bank_variant::BankDifficultyType::Boss => BankDifficultyType::Boss,
-            bank_variant::BankDifficultyType::Critical => BankDifficultyType::Critical,
-            bank_variant::BankDifficultyType::Easy => BankDifficultyType::Easy,
-            bank_variant::BankDifficultyType::Hard => BankDifficultyType::Hard,
-            bank_variant::BankDifficultyType::Medium => BankDifficultyType::Medium
+            bank_difficulty::BankDifficultyType::Boss => BankDifficultyType::Boss,
+            bank_difficulty::BankDifficultyType::Critical => BankDifficultyType::Critical,
+            bank_difficulty::BankDifficultyType::Easy => BankDifficultyType::Easy,
+            bank_difficulty::BankDifficultyType::Hard => BankDifficultyType::Hard,
+            bank_difficulty::BankDifficultyType::Medium => BankDifficultyType::Medium
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BankDifficultyModel {
+    pub id: i32,
+    pub difficulty: BankDifficultyType,
+    pub chance: i32
+}
+
+impl From<bank_difficulty::Model> for BankDifficultyModel {
+    fn from(value: bank_difficulty::Model) -> Self {
+        BankDifficultyModel {
+            id: value.id,
+            difficulty: BankDifficultyType::from(value.difficulty_type),
+            chance: value.chance
         }
     }
 }
@@ -138,7 +155,8 @@ impl From<bank_variant::BankDifficultyType> for BankDifficultyType {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BankVariantModel {
     pub id: i32,
-    pub chance: i32,
+    pub label: String,
+    //pub chance: i32,
     pub difficulty: BankDifficultyType
 }
 
@@ -146,7 +164,8 @@ impl From<bank_variant::Model> for BankVariantModel {
     fn from(value: bank_variant::Model) -> Self {
         BankVariantModel {
             id: value.id,
-            chance: value.chance,
+            //chance: value.chance,
+            label: value.label,
             difficulty: BankDifficultyType::from(value.difficulty)
         }
     }

@@ -3,7 +3,7 @@ use itertools::Itertools;
 use payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload};
 use sea_orm::{sqlx::{types::Json, SqlitePool}, ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityOrSelect, EntityTrait, FromQueryResult, InsertResult, IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, QueryTrait, Related, SqlxSqlitePoolConnection};
 use crate::error::EditorToolsError;
-use super::models::{bank, bank_creature_entry::{self, BankCreatureSlotType, CreatureSlotData}, bank_variant};
+use super::models::{bank, bank_creature_entry::{self, BankCreatureSlotType, CreatureSlotData}, bank_difficulty, bank_variant};
 
 pub mod payloads;
 
@@ -45,6 +45,19 @@ impl BanksService {
         Ok(())
     }
 
+    pub async fn get_difficulties(&self, bank_id: i32) -> Result<Vec<bank_difficulty::Model>, EditorToolsError> {
+        Ok(bank_difficulty::Entity::find().filter(bank_difficulty::Column::BankId.eq(bank_id)).all(&self.db).await?)
+    }
+
+    pub async fn update_difficulty(&self, id: i32, chance: i32) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = bank_difficulty::Entity::find_by_id(id).one(&self.db).await? {
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.chance = Set(chance);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
     pub async fn get_variant(&self, id: i32) -> Result<Option<bank_variant::Model>, EditorToolsError> {
         Ok(bank_variant::Entity::find_by_id(id).one(&self.db).await?)
     }
@@ -56,7 +69,7 @@ impl BanksService {
     pub async fn create_variant(&self, payload: CreateVariantPayload) -> Result<bank_variant::Model, EditorToolsError> {
         let model_to_insert = bank_variant::ActiveModel {
             bank_id: Set(payload.bank_id),
-            chance: Set(payload.chance),
+            label: Set(payload.label),
             difficulty: Set(payload.difficulty),
             ..Default::default()
         };
@@ -66,8 +79,8 @@ impl BanksService {
     pub async fn update_variant(&self, payload: UpdateBankVariantPayload) -> Result<(), EditorToolsError> {
         if let Some(current_variant) = bank_variant::Entity::find_by_id(payload.id).one(&self.db).await? {
             let mut model_to_update = current_variant.into_active_model();
-            if let Some(chance) = payload.chance {
-                model_to_update.chance = Set(chance);
+            if let Some(label) = payload.label {
+                model_to_update.label = Set(label);
             }
             if let Some(difficulty) = payload.difficulty {
                 model_to_update.difficulty = Set(difficulty);

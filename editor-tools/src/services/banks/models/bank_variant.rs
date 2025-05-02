@@ -2,17 +2,7 @@ use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 use sea_orm::prelude::*;
 
-use super::bank;
-
-#[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize, DeriveActiveEnum, EnumIter, PartialEq, Eq)]
-#[sea_orm(rs_type = "i32", db_type = "Integer")]
-pub enum BankDifficultyType {
-    Easy = 0,
-    Medium = 1,
-    Hard = 2,
-    Critical = 3,
-    Boss = 4
-}
+use super::{bank, bank_difficulty::BankDifficultyType};
 
 #[derive(Debug, Clone, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "bank_variants")]
@@ -20,7 +10,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub bank_id: i32,
-    pub chance: i32,
+    pub label: String,
     pub difficulty: BankDifficultyType
 }
 
