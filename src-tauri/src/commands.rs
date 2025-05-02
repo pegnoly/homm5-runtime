@@ -15,8 +15,9 @@ use crate::utils::{Config, LocalAppManager, MapFrontendModel, RepackerFrontendDa
 use crate::{DataContainer, RuntimeData};
 
 #[tauri::command]
-pub async fn execute_scan(config: State<'_, Config>) -> Result<(), ()> {
-    let data_path = PathBuf::from(&config.data_path);
+pub async fn execute_scan(app_manager: State<'_, LocalAppManager>) -> Result<(), ()> {
+    let base_config_locked = app_manager.base_config.read().await;
+    let data_path = PathBuf::from(&base_config_locked.data_path);
     let root_folder = data_path.parent().unwrap();
     let maps_path = root_folder.join("Maps\\");
     let mods_path = root_folder.join("UserMODs\\");
@@ -27,8 +28,9 @@ pub async fn execute_scan(config: State<'_, Config>) -> Result<(), ()> {
 }
 
 #[tauri::command]
-pub async fn run_game(config: State<'_, Config>) -> Result<(), ()> {
-    let bin_path = &config.bin_path;
+pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), ()> {
+    let base_config_locked = app_manager.base_config.read().await;
+    let bin_path = &base_config_locked.bin_path;
     let mut runtime_runner = RuntimeRunner::new(PathBuf::from(bin_path));
     runtime_runner.run();
     Ok(())
