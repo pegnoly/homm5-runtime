@@ -1,0 +1,1 @@
+pub(crate) mod generatable_hero;

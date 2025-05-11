@@ -1134,6 +1134,7 @@ checksum = "feeef44e73baff3a26d371801df019877a9866a8c493d315ab00177843314f35"
 name = "editor-tools"
 version = "0.1.0"
 dependencies = [
+ "homm5-scaner",
  "homm5-types",
  "itertools 0.14.0",
  "sea-orm",

@@ -1,26 +1,19 @@
+use homm5_scaner::prelude::Town;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 use sea_orm::{prelude::*, FromJsonQueryResult, FromQueryResult};
 
 #[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize, DeriveActiveEnum, EnumIter, PartialEq, Eq)]
-#[sea_orm(rs_type = "i32", db_type = "Integer")]
-pub enum CreatureTownType {
-    TownNoType = -1,
-    TownHeaven = 0,
-    TownInferno = 1,
-    TownNecromancy = 2,
-    TownPreserve = 3,
-    TownDungeon = 4,
-    TownAcademy = 5,
-    TownFortress = 6,
-    TownStronghold = 7
-}
-
-#[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize, DeriveActiveEnum, EnumIter, PartialEq, Eq)]
-#[sea_orm(rs_type = "i32", db_type = "Integer")]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum BankCreatureSlotType {
-    Tier = 0,
-    Concrete = 1
+    #[sea_orm(string_value = "CREATURE_SLOT_TYPE_TIER")]
+    #[serde(rename = "CREATURE_SLOT_TYPE_TIER")]
+    #[strum(serialize = "CREATURE_SLOT_TYPE_TIER")]
+    Tier,
+    #[sea_orm(string_value = "CREATURE_SLOT_TYPE_CONCRETE")]
+    #[serde(rename = "CREATURE_SLOT_TYPE_CONCRETE")]
+    #[strum(serialize = "CREATURE_SLOT_TYPE_CONCRETE")]
+    Concrete
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DeriveEntityModel)]
@@ -38,7 +31,7 @@ pub struct Model {
 pub struct CreatureSlotData {
     pub base_power: Option<i32>,
     pub power_grow: Option<i32>,
-    pub creature_town: Option<CreatureTownType>,
+    pub creature_town: Option<Town>,
     pub creature_tier: Option<i32>,
     pub creature_id: Option<i32>,
     pub creature_count: Option<i32>

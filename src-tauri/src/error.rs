@@ -1,6 +1,4 @@
 use std::num::ParseIntError;
-
-use derive_more::derive::{Display, From};
 use serde::{Serialize, Serializer};
 
 #[derive(Debug, thiserror::Error)]
@@ -14,7 +12,7 @@ pub enum Error {
     #[error(transparent)]
     ParseInt(#[from]ParseIntError),
     #[error(transparent)]
-    EditorTools(#[from]editor_tools::error::EditorToolsError)
+    EditorTools(#[from]editor_tools::prelude::EditorToolsError)
 }
 
 impl Serialize for Error {

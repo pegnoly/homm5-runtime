@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
 use sea_orm::prelude::*;
 
 use super::{bank, bank_difficulty::BankDifficultyType};

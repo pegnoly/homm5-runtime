@@ -21,7 +21,7 @@ pub struct Model {
     pub is_generatable: bool 
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Hash)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum ArtifactSlotType {
     #[sea_orm(string_value = "PRIMARY")]

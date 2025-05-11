@@ -5,38 +5,48 @@ use strum::{Display, EnumString};
 use super::bank_variant;
 
 #[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize, DeriveActiveEnum, EnumIter, PartialEq, Eq)]
-#[sea_orm(rs_type = "i32", db_type = "Integer")]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum BankType {
-    // #[serde(rename = "BTD_BANK_CRYPT")]
-    // #[strum(to_string = "BTD_BANK_CRYPT")]
-    Crypt = 0,
-    // #[serde(rename = "BTD_BANK_PYRAMID")]
-    // #[strum(to_string = "BTD_BANK_PYRAMID")]
-    Pyramid = 1,
-    // #[serde(rename = "BTD_BANK_MAGI_VAULT")]
-    // #[strum(to_string = "BTD_BANK_MAGI_VAULT")]
-    MagiVault = 2,
-    // #[serde(rename = "BTD_BANK_DRAGON_UTOPIA")]
-    // #[strum(to_string = "BTD_BANK_DRAGON_UTOPIA")]
-    DragonUtopia = 3,
-    // #[serde(rename = "BTD_BANK_ELEMENTAL_STOCKPILE")]
-    // #[strum(to_string = "BTD_BANK_ELEMENTAL_STOCKPILE")]
-    ElementalStockpile = 4,
-    // #[serde(rename = "BTD_BANK_DWARVEN_TREASURE")]
-    // #[strum(to_string = "BTD_BANK_DWARVEN_TREASURE")]
-    DwarvenTreasure = 5,
-    // #[serde(rename = "BTD_BANK_BLOOD_TEMPLE")]
-    // #[strum(to_string = "BTD_BANK_BLOOD_TEMPLE")]
-    BloodTemple = 6,
-    // #[serde(rename = "BTD_BANK_TREANT_THICKET")]
-    // #[strum(to_string = "BTD_BANK_TREANT_THICKET")]
-    TreantThicket = 7,
-    // #[serde(rename = "BTD_BANK_GARGOYLE_STONEVAULT")]
-    // #[strum(to_string = "BTD_BANK_GARGOYLE_STONEVAULT")]
-    GargoyleStonevault = 8,
-    // #[serde(rename = "BTD_BANK_SUNKEN_TEMPLE")]
-    // #[strum(to_string = "BTD_BANK_SUNKEN_TEMPLE")]
-    SunkenTemple = 9
+    #[sea_orm(string_value = "BTD_BANK_CRYPT")]
+    #[serde(rename = "BTD_BANK_CRYPT")]
+    #[strum(serialize = "BTD_BANK_CRYPT")]
+    Crypt,
+    #[sea_orm(string_value = "BTD_BANK_PYRAMID")]
+    #[serde(rename = "BTD_BANK_PYRAMID")]
+    #[strum(serialize = "BTD_BANK_PYRAMID")]
+    Pyramid,
+    #[sea_orm(string_value = "BTD_BANK_MAGI_VAULT")]
+    #[serde(rename = "BTD_BANK_MAGI_VAULT")]
+    #[strum(serialize = "BTD_BANK_MAGI_VAULT")]
+    MagiVault,
+    #[sea_orm(string_value = "BTD_BANK_DRAGON_UTOPIA")]
+    #[serde(rename = "BTD_BANK_DRAGON_UTOPIA")]
+    #[strum(serialize = "BTD_BANK_DRAGON_UTOPIA")]
+    DragonUtopia,
+    #[sea_orm(string_value = "BTD_BANK_ELEMENTAL_STOCKPILE")]
+    #[serde(rename = "BTD_BANK_ELEMENTAL_STOCKPILE")]
+    #[strum(serialize = "BTD_BANK_ELEMENTAL_STOCKPILE")]
+    ElementalStockpile,
+    #[sea_orm(string_value = "BTD_BANK_DWARVEN_TREASURE")]
+    #[serde(rename = "BTD_BANK_DWARVEN_TREASURE")]
+    #[strum(serialize = "BTD_BANK_DWARVEN_TREASURE")]
+    DwarvenTreasure,
+    #[sea_orm(string_value = "BTD_BANK_BLOOD_TEMPLE")]
+    #[serde(rename = "BTD_BANK_BLOOD_TEMPLE")]
+    #[strum(serialize = "BTD_BANK_BLOOD_TEMPLE")]
+    BloodTemple,
+    #[sea_orm(string_value = "BTD_BANK_TREANT_THICKET")]
+    #[serde(rename = "BTD_BANK_TREANT_THICKET")]
+    #[strum(serialize = "BTD_BANK_TREANT_THICKET")]
+    TreantThicket,
+    #[sea_orm(string_value = "BTD_BANK_GARGOYLE_STONEVAULT")]
+    #[serde(rename = "BTD_BANK_GARGOYLE_STONEVAULT")]
+    #[strum(serialize = "BTD_BANK_GARGOYLE_STONEVAULT")]
+    GargoyleStonevault,
+    #[sea_orm(string_value = "BTD_BANK_SUNKEN_TEMPLE")]
+    #[serde(rename = "BTD_BANK_SUNKEN_TEMPLE")]
+    #[strum(serialize = "BTD_BANK_SUNKEN_TEMPLE")]
+    SunkenTemple
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DeriveEntityModel)]

@@ -1,8 +1,8 @@
 use sea_orm::{prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
-use strum_macros::EnumString;
+use strum_macros::{Display, EnumString};
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum Town {
     #[sea_orm(string_value = "TOWN_NO_TYPE")]

@@ -1,2 +1,3 @@
-pub mod services;
-pub mod error;
+mod services;
+mod error;
+pub mod prelude;

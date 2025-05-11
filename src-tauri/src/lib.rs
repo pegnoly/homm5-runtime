@@ -1,12 +1,10 @@
 use std::path::PathBuf;
-
-use editor_tools::services::banks::service::BanksService;
+use editor_tools::prelude::BanksGeneratorRepo;
 use homm5_scaner::prelude::ScanerService;
 use map_modifier::{artifacts::ArtifactConfigEntity, buildings::{BankConfigEntity, BuildingConfigEntity}, MapData};
 use serde::{Deserialize, Serialize};
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
-
 use tokio::sync::RwLock;
 use utils::{Config, LocalAppManager, RuntimeConfig};
 
@@ -70,7 +68,7 @@ pub async fn run() {
         })
         .manage(quest_service)
         .manage(dialog_generator_service)
-        .manage(BanksService::new(pool.clone(), PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/")))
+        .manage(BanksGeneratorRepo::new(pool.clone(), PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/")))
         .manage(ScanerService::new(pool.clone()))
         .manage(data)
         .plugin(tauri_plugin_shell::init())

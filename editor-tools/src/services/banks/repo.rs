@@ -1,23 +1,21 @@
 use std::path::PathBuf;
 use itertools::Itertools;
-use payloads::{CreateVariantPayload, UpdateBankPayload, UpdateBankVariantPayload, UpdateCreatureEntryPayload};
-use sea_orm::{sqlx::{types::Json, SqlitePool}, ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityOrSelect, EntityTrait, FromQueryResult, InsertResult, IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, QueryTrait, Related, SqlxSqlitePoolConnection};
+use super::payloads::*;
+use sea_orm::{sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, QueryTrait, Related, SqlxSqlitePoolConnection};
 use crate::error::EditorToolsError;
-use super::models::{bank, bank_creature_entry::{self, BankCreatureSlotType, CreatureSlotData}, bank_difficulty, bank_variant};
+use super::models::{self, bank, bank_creature_entry::{self, BankCreatureSlotType, CreatureSlotData}, bank_difficulty, bank_variant};
 
-pub mod payloads;
-
-pub struct BanksService {
+pub struct BanksGeneratorRepo {
     db: DatabaseConnection,
     pub path: PathBuf
 }
 
-impl BanksService {
+impl BanksGeneratorRepo {
     pub fn new(pool: SqlitePool, path: PathBuf) -> Self {
-        BanksService { db: DatabaseConnection::SqlxSqlitePoolConnection(SqlxSqlitePoolConnection::from(pool)), path }
+        BanksGeneratorRepo { db: DatabaseConnection::SqlxSqlitePoolConnection(SqlxSqlitePoolConnection::from(pool)), path }
     }
 
-    pub async fn get_banks(&self) -> Result<Vec<super::models::bank::Model>, EditorToolsError> {
+    pub async fn get_banks(&self) -> Result<Vec<models::bank::Model>, EditorToolsError> {
         Ok(bank::Entity::find().all(&self.db).await?)
     }
 

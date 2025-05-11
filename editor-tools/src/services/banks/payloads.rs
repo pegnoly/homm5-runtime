@@ -1,4 +1,5 @@
-use crate::services::banks::models::{bank_creature_entry::CreatureTownType, bank_difficulty::BankDifficultyType};
+use homm5_scaner::prelude::Town;
+use crate::services::banks::models::bank_difficulty::BankDifficultyType;
 
 pub struct CreateVariantPayload {
     pub bank_id: i32,
@@ -75,7 +76,7 @@ pub struct UpdateCreatureEntryPayload {
     pub id: i32,
     pub base_power: Option<i32>,
     pub power_grow: Option<i32>,
-    pub creature_town: Option<CreatureTownType>,
+    pub creature_town: Option<Town>,
     pub creature_tier: Option<i32>,
     pub creature_id: Option<i32>,
     pub creature_count: Option<i32>
@@ -99,7 +100,7 @@ impl UpdateCreatureEntryPayload {
         self
     }
 
-    pub fn with_town(mut self, town: CreatureTownType) -> Self {
+    pub fn with_town(mut self, town: Town) -> Self {
         self.creature_town = Some(town);
         self
     }
