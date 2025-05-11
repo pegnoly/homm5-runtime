@@ -44,13 +44,13 @@ impl ScanerService {
 
         let mut artifact_scan_processor = ScanProcessor::new(
             ArtFileCollector,
-            ArtScaner { id: 0 }, 
+            ArtScaner { id: -1 }, 
             ArtifactDataOutput::new(&self.db)
         );
 
         let mut spell_scan_processor = ScanProcessor::new(
             SpellFileCollector,
-            SpellScaner { id: -1 }, 
+            SpellScaner { id: 0 }, 
             SpellDataOutput::new(&self.db)
         );
 
