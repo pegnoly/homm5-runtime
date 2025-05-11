@@ -21,6 +21,7 @@ impl HeroScaner {
 
 impl Scan for HeroScaner {
     type Output = model::Model;
+    
     fn scan(
         &mut self,
         file_key: &String,

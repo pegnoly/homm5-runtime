@@ -2,7 +2,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use sea_orm::{sqlx::SqlitePool, DatabaseConnection, SqlxSqlitePoolConnection};
 
-use crate::{core::ScanProcessor, pak::{self, FileStructure, EXTENSIONS}, scaners::prelude::{CreatureDataOutput, CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner}};
+use crate::{core::ScanProcessor, pak::{self, FileStructure, EXTENSIONS}, scaners::prelude::{ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput, CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner, SpellDataOutput, SpellFileCollector, SpellScaner}};
 
 pub struct ScanerService {
     db: DatabaseConnection
@@ -42,7 +42,21 @@ impl ScanerService {
             HeroDataOutput::new(&self.db)
         );
 
+        let mut artifact_scan_processor = ScanProcessor::new(
+            ArtFileCollector,
+            ArtScaner { id: 0 }, 
+            ArtifactDataOutput::new(&self.db)
+        );
+
+        let mut spell_scan_processor = ScanProcessor::new(
+            SpellFileCollector,
+            SpellScaner { id: -1 }, 
+            SpellDataOutput::new(&self.db)
+        );
+
         creature_scan_processor.run(&mut files).await.unwrap();
         hero_scan_processor.run(&mut files).await.unwrap();
+        artifact_scan_processor.run(&mut files).await.unwrap();
+        spell_scan_processor.run(&mut files).await.unwrap();
     }
 }
