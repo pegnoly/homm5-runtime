@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use editor_tools::services::banks::service::BanksService;
+use homm5_scaner::prelude::ScanerService;
 use map_modifier::{artifacts::ArtifactConfigEntity, buildings::{BankConfigEntity, BuildingConfigEntity}, MapData};
 use serde::{Deserialize, Serialize};
 use services::dialog_generator::prelude::*;
@@ -56,7 +57,7 @@ pub async fn run() {
     let pool = sqlx::SqlitePool::connect(db_path.to_str().unwrap())
         .await
         .unwrap();
-    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    //sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
     let quest_service = QuestService::new(pool.clone());
     let dialog_generator_service = DialogGeneratorService::new(pool.clone());
@@ -69,7 +70,8 @@ pub async fn run() {
         })
         .manage(quest_service)
         .manage(dialog_generator_service)
-        .manage(BanksService::new(pool.clone(), PathBuf::from("C:/H5ToE/Mods/GOG/scripts/advmap/Banks/Data/")))
+        .manage(BanksService::new(pool.clone(), PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/")))
+        .manage(ScanerService::new(pool.clone()))
         .manage(data)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![

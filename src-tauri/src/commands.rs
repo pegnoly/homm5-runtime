@@ -2,7 +2,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use homm5_repacker::Repacker;
-use homm5_scaner::ScanExecutor;
+use homm5_scaner::prelude::ScanerService;
 use itertools::Itertools;
 use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
@@ -11,19 +11,21 @@ use serde::{Serialize, Serializer};
 use tauri::State;
 
 use crate::services::QuestService;
-use crate::utils::{Config, LocalAppManager, MapFrontendModel, RepackerFrontendData};
+use crate::utils::{LocalAppManager, MapFrontendModel, RepackerFrontendData};
 use crate::{DataContainer, RuntimeData};
 
 #[tauri::command]
-pub async fn execute_scan(app_manager: State<'_, LocalAppManager>) -> Result<(), ()> {
+pub async fn execute_scan(
+    app_manager: State<'_, LocalAppManager>,
+    scaner_service: State<'_, ScanerService>
+) -> Result<(), ()> {
     let base_config_locked = app_manager.base_config.read().await;
     let data_path = PathBuf::from(&base_config_locked.data_path);
     let root_folder = data_path.parent().unwrap();
     let maps_path = root_folder.join("Maps\\");
     let mods_path = root_folder.join("UserMODs\\");
     let output_path = data_path.join("MCCS_GeneratedFiles.pak");
-    let scan_executor = ScanExecutor::new(output_path, vec![data_path, maps_path, mods_path]);
-    scan_executor.run().await;
+    scaner_service.run(vec![data_path, maps_path, mods_path], output_path).await;
     Ok(())
 }
 

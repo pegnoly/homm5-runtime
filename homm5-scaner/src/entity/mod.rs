@@ -3,7 +3,7 @@ pub mod creature;
 pub mod hero;
 pub mod spell;
 
-use crate::pak::FileStructure;
+use crate::{models, pak::FileStructure};
 use homm5_types::common::FileRef;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -29,68 +29,61 @@ pub trait CollectFiles {
     );
 }
 
-pub trait Scan<T> {
+pub trait Scan {
+    type Output;
     fn scan(
         &mut self,
         file_key: &String,
         entity: &String,
         files: &HashMap<String, FileStructure>,
-    ) -> Option<Box<dyn Output<ID = T>>>;
-    fn get_id(&self) -> Option<T>;
+    ) -> Self::Output;
 }
 
 pub trait Output {
-    type ID;
-    fn to_lua(&self, id: &Option<Self::ID>) -> String;
-    fn to_json(&self, id: &Option<Self::ID>) -> String;
+    type Input;
+    fn output_single(&self, object: Self::Input);
+    fn finish_output(&self);
+}
+
+pub struct CreatureOutput;
+
+impl Output for CreatureOutput { 
+    type Input = models::creature::Model;
+
+    fn output_single(&self, object: Self::Input) {}
+
+    fn finish_output(&self) {}
 }
 
 pub struct ScanProcessor<T> {
-    pub table_name: String,
-    pub output_file_name: String,
     pub collector: Box<dyn CollectFiles>,
-    pub scaner: Box<dyn Scan<T>>,
+    pub scaner: Box<dyn Scan<Output = T>>,
+    pub writer: Box<dyn Output<Input = T>>
 }
 
 impl<T> ScanProcessor<T> {
     pub fn new(
-        table: String,
-        output: String,
         collector: Box<dyn CollectFiles>,
-        processor: Box<dyn Scan<T>>,
+        scaner: Box<dyn Scan<Output = T>>,
+        writer: Box<dyn Output<Input = T>>
     ) -> Self {
         ScanProcessor {
-            table_name: table,
-            output_file_name: output,
-            collector: collector,
-            scaner: processor,
+            collector,
+            scaner,
+            writer
         }
     }
 }
 
 impl<T> ScanProcessor<T> {
-    pub fn run(&mut self, files: &HashMap<String, FileStructure>) -> (String, String) {
+    pub fn run(&mut self, files: &HashMap<String, FileStructure>) {
         let mut actual_files = vec![];
         self.collector.collect(files, &mut actual_files);
-        //println!("files collected: {:?}", &actual_files);
-        let mut output_string = format!("{} = {{\n", &self.table_name);
-        let mut json_string = String::from("[");
         for file in actual_files {
             let scanned_file = self.scaner.scan(&file.0, &file.1.content, files);
-            let id = self.scaner.get_id();
-            match scanned_file {
-                Some(actual_file) => {
-                    output_string += &actual_file.to_lua(&id);
-                    json_string += &format!("{},\n", actual_file.to_json(&id));
-                }
-                None => {}
-            }
+            self.writer.output_single(scanned_file);
         }
-        output_string.trim_end_matches(",").to_string();
-        output_string.push('}');
-        json_string = json_string.trim_end_matches(",").to_owned();
-        json_string.push(']');
-        (output_string, format!("{{\n{}}}", json_string))
+        self.writer.finish_output();
     }
 }
 

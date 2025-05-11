@@ -197,3 +197,4 @@ pub struct AdvMapMonster {
 }
 
 impl Homm5Type for AdvMapMonster {}
+impl Homm5Type for AdvMapCreatureShared {}
