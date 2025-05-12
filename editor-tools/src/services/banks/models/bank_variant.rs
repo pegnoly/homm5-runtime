@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use sea_orm::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use super::{bank, bank_difficulty::BankDifficultyType};
 
@@ -10,12 +10,12 @@ pub struct Model {
     pub id: i32,
     pub bank_id: i32,
     pub label: String,
-    pub difficulty: BankDifficultyType
+    pub difficulty: BankDifficultyType,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
-    Bank
+    Bank,
 }
 
 impl RelationTrait for Relation {
@@ -23,8 +23,8 @@ impl RelationTrait for Relation {
         match self {
             Relation::Bank => Entity::belongs_to(bank::Entity)
                 .from(Column::BankId)
-                .to(bank::Column::Id) 
-                .into()
+                .to(bank::Column::Id)
+                .into(),
         }
     }
 }

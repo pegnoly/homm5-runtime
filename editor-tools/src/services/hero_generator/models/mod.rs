@@ -1,1 +1,5 @@
-pub(crate) mod generatable_hero;
+pub(crate) mod army_slot;
+pub(crate) mod artifacts;
+pub(crate) mod asset;
+pub(crate) mod common;
+pub mod prelude;

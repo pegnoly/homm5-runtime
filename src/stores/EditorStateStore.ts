@@ -4,7 +4,8 @@ export enum EditorState {
     Quest,
     Dialog,
     ReserveHeroes,
-    Banks
+    Banks,
+    HeroGenerator
 }
 
 type State = {

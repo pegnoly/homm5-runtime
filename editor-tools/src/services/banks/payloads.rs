@@ -1,10 +1,10 @@
-use homm5_scaner::prelude::Town;
 use crate::services::banks::models::bank_difficulty::BankDifficultyType;
+use homm5_scaner::prelude::Town;
 
 pub struct CreateVariantPayload {
     pub bank_id: i32,
     pub label: String,
-    pub difficulty: BankDifficultyType
+    pub difficulty: BankDifficultyType,
 }
 
 #[derive(Debug, Default)]
@@ -13,7 +13,7 @@ pub struct UpdateBankPayload {
     pub recharge_count: Option<i32>,
     pub recharge_timer: Option<i32>,
     pub luck_loss: Option<i32>,
-    pub morale_loss: Option<i32>
+    pub morale_loss: Option<i32>,
 }
 
 impl UpdateBankPayload {
@@ -49,7 +49,7 @@ impl UpdateBankPayload {
 pub struct UpdateBankVariantPayload {
     pub id: i32,
     pub label: Option<String>,
-    pub difficulty: Option<BankDifficultyType>
+    pub difficulty: Option<BankDifficultyType>,
 }
 
 impl UpdateBankVariantPayload {
@@ -79,7 +79,7 @@ pub struct UpdateCreatureEntryPayload {
     pub creature_town: Option<Town>,
     pub creature_tier: Option<i32>,
     pub creature_id: Option<i32>,
-    pub creature_count: Option<i32>
+    pub creature_count: Option<i32>,
 }
 
 impl UpdateCreatureEntryPayload {

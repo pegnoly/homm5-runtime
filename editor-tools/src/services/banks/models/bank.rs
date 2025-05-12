@@ -4,7 +4,18 @@ use strum::{Display, EnumString};
 
 use super::bank_variant;
 
-#[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize, DeriveActiveEnum, EnumIter, PartialEq, Eq)]
+#[derive(
+    Debug,
+    EnumString,
+    Display,
+    Clone,
+    Serialize,
+    Deserialize,
+    DeriveActiveEnum,
+    EnumIter,
+    PartialEq,
+    Eq,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum BankType {
     #[sea_orm(string_value = "BTD_BANK_CRYPT")]
@@ -46,7 +57,7 @@ pub enum BankType {
     #[sea_orm(string_value = "BTD_BANK_SUNKEN_TEMPLE")]
     #[serde(rename = "BTD_BANK_SUNKEN_TEMPLE")]
     #[strum(serialize = "BTD_BANK_SUNKEN_TEMPLE")]
-    SunkenTemple
+    SunkenTemple,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DeriveEntityModel)]
@@ -59,18 +70,18 @@ pub struct Model {
     pub recharge_count: i32,
     pub recharge_timer: i32,
     pub luck_loss: i32,
-    pub morale_loss: i32
+    pub morale_loss: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
-    BankVariant
+    BankVariant,
 }
 
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
-            Self::BankVariant => Entity::has_many(bank_variant::Entity).into()
+            Self::BankVariant => Entity::has_many(bank_variant::Entity).into(),
         }
     }
 }

@@ -2,7 +2,18 @@ use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 
-#[derive(Debug, EnumString, Display, Clone, Serialize, Deserialize, DeriveActiveEnum, EnumIter, PartialEq, Eq)]
+#[derive(
+    Debug,
+    EnumString,
+    Display,
+    Clone,
+    Serialize,
+    Deserialize,
+    DeriveActiveEnum,
+    EnumIter,
+    PartialEq,
+    Eq,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum BankDifficultyType {
     #[sea_orm(string_value = "BANK_DIFFICULTY_EASY")]
@@ -24,7 +35,7 @@ pub enum BankDifficultyType {
     #[sea_orm(string_value = "BANK_DIFFICULTY_BOSS")]
     #[serde(rename = "BANK_DIFFICULTY_BOSS")]
     #[strum(serialize = "BANK_DIFFICULTY_BOSS")]
-    Boss
+    Boss,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DeriveEntityModel)]
@@ -34,7 +45,7 @@ pub struct Model {
     pub id: i32,
     pub bank_id: i32,
     pub difficulty_type: BankDifficultyType,
-    pub chance: i32
+    pub chance: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

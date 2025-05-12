@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use editor_tools::prelude::BanksGeneratorRepo;
+use editor_tools::prelude::{BanksGeneratorRepo, HeroGeneratorRepo};
 use homm5_scaner::prelude::ScanerService;
 use map_modifier::{artifacts::ArtifactConfigEntity, buildings::{BankConfigEntity, BuildingConfigEntity}, MapData};
 use serde::{Deserialize, Serialize};
@@ -69,6 +69,7 @@ pub async fn run() {
         .manage(quest_service)
         .manage(dialog_generator_service)
         .manage(BanksGeneratorRepo::new(pool.clone(), PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/")))
+        .manage(HeroGeneratorRepo::new(pool.clone()))
         .manage(ScanerService::new(pool.clone()))
         .manage(data)
         .plugin(tauri_plugin_shell::init())
@@ -144,7 +145,12 @@ pub async fn run() {
             services::banks_configurator::commands::update_creature_slot_power_grow,
             services::banks_configurator::commands::update_creature_slot_tier,
             services::banks_configurator::commands::update_creature_slot_town,
-            services::banks_configurator::commands::generate_banks_script
+            services::banks_configurator::commands::generate_banks_script,
+
+            services::heroes_generator::commands::pick_hero_lua_generation_directory,
+            services::heroes_generator::commands::init_new_generatable_hero,
+            services::heroes_generator::commands::load_all_hero_assets,
+            services::heroes_generator::commands::load_hero_asset
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

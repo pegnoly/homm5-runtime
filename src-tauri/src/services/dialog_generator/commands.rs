@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     DialogGeneratorService,
-    utils::{Config, LocalAppManager},
+    utils::LocalAppManager,
 };
 
 use super::data::{DialogFrontendModel, SpeakerFrontendModel, SpeakerType};
@@ -34,16 +34,16 @@ pub async fn load_speakers(
 #[tauri::command]
 pub async fn pick_dialog_directory(
     app: AppHandle,
-    config: State<'_, Config>,
-    app_manager: State<'_, LocalAppManager>,
+    app_manager: State<'_, LocalAppManager>
 ) -> Result<(), ()> {
+    let base_config_locked = app_manager.base_config.read().await;
     let current_map_id = app_manager
         .runtime_config
         .read()
         .await
         .current_selected_map
         .unwrap();
-    let map = config.maps.iter().find(|m| m.id == current_map_id).unwrap();
+    let map = base_config_locked.maps.iter().find(|m| m.id == current_map_id).unwrap();
 
     app.dialog()
         .file()
