@@ -25,13 +25,23 @@ pub struct UpdateArtifactsGenerationPowerPayload {
 }
 
 pub struct AddOptionalArtifactPayload {
-    pub hero_id: i32,
+    pub asset_id: i32,
     pub slot: ArtifactSlotType,
     pub artifact_id: i32,
 }
 
 pub struct RemoveOptionalArtifactPayload {
-    pub hero_id: i32,
+    pub asset_id: i32,
     pub slot: ArtifactSlotType,
+    pub artifact_id: i32,
+}
+
+pub struct AddRequiredArtifactPayload {
+    pub asset_id: i32,
+    pub artifact_id: i32,
+}
+
+pub struct RemoveRequiredArtifactPayload {
+    pub asset_id: i32,
     pub artifact_id: i32,
 }

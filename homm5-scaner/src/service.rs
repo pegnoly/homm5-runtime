@@ -1,8 +1,8 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use sea_orm::{sqlx::SqlitePool, DatabaseConnection, SqlxSqlitePoolConnection};
+use sea_orm::{sqlx::SqlitePool, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, SqlxSqlitePoolConnection};
 
-use crate::{core::ScanProcessor, pak::{self, FileStructure, EXTENSIONS}, scaners::prelude::{ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput, CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner, SpellDataOutput, SpellFileCollector, SpellScaner}};
+use crate::{core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{ArtifactDBColumn, ArtifactDBModel}, scaners::{self, prelude::{ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput, CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner, SpellDataOutput, SpellFileCollector, SpellScaner}}};
 
 pub struct ScanerService {
     db: DatabaseConnection
@@ -58,5 +58,9 @@ impl ScanerService {
         hero_scan_processor.run(&mut files).await.unwrap();
         artifact_scan_processor.run(&mut files).await.unwrap();
         spell_scan_processor.run(&mut files).await.unwrap();
+    }
+
+    pub async fn get_artifact_models(&self) -> Result<Vec<ArtifactDBModel>, ScanerError> {
+        Ok(scaners::prelude::ArtifactDBEntity::find().filter(ArtifactDBColumn::IsGeneratable.eq(true)).all(&self.db).await?)
     }
 }

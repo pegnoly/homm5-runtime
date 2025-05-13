@@ -5,7 +5,7 @@ use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "artifacts")]
 pub struct Model {
     #[sea_orm(primary_key)]

@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use super::{
     models::{
         artifacts::{self, OptionalArtifacts, RequiredArtifacts}, asset, common::{AssetGenerationType, DifficultyMappedValue}
@@ -5,12 +7,11 @@ use super::{
     payloads::{
         AddOptionalArtifactPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload,
     },
-    prelude::{InitAssetArtifactsDataPayload, UpdateArtifactsGenerationPowerPayload, UpdateArtifactsGenerationTypePayload},
+    prelude::{AddRequiredArtifactPayload, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationPowerPayload, UpdateArtifactsGenerationTypePayload},
 };
 use crate::error::EditorToolsError;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, DatabaseConnection, EntityTrait, IntoActiveModel,
-    SqlxSqlitePoolConnection, sqlx::SqlitePool,
+    sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, SqlxSqlitePoolConnection
 };
 
 pub struct HeroGeneratorRepo {
@@ -49,6 +50,13 @@ impl HeroGeneratorRepo {
         };
         let model = model_to_insert.insert(&self.db).await?;
         Ok(model)
+    }
+
+    pub async fn get_artifacts_model(
+        &self,
+        asset_id: i32 
+    ) -> Result<Option<artifacts::Model>, EditorToolsError> {
+        Ok(artifacts::Entity::find().filter(artifacts::Column::AssetId.eq(asset_id)).one(&self.db).await?)
     }
 
     pub async fn add_artifacts_model(
@@ -114,12 +122,45 @@ impl HeroGeneratorRepo {
         Ok(())
     }
 
+    pub async fn add_required_artifact_id(
+        &self,
+        payload: AddRequiredArtifactPayload,
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.asset_id)
+            .one(&self.db)
+            .await?
+        {
+            let mut model_to_update = existing_model.clone().into_active_model();
+            let mut required_artifacts_to_update = existing_model.required.clone();
+            required_artifacts_to_update.ids.push(payload.artifact_id);
+            model_to_update.required = Set(required_artifacts_to_update);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn remove_required_artifact_id(
+        &self,
+        payload: RemoveRequiredArtifactPayload,
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.asset_id)
+            .one(&self.db)
+            .await?
+        {
+            let mut model_to_update = existing_model.clone().into_active_model();
+            let mut required_artifacts_to_update = existing_model.required.clone();
+            required_artifacts_to_update.ids.retain(|id| *id != payload.artifact_id);
+            model_to_update.required = Set(required_artifacts_to_update);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
 
     pub async fn add_optional_artifact_id(
         &self,
         payload: AddOptionalArtifactPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.hero_id)
+        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.asset_id)
             .one(&self.db)
             .await?
         {
@@ -145,7 +186,7 @@ impl HeroGeneratorRepo {
         &self,
         payload: RemoveOptionalArtifactPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.hero_id)
+        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.asset_id)
             .one(&self.db)
             .await?
         {

@@ -147,10 +147,19 @@ pub async fn run() {
             services::banks_configurator::commands::update_creature_slot_town,
             services::banks_configurator::commands::generate_banks_script,
 
+            services::heroes_generator::commands::load_artifact_models,
             services::heroes_generator::commands::pick_hero_lua_generation_directory,
             services::heroes_generator::commands::init_new_generatable_hero,
             services::heroes_generator::commands::load_all_hero_assets,
-            services::heroes_generator::commands::load_hero_asset
+            services::heroes_generator::commands::load_hero_asset,
+            services::heroes_generator::commands::try_load_artifacts_data_for_asset,
+            services::heroes_generator::commands::create_artifacts_data_for_asset,
+            services::heroes_generator::commands::update_artifacts_base_cost,
+            services::heroes_generator::commands::update_artifacts_cost_grow,
+            services::heroes_generator::commands::add_required_artifact,
+            services::heroes_generator::commands::remove_required_artifact,
+            services::heroes_generator::commands::add_optional_artifact,
+            services::heroes_generator::commands::remove_optional_artifact
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

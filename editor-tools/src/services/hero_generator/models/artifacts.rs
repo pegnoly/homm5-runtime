@@ -5,7 +5,7 @@ use std::{collections::HashMap, str};
 
 use super::common::{AssetGenerationType, DifficultyMappedValue};
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "hero_generated_artifacts")]
 pub struct Model {
     #[sea_orm(primary_key)]

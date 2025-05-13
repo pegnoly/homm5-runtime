@@ -12,7 +12,9 @@ pub enum Error {
     #[error(transparent)]
     ParseInt(#[from]ParseIntError),
     #[error(transparent)]
-    EditorTools(#[from]editor_tools::prelude::EditorToolsError)
+    EditorTools(#[from]editor_tools::prelude::EditorToolsError),
+    #[error(transparent)]
+    Scaner(#[from]homm5_scaner::prelude::ScanerError)
 }
 
 impl Serialize for Error {
