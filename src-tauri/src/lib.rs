@@ -159,7 +159,16 @@ pub async fn run() {
             services::heroes_generator::commands::add_required_artifact,
             services::heroes_generator::commands::remove_required_artifact,
             services::heroes_generator::commands::add_optional_artifact,
-            services::heroes_generator::commands::remove_optional_artifact
+            services::heroes_generator::commands::remove_optional_artifact,
+            services::heroes_generator::commands::load_stacks_ids,
+            services::heroes_generator::commands::create_stack,
+            services::heroes_generator::commands::load_stack,
+            services::heroes_generator::commands::update_stack_base_powers,
+            services::heroes_generator::commands::update_stack_powers_grow,
+            services::heroes_generator::commands::update_stack_creature_town,
+            services::heroes_generator::commands::update_stack_creature_tier,
+            services::heroes_generator::commands::add_stack_generation_rule,
+            services::heroes_generator::commands::remove_stack_generation_rule
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

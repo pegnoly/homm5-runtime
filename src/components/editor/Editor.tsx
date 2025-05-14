@@ -8,6 +8,7 @@ import ReserveHeroesMain from "../reserve_heroes/main";
 import { invoke } from "@tauri-apps/api/core";
 import BanksConfiguratorMain, { BanksConfiguratorGlobals } from "../bank_configurator/main";
 import HeroGeneratorMain from "../hero_generator/main";
+import HeroGeneratorGlobals from "../hero_generator/global";
 
 function Editor() {
 
@@ -85,6 +86,8 @@ function EditorGlobals() {
             return <DialogGeneratorGlobals/>
         case EditorState.Banks: 
             return <BanksConfiguratorGlobals/>
+        case EditorState.HeroGenerator:
+            return <HeroGeneratorGlobals/>
     }
 }
 

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
-use editor_tools::prelude::{AddOptionalArtifactPayload, AddRequiredArtifactPayload, AssetGenerationType, DifficultyType, HeroAssetArtifactsModel, HeroAssetModel, HeroGeneratorRepo, InitAssetArtifactsDataPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationPowerPayload};
-use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, ScanerService};
+use editor_tools::prelude::{AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, AssetGenerationType, DifficultyType, HeroAssetArmySlotModel, HeroAssetArtifactsModel, HeroAssetModel, HeroGeneratorRepo, InitAssetArtifactsDataPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload};
+use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, ScanerService, Town};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use crate::{error::Error, utils::LocalAppManager};
@@ -89,7 +89,7 @@ pub async fn update_artifacts_base_cost(
     value: String
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo.update_artifacts_base_generation_power(UpdateArtifactsGenerationPowerPayload {id: container_id, difficulty, value: actual_value}).await?;
+    heroes_repo.update_artifacts_base_generation_power(UpdateDifficultyBasedPowerPayload {id: container_id, difficulty, value: actual_value}).await?;
     Ok(actual_value)
 }
 
@@ -101,7 +101,7 @@ pub async fn update_artifacts_cost_grow(
     value: String
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo.update_artifacts_grow_power(UpdateArtifactsGenerationPowerPayload {id: container_id, difficulty, value: actual_value}).await?;
+    heroes_repo.update_artifacts_grow_power(UpdateDifficultyBasedPowerPayload {id: container_id, difficulty, value: actual_value}).await?;
     Ok(actual_value)
 }
 
@@ -141,4 +141,89 @@ pub async fn remove_optional_artifact(
     artifact_id: i32
 ) -> Result<(), Error> {
     Ok(heroes_repo.remove_optional_artifact_id(RemoveOptionalArtifactPayload { asset_id, slot, artifact_id}).await?)
+}
+
+#[tauri::command]
+pub async fn load_stacks_ids(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    asset_id: i32
+) -> Result<Vec<i32>, Error> {
+    Ok(heroes_repo.get_stacks_ids(asset_id).await?)
+}
+
+#[tauri::command]
+pub async fn create_stack(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    asset_id: i32,
+    generation_type: AssetGenerationType
+) -> Result<i32, Error> {
+    Ok(heroes_repo.add_stack(AddStackPayload { asset_id, generation_type }).await?)
+}
+
+#[tauri::command]
+pub async fn load_stack(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    stack_id: i32
+) -> Result<Option<HeroAssetArmySlotModel>, Error> {
+    Ok(heroes_repo.get_stack(stack_id).await?)
+}
+
+#[tauri::command]
+pub async fn update_stack_base_powers(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    container_id: i32,
+    difficulty: DifficultyType,
+    value: String
+) -> Result<i32, Error> {
+    let actual_value = value.parse::<i32>()?;
+    heroes_repo.update_stack_base_power(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty: difficulty, value: actual_value }).await?;
+    Ok(actual_value)
+}
+
+#[tauri::command]
+pub async fn update_stack_powers_grow(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    container_id: i32,
+    difficulty: DifficultyType,
+    value: String
+) -> Result<i32, Error> {
+    let actual_value = value.parse::<i32>()?;
+    heroes_repo.update_stack_base_power(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty: difficulty, value: actual_value }).await?;
+    Ok(actual_value)
+}
+
+#[tauri::command]
+pub async fn update_stack_creature_town(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    stack_id: i32,
+    town: Town
+) -> Result<(), Error> {
+    Ok(heroes_repo.update_stack_creature_town(UpdateStackCreatureTownPayload { stack_id, town }).await?)
+}
+
+#[tauri::command]
+pub async fn update_stack_creature_tier(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    stack_id: i32,
+    tier: i32
+) -> Result<(), Error> {
+    Ok(heroes_repo.update_stack_creature_tier(UpdateStackCreatureTierPayload { stack_id, tier }).await?)
+}
+
+#[tauri::command]
+pub async fn add_stack_generation_rule(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    stack_id: i32,
+    rule: ArmyGenerationRuleParam
+) -> Result<(), Error> {
+    Ok(heroes_repo.add_generation_rule(UpdateGenerationRulesPayload { stack_id, rule }).await?)
+}
+
+#[tauri::command]
+pub async fn remove_stack_generation_rule(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    stack_id: i32,
+    rule: ArmyGenerationRuleParam
+) -> Result<(), Error> {
+    Ok(heroes_repo.remove_generation_rule(UpdateGenerationRulesPayload { stack_id, rule }).await?)
 }

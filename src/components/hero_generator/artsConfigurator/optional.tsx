@@ -71,7 +71,13 @@ function OptionalArtifactsList(params: {modelId: number, currentArtifacts: Optio
                     <div>
                         <List>{params.currentArtifacts.values[slot].map((art, index) => (
                             <List.Item key={index}>
-                                <ArtifactListItem artifact={availableArtifacts.find(model => model.id == art)!} removeArtifactCallback={removeArtifact}></ArtifactListItem>
+                                <ArtifactListItem 
+                                    artifact={
+                                        availableArtifacts
+                                            .find(model => model.id == art)!
+                                    } 
+                                    removeArtifactCallback={removeArtifact}
+                                />
                             </List.Item>
                         ))}</List>
                     </div> :

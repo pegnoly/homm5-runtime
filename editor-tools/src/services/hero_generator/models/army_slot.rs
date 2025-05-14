@@ -1,12 +1,12 @@
 use homm5_scaner::prelude::Town;
-use sea_orm::{FromJsonQueryResult, prelude::*};
+use sea_orm::{prelude::*, FromJsonQueryResult, FromQueryResult};
 use serde::{Deserialize, Serialize};
 use std::str;
 use strum::EnumString;
 
 use super::common::{AssetGenerationType, DifficultyMappedValue};
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "hero_generated_army_slots")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -18,6 +18,14 @@ pub struct Model {
     pub town: Town,
     pub tier: i32,
     pub generation_rule: ArmySlotGenerationRule,
+}
+
+pub type ArmySlotEntity = Entity;
+
+#[derive(Debug, DerivePartialModel, FromQueryResult)]
+#[sea_orm(entity = "ArmySlotEntity")]
+pub struct ArmySlotId {
+    pub id: i32
 }
 
 #[derive(

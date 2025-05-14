@@ -1,15 +1,15 @@
-use std::ops::Add;
-
 use super::{
     models::{
-        artifacts::{self, OptionalArtifacts, RequiredArtifacts}, asset, common::{AssetGenerationType, DifficultyMappedValue}
+        army_slot::{self, ArmySlotGenerationRule, ArmySlotId}, artifacts::{self, OptionalArtifacts, RequiredArtifacts}, asset, common::{AssetGenerationType, DifficultyMappedValue}
     },
     payloads::{
         AddOptionalArtifactPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload,
     },
-    prelude::{AddRequiredArtifactPayload, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationPowerPayload, UpdateArtifactsGenerationTypePayload},
+    prelude::{AddRequiredArtifactPayload, AddStackPayload, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload},
 };
 use crate::error::EditorToolsError;
+use homm5_scaner::prelude::Town;
+use itertools::Itertools;
 use sea_orm::{
     sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, SqlxSqlitePoolConnection
 };
@@ -92,7 +92,7 @@ impl HeroGeneratorRepo {
 
     pub async fn update_artifacts_base_generation_power(
         &self,
-        payload: UpdateArtifactsGenerationPowerPayload
+        payload: UpdateDifficultyBasedPowerPayload
     ) -> Result<(), EditorToolsError> {
         if let Some(existing_model) = artifacts::Entity::find_by_id(payload.id).one(&self.db).await? {
             let mut model_to_update = existing_model.clone().into_active_model();
@@ -108,7 +108,7 @@ impl HeroGeneratorRepo {
 
     pub async fn update_artifacts_grow_power(
         &self,
-        payload: UpdateArtifactsGenerationPowerPayload
+        payload: UpdateDifficultyBasedPowerPayload
     ) -> Result<(), EditorToolsError> {
         if let Some(existing_model) = artifacts::Entity::find_by_id(payload.id).one(&self.db).await? {
             let mut model_to_update = existing_model.clone().into_active_model();
@@ -202,5 +202,127 @@ impl HeroGeneratorRepo {
             model_to_update.update(&self.db).await?;
         }
         Ok(())
+    }
+
+    pub async fn get_stacks_ids(
+        &self,
+        asset_id: i32
+    ) -> Result<Vec<i32>, EditorToolsError> {
+        let ids = army_slot::Entity::find()
+            .filter(army_slot::Column::AssetId.eq(asset_id))
+            .into_partial_model::<ArmySlotId>()
+            .all(&self.db)
+            .await?;
+
+        Ok(ids.iter().map(|slot| { slot.id }).collect_vec())
+    }
+
+    pub async fn add_stack(
+        &self,
+        payload: AddStackPayload
+    ) -> Result<i32, EditorToolsError> {
+        let model_to_insert = army_slot::ActiveModel {
+            asset_id: Set(payload.asset_id),
+            generation_type: Set(payload.generation_type.clone()),
+            base_powers: Set(DifficultyMappedValue::default()),
+            powers_grow: Set(if payload.generation_type == AssetGenerationType::Dynamic { Some(DifficultyMappedValue::default()) } else { None }),
+            town: Set(Town::TownNoType),
+            tier: Set(1),
+            generation_rule: Set(ArmySlotGenerationRule { params: vec![]} ),
+            ..Default::default()
+        };
+        let inserted_model = model_to_insert.insert(&self.db).await?;
+        Ok(inserted_model.id)
+    }
+
+    pub async fn get_stack(
+        &self,
+        stack_id: i32
+    ) -> Result<Option<army_slot::Model>, EditorToolsError> {
+        Ok(army_slot::Entity::find_by_id(stack_id).one(&self.db).await?)
+    }
+
+    pub async fn update_stack_base_power(
+        &self,
+        payload: UpdateDifficultyBasedPowerPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.id).one(&self.db).await? {
+            let mut model_to_update = existing_model.clone().into_active_model();
+            let mut base_powers_to_update = existing_model.base_powers.clone();
+            if let Some(power) = base_powers_to_update.data.get_mut(&payload.difficulty) {
+                *power = payload.value;
+            }
+            model_to_update.base_powers = Set(base_powers_to_update);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn update_stack_power_grow(
+        &self,
+        payload: UpdateDifficultyBasedPowerPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.id).one(&self.db).await? {
+            let mut model_to_update = existing_model.clone().into_active_model();
+            let mut base_powers_to_update = existing_model.base_powers.clone();
+            if let Some(power) = base_powers_to_update.data.get_mut(&payload.difficulty) {
+                *power = payload.value;
+            }
+            model_to_update.base_powers = Set(base_powers_to_update);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn update_stack_creature_town(
+        &self,
+        payload: UpdateStackCreatureTownPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.town = Set(payload.town);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn update_stack_creature_tier(
+        &self,
+        payload: UpdateStackCreatureTierPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.tier = Set(payload.tier);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn add_generation_rule(
+        &self,
+        payload: UpdateGenerationRulesPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+            let mut model_to_update = existing_model.clone().into_active_model();
+            let mut rule_to_update = existing_model.generation_rule.clone();
+            rule_to_update.params.push(payload.rule);
+            model_to_update.generation_rule = Set(rule_to_update);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())      
+    }
+
+    pub async fn remove_generation_rule(
+        &self,
+        payload: UpdateGenerationRulesPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+            let mut model_to_update = existing_model.clone().into_active_model();
+            let mut rule_to_update = existing_model.generation_rule.clone();
+            rule_to_update.params.retain(|rule| *rule != payload.rule);
+            model_to_update.generation_rule = Set(rule_to_update);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())      
     }
 }
