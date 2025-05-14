@@ -7,7 +7,7 @@ function HeroGeneratorGlobals() {
 
     return <Button 
         disabled={!currentAsset} 
-        onClick={() => invoke("generate_hero_script", {assetId: currentAsset})}
+        onClick={() => invoke("generate_current_hero_script", {assetId: currentAsset})}
     >Generate script for current hero</Button>
 }
 

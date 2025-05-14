@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use sea_orm::{FromJsonQueryResult, Iterable, prelude::*};
 use serde::{Deserialize, Serialize};
-use strum::EnumString;
+use strum::{Display, EnumString};
 
 #[derive(
     Debug,
@@ -15,6 +15,7 @@ use strum::EnumString;
     Serialize,
     Deserialize,
     Hash,
+    Display
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum DifficultyType {
@@ -22,9 +23,9 @@ pub enum DifficultyType {
     #[serde(rename = "DIFFICULTY_EASY")]
     #[strum(serialize = "DIFFICULTY_EASY")]
     Easy,
-    #[sea_orm(string_value = "DIFFICULTY_MEDIUM")]
-    #[serde(rename = "DIFFICULTY_MEDIUM")]
-    #[strum(serialize = "DIFFICULTY_MEDIUM")]
+    #[sea_orm(string_value = "DIFFICULTY_NORMAL")]
+    #[serde(rename = "DIFFICULTY_NORMAL")]
+    #[strum(serialize = "DIFFICULTY_NORMAL")]
     Medium,
     #[sea_orm(string_value = "DIFFICULTY_HARD")]
     #[serde(rename = "DIFFICULTY_HARD")]

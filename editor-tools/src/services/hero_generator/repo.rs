@@ -5,7 +5,7 @@ use super::{
     payloads::{
         AddOptionalArtifactPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload,
     },
-    prelude::{AddRequiredArtifactPayload, AddStackPayload, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload},
+    prelude::{AddRequiredArtifactPayload, AddStackPayload, HeroAssetArmySlotModel, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload},
 };
 use crate::error::EditorToolsError;
 use homm5_scaner::prelude::Town;
@@ -215,6 +215,13 @@ impl HeroGeneratorRepo {
             .await?;
 
         Ok(ids.iter().map(|slot| { slot.id }).collect_vec())
+    }
+
+    pub async fn get_stacks(
+        &self,
+        asset_id: i32
+    ) -> Result<Vec<HeroAssetArmySlotModel>, EditorToolsError> {
+        Ok(army_slot::Entity::find().filter(army_slot::Column::AssetId.eq(asset_id)).all(&self.db).await?)
     }
 
     pub async fn add_stack(

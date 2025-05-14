@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 use editor_tools::prelude::{AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, AssetGenerationType, DifficultyType, HeroAssetArmySlotModel, HeroAssetArtifactsModel, HeroAssetModel, HeroGeneratorRepo, InitAssetArtifactsDataPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload};
 use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, ScanerService, Town};
 use tauri::{AppHandle, Emitter, State};
@@ -226,4 +226,108 @@ pub async fn remove_stack_generation_rule(
     rule: ArmyGenerationRuleParam
 ) -> Result<(), Error> {
     Ok(heroes_repo.remove_generation_rule(UpdateGenerationRulesPayload { stack_id, rule }).await?)
+}
+
+#[tauri::command]
+pub async fn generate_current_hero_script(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    asset_id: i32
+) -> Result<(), Error> {
+    if let Some(main_asset) = heroes_repo.get_hero_asset(asset_id).await? {
+        let mut output_file = std::fs::File::create(format!("{}\\script.lua", &main_asset.path_to_generate))?;
+        let mut script = format!("{} = {{\n", &main_asset.table_name);
+        // stacks script
+        let stacks_assets = heroes_repo.get_stacks(main_asset.id).await?;
+        let mut base_army_powers_script = String::from("\tarmy_base_powers = {\n");
+        let mut army_grow_powers_script = String::from("\tarmy_powers_grow = {\n");
+        let mut army_generation_rules_script = String::from("\tarmy_getters = {\n");
+
+        let mut stack_count = 0;
+        for asset in stacks_assets {
+            stack_count += 1;
+            base_army_powers_script += &format!("\t\t[{}] = {{\n", stack_count);
+            for (difficulty, power) in asset.base_powers.data {
+                base_army_powers_script += &format!("\t\t\t[{}] = {},\n", &difficulty, power);
+            }
+            base_army_powers_script += "\t\t},\n";
+            
+            if asset.generation_type == AssetGenerationType::Dynamic {
+                army_grow_powers_script += &format!("\t\t[{}] = {{\n", stack_count);
+                for (difficulty, power) in asset.powers_grow.unwrap().data {
+                    army_grow_powers_script += &format!("\t\t\t[{}] = {},\n", &difficulty, power);
+                }
+                army_grow_powers_script += "\t\t},\n";
+            }
+
+            // construct generation rule filter
+            let mut generation_rules_script = String::from("local result = ");
+            for rule in &asset.generation_rule.params {
+                match rule {
+                    ArmyGenerationRuleParam::Generatable => {
+                        generation_rules_script += "Creature.Params.IsGeneratable(creature) and "
+                    },
+                    ArmyGenerationRuleParam::Caster => {
+                        generation_rules_script += "Creature.Type.IsCaster(creature) and "
+                    },
+                    ArmyGenerationRuleParam::Shooter => {
+                        generation_rules_script += "Creature.Type.IsShooter(creature) and"
+                    }
+                    _=> {}
+                }
+            }
+            generation_rules_script = generation_rules_script.trim_end().trim_end_matches("and").trim_end().to_string();
+            // construct getter function
+            let mut inner_getter_function = format!("\t\t\tlocal tiers = TIER_TABLES[{}][{}]\n", asset.town, asset.tier);
+            let filter_function = format!(
+                "\t\t\tlocal filtered_tiers = list_iterator.
+                Filter(\n\t\t\t\ttiers,\n\t\t\t\tfunction(creature)\n\t\t\t\t\t{}\n\t\t\t\t\treturn result\n\t\t\t\tend)", &generation_rules_script);
+            if asset.generation_rule.params.len() > 0 {
+                inner_getter_function += &format!("{}\n\t\t\tlocal id = Random.FromTable(filtered_tiers)\n\t\t\treturn id", &filter_function);
+            } else {
+                inner_getter_function += "\t\t\tlocal id = Random.FromTable(tiers)\n\t\t\treturn id";
+            }
+            army_generation_rules_script += &format!("\t\t[{}] = function ()\n{}\n\t\tend,\n", stack_count, inner_getter_function);
+        }
+        script += &format!("{}\t}},\n\n", base_army_powers_script);
+        script += &format!("{}\t}},\n\n", army_grow_powers_script);
+        script += &format!("{}\t}},\n\n", army_generation_rules_script);
+
+        // artifacts script
+        if let Some(artifacts_asset) = heroes_repo.get_artifacts_model(asset_id).await? {
+            script += "\trequired_artifacts = {";
+            for artifact_id in artifacts_asset.required.ids {
+                script += &format!("{}, ", artifact_id);
+            }
+            script.push_str("\t},\n");
+            script += "\toptional_artifacts = {\n";
+            for (slot, ids) in artifacts_asset.optional.values {
+                if !ids.is_empty() {
+                    script += &format!("\t\t[{}] = {{", &slot);
+                    for id in ids {
+                        script += &format!("{}, ", id);
+                    }
+                    script += "},\n"
+                }
+            }
+            script.push_str("\t},\n\n");
+            
+            script += "\tartifacts_base_costs = {\n";
+            for (difficulty, cost) in artifacts_asset.base_powers.data {
+                script += &format!("\t\t[{}] = {},\n", difficulty, cost); 
+            }
+            script.push_str("\t},\n\n");
+
+            if artifacts_asset.generation_type == AssetGenerationType::Dynamic {
+                script += "\tartifacts_costs_grow = {\n";
+                for (difficulty, cost) in artifacts_asset.powers_grow.unwrap().data {
+                    script += &format!("\t\t[{}] = {},\n", difficulty, cost);  
+                }
+                script.push_str("\t},\n\n");
+            }
+        }
+
+        script.push('}');
+        output_file.write_all(script.as_bytes())?;
+    }
+    Ok(())
 }

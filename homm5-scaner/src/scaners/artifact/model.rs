@@ -3,7 +3,7 @@ use std::str::FromStr;
 use homm5_types::art::AdvMapArtifactShared;
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
-use strum_macros::EnumString;
+use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "artifacts")]
@@ -21,7 +21,7 @@ pub struct Model {
     pub is_generatable: bool 
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Hash)]
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Hash, Display)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum ArtifactSlotType {
     #[sea_orm(string_value = "PRIMARY")]

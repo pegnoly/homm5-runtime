@@ -10,7 +10,7 @@ function HeroAssetFocusedStack(params: {stackId: number}) {
 
     useEffect(() => {
         loadStackData();
-    }, []);
+    }, [params.stackId]);
 
     const loadStackData = async () => {
         await invoke<HeroAssetStackModel | null>("load_stack", {stackId: params.stackId})

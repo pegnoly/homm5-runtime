@@ -5,7 +5,7 @@ export enum AssetGenerationType {
 
 export enum DifficultyType {
     Easy = "DIFFICULTY_EASY",
-    Medium = "DIFFICULTY_MEDIUM",
+    Medium = "DIFFICULTY_NORMAL",
     Hard = "DIFFICULTY_HARD",
     Heroic = "DIFFICULTY_HEROIC"
 }

@@ -168,7 +168,8 @@ pub async fn run() {
             services::heroes_generator::commands::update_stack_creature_town,
             services::heroes_generator::commands::update_stack_creature_tier,
             services::heroes_generator::commands::add_stack_generation_rule,
-            services::heroes_generator::commands::remove_stack_generation_rule
+            services::heroes_generator::commands::remove_stack_generation_rule,
+            services::heroes_generator::commands::generate_current_hero_script
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
