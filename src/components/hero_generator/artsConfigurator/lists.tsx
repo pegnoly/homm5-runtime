@@ -16,16 +16,16 @@ function HeroAssetArtifactsLists(params: {
         params.updateCallback({...params.model, optional: newArtifacts});
     }
 
-    return <div>
+    return <div style={{width: '100%', paddingTop: '2%'}}>
         <Row>
-            <Col span={11}>
+            <Col span={12}>
                 <RequiredArtifactsList modelId={params.model.id} currentArtifacts={params.model.required} updateCallback={updateRequiredArtifacts}/>
             </Col>
             {
                 params.model.generation_type == AssetGenerationType.Dynamic ?
-                <Col offset={1} span={11}>
-                    <OptionalArtifactsList modelId={params.model.id} currentArtifacts={params.model.optional} updateCallback={updateOptionalArtifacts}/>
-                </Col> :
+                <Col span={11}>
+                    <OptionalArtifactsList modelId={params.model.id} currentArtifacts={params.model.optional} updateCallback={updateOptionalArtifacts}/> :
+                </Col> : 
                 null
             }
         </Row>

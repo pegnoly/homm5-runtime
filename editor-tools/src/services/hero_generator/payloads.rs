@@ -1,6 +1,6 @@
 use homm5_scaner::prelude::{ArtifactSlotType, Town};
 
-use super::{models::{army_slot::ArmyGenerationRuleParam, common::AssetGenerationType}, prelude::DifficultyType};
+use super::{models::{army_slot::{ArmyGenerationRuleParam, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode}, common::AssetGenerationType}, prelude::DifficultyType};
 
 pub struct InitGeneratableHeroPayload {
     pub name: String,
@@ -48,7 +48,25 @@ pub struct RemoveRequiredArtifactPayload {
 
 pub struct AddStackPayload {
     pub asset_id: i32,
-    pub generation_type: AssetGenerationType
+    pub unit_generation_type: ArmySlotStackUnitGenerationMode,
+    pub count_generation_type: ArmySlotStackCountGenerationMode,
+    pub power_based_generation_type: Option<AssetGenerationType>
+}
+
+impl AddStackPayload {
+    pub fn new(asset_id: i32, unit_generation_type: ArmySlotStackUnitGenerationMode, count_generation_type: ArmySlotStackCountGenerationMode) -> Self {
+        AddStackPayload {
+            asset_id,
+            unit_generation_type,
+            count_generation_type,
+            power_based_generation_type: None
+        }
+    }
+
+    pub fn with_power_based_generation_type(mut self, generation_type: AssetGenerationType) -> Self {
+        self.power_based_generation_type = Some(generation_type);
+        self
+    }
 }
 
 pub struct UpdateStackCreatureTownPayload {

@@ -1,5 +1,5 @@
 use std::{io::Write, path::PathBuf};
-use editor_tools::prelude::{AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, AssetGenerationType, DifficultyType, HeroAssetArmySlotModel, HeroAssetArtifactsModel, HeroAssetModel, HeroGeneratorRepo, InitAssetArtifactsDataPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload};
+use editor_tools::prelude::{AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, AssetGenerationType, DifficultyType, HeroAssetArmySlotModel, HeroAssetArtifactsModel, HeroAssetModel, HeroGeneratorRepo, InitAssetArtifactsDataPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload};
 use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, ScanerService, Town};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
@@ -155,9 +155,15 @@ pub async fn load_stacks_ids(
 pub async fn create_stack(
     heroes_repo: State<'_, HeroGeneratorRepo>,
     asset_id: i32,
-    generation_type: AssetGenerationType
+    type_generation_mode: ArmySlotStackUnitGenerationMode,
+    count_generation_mode: ArmySlotStackCountGenerationMode,
+    generation_type: Option<AssetGenerationType>
 ) -> Result<i32, Error> {
-    Ok(heroes_repo.add_stack(AddStackPayload { asset_id, generation_type }).await?)
+    let mut payload = AddStackPayload::new(asset_id, type_generation_mode, count_generation_mode.clone());
+    if count_generation_mode == ArmySlotStackCountGenerationMode::PowerBased {
+        payload = payload.with_power_based_generation_type(generation_type.unwrap_or(AssetGenerationType::Static))
+    }
+    Ok(heroes_repo.add_stack(payload).await?)
 }
 
 #[tauri::command]
@@ -176,7 +182,7 @@ pub async fn update_stack_base_powers(
     value: String
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo.update_stack_base_power(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty: difficulty, value: actual_value }).await?;
+    heroes_repo.update_stack_base_power(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty, value: actual_value }).await?;
     Ok(actual_value)
 }
 
@@ -188,7 +194,19 @@ pub async fn update_stack_powers_grow(
     value: String
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo.update_stack_base_power(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty: difficulty, value: actual_value }).await?;
+    heroes_repo.update_stack_base_power(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty, value: actual_value }).await?;
+    Ok(actual_value)
+}
+
+#[tauri::command]
+pub async fn update_stack_concrete_count(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    container_id: i32,
+    difficulty: DifficultyType,
+    value: String
+) -> Result<i32, Error> {
+    let actual_value = value.parse::<i32>()?;
+    heroes_repo.update_stack_creature_count(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty, value: actual_value }).await?;
     Ok(actual_value)
 }
 
@@ -251,9 +269,9 @@ pub async fn generate_current_hero_script(
             }
             base_army_powers_script += "\t\t},\n";
             
-            if asset.generation_type == AssetGenerationType::Dynamic {
+            if asset.power_based_generation_type == AssetGenerationType::Dynamic {
                 army_grow_powers_script += &format!("\t\t[{}] = {{\n", stack_count);
-                for (difficulty, power) in asset.powers_grow.unwrap().data {
+                for (difficulty, power) in asset.powers_grow.data {
                     army_grow_powers_script += &format!("\t\t\t[{}] = {},\n", &difficulty, power);
                 }
                 army_grow_powers_script += "\t\t},\n";

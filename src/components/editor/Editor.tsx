@@ -16,7 +16,7 @@ function Editor() {
         await invoke("apply_modifications")
     }
 
-    return <>
+    return <div style={{height: '100%'}}>
         <Row>
             <Col span={5}>
                 <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 10}}>
@@ -29,7 +29,7 @@ function Editor() {
                 <EditorWindow/>
             </Col>
         </Row>
-    </>
+    </div>
 }
 
 function EditorStateSelector() {

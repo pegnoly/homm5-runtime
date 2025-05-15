@@ -37,7 +37,7 @@ function HeroGeneratorMain() {
 
 function HeroAssetsList(params: {assets: HeroAssetSimple[]}) {
 
-    return <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+    return <div style={{display: 'flex', flexDirection: 'column', height: '100%', alignItems: 'center'}}>
         <Typography.Text style={{fontFamily: 'fantasy', fontSize: 20, color: 'darkorchid', fontStretch: 'expanded', letterSpacing: 2}}>Assets list</Typography.Text>
             <List>{params.assets.map((asset, index) => (
             <Link key={index} to={`asset/${asset.id}`}>

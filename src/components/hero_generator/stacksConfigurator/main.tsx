@@ -4,6 +4,9 @@ import { Button, Modal, Segmented, Select, Space, Typography } from "antd"
 import { PlusOutlined } from "@ant-design/icons"
 import { invoke } from "@tauri-apps/api/core"
 import HeroAssetFocusedStack from "./focused"
+import HeroAssetStackCreator from "./creator"
+import HeroAssetStacksConfiguratorHeader from "./header"
+import HeroAssetCurrentStackData from "./data"
 
 export enum TownType {
     TownNoType = "TOWN_NO_TYPE",
@@ -16,6 +19,26 @@ export enum TownType {
     TownFortress = "TOWN_FORTRESS",
     TownStronghold = "TOWN_STRONGHOLD"
 }
+
+export enum StackUnitGenerationType {
+    ConcreteUnit = "UNIT_TYPE_GENERATION_MODE_CONCRETE",
+    TierSlotBased = "UNIT_TYPE_GENERATION_MODE_TIER_SLOT_BASED"
+}
+
+export const unitGenerationTypeNames = new Map<StackUnitGenerationType, string>([
+    [StackUnitGenerationType.ConcreteUnit, "Concrete unit"],
+    [StackUnitGenerationType.TierSlotBased, "Tier-slot based"]
+])
+
+export enum StackCountGenerationType {
+    Raw = "UNIT_COUNT_GENERATION_MODE_RAW",
+    PowerBased = "UNIT_COUNT_GENERATION_MODE_POWER_BASED"
+}
+
+export const countGenerationTypeNames = new Map<StackCountGenerationType, string>([
+    [StackCountGenerationType.Raw, "Concrete count"],
+    [StackCountGenerationType.PowerBased, "Power based"]
+])
 
 export enum StackGenerationParam {
     UpgradeOnly = "GENERATION_RULE_UPGRADE_ONLY",
@@ -37,15 +60,21 @@ export type StackGenerationRules = {
 
 export type HeroAssetStackModel = {
     id: number,
-    generation_type: AssetGenerationType,
+    type_generation_mode: StackUnitGenerationType,
+    count_generation_mode: StackCountGenerationType,
+    power_based_generation_type: AssetGenerationType,
     base_powers: DifficultyMappedValue,
     powers_grow: DifficultyMappedValue | null,
     town: TownType,
     tier: number,
-    generation_rule: StackGenerationRules
+    generation_rule: StackGenerationRules,
+    concrete_creature: number,
+    concrete_count: DifficultyMappedValue
 }
 
-function HeroAssetStacksConfigurator(params: {assetId: number}) {
+function HeroAssetStacksConfigurator(params: {
+    assetId: number
+}) {
     const [stacksIds, setStacksIds] = useState<number[]>([]);
     const [selectedStack, setSelectedStack] = useState<number | null>(null);
 
@@ -58,67 +87,31 @@ function HeroAssetStacksConfigurator(params: {assetId: number}) {
             .then((values) => setStacksIds(values));
     }
 
-    async function stackCreated(stackId: number) {
-        setStacksIds([...stacksIds, stackId]);
+    async function onStackCreated(value: number) {
+        setStacksIds([...stacksIds, value]);
     }
 
     return <div style={{display: 'flex', flexDirection: 'column'}}>
-        <Typography.Text style={{fontFamily: 'fantasy', fontSize: 20, color: 'darkorchid', fontStretch: 'expanded'}}>Stacks data</Typography.Text>
-        <Space>
-            <Segmented
-                value={selectedStack}
-                onChange={setSelectedStack}
-                options={stacksIds.map((id, index) => ({value: id, label: (index + 1).toString()}))}
-            />
-            <HeroAssetStackCreator disabled={stacksIds.length >= 7} assetId={params.assetId} createCallback={stackCreated}/>
-        </Space>
+        <div style={{width: '100%', height: '15%', display: 'flex'}}>
+            <div style={{height: '100%', display: 'flex',  flexDirection: 'column'}}>
+                <HeroAssetStacksConfiguratorHeader
+                    assetId={params.assetId}
+                    stacks={stacksIds}
+                    currentStack={selectedStack}
+                    stackSelectedCallback={setSelectedStack}
+                    stackCreatedCallback={onStackCreated}
+                />
+                <HeroAssetCurrentStackData/>
+            </div>
+        </div>
         {
             selectedStack != null ?
-            <HeroAssetFocusedStack stackId={selectedStack}/> :
+            <div style={{width: '100%', height: '82%', display: 'flex', flexDirection: 'column', paddingTop: '3%'}}>
+                <HeroAssetFocusedStack stackId={selectedStack}/>
+            </div> :
             null
         }
     </div>
-}
-
-function HeroAssetStackCreator(params: {
-    disabled: boolean,
-    assetId: number, 
-    createCallback: (createdId: number) => void
-}) {
-    const [opened, setOpened] = useState<boolean>(false);
-    const [selectedType, setSelectedType] = useState<AssetGenerationType | null>(null);
-
-    async function create() {
-        await close();
-        await invoke<number>("create_stack", {assetId: params.assetId, generationType: selectedType})
-            .then((value) => params.createCallback(value));
-    }
-
-    async function close() {
-        setOpened(false);
-    }
-
-    return <>
-        <Button 
-            disabled={params.disabled}
-            onClick={() => setOpened(true)}
-            icon={<PlusOutlined/>}
-        />
-        <Modal
-            open={opened}
-            onClose={close}
-            onCancel={close}
-            centered
-        >
-            <Space direction="vertical">
-                <Select value={selectedType} onChange={setSelectedType} placeholder="Select generation type of stack">
-                    <Select.Option value={AssetGenerationType.Static}>Static generation</Select.Option>
-                    <Select.Option value={AssetGenerationType.Dynamic}>Dynamic generation</Select.Option>
-                </Select>
-                <Button onClick={create}>Create</Button>
-            </Space>
-        </Modal>
-    </>
 }
 
 export default HeroAssetStacksConfigurator;

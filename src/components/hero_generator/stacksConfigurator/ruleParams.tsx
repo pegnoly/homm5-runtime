@@ -22,6 +22,7 @@ function HeroAssetStackGenerationRuleParams(params: {
     }
 
     return <div style={{display: 'flex', flexDirection: 'column'}}>
+        <Typography.Text style={{fontFamily: 'fantasy', fontSize: 20, color: 'darkorchid', fontStretch: 'expanded'}}>Stack generation rules</Typography.Text>
         <RuleSelector existing={params.rules.params} selectedCallback={addRule}/>
         <RulesList current={params.rules.params} removeCallback={removeRule}/>
     </div>

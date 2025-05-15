@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import HeroAssetArtifactsInitializator from "./initializator";
 import HeroAssetArtifactsCostConfigurator from "./costs";
 import HeroAssetArtifactsLists from "./lists";
+import HeroAssetArtifactsConfiguratorHeader from "./header";
 
 function HeroAssetArtifactsConfigurator(params: {assetId: number}) {
     const [artifactsData, setArtifactsData] = useState<HeroAssetArtifactsModel | null>(null);
@@ -25,10 +26,15 @@ function HeroAssetArtifactsConfigurator(params: {assetId: number}) {
         {
             artifactsData == null ? 
             <HeroAssetArtifactsInitializator assetId={params.assetId} initializedCallback={artifactsDataInitialized}/> :
-            <>
-                <HeroAssetArtifactsCostConfigurator model={artifactsData} updateModelCallback={setArtifactsData}/>
-                <HeroAssetArtifactsLists model={artifactsData} updateCallback={setArtifactsData}/>
-            </> 
+            <div style={{height: '100%'}}>
+                <div style={{height: '15%'}}>
+                    <HeroAssetArtifactsConfiguratorHeader/>
+                </div>
+                <div style={{height: '82%', paddingTop: '3%'}}> 
+                    <HeroAssetArtifactsCostConfigurator model={artifactsData} updateModelCallback={setArtifactsData}/>
+                    <HeroAssetArtifactsLists model={artifactsData} updateCallback={setArtifactsData}/>
+                </div>
+            </div> 
         }
     </div>
 }

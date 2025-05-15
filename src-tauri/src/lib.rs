@@ -165,6 +165,7 @@ pub async fn run() {
             services::heroes_generator::commands::load_stack,
             services::heroes_generator::commands::update_stack_base_powers,
             services::heroes_generator::commands::update_stack_powers_grow,
+            services::heroes_generator::commands::update_stack_concrete_count,
             services::heroes_generator::commands::update_stack_creature_town,
             services::heroes_generator::commands::update_stack_creature_tier,
             services::heroes_generator::commands::add_stack_generation_rule,

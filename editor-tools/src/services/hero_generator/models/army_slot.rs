@@ -12,12 +12,16 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub asset_id: i32,
-    pub generation_type: AssetGenerationType,
+    pub type_generation_mode: ArmySlotStackUnitGenerationMode,
+    pub count_generation_mode: ArmySlotStackCountGenerationMode,
+    pub power_based_generation_type: AssetGenerationType,
     pub base_powers: DifficultyMappedValue,
-    pub powers_grow: Option<DifficultyMappedValue>,
+    pub powers_grow: DifficultyMappedValue,
     pub town: Town,
     pub tier: i32,
     pub generation_rule: ArmySlotGenerationRule,
+    pub concrete_creature: i32,
+    pub concrete_count: DifficultyMappedValue
 }
 
 pub type ArmySlotEntity = Entity;
@@ -26,6 +30,32 @@ pub type ArmySlotEntity = Entity;
 #[sea_orm(entity = "ArmySlotEntity")]
 pub struct ArmySlotId {
     pub id: i32
+}
+
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum ArmySlotStackUnitGenerationMode {
+    #[sea_orm(string_value = "UNIT_TYPE_GENERATION_MODE_CONCRETE")]
+    #[serde(rename = "UNIT_TYPE_GENERATION_MODE_CONCRETE")]
+    #[strum(serialize = "UNIT_TYPE_GENERATION_MODE_CONCRETE")]
+    ConcreteUnit,
+    #[sea_orm(string_value = "UNIT_TYPE_GENERATION_MODE_TIER_SLOT_BASED")]
+    #[serde(rename = "UNIT_TYPE_GENERATION_MODE_TIER_SLOT_BASED")]
+    #[strum(serialize = "UNIT_TYPE_GENERATION_MODE_TIER_SLOT_BASED")]
+    TierSlotBased
+}
+
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum ArmySlotStackCountGenerationMode {
+    #[sea_orm(string_value = "UNIT_COUNT_GENERATION_MODE_RAW")]
+    #[serde(rename = "UNIT_COUNT_GENERATION_MODE_RAW")]
+    #[strum(serialize = "UNIT_COUNT_GENERATION_MODE_RAW")]
+    Raw,
+    #[sea_orm(string_value = "UNIT_COUNT_GENERATION_MODE_POWER_BASED")]
+    #[serde(rename = "UNIT_COUNT_GENERATION_MODE_POWER_BASED")]
+    #[strum(serialize = "UNIT_COUNT_GENERATION_MODE_POWER_BASED")]
+    PowerBased
 }
 
 #[derive(

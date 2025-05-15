@@ -5,7 +5,7 @@ import HeroAssetStacksConfigurator from "./stacksConfigurator/main";
 import { useEffect, useState } from "react";
 import { HeroAssetSimple } from "./main";
 import { invoke } from "@tauri-apps/api/core";
-import { useHeroGeneratorStore } from "../../stores/HeroGeneratorStore";
+import useHeroGeneratorStore from "../../stores/HeroGeneratorStore";
 
 function HeroAssetFocused() {
     const { id } = useParams();
@@ -30,18 +30,26 @@ function HeroAssetFocused() {
     {
         asset != null ?
         <div style={{width: '100%', height: '100%'}}>
-            <div style={{width: '100%', height: '20%'}}>
-                <h1>{`Focused hero - ${asset.name}`}</h1>
+            <div style={{width: '100%', height: '5%', justifyItems: 'center'}}>
+                <div style={{border: 'solid', borderColor: 'red', borderWidth: 5, paddingInline: '3%'}}>
+                    <h2>{`Focused hero - ${asset.name}`}</h2>
+                </div>
             </div>
-            <div style={{width: '100%', height: '79%'}}>
-                <Row>
-                    <Col span={12}>
-                        <HeroAssetStacksConfigurator assetId={parseInt(id!)}/>
-                    </Col>
-                    <Col span={12}>
-                        <HeroAssetArtifactsConfigurator assetId={parseInt(id!)}/>
-                    </Col>
-                </Row>
+            <div style={{width: '100%', height: '84%', paddingTop: '1%'}}>
+                <div style={{height: '100%'}}>
+                    <Row>
+                        <Col span={12}>
+                            <div style={{width: '100%', height: '100%'}}>
+                                <HeroAssetStacksConfigurator assetId={parseInt(id!)}/>
+                            </div>
+                        </Col>
+                        <Col span={12}>
+                            <div style={{width: '100%', height: '100%'}}>
+                                <HeroAssetArtifactsConfigurator assetId={parseInt(id!)}/>
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
             </div>
         </div>: 
         null

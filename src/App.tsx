@@ -19,7 +19,7 @@ function App() {
             .then((values) => setArtifacts(values));
     }
 
-    return <div style={{display: 'flex', flexDirection: 'column', gap: 10}}>
+    return <div style={{display: 'flex', flexDirection: 'column', height: '100%', gap: 10}}>
         <Row>
             <Col span={12}>
                 <RuntimeRunner/>

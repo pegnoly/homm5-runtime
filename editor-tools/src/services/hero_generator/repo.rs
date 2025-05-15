@@ -230,12 +230,16 @@ impl HeroGeneratorRepo {
     ) -> Result<i32, EditorToolsError> {
         let model_to_insert = army_slot::ActiveModel {
             asset_id: Set(payload.asset_id),
-            generation_type: Set(payload.generation_type.clone()),
+            type_generation_mode: Set(payload.unit_generation_type),
+            count_generation_mode: Set(payload.count_generation_type),
+            power_based_generation_type: Set(payload.power_based_generation_type.unwrap_or(AssetGenerationType::Static)),
             base_powers: Set(DifficultyMappedValue::default()),
-            powers_grow: Set(if payload.generation_type == AssetGenerationType::Dynamic { Some(DifficultyMappedValue::default()) } else { None }),
+            powers_grow: Set(DifficultyMappedValue::default()),
             town: Set(Town::TownNoType),
             tier: Set(1),
             generation_rule: Set(ArmySlotGenerationRule { params: vec![]} ),
+            concrete_creature: Set(0),
+            concrete_count: Set(DifficultyMappedValue::default()),
             ..Default::default()
         };
         let inserted_model = model_to_insert.insert(&self.db).await?;
@@ -279,6 +283,22 @@ impl HeroGeneratorRepo {
             model_to_update.update(&self.db).await?;
         }
         Ok(())
+    }
+
+    pub async fn update_stack_creature_count(
+        &self,
+        payload: UpdateDifficultyBasedPowerPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.id).one(&self.db).await? {
+            let mut model_to_update = existing_model.clone().into_active_model();
+            let mut creature_counts_to_update = existing_model.concrete_count.clone();
+            if let Some(power) = creature_counts_to_update.data.get_mut(&payload.difficulty) {
+                *power = payload.value;
+            }
+            model_to_update.concrete_count = Set(creature_counts_to_update);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())   
     }
 
     pub async fn update_stack_creature_town(

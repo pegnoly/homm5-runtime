@@ -1,10 +1,10 @@
 import { Col, Row, Select, Space, Typography } from "antd";
-import { HeroAssetStackModel, StackGenerationRules, TownType } from "./main";
-import HeroAssetStackGenerationRuleParams from "./ruleParams";
+import { HeroAssetStackModel, StackGenerationRules, StackUnitGenerationType, TownType } from "./main";
 import { invoke } from "@tauri-apps/api/core";
+import HeroAssetStackGenerationRuleParams from "./ruleParams";
 
-function HeroAssetStackGenerationRules(params: {
-    model: HeroAssetStackModel, 
+function HeroAssetStackUnitConfigurator(params: {
+    model: HeroAssetStackModel
     updateCallback: (value: HeroAssetStackModel) => void
 }) {
     async function updateTown(value: TownType) {
@@ -18,24 +18,54 @@ function HeroAssetStackGenerationRules(params: {
     }
 
     async function updateGenerationRules(value: StackGenerationRules) {
-        params.updateCallback({...params.model, generation_rule: value});
+        params.updateCallback({...params.model, generation_rule: value});    
     }
 
-    return <Row>
-        <Col span={10}>
-            <Space direction="vertical">
-                <Typography.Text style={{fontFamily: 'fantasy', fontSize: 20, color: 'darkorchid', fontStretch: 'expanded'}}>Stack unit base data</Typography.Text>
-                <UnitTownSelector currentTown={params.model.town} updateCallback={updateTown}/>
-                <UnitTierSelector currentTier={params.model.tier} updateCallback={updateTier}/>
-            </Space>
-        </Col>
-        <Col span={12}>
-            <Space direction="vertical">
-                <Typography.Text style={{fontFamily: 'fantasy', fontSize: 20, color: 'darkorchid', fontStretch: 'expanded'}}>Stack generation rules</Typography.Text>
-                <HeroAssetStackGenerationRuleParams stackId={params.model.id} rules={params.model.generation_rule} updateCallback={updateGenerationRules}/>
-            </Space>
-        </Col>
-    </Row>
+    return <>
+    {
+        params.model.type_generation_mode == StackUnitGenerationType.TierSlotBased ?
+        <>
+            <Row>
+                <Col span={10}>
+                    <TierSlotBasedSelector
+                        assetId={params.model.id}
+                        tier={params.model.tier}
+                        town={params.model.town}
+                        updateTierCallback={updateTier}
+                        updateTownCallback={updateTown}
+                    />
+                </Col>
+                <Col span={12}>
+                    <HeroAssetStackGenerationRuleParams 
+                        stackId={params.model.id} 
+                        rules={params.model.generation_rule} 
+                        updateCallback={updateGenerationRules}
+                    />
+                </Col>
+            </Row>
+        </> :
+        null
+    }
+    </>
+}
+
+function ConcreteUnitSelector() {
+
+}
+
+function TierSlotBasedSelector(params: {
+    assetId: number,
+    town: TownType,
+    tier: number,
+    updateTownCallback: (value: TownType) => void,
+    updateTierCallback: (value: number) => void 
+}) {
+
+    return <Space direction="vertical">
+        <Typography.Text style={{fontFamily: 'fantasy', fontSize: 20, color: 'darkorchid', fontStretch: 'expanded'}}>Stack unit base data</Typography.Text>
+        <UnitTownSelector currentTown={params.town} updateCallback={params.updateTownCallback}/>
+        <UnitTierSelector currentTier={params.tier} updateCallback={params.updateTierCallback}/>
+    </Space>
 }
 
 function UnitTownSelector(params: {
@@ -85,4 +115,4 @@ function UnitTierSelector(params: {
     </Space>
 }
 
-export default HeroAssetStackGenerationRules;
+export default HeroAssetStackUnitConfigurator;
