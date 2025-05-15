@@ -5,7 +5,7 @@ use super::{
     payloads::{
         AddOptionalArtifactPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload,
     },
-    prelude::{AddRequiredArtifactPayload, AddStackPayload, HeroAssetArmySlotModel, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload},
+    prelude::{AddRequiredArtifactPayload, AddStackPayload, HeroAssetArmySlotModel, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackConcreteCreaturePayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload},
 };
 use crate::error::EditorToolsError;
 use homm5_scaner::prelude::Town;
@@ -299,6 +299,18 @@ impl HeroGeneratorRepo {
             model_to_update.update(&self.db).await?;
         }
         Ok(())   
+    }
+
+    pub async fn update_stack_concrete_creature(
+        &self,
+        payload: UpdateStackConcreteCreaturePayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+            let mut model_to_update = existing_model.clone().into_active_model();
+            model_to_update.concrete_creature = Set(payload.creature);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())    
     }
 
     pub async fn update_stack_creature_town(

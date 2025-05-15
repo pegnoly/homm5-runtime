@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::scaners::common::{MagicElement, Mastery, ResourcesModel, Town};
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "creatures")]
 pub struct Model {
     #[sea_orm(primary_key)]

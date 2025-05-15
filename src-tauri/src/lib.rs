@@ -148,6 +148,7 @@ pub async fn run() {
             services::banks_configurator::commands::generate_banks_script,
 
             services::heroes_generator::commands::load_artifact_models,
+            services::heroes_generator::commands::load_creature_models,
             services::heroes_generator::commands::pick_hero_lua_generation_directory,
             services::heroes_generator::commands::init_new_generatable_hero,
             services::heroes_generator::commands::load_all_hero_assets,
@@ -166,6 +167,7 @@ pub async fn run() {
             services::heroes_generator::commands::update_stack_base_powers,
             services::heroes_generator::commands::update_stack_powers_grow,
             services::heroes_generator::commands::update_stack_concrete_count,
+            services::heroes_generator::commands::update_stack_concrete_creature,
             services::heroes_generator::commands::update_stack_creature_town,
             services::heroes_generator::commands::update_stack_creature_tier,
             services::heroes_generator::commands::add_stack_generation_rule,

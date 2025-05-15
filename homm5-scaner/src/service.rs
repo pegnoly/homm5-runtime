@@ -2,7 +2,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use sea_orm::{sqlx::SqlitePool, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, SqlxSqlitePoolConnection};
 
-use crate::{core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{ArtifactDBColumn, ArtifactDBModel}, scaners::{self, prelude::{ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput, CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner, SpellDataOutput, SpellFileCollector, SpellScaner}}};
+use crate::{core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{ArtifactDBColumn, ArtifactDBModel, CreatureDBColumn, CreatureDBModel}, scaners::{self, prelude::{ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput, CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner, SpellDataOutput, SpellFileCollector, SpellScaner}}};
 
 pub struct ScanerService {
     db: DatabaseConnection
@@ -62,5 +62,16 @@ impl ScanerService {
 
     pub async fn get_artifact_models(&self) -> Result<Vec<ArtifactDBModel>, ScanerError> {
         Ok(scaners::prelude::ArtifactDBEntity::find().filter(ArtifactDBColumn::IsGeneratable.eq(true)).all(&self.db).await?)
+    }
+
+    pub async fn get_creature_models(&self) -> Result<Vec<CreatureDBModel>, ScanerError> {
+        Ok(
+            scaners::prelude::CreatureDBEntity::find()
+                .filter(CreatureDBColumn::Initiative.between(2, 30))
+                .filter(CreatureDBColumn::Speed.between(2, 30))
+                .filter(CreatureDBColumn::Power.between(2, 100000))
+                .all(&self.db)
+                .await?
+        )
     }
 }

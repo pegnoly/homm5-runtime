@@ -1,6 +1,7 @@
 use std::{io::Write, path::PathBuf};
-use editor_tools::prelude::{AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, AssetGenerationType, DifficultyType, HeroAssetArmySlotModel, HeroAssetArtifactsModel, HeroAssetModel, HeroGeneratorRepo, InitAssetArtifactsDataPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload};
-use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, ScanerService, Town};
+use editor_tools::prelude::{AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, AssetGenerationType, DifficultyType, HeroAssetArmySlotModel, HeroAssetArtifactsModel, HeroAssetModel, HeroGeneratorRepo, InitAssetArtifactsDataPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackConcreteCreaturePayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload};
+use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town};
+use homm5_types::hero;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use crate::{error::Error, utils::LocalAppManager};
@@ -61,6 +62,13 @@ pub async fn load_artifact_models(
     scaner_repo: State<'_, ScanerService>
 ) -> Result<Vec<ArtifactDBModel>, Error> {
     Ok(scaner_repo.get_artifact_models().await?)
+}
+
+#[tauri::command]
+pub async fn load_creature_models(
+    scaner_repo: State<'_, ScanerService>
+) -> Result<Vec<CreatureDBModel>, Error> {
+    Ok(scaner_repo.get_creature_models().await?)
 }
 
 #[tauri::command]
@@ -208,6 +216,15 @@ pub async fn update_stack_concrete_count(
     let actual_value = value.parse::<i32>()?;
     heroes_repo.update_stack_creature_count(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty, value: actual_value }).await?;
     Ok(actual_value)
+}
+
+#[tauri::command]
+pub async fn update_stack_concrete_creature(
+    heroes_repo: State<'_, HeroGeneratorRepo>,
+    stack_id: i32,
+    creature: i32
+) -> Result<(), Error> {
+    Ok(heroes_repo.update_stack_concrete_creature(UpdateStackConcreteCreaturePayload { stack_id, creature }).await?)
 }
 
 #[tauri::command]

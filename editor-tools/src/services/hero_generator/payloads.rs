@@ -69,6 +69,11 @@ impl AddStackPayload {
     }
 }
 
+pub struct UpdateStackConcreteCreaturePayload {
+    pub stack_id: i32,
+    pub creature: i32
+}
+
 pub struct UpdateStackCreatureTownPayload {
     pub stack_id: i32,
     pub town: Town
