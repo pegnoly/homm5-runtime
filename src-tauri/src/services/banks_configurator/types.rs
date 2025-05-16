@@ -1,17 +1,20 @@
 use derive_more::derive::Debug;
+use editor_tools::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
-use editor_tools::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BankSimpleModel {
     pub id: i32,
-    pub name: String
+    pub name: String,
 }
 
 impl From<BankDBModel> for BankSimpleModel {
     fn from(value: BankDBModel) -> Self {
-        BankSimpleModel { id: value.id, name: value.name.clone() }
+        BankSimpleModel {
+            id: value.id,
+            name: value.name.clone(),
+        }
     }
 }
 
@@ -19,7 +22,7 @@ impl From<BankDBModel> for BankSimpleModel {
 pub struct BankDifficultyModel {
     pub id: i32,
     pub difficulty: BankDifficultyType,
-    pub chance: i32
+    pub chance: i32,
 }
 
 impl From<BankDifficultyDBModel> for BankDifficultyModel {
@@ -27,7 +30,7 @@ impl From<BankDifficultyDBModel> for BankDifficultyModel {
         BankDifficultyModel {
             id: value.id,
             difficulty: BankDifficultyType::from(value.difficulty_type),
-            chance: value.chance
+            chance: value.chance,
         }
     }
 }
@@ -37,7 +40,7 @@ pub struct BankVariantModel {
     pub id: i32,
     pub label: String,
     //pub chance: i32,
-    pub difficulty: BankDifficultyType
+    pub difficulty: BankDifficultyType,
 }
 
 impl From<BankVariantDBModel> for BankVariantModel {
@@ -46,7 +49,7 @@ impl From<BankVariantDBModel> for BankVariantModel {
             id: value.id,
             //chance: value.chance,
             label: value.label,
-            difficulty: BankDifficultyType::from(value.difficulty)
+            difficulty: BankDifficultyType::from(value.difficulty),
         }
     }
 }

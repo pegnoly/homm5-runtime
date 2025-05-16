@@ -17,7 +17,7 @@ use crate::{DataContainer, RuntimeData};
 #[tauri::command]
 pub async fn execute_scan(
     app_manager: State<'_, LocalAppManager>,
-    scaner_service: State<'_, ScanerService>
+    scaner_service: State<'_, ScanerService>,
 ) -> Result<(), ()> {
     let base_config_locked = app_manager.base_config.read().await;
     let data_path = PathBuf::from(&base_config_locked.data_path);
@@ -25,7 +25,9 @@ pub async fn execute_scan(
     let maps_path = root_folder.join("Maps\\");
     let mods_path = root_folder.join("UserMODs\\");
     let output_path = data_path.join("MCCS_GeneratedFiles.pak");
-    scaner_service.run(vec![data_path, maps_path, mods_path], output_path).await;
+    scaner_service
+        .run(vec![data_path, maps_path, mods_path], output_path)
+        .await;
     Ok(())
 }
 
@@ -39,21 +41,25 @@ pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), ()>
 }
 
 #[tauri::command]
-pub async fn load_repackers(app_manager: State<'_, LocalAppManager>) -> Result<Vec<RepackerFrontendData>, ()> {
+pub async fn load_repackers(
+    app_manager: State<'_, LocalAppManager>,
+) -> Result<Vec<RepackerFrontendData>, ()> {
     let base_config_locked = app_manager.base_config.read().await;
-    let repackers_data = base_config_locked.repackers.iter()
-        .map(|(key, value)| {
-            RepackerFrontendData {
-                label: key.clone(),
-                update_time: value.last_update.clone()
-            }
+    let repackers_data = base_config_locked
+        .repackers
+        .iter()
+        .map(|(key, value)| RepackerFrontendData {
+            label: key.clone(),
+            update_time: value.last_update.clone(),
         })
         .collect_vec();
     Ok(repackers_data)
 }
 
 #[tauri::command]
-pub async fn load_maps(app_manager: State<'_, LocalAppManager>) -> Result<Vec<MapFrontendModel>, ()> {
+pub async fn load_maps(
+    app_manager: State<'_, LocalAppManager>,
+) -> Result<Vec<MapFrontendModel>, ()> {
     let base_config_locked = app_manager.base_config.read().await;
     Ok(base_config_locked
         .maps
@@ -71,22 +77,29 @@ pub async fn load_current_map(app_manager: State<'_, LocalAppManager>) -> Result
 }
 
 #[tauri::command]
-pub async fn select_map(
-    app_manager: State<'_, LocalAppManager>, 
-    id: u16
-) -> Result<(), ()> {
+pub async fn select_map(app_manager: State<'_, LocalAppManager>, id: u16) -> Result<(), ()> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     runtime_config_locked.current_selected_map = Some(id);
     let exe_path = std::env::current_exe().unwrap();
     let runtime_cfg_path = exe_path.parent().unwrap().join("cfg\\runtime.json");
-    let new_runtime_data = serde_json::to_string_pretty(&RuntimeData {current_selected_map: id}).unwrap();
+    let new_runtime_data = serde_json::to_string_pretty(&RuntimeData {
+        current_selected_map: id,
+    })
+    .unwrap();
     let mut file = std::fs::File::create(&runtime_cfg_path).unwrap();
     file.write_all(new_runtime_data.as_bytes()).unwrap();
 
     let base_config_locked = app_manager.base_config.read().await;
-    let map = base_config_locked.maps.iter().find(|m| m.id == runtime_config_locked.current_selected_map.unwrap()).unwrap();
+    let map = base_config_locked
+        .maps
+        .iter()
+        .find(|m| m.id == runtime_config_locked.current_selected_map.unwrap())
+        .unwrap();
     let current_map_data = MapData::read(map);
-    let current_map_data_path = exe_path.parent().unwrap().join("cfg\\current_map_data.json");
+    let current_map_data_path = exe_path
+        .parent()
+        .unwrap()
+        .join("cfg\\current_map_data.json");
     let current_map_data_string = serde_json::to_string_pretty(&current_map_data).unwrap();
     let mut file = std::fs::File::create(&current_map_data_path).unwrap();
     file.write_all(current_map_data_string.as_bytes()).unwrap();
@@ -95,16 +108,21 @@ pub async fn select_map(
 }
 
 #[tauri::command]
-pub async fn repack(app_manager: State<'_, LocalAppManager>, repacker_label: String) -> Result<String, ()> {
+pub async fn repack(
+    app_manager: State<'_, LocalAppManager>,
+    repacker_label: String,
+) -> Result<String, ()> {
     let mut base_config_locked = app_manager.base_config.write().await;
     if let Some(repacker_data) = base_config_locked.repackers.get_mut(&repacker_label) {
         let from = PathBuf::from(&repacker_data.from);
         let to = PathBuf::from(&repacker_data.to);
         let repacker = Repacker::new(from, to);
         repacker.run();
-        let date = chrono::Local::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, false).to_string();
+        let date = chrono::Local::now()
+            .to_rfc3339_opts(chrono::SecondsFormat::Secs, false)
+            .to_string();
         repacker_data.last_update = date.clone();
-        let new_base_config_data = serde_json::to_string_pretty(& *base_config_locked).unwrap();
+        let new_base_config_data = serde_json::to_string_pretty(&*base_config_locked).unwrap();
         let exe_path = std::env::current_exe().unwrap();
         let base_cfg_path = exe_path.parent().unwrap().join("cfg\\main.json");
         let mut file = std::fs::File::create(&base_cfg_path).unwrap();
@@ -134,15 +152,23 @@ impl Serialize for ModificationsError {
 pub async fn apply_modifications(
     app_manager: State<'_, LocalAppManager>,
     quest_service: State<'_, QuestService>,
-    data_containter: State<'_, DataContainer>
+    data_containter: State<'_, DataContainer>,
 ) -> Result<(), super::error::Error> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     let base_config_locked = app_manager.base_config.read().await;
     let current_map_id = runtime_config_locked.current_selected_map.unwrap();
-    let map = base_config_locked.maps.iter().find(|m| m.id == current_map_id).unwrap();
+    let map = base_config_locked
+        .maps
+        .iter()
+        .find(|m| m.id == current_map_id)
+        .unwrap();
     let mod_path = &base_config_locked.mod_path;
 
-    let mut modifiers_queue = ModifiersQueue::new(&data_containter.banks, &data_containter.buildings, &data_containter.artifacts);
+    let mut modifiers_queue = ModifiersQueue::new(
+        &data_containter.banks,
+        &data_containter.buildings,
+        &data_containter.artifacts,
+    );
 
     // get all ids of quest for current map
 

@@ -6,3 +6,8 @@ pub use super::army_slot::{
     ArmySlotStackCountGenerationMode,
     ArmySlotStackUnitGenerationMode
 };
+pub use super::stat_generation::{
+    Model as ArmyStatGenerationModel,
+    ArmyGenerationStatParam,
+    ArmyGenerationStatRule
+};

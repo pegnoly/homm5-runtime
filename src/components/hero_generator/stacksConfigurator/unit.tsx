@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import HeroAssetStackGenerationRuleParams from "./ruleParams";
 import { useState } from "react";
 import useGameDataStore from "../../../stores/GameDataStore";
+import HeroAssetStackStatGenerator from "./statParams";
 
 function HeroAssetStackUnitConfigurator(params: {
     model: HeroAssetStackModel
@@ -32,21 +33,24 @@ function HeroAssetStackUnitConfigurator(params: {
     {
         params.model.type_generation_mode == StackUnitGenerationType.TierSlotBased ?
         <>
-            <Row>
-                <Col span={10}>
-                    <TierSlotBasedSelector
-                        assetId={params.model.id}
-                        tier={params.model.tier}
-                        town={params.model.town}
-                        updateTierCallback={updateTier}
-                        updateTownCallback={updateTown}
-                    />
-                </Col>
-                <Col span={12}>
+            <TierSlotBasedSelector
+                assetId={params.model.id}
+                tier={params.model.tier}
+                town={params.model.town}
+                updateTierCallback={updateTier}
+                updateTownCallback={updateTown}
+            />
+            <Row style={{paddingTop: '5%'}}>
+                <Col span={8}>
                     <HeroAssetStackGenerationRuleParams 
                         stackId={params.model.id} 
                         rules={params.model.generation_rule} 
                         updateCallback={updateGenerationRules}
+                    />
+                </Col>
+                <Col offset={1} span={15}>
+                    <HeroAssetStackStatGenerator
+                        stackId={params.model.id}
                     />
                 </Col>
             </Row>
@@ -145,7 +149,7 @@ function TierSlotBasedSelector(params: {
     updateTierCallback: (value: number) => void 
 }) {
 
-    return <Space direction="vertical">
+    return <Space size="large">
         <Typography.Text style={{fontFamily: 'fantasy', fontSize: 20, color: 'darkorchid', fontStretch: 'expanded'}}>Stack unit base data</Typography.Text>
         <UnitTownSelector currentTown={params.town} updateCallback={params.updateTownCallback}/>
         <UnitTierSelector currentTier={params.tier} updateCallback={params.updateTierCallback}/>

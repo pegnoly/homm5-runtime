@@ -1,20 +1,20 @@
-use std::num::ParseIntError;
 use serde::{Serialize, Serializer};
+use std::num::ParseIntError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
-    Sqlx(#[from]sqlx::Error),
+    Sqlx(#[from] sqlx::Error),
     #[error(transparent)]
-    Json(#[from]serde_json::Error),
+    Json(#[from] serde_json::Error),
     #[error(transparent)]
-    IO(#[from]std::io::Error),
+    IO(#[from] std::io::Error),
     #[error(transparent)]
-    ParseInt(#[from]ParseIntError),
+    ParseInt(#[from] ParseIntError),
     #[error(transparent)]
-    EditorTools(#[from]editor_tools::prelude::EditorToolsError),
+    EditorTools(#[from] editor_tools::prelude::EditorToolsError),
     #[error(transparent)]
-    Scaner(#[from]homm5_scaner::prelude::ScanerError)
+    Scaner(#[from] homm5_scaner::prelude::ScanerError),
 }
 
 impl Serialize for Error {

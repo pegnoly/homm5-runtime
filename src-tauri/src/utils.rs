@@ -16,19 +16,19 @@ pub struct Config {
     pub mod_path: String,
     pub texts_path: String,
     pub repackers: HashMap<String, RepackerPathsData>,
-    pub maps: Vec<Map>
+    pub maps: Vec<Map>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RuntimeConfig {
     pub current_selected_map: Option<u16>,
-    pub current_map_data: MapData
+    pub current_map_data: MapData,
 }
 
 #[derive(Debug)]
 pub struct LocalAppManager {
     pub base_config: RwLock<Config>,
-    pub runtime_config: RwLock<RuntimeConfig>
+    pub runtime_config: RwLock<RuntimeConfig>,
 }
 
 pub enum AppMode {
@@ -40,13 +40,13 @@ pub enum AppMode {
 pub struct RepackerPathsData {
     pub from: String,
     pub to: String,
-    pub last_update: String
+    pub last_update: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RepackerFrontendData {
     pub label: String,
-    pub update_time: String
+    pub update_time: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

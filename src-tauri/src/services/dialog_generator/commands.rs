@@ -4,10 +4,7 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use uuid::Uuid;
 
-use crate::{
-    DialogGeneratorService,
-    utils::LocalAppManager,
-};
+use crate::{DialogGeneratorService, utils::LocalAppManager};
 
 use super::data::{DialogFrontendModel, SpeakerFrontendModel, SpeakerType};
 
@@ -34,7 +31,7 @@ pub async fn load_speakers(
 #[tauri::command]
 pub async fn pick_dialog_directory(
     app: AppHandle,
-    app_manager: State<'_, LocalAppManager>
+    app_manager: State<'_, LocalAppManager>,
 ) -> Result<(), ()> {
     let base_config_locked = app_manager.base_config.read().await;
     let current_map_id = app_manager
@@ -43,7 +40,11 @@ pub async fn pick_dialog_directory(
         .await
         .current_selected_map
         .unwrap();
-    let map = base_config_locked.maps.iter().find(|m| m.id == current_map_id).unwrap();
+    let map = base_config_locked
+        .maps
+        .iter()
+        .find(|m| m.id == current_map_id)
+        .unwrap();
 
     app.dialog()
         .file()
@@ -274,7 +275,11 @@ pub async fn generate_dialog(
         .unwrap();
 
     let base_config_data = app_manager.base_config.read().await;
-    let map_data = base_config_data.maps.iter().find(|m| m.id == current_map).unwrap();
+    let map_data = base_config_data
+        .maps
+        .iter()
+        .find(|m| m.id == current_map)
+        .unwrap();
     let map_data_path = &map_data.data_path;
 
     // get dialog data

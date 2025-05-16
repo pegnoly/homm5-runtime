@@ -1,17 +1,17 @@
 use super::{
     models::{
-        army_slot::{self, ArmySlotGenerationRule, ArmySlotId}, artifacts::{self, OptionalArtifacts, RequiredArtifacts}, asset, common::{AssetGenerationType, DifficultyMappedValue}
+        army_slot::{self, ArmySlotGenerationRule, ArmySlotId}, artifacts::{self, OptionalArtifacts, RequiredArtifacts}, asset, common::{AssetGenerationType, DifficultyMappedValue}, stat_generation::{self, ArmyGenerationStats}
     },
     payloads::{
         AddOptionalArtifactPayload, InitGeneratableHeroPayload, RemoveOptionalArtifactPayload,
     },
-    prelude::{AddRequiredArtifactPayload, AddStackPayload, HeroAssetArmySlotModel, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateStackConcreteCreaturePayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload},
+    prelude::{AddGenerationStatElementPayload, AddRequiredArtifactPayload, AddStackPayload, UpdateGenerationStatParamsPayload, HeroAssetArmySlotModel, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload, UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackConcreteCreaturePayload, UpdateStackCreatureTierPayload, UpdateStackCreatureTownPayload},
 };
 use crate::error::EditorToolsError;
 use homm5_scaner::prelude::Town;
 use itertools::Itertools;
 use sea_orm::{
-    sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, SqlxSqlitePoolConnection
+    sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection
 };
 
 pub struct HeroGeneratorRepo {
@@ -363,5 +363,66 @@ impl HeroGeneratorRepo {
             model_to_update.update(&self.db).await?;
         }
         Ok(())      
+    }
+
+    pub async fn get_stat_generation_elements(
+        &self,
+        stack_id: i32
+    ) -> Result<Vec<stat_generation::Model>, EditorToolsError> {
+        Ok(stat_generation::Entity::find().filter(stat_generation::Column::StackId.eq(stack_id)).all(&self.db).await?)
+    }
+
+    pub async fn add_stat_generation_element(
+        &self,
+        payload: AddGenerationStatElementPayload
+    ) -> Result<stat_generation::Model, EditorToolsError> {
+        let model_to_insert = stat_generation::ActiveModel {
+            stack_id: Set(payload.stack_id),
+            priority: Set(0),
+            rule: Set(payload.rule),
+            stats: Set(ArmyGenerationStats { values: vec![] }),
+            ..Default::default()
+        };
+        let model = model_to_insert.insert(&self.db).await?;
+        Ok(model)
+    }
+
+    pub async fn delete_stat_generation_element(
+        &self,
+        id: i32,
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = stat_generation::Entity::find_by_id(id).one(&self.db).await? {
+            existing_model.delete(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn update_stat_generation_element(
+        &self,
+        payload: UpdateGenerationStatElementPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = stat_generation::Entity::find_by_id(payload.element_id).one(&self.db).await? {
+            let mut model_to_update = existing_model.into_active_model();
+            if let Some(priority) = payload.priority {
+                model_to_update.priority = Set(priority);
+            }
+            if let Some(rule) = payload.rule {
+                model_to_update.rule = Set(rule);
+            }
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn update_stat_generation_params(
+        &self,
+        payload: UpdateGenerationStatParamsPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = stat_generation::Entity::find_by_id(payload.element_id).one(&self.db).await? {  
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.stats = Set(ArmyGenerationStats { values: payload.params });
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
     }
 }

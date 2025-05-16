@@ -1,10 +1,14 @@
-use std::path::PathBuf;
 use editor_tools::prelude::{BanksGeneratorRepo, HeroGeneratorRepo};
 use homm5_scaner::prelude::ScanerService;
-use map_modifier::{artifacts::ArtifactConfigEntity, buildings::{BankConfigEntity, BuildingConfigEntity}, MapData};
+use map_modifier::{
+    MapData,
+    artifacts::ArtifactConfigEntity,
+    buildings::{BankConfigEntity, BuildingConfigEntity},
+};
 use serde::{Deserialize, Serialize};
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
+use std::path::PathBuf;
 use tokio::sync::RwLock;
 use utils::{Config, LocalAppManager, RuntimeConfig};
 
@@ -16,14 +20,14 @@ mod utils;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RuntimeData {
-    pub current_selected_map: u16
+    pub current_selected_map: u16,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DataContainer {
     pub banks: Vec<BankConfigEntity>,
     pub buildings: Vec<BuildingConfigEntity>,
-    pub artifacts: Vec<ArtifactConfigEntity>
+    pub artifacts: Vec<ArtifactConfigEntity>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -36,12 +40,13 @@ pub async fn run() {
 
     let runtime_cfg_string = std::fs::read_to_string(cfg_path.join("runtime.json")).unwrap();
     let runtime_data: RuntimeData = serde_json::from_str(&runtime_cfg_string).unwrap();
-    let current_map_string = std::fs::read_to_string(cfg_path.join("current_map_data.json")).unwrap();
+    let current_map_string =
+        std::fs::read_to_string(cfg_path.join("current_map_data.json")).unwrap();
     let current_map_data: MapData = serde_json::from_str(&current_map_string).unwrap();
 
     let runtime_config = RuntimeConfig {
         current_selected_map: Some(runtime_data.current_selected_map),
-        current_map_data
+        current_map_data,
     };
 
     let data_string = std::fs::read_to_string(cfg_path.join("objects_data.json")).unwrap();
@@ -64,11 +69,14 @@ pub async fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(LocalAppManager {
             base_config: RwLock::new(cfg),
-            runtime_config: RwLock::new(runtime_config)
+            runtime_config: RwLock::new(runtime_config),
         })
         .manage(quest_service)
         .manage(dialog_generator_service)
-        .manage(BanksGeneratorRepo::new(pool.clone(), PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/")))
+        .manage(BanksGeneratorRepo::new(
+            pool.clone(),
+            PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/"),
+        ))
         .manage(HeroGeneratorRepo::new(pool.clone()))
         .manage(ScanerService::new(pool.clone()))
         .manage(data)
@@ -146,7 +154,7 @@ pub async fn run() {
             services::banks_configurator::commands::update_creature_slot_tier,
             services::banks_configurator::commands::update_creature_slot_town,
             services::banks_configurator::commands::generate_banks_script,
-
+            // hero generator
             services::heroes_generator::commands::load_artifact_models,
             services::heroes_generator::commands::load_creature_models,
             services::heroes_generator::commands::pick_hero_lua_generation_directory,
@@ -172,7 +180,13 @@ pub async fn run() {
             services::heroes_generator::commands::update_stack_creature_tier,
             services::heroes_generator::commands::add_stack_generation_rule,
             services::heroes_generator::commands::remove_stack_generation_rule,
-            services::heroes_generator::commands::generate_current_hero_script
+            services::heroes_generator::commands::generate_current_hero_script,
+            services::heroes_generator::commands::load_stats_generation_elements,
+            services::heroes_generator::commands::add_stat_generation_element,
+            services::heroes_generator::commands::remove_stat_generation_element,
+            services::heroes_generator::commands::update_stat_generation_element_priority,
+            services::heroes_generator::commands::update_stat_generation_element_rule,
+            services::heroes_generator::commands::update_stat_generation_params
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

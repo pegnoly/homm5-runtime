@@ -1,6 +1,6 @@
 use homm5_scaner::prelude::{ArtifactSlotType, Town};
 
-use super::{models::{army_slot::{ArmyGenerationRuleParam, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode}, common::AssetGenerationType}, prelude::DifficultyType};
+use super::{models::{army_slot::{ArmyGenerationRuleParam, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode}, common::AssetGenerationType, stat_generation::{ArmyGenerationStatParam, ArmyGenerationStatRule}}, prelude::DifficultyType};
 
 pub struct InitGeneratableHeroPayload {
     pub name: String,
@@ -87,4 +87,40 @@ pub struct UpdateStackCreatureTierPayload {
 pub struct UpdateGenerationRulesPayload {
     pub stack_id: i32,
     pub rule: ArmyGenerationRuleParam
+}
+
+pub struct AddGenerationStatElementPayload {
+    pub stack_id: i32,
+    pub rule: ArmyGenerationStatRule
+}
+
+pub struct UpdateGenerationStatParamsPayload {
+    pub element_id: i32,
+    pub params: Vec<ArmyGenerationStatParam>
+}
+
+#[derive(Default)]
+pub struct UpdateGenerationStatElementPayload {
+    pub element_id: i32,
+    pub rule: Option<ArmyGenerationStatRule>,
+    pub priority: Option<i32>
+}
+
+impl UpdateGenerationStatElementPayload {
+    pub fn new(id: i32) -> Self {
+        UpdateGenerationStatElementPayload {
+            element_id: id,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_rule(mut self, rule: ArmyGenerationStatRule) -> Self {
+        self.rule = Some(rule);
+        self
+    }
+
+    pub fn with_priority(mut self, priority: i32) -> Self {
+        self.priority = Some(priority);
+        self
+    }
 }

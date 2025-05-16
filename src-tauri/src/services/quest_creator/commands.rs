@@ -25,7 +25,11 @@ pub async fn collect_quests_for_selection(
         .unwrap();
 
     let base_config_locked = app_manager.base_config.read().await;
-    let current_map = base_config_locked.maps.iter().find(|m| m.id == current_map_id).unwrap();
+    let current_map = base_config_locked
+        .maps
+        .iter()
+        .find(|m| m.id == current_map_id)
+        .unwrap();
 
     match quest_service
         .get_quests_by_mission_data(current_map.campaign as u32, current_map.mission as u32)
@@ -150,7 +154,11 @@ pub async fn pick_quest_directory(
         .unwrap();
 
     let base_config_locked = app_manager.base_config.read().await;
-    let map = base_config_locked.maps.iter().find(|m| m.id == current_map_id).unwrap();
+    let map = base_config_locked
+        .maps
+        .iter()
+        .find(|m| m.id == current_map_id)
+        .unwrap();
 
     app.dialog()
         .file()
