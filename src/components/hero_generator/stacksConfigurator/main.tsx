@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react"
 import { AssetGenerationType, DifficultyMappedValue } from "../artsConfigurator/types"
-import { Button, Modal, Segmented, Select, Space, Typography } from "antd"
-import { PlusOutlined } from "@ant-design/icons"
 import { invoke } from "@tauri-apps/api/core"
 import HeroAssetFocusedStack from "./focused"
-import HeroAssetStackCreator from "./creator"
 import HeroAssetStacksConfiguratorHeader from "./header"
 import HeroAssetCurrentStackData from "./data"
 

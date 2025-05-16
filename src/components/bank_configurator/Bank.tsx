@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Col, Segmented, Typography } from "antd";
+import { Col, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import BankVariants from "./BankVariants";
@@ -17,11 +17,6 @@ enum BankType {
     TreantThicket = "BTD_BANK_TREANT_THICKET",
     GargoyleStonevault = "BTD_BANK_GARGOYLE_STONEVAULT",
     SunkenTemple = "BTD_BANK_SUNKEN_TEMPLE"
-}
-
-enum BankDisplayMode {
-    Difficulty,
-    Variant
 }
 
 export type BankModel = {
