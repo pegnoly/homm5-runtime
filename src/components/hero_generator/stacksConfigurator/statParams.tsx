@@ -63,7 +63,7 @@ function HeroAssetStackStatGenerator(params: {
 
     return <Space direction="vertical">
         <Typography.Text style={{fontFamily: 'fantasy', fontSize: 20, color: 'darkorchid', fontStretch: 'expanded'}}>Stats generation rules</Typography.Text>
-        <HeroAssetStatElementCreator stackId={params.stackId} elementCreatedCallback={onElementCreated}/>
+        <HeroAssetStatElementCreator elementsCount={elements.length} stackId={params.stackId} elementCreatedCallback={onElementCreated}/>
         <List>{elements.map((element, index) => (
             <List.Item key={index}>
                 <HeroAssetStatElementItem element={element} updateCallback={onElementUpdated}/>
@@ -74,6 +74,7 @@ function HeroAssetStackStatGenerator(params: {
 
 function HeroAssetStatElementCreator(params: {
     stackId: number
+    elementsCount: number
     elementCreatedCallback: (created: ArmyGenerationStatElement) => void
 }) {
     const [rule, setRule] = useState<StatGenerationRule | null>(null);
@@ -90,7 +91,10 @@ function HeroAssetStatElementCreator(params: {
     }
 
     return <>
-        <Button onClick={() => setOpened(true)} icon={<PlusOutlined/>}/>
+        <Button 
+            disabled={params.elementsCount >= 1}
+            onClick={() => setOpened(true)} icon={<PlusOutlined/>}
+        />
         <Modal
             open={opened}
             onCancel={close}
