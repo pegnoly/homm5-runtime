@@ -2,7 +2,7 @@ use homm5_scaner::prelude::Town;
 use sea_orm::{prelude::*, FromJsonQueryResult, FromQueryResult};
 use serde::{Deserialize, Serialize};
 use std::str;
-use strum::EnumString;
+use strum::{Display, EnumString};
 
 use super::common::{AssetGenerationType, DifficultyMappedValue};
 
@@ -45,7 +45,7 @@ pub enum ArmySlotStackUnitGenerationMode {
     TierSlotBased
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum ArmySlotStackCountGenerationMode {
     #[sea_orm(string_value = "UNIT_COUNT_GENERATION_MODE_RAW")]
