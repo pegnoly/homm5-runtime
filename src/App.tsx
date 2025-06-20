@@ -1,12 +1,9 @@
-import { Col, Row } from "antd";
-import Editor from "./components/editor/Editor";
-import RepackController from "./components/core/RepackController";
-import MapSelector from "./components/core/MapSelector";
-import RuntimeRunner from "./components/core/RuntimeRunner";
 import useGameDataStore, { ArtifactModel, CreatureModel } from "./stores/GameDataStore";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect } from "react";
 import { useShallow } from "zustand/shallow";
+import Header from "./components/header";
+import Body from "./components/body";
 
 function App() {
     const [setArtifacts, setCreatures] = useGameDataStore(useShallow((state) => [state.load_artifacts, state.load_creatures]));
@@ -26,19 +23,24 @@ function App() {
             .then((values) => setCreatures(values));
     }
 
-    return <div style={{display: 'flex', flexDirection: 'column', height: '100%', gap: 10}}>
-        <Row>
-            <Col span={12}>
-                <RuntimeRunner/>
-            </Col>
-            <Col span={8} offset={4}>
-                <MapSelector/>
-            </Col>
-        </Row>
-        <RepackController/>
-        <Editor/>
-        {/* <Button onClick={() => Test()}>Test</Button> */}
-    </div>
+    // return <div style={{display: 'flex', flexDirection: 'column', height: '100%', gap: 10}}>
+    //     <Row>
+    //         <Col span={12}>
+    //             <RuntimeRunner/>
+    //         </Col>
+    //         <Col span={8} offset={4}>
+    //             <MapSelector/>
+    //         </Col>
+    //     </Row>
+    //     <RepackController/>
+    //     <Editor/>
+    // </div>
+    return (
+        <>
+            <Header/>
+            <Body/>
+        </>
+    )
 }
 
 export default App;

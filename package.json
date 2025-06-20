@@ -10,12 +10,18 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@ant-design/icons": "^5.5.2",
+    "@mantine/carousel": "^8.1.0",
+    "@mantine/core": "^8.1.0",
+    "@mantine/hooks": "^8.1.0",
+    "@mantine/modals": "^8.1.0",
+    "@mantine/notifications": "^8.1.0",
+    "@tabler/icons-react": "^3.34.0",
+    "@tanstack/react-query": "^5.80.10",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.0.1",
     "@tauri-apps/plugin-shell": "^2",
-    "antd": "^5.22.3",
-    "antd-icons": "^0.1.0-alpha.1",
+    "embla-carousel": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "react": "^18.2.0",
     "react-colorful": "^5.6.1",
     "react-dom": "^18.2.0",
@@ -27,6 +33,9 @@
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.2.1",
+    "postcss": "^8.5.4",
+    "postcss-preset-mantine": "^1.17.0",
+    "postcss-simple-vars": "^7.0.1",
     "typescript": "^5.2.2",
     "vite": "^6.3.2"
   }

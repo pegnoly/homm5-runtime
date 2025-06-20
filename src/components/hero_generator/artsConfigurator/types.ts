@@ -1,15 +1,3 @@
-export enum AssetGenerationType {
-    Static = "GENERATION_TYPE_STATIC",
-    Dynamic = "GENERATION_TYPE_DYNAMIC"
-}
-
-export enum DifficultyType {
-    Easy = "DIFFICULTY_EASY",
-    Medium = "DIFFICULTY_NORMAL",
-    Hard = "DIFFICULTY_HARD",
-    Heroic = "DIFFICULTY_HEROIC"
-}
-
 export enum ArtifactSlotType {
     Primary = "PRIMARY",
     Secondary = "SECONDARY",
@@ -43,10 +31,3 @@ export type HeroAssetArtifactsModel = {
     required: RequiredArtifacts,
     optional: OptionalArtifacts
 }
-
-export const gameDifficultyNames = new Map<DifficultyType, string>([
-    [DifficultyType.Easy, "Easy difficulty"],
-    [DifficultyType.Medium, "Medium difficulty"],
-    [DifficultyType.Hard, "Hard difficulty"],
-    [DifficultyType.Heroic, "Heroic difficulty"]
-])

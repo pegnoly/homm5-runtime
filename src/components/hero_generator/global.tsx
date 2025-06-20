@@ -1,5 +1,5 @@
 import { Button } from "antd";
-import useHeroGeneratorStore from "../../stores/HeroGeneratorStore";
+import useHeroGeneratorStore from "../../stores/FightGeneratorStore";
 import { invoke } from "@tauri-apps/api/core";
 
 function HeroGeneratorGlobals() {

@@ -3,7 +3,7 @@ import { HeroAssetStackModel } from "./main";
 import { invoke } from "@tauri-apps/api/core";
 import HeroAssetStackCountConfigurator from "./count";
 import HeroAssetStackUnitConfigurator from "./unit";
-import useHeroGeneratorStore from "../../../stores/HeroGeneratorStore";
+import useHeroGeneratorStore from "../../../stores/FightGeneratorStore";
 import { useShallow } from "zustand/shallow";
 
 function HeroAssetFocusedStack(params: {stackId: number}) {

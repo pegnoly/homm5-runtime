@@ -1,0 +1,49 @@
+.main {
+    width: 100dvw;
+    height: 82dvh;
+    /* background-color: tomato; */
+    display: flex;
+    flex-direction: row;
+    justify-self: start;
+}
+
+.sidebar {
+    width: 12%;
+    height: 100%;
+    /* background-color: aqua; */
+    display: flex;
+    flex-direction: column;
+}
+
+.mode_selector {
+    width: 100%;
+    height: 50%;
+    /* background-color: chartreuse; */
+}
+
+.modes_list {
+    display: flex;
+    flex-direction: column;
+}
+
+.mode_link {
+    text-decoration: none;
+}
+
+.editor_globals {
+    width: 100%;
+    height: 50%;
+    /* background-color: cornflowerblue; */
+}
+
+.editor {
+    /* padding-right: 25%; */
+    width: 88%;
+    height: 100%;
+    /* background-color: slategray; */
+}
+
+.editor_layout {
+    width: 100%;
+    height: 100%;
+}

@@ -1,3 +1,3 @@
 mod banks;
-mod hero_generator;
+mod fight_generator;
 pub mod prelude;

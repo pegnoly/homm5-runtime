@@ -5,7 +5,7 @@ import HeroAssetStacksConfigurator from "./stacksConfigurator/main";
 import { useEffect, useState } from "react";
 import { HeroAssetSimple } from "./main";
 import { invoke } from "@tauri-apps/api/core";
-import useHeroGeneratorStore from "../../stores/HeroGeneratorStore";
+import useHeroGeneratorStore from "../../stores/FightGeneratorStore";
 
 function HeroAssetFocused() {
     const { id } = useParams();

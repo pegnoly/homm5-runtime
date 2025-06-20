@@ -1,24 +1,30 @@
 import { create } from "zustand"
 
 export enum EditorState {
-    Quest,
-    Dialog,
-    ReserveHeroes,
-    Banks,
-    HeroGenerator
+    Quest = "Quest",
+    Dialog = "Dialog",
+    ReserveHeroes = "ReserveHeroes",
+    Banks = "Banks",
+    FightGenerator = "FightGenerator"
 }
 
-type State = {
-    editor_state: EditorState
+type Actions = {
+    setEditorState: (state: EditorState) => void
 }
 
-type Action = {
-    set_editor_state: (state: EditorState) => void
+type Store = {
+    editorState: EditorState | undefined,
+    actions: Actions
 }
 
-export const useEditorStateStore = create<State & Action>((set) => ({
-    editor_state: EditorState.Quest,
-    set_editor_state(state) {
-        set({editor_state: state})
-    },
+const useEditorStateStore = create<Store>((set) => ({
+    editorState: undefined,
+    actions: {
+        setEditorState(state) {
+            set({editorState: state})
+        },
+    }
 }))
+
+export const useEditorState = () => useEditorStateStore((state) => state.editorState);
+export const useEditorStateActions = () => useEditorStateStore((state) => state.actions);

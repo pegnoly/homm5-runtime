@@ -1,5 +1,5 @@
 import { Typography } from "antd";
-import useHeroGeneratorStore from "../../../stores/HeroGeneratorStore";
+import useHeroGeneratorStore from "../../../stores/FightGeneratorStore";
 import { countGenerationTypeNames, StackCountGenerationType, unitGenerationTypeNames } from "./main";
 import { AssetGenerationType } from "../artsConfigurator/types";
 

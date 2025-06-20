@@ -1,4 +1,4 @@
-use editor_tools::prelude::{BanksGeneratorRepo, HeroGeneratorRepo};
+use editor_tools::prelude::{BanksGeneratorRepo, FightGeneratorRepo};
 use homm5_scaner::prelude::ScanerService;
 use map_modifier::{
     MapData,
@@ -77,7 +77,7 @@ pub async fn run() {
             pool.clone(),
             PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/"),
         ))
-        .manage(HeroGeneratorRepo::new(pool.clone()))
+        .manage(FightGeneratorRepo::new(pool.clone()))
         .manage(ScanerService::new(pool.clone()))
         .manage(data)
         .plugin(tauri_plugin_shell::init())
@@ -155,38 +155,37 @@ pub async fn run() {
             services::banks_configurator::commands::update_creature_slot_town,
             services::banks_configurator::commands::generate_banks_script,
             // hero generator
-            services::heroes_generator::commands::load_artifact_models,
-            services::heroes_generator::commands::load_creature_models,
-            services::heroes_generator::commands::pick_hero_lua_generation_directory,
-            services::heroes_generator::commands::init_new_generatable_hero,
-            services::heroes_generator::commands::load_all_hero_assets,
-            services::heroes_generator::commands::load_hero_asset,
-            services::heroes_generator::commands::try_load_artifacts_data_for_asset,
-            services::heroes_generator::commands::create_artifacts_data_for_asset,
-            services::heroes_generator::commands::update_artifacts_base_cost,
-            services::heroes_generator::commands::update_artifacts_cost_grow,
-            services::heroes_generator::commands::add_required_artifact,
-            services::heroes_generator::commands::remove_required_artifact,
-            services::heroes_generator::commands::add_optional_artifact,
-            services::heroes_generator::commands::remove_optional_artifact,
-            services::heroes_generator::commands::load_stacks_ids,
-            services::heroes_generator::commands::create_stack,
-            services::heroes_generator::commands::load_stack,
-            services::heroes_generator::commands::update_stack_base_powers,
-            services::heroes_generator::commands::update_stack_powers_grow,
-            services::heroes_generator::commands::update_stack_concrete_count,
-            services::heroes_generator::commands::update_stack_concrete_creature,
-            services::heroes_generator::commands::update_stack_creature_town,
-            services::heroes_generator::commands::update_stack_creature_tier,
-            services::heroes_generator::commands::add_stack_generation_rule,
-            services::heroes_generator::commands::remove_stack_generation_rule,
-            services::heroes_generator::commands::generate_current_hero_script,
-            services::heroes_generator::commands::load_stats_generation_elements,
-            services::heroes_generator::commands::add_stat_generation_element,
-            services::heroes_generator::commands::remove_stat_generation_element,
-            services::heroes_generator::commands::update_stat_generation_element_priority,
-            services::heroes_generator::commands::update_stat_generation_element_rule,
-            services::heroes_generator::commands::update_stat_generation_params
+            services::fight_generator::commands::load_artifact_models,
+            services::fight_generator::commands::load_creature_models,
+            services::fight_generator::commands::pick_hero_lua_generation_directory,
+            services::fight_generator::commands::init_new_asset,
+            services::fight_generator::commands::load_all_assets,
+            services::fight_generator::commands::load_asset,
+            services::fight_generator::commands::try_load_artifacts_data_for_asset,
+            services::fight_generator::commands::create_artifacts_data_for_asset,
+            services::fight_generator::commands::update_artifacts_base_cost,
+            services::fight_generator::commands::update_artifacts_cost_grow,
+            services::fight_generator::commands::add_required_artifact,
+            services::fight_generator::commands::remove_required_artifact,
+            services::fight_generator::commands::add_optional_artifact,
+            services::fight_generator::commands::remove_optional_artifact,
+            services::fight_generator::commands::load_stacks_ids,
+            services::fight_generator::commands::create_stack,
+            services::fight_generator::commands::load_stack,
+            services::fight_generator::commands::update_stack_base_powers,
+            services::fight_generator::commands::update_stack_powers_grow,
+            services::fight_generator::commands::update_stack_concrete_count,
+            services::fight_generator::commands::update_stack_concrete_creatures,
+            services::fight_generator::commands::update_stack_towns,
+            services::fight_generator::commands::update_stack_tiers,
+            services::fight_generator::commands::update_stack_rules,
+            // services::fight_generator::commands::generate_current_hero_script,
+            services::fight_generator::commands::load_stats_generation_elements,
+            services::fight_generator::commands::add_stat_generation_element,
+            services::fight_generator::commands::remove_stat_generation_element,
+            services::fight_generator::commands::update_stat_generation_element_priority,
+            services::fight_generator::commands::update_stat_generation_element_rule,
+            services::fight_generator::commands::update_stat_generation_params
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

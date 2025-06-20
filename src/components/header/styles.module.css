@@ -1,0 +1,35 @@
+.main {
+    width: 100dvw;
+    height: 18dvh;
+    /* background-color: cadetblue; */
+    display: flex;
+}
+
+.core {
+    width: 10%;
+    height: 100%;
+    /* background-color: green; */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-items: center;
+}
+
+.repackers {
+    width: 65%;
+    height: 100%;
+    /* background-color: blueviolet; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map_selector {
+    width: 25%;
+    height: 100%;
+    /* background-color: aliceblue; */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}

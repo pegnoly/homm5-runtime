@@ -1,0 +1,52 @@
+.focused_panel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.stacks_panel {
+    width: 100%;
+    height: 50%;
+    /* background-color: aqua; */
+    display: flex;
+}
+
+.stack_selector_panel {
+    height: 100%;
+    width: 10%;
+    /* background-color: brown; */
+    display: flex;
+    flex-direction: column;
+    /* justify-content: start;
+    align-items: start; */
+}
+
+.focused_stack_panel {
+    height: 100%;
+    width: 90%;
+    display: flex;
+    flex-direction: row;
+}
+
+.stack_counts_panel {
+    height: 100%;
+    width: 40%;
+    /* background-color: chartreuse; */
+    display: flex;
+    flex-direction: column;
+    gap: 10%;
+    /* padding: 2%; */
+}
+
+.stack_params_panel {
+    height: 100%;
+    width: 60%;
+    /* background-color: tomato; */
+    display: flex;
+}
+
+.artifacts_panel {
+    width: 100%;
+    height: 50%;
+}

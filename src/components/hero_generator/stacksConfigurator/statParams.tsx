@@ -3,29 +3,6 @@ import { invoke } from "@tauri-apps/api/core"
 import { Button, List, Modal, Select, Space, Typography } from "antd"
 import { useEffect, useState } from "react"
 
-export enum StatGenerationType {
-    Initiative = "GENERATION_STAT_INITIATIVE",
-    Speed = "GENERATION_STAT_SPEED",
-    Hitpoints = "GENERATION_STAT_HITPOINTS",
-    Attack = "GENERATION_STAT_ATTACK",
-    Defence = "GENERATION_STAT_DEFENCE"
-}
-
-export enum StatGenerationRule {
-    MaxBy = "GENERATION_STAT_RULE_MAXBY",
-    MinBy = "GENERATION_STAT_RULE_MINBY"
-}
-
-export type ArmyGenerationStats = {
-    values: StatGenerationType[]
-}
-
-export type ArmyGenerationStatElement = {
-    id: number,
-    rule: StatGenerationRule,
-    priority: number,
-    stats: ArmyGenerationStats
-}
 
 function HeroAssetStackStatGenerator(params: {
     stackId: number
