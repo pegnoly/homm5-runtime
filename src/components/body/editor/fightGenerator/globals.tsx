@@ -1,10 +1,15 @@
 import { Button, Stack, Text } from "@mantine/core";
 import { useFightAssetActions, useFightAssetId, useFightAssetName } from "./store";
+import { invoke } from "@tauri-apps/api/core";
 
 function FightGeneratorGlobals() {
     const actions = useFightAssetActions();
     const assetId = useFightAssetId();
     const assetName = useFightAssetName();
+
+    async function startGeneration() {
+        await invoke("generate_current_hero_script", {assetId: assetId});
+    }
 
     return (
     <Stack>
@@ -16,7 +21,7 @@ function FightGeneratorGlobals() {
                 <Text size="sm">{assetName}</Text>
             </div>
         }
-        <Button radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>
+        <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>
     </Stack>
     )
 }

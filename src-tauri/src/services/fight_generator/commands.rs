@@ -13,6 +13,8 @@ use editor_tools::prelude::{
 use homm5_scaner::prelude::{
     ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town,
 };
+use homm5_types::town;
+use itertools::Itertools;
 use std::{io::Write, path::PathBuf};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
@@ -428,205 +430,216 @@ pub async fn update_stat_generation_params(
         .await?)
 }
 
-// #[tauri::command]
-// pub async fn generate_current_hero_script(
-//     heroes_repo: State<'_, FightGeneratorRepo>,
-//     asset_id: i32,
-// ) -> Result<(), Error> {
-//     if let Some(main_asset) = heroes_repo.get_asset(asset_id).await? {
-//         let mut output_file =
-//             std::fs::File::create(format!("{}\\script.lua", &main_asset.path_to_generate))?;
-//         let mut script = format!("{} = {{\n", &main_asset.table_name);
-//         // stacks script
-//         let stacks_assets = heroes_repo.get_stacks(main_asset.id).await?;
-//         let mut stack_gen_type_script = String::from("\tstack_count_generation_logic = {\n");
-//         let mut base_army_count_data_script = String::from("\tarmy_base_count_data = {\n");
-//         let mut army_count_grow_script = String::from("\tarmy_counts_grow = {\n");
-//         let mut army_generation_rules_script = String::from("\tarmy_getters = {\n");
+#[tauri::command]
+pub async fn generate_current_hero_script(
+    heroes_repo: State<'_, FightGeneratorRepo>,
+    asset_id: i32,
+) -> Result<(), Error> {
+    if let Some(main_asset) = heroes_repo.get_asset(asset_id).await? {
+        let mut output_file =
+            std::fs::File::create(format!("{}\\script.lua", &main_asset.path_to_generate))?;
+        let mut script = format!("{} = {{\n", &main_asset.table_name);
+        // stacks script
+        let stacks_assets = heroes_repo.get_stacks(main_asset.id).await?;
+        let mut stack_gen_type_script = String::from("\tstack_count_generation_logic = {\n");
+        let mut base_army_count_data_script = String::from("\tarmy_base_count_data = {\n");
+        let mut army_count_grow_script = String::from("\tarmy_counts_grow = {\n");
+        let mut army_generation_rules_script = String::from("\tarmy_getters = {\n");
 
-//         let mut stack_count = 0;
-//         for asset in stacks_assets {
-//             stack_count += 1;
+        let mut stack_count = 0;
+        for asset in stacks_assets {
+            stack_count += 1;
 
-//             stack_gen_type_script += &format!(
-//                 "\t\t[{}] = {},\n",
-//                 stack_count, &asset.count_generation_mode
-//             );
-//             base_army_count_data_script += &format!("\t\t[{}] = {{\n", stack_count);
+            stack_gen_type_script += &format!(
+                "\t\t[{}] = {},\n",
+                stack_count, &asset.count_generation_mode
+            );
+            base_army_count_data_script += &format!("\t\t[{}] = {{\n", stack_count);
 
-//             if asset.count_generation_mode == ArmySlotStackCountGenerationMode::PowerBased {
-//                 for (difficulty, power) in asset.base_powers.data {
-//                     base_army_count_data_script +=
-//                         &format!("\t\t\t[{}] = {},\n", &difficulty, power);
-//                 }
-//                 base_army_count_data_script += "\t\t},\n";
+            if asset.count_generation_mode == ArmySlotStackCountGenerationMode::PowerBased {
+                for (difficulty, power) in asset.base_powers.data {
+                    base_army_count_data_script +=
+                        &format!("\t\t\t[{}] = {},\n", &difficulty, power);
+                }
+                base_army_count_data_script += "\t\t},\n";
 
-//                 if asset.power_based_generation_type == AssetGenerationType::Dynamic {
-//                     army_count_grow_script += &format!("\t\t[{}] = {{\n", stack_count);
-//                     for (difficulty, power) in asset.powers_grow.data {
-//                         army_count_grow_script +=
-//                             &format!("\t\t\t[{}] = {},\n", &difficulty, power);
-//                     }
-//                     army_count_grow_script += "\t\t},\n";
-//                 }
-//             } else {
-//                 for (difficulty, power) in asset.concrete_count.data {
-//                     base_army_count_data_script +=
-//                         &format!("\t\t\t[{}] = {},\n", &difficulty, power);
-//                 }
-//                 base_army_count_data_script += "\t\t},\n";
-//             }
+                if asset.power_based_generation_type == AssetGenerationType::Dynamic {
+                    army_count_grow_script += &format!("\t\t[{}] = {{\n", stack_count);
+                    for (difficulty, power) in asset.powers_grow.data {
+                        army_count_grow_script +=
+                            &format!("\t\t\t[{}] = {},\n", &difficulty, power);
+                    }
+                    army_count_grow_script += "\t\t},\n";
+                }
+            } else {
+                for (difficulty, power) in asset.concrete_count.data {
+                    base_army_count_data_script +=
+                        &format!("\t\t\t[{}] = {},\n", &difficulty, power);
+                }
+                base_army_count_data_script += "\t\t},\n";
+            }
 
-//             // construct generation rule filter
-//             if asset.type_generation_mode == ArmySlotStackUnitGenerationMode::ConcreteUnit {
-//                 army_generation_rules_script += &format!(
-//                     "\t\t[{}] = function ()\n\t\t\treturn {}\n\t\tend,\n",
-//                     stack_count, asset.concrete_creature
-//                 );
-//             } else {
-//                 army_generation_rules_script += &format!("\t\t[{}] = function ()\n", stack_count);
+            // construct generation rule filter
+            if asset.type_generation_mode == ArmySlotStackUnitGenerationMode::ConcreteUnit {
+                let creatures_list = asset.concrete_creatures.ids.iter().join(", ");
+                army_generation_rules_script += &format!(
+                    "\t\t[{}] = function ()
+                    \t\t\tlocal result = Random.FromTable({{{}}})
+                    \t\t\treturn result
+                    \t\tend,\n",
+                    stack_count, creatures_list
+                );
+            } else {
+                army_generation_rules_script += &format!("\t\t[{}] = function ()\n", stack_count);
 
-//                 let mut generation_rules_script = String::from("local result = ");
-//                 for rule in &asset.generation_rule.params {
-//                     match rule {
-//                         ArmyGenerationRuleParam::Generatable => {
-//                             generation_rules_script +=
-//                                 "Creature.Params.IsGeneratable(creature) and "
-//                         }
-//                         ArmyGenerationRuleParam::Caster => {
-//                             generation_rules_script += "Creature.Type.IsCaster(creature) and "
-//                         }
-//                         ArmyGenerationRuleParam::Shooter => {
-//                             generation_rules_script += "Creature.Type.IsShooter(creature) and"
-//                         }
-//                         _ => {}
-//                     }
-//                 }
-//                 generation_rules_script = generation_rules_script
-//                     .trim_end()
-//                     .trim_end_matches("and")
-//                     .trim_end()
-//                     .to_string();
-//                 // construct getter function
-//                 let mut inner_getter_function = format!(
-//                     "\t\t\tlocal tiers = TIER_TABLES[{}][{}]\n",
-//                     asset.town, asset.tier
-//                 );
-//                 let filter_function = format!(
-//                     "\t\t\tlocal filtered_tiers = list_iterator.Filter(\n\t\t\t\ttiers,\n\t\t\t\tfunction(creature)\n\t\t\t\t\t{}\n\t\t\t\t\treturn result\n\t\t\t\tend)",
-//                     &generation_rules_script
-//                 );
+                let mut generation_rules_script = String::from("local result = ");
+                for rule in &asset.generation_rule.params {
+                    match rule {
+                        ArmyGenerationRuleParam::Generatable => {
+                            generation_rules_script +=
+                                "Creature.Params.IsGeneratable(creature) and "
+                        }
+                        ArmyGenerationRuleParam::Caster => {
+                            generation_rules_script += "Creature.Type.IsCaster(creature) and "
+                        }
+                        ArmyGenerationRuleParam::Shooter => {
+                            generation_rules_script += "Creature.Type.IsShooter(creature) and "
+                        }
+                        _ => {}
+                    }
+                }
+                generation_rules_script = generation_rules_script
+                    .trim_end()
+                    .trim_end_matches("and")
+                    .trim_end()
+                    .to_string();
+                // construct getter function
+                let towns = asset.towns.towns.iter().join(", ");
+                let tiers = asset.tiers.tiers.iter().join(", ");
+                let mut inner_getter_function = format!(
+                    "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})\n",
+                    towns, tiers
+                );
+                let filter_function = format!(
+                    "\t\t\tlocal filtered_creatures = list_iterator.Filter(\n\t\t\t\tpossible_creatures,\n\t\t\t\tfunction(creature)\n\t\t\t\t\t{}\n\t\t\t\t\treturn result\n\t\t\t\tend)",
+                    &generation_rules_script
+                );
 
-//                 let stats_elements = heroes_repo.get_stat_generation_elements(asset.id).await?;
-//                 //println!("Stats elements: {:#?}", &stats_elements);
-//                 if stats_elements.len() == 0 {
-//                     if asset.generation_rule.params.len() > 0 {
-//                         inner_getter_function += &format!(
-//                             "{}\n\t\t\tlocal id = Random.FromTable(filtered_tiers)\n\t\t\treturn id",
-//                             &filter_function
-//                         );
-//                     } else {
-//                         inner_getter_function +=
-//                             "\t\t\tlocal id = Random.FromTable(tiers)\n\t\t\treturn id";
-//                     }
-//                     army_generation_rules_script +=
-//                         &format!("{}\n\t\tend,\n", inner_getter_function);
-//                 } else {
-//                     let stat_element = &stats_elements[0];
-//                     let mut sort_function = format!(
-//                         "{}\n\t\t\tlocal id = list_iterator.{}(\n\t\t\t\t{},\n\t\t\t\tfunction(creature)\n\t\t\t\t\tlocal result = ",
-//                         if asset.generation_rule.params.len() > 0 {
-//                             format!(
-//                                 "\t\t\tlocal tiers = TIER_TABLES[{}][{}]\n{}",
-//                                 asset.town, asset.tier, filter_function
-//                             )
-//                         } else {
-//                             format!(
-//                                 "\t\t\tlocal tiers = TIER_TABLES[{}][{}]",
-//                                 asset.town, asset.tier
-//                             )
-//                         },
-//                         if stat_element.rule == ArmyGenerationStatRule::MaxBy {
-//                             "MaxBy"
-//                         } else {
-//                             "MinBy"
-//                         },
-//                         if asset.generation_rule.params.len() > 0 {
-//                             "filtered_tiers"
-//                         } else {
-//                             "tiers"
-//                         }
-//                     );
-//                     for param in &stat_element.stats.values {
-//                         match param {
-//                             ArmyGenerationStatParam::Attack => {
-//                                 sort_function += "Creature.Params.Attack(creature) + ";
-//                             }
-//                             ArmyGenerationStatParam::Defence => {
-//                                 sort_function += "Creature.Params.Defence(creature) + ";
-//                             }
-//                             ArmyGenerationStatParam::Initiative => {
-//                                 sort_function += "Creature.Params.Initiative(creature) + ";
-//                             }
-//                             ArmyGenerationStatParam::Speed => {
-//                                 sort_function += "Creature.Params.Speed(creature) + ";
-//                             }
-//                             ArmyGenerationStatParam::Hitpoints => {
-//                                 sort_function += "Creature.Params.Health(creature) + ";
-//                             }
-//                         }
-//                     }
-//                     sort_function = sort_function
-//                         .trim_end()
-//                         .trim_end_matches("+")
-//                         .trim_end()
-//                         .to_string();
-//                     sort_function += "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
-//                     army_generation_rules_script += &format!("{}\n\t\tend,\n", sort_function);
-//                 }
-//             }
-//         }
-//         script += &format!("{}\t}},\n\n", stack_gen_type_script);
-//         script += &format!("{}\t}},\n\n", base_army_count_data_script);
-//         script += &format!("{}\t}},\n\n", army_count_grow_script);
-//         script += &format!("{}\t}},\n\n", army_generation_rules_script);
+                let stats_elements = heroes_repo.get_stat_generation_elements(asset.id).await?;
+                //println!("Stats elements: {:#?}", &stats_elements);
+                if stats_elements.len() == 0 || stats_elements[0].stats.values.len() == 0 {
+                    if asset.generation_rule.params.len() > 0 {
+                        inner_getter_function += &format!(
+                            "{}\n\t\t\tlocal id = Random.FromTable(filtered_creatures)\n\t\t\treturn id",
+                            &filter_function
+                        );
+                    } else {
+                        inner_getter_function +=
+                            "\t\t\tlocal id = Random.FromTable(possible_creatures)\n\t\t\treturn id";
+                    }
+                    army_generation_rules_script +=
+                        &format!("{}\n\t\tend,\n", inner_getter_function);
+                } else {
+                    let stat_element = &stats_elements[0];
+                    let mut sort_function = String::new();
+                    // if stat_element.stats.values.len() > 0 {
+                        let towns = asset.towns.towns.iter().join(", ");
+                        let tiers = asset.tiers.tiers.iter().join(", ");
+                        sort_function += &format!(
+                            "{}\n\t\t\tlocal id = list_iterator.{}(\n\t\t\t\t{},\n\t\t\t\tfunction(creature)\n\t\t\t\t\tlocal result = ",
+                            if asset.generation_rule.params.len() > 0 {
+                                format!(
+                                    "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})\n{}",
+                                    towns, tiers, filter_function
+                                )
+                            } else {
+                                format!(
+                                    "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})",
+                                    towns, tiers
+                                )
+                            },
+                            if stat_element.rule == ArmyGenerationStatRule::MaxBy {
+                                "MaxBy"
+                            } else {
+                                "MinBy"
+                            },
+                            if asset.generation_rule.params.len() > 0 {
+                                "filtered_creatures"
+                            } else {
+                                "possible_creatures"
+                            }
+                        );
+                        for param in &stat_element.stats.values {
+                            match param {
+                                ArmyGenerationStatParam::Attack => {
+                                    sort_function += "Creature.Params.Attack(creature) + ";
+                                }
+                                ArmyGenerationStatParam::Defence => {
+                                    sort_function += "Creature.Params.Defence(creature) + ";
+                                }
+                                ArmyGenerationStatParam::Initiative => {
+                                    sort_function += "Creature.Params.Initiative(creature) + ";
+                                }
+                                ArmyGenerationStatParam::Speed => {
+                                    sort_function += "Creature.Params.Speed(creature) + ";
+                                }
+                                ArmyGenerationStatParam::Hitpoints => {
+                                    sort_function += "Creature.Params.Health(creature) + ";
+                                }
+                            }
+                        }
+                        sort_function = sort_function
+                            .trim_end()
+                            .trim_end_matches("+")
+                            .trim_end()
+                            .to_string();
+                        sort_function += "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
+                    // }
+                    army_generation_rules_script += &format!("{}\n\t\tend,\n", sort_function);
+                }
+            }
+        }
+        script += &format!("{}\t}},\n\n", stack_gen_type_script);
+        script += &format!("{}\t}},\n\n", base_army_count_data_script);
+        script += &format!("{}\t}},\n\n", army_count_grow_script);
+        script += &format!("{}\t}},\n\n", army_generation_rules_script);
 
-//         // artifacts script
-//         if let Some(artifacts_asset) = heroes_repo.get_artifacts_model(asset_id).await? {
-//             script += "\trequired_artifacts = {";
-//             for artifact_id in artifacts_asset.required.ids {
-//                 script += &format!("{}, ", artifact_id);
-//             }
-//             script.push_str("\t},\n");
-//             script += "\toptional_artifacts = {\n";
-//             for (slot, ids) in artifacts_asset.optional.values {
-//                 if !ids.is_empty() {
-//                     script += &format!("\t\t[{}] = {{", &slot);
-//                     for id in ids {
-//                         script += &format!("{}, ", id);
-//                     }
-//                     script += "},\n"
-//                 }
-//             }
-//             script.push_str("\t},\n\n");
+        // artifacts script
+        if let Some(artifacts_asset) = heroes_repo.get_artifacts_model(asset_id).await? {
+            script += "\trequired_artifacts = {";
+            for artifact_id in artifacts_asset.required.ids {
+                script += &format!("{}, ", artifact_id);
+            }
+            script.push_str("\t},\n");
+            script += "\toptional_artifacts = {\n";
+            for (slot, ids) in artifacts_asset.optional.values {
+                if !ids.is_empty() {
+                    script += &format!("\t\t[{}] = {{", &slot);
+                    for id in ids {
+                        script += &format!("{}, ", id);
+                    }
+                    script += "},\n"
+                }
+            }
+            script.push_str("\t},\n\n");
 
-//             script += "\tartifacts_base_costs = {\n";
-//             for (difficulty, cost) in artifacts_asset.base_powers.data {
-//                 script += &format!("\t\t[{}] = {},\n", difficulty, cost);
-//             }
-//             script.push_str("\t},\n\n");
+            script += "\tartifacts_base_costs = {\n";
+            for (difficulty, cost) in artifacts_asset.base_powers.data {
+                script += &format!("\t\t[{}] = {},\n", difficulty, cost);
+            }
+            script.push_str("\t},\n\n");
 
-//             if artifacts_asset.generation_type == AssetGenerationType::Dynamic {
-//                 script += "\tartifacts_costs_grow = {\n";
-//                 for (difficulty, cost) in artifacts_asset.powers_grow.unwrap().data {
-//                     script += &format!("\t\t[{}] = {},\n", difficulty, cost);
-//                 }
-//                 script.push_str("\t},\n\n");
-//             }
-//         }
+            if artifacts_asset.generation_type == AssetGenerationType::Dynamic {
+                script += "\tartifacts_costs_grow = {\n";
+                for (difficulty, cost) in artifacts_asset.powers_grow.unwrap().data {
+                    script += &format!("\t\t[{}] = {},\n", difficulty, cost);
+                }
+                script.push_str("\t},\n\n");
+            }
+        }
 
-//         script.push('}');
-//         output_file.write_all(script.as_bytes())?;
-//     }
-//     Ok(())
-// }
+        script.push('}');
+        output_file.write_all(script.as_bytes())?;
+    }
+    Ok(())
+}

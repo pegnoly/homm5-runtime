@@ -179,7 +179,7 @@ pub async fn run() {
             services::fight_generator::commands::update_stack_towns,
             services::fight_generator::commands::update_stack_tiers,
             services::fight_generator::commands::update_stack_rules,
-            // services::fight_generator::commands::generate_current_hero_script,
+            services::fight_generator::commands::generate_current_hero_script,
             services::fight_generator::commands::load_stats_generation_elements,
             services::fight_generator::commands::add_stat_generation_element,
             services::fight_generator::commands::remove_stat_generation_element,
