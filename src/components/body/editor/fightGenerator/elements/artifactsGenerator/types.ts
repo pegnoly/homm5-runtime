@@ -1,3 +1,5 @@
+import { AssetGenerationType, DifficultyMappedValue } from "../../types"
+
 export enum ArtifactSlotType {
     Primary = "PRIMARY",
     Secondary = "SECONDARY",
@@ -11,10 +13,6 @@ export enum ArtifactSlotType {
     Inventory = "INVENTORY"
 }
 
-export type DifficultyMappedValue = {
-    data: Record<DifficultyType, number>
-}
-
 export type RequiredArtifacts = {
     ids: number[]
 }
@@ -23,11 +21,11 @@ export type OptionalArtifacts = {
     values: Record<ArtifactSlotType, number[]>
 }
 
-export type HeroAssetArtifactsModel = {
+export type FightAssetArtifactsModel = {
     id: number,
     generation_type: AssetGenerationType,
     base_powers: DifficultyMappedValue,
-    powers_grow: DifficultyMappedValue | null,
+    powers_grow: DifficultyMappedValue,
     required: RequiredArtifacts,
     optional: OptionalArtifacts
 }

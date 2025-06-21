@@ -12,7 +12,7 @@ function FightAssetStackSelector(params: {
             orientation="vertical"
             value={params.currentSelectedStack?.toString()}
             onChange={(value) => params.stackSelectedCallback(parseInt(value))}
-            data={params.stackIds.map((stack, index) => ({label: stack, value: (index + 1).toString()}))}/>
+            data={params.stackIds.map((stack, index) => ({label: (index + 1).toString(), value: stack.toString()}))}/>
     </>
     )
 }

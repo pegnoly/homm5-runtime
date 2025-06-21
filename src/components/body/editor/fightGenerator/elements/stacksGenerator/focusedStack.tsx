@@ -15,11 +15,13 @@ function useStackQuery(stackId: number) {
 }
 
 function FightAssetFocusedStack(params: {
-    assedId: number,
+    assetId: number,
     stackId: number
 }) {
     const currentStackId = useCurrentStackId();
     const currentStackActions = useCurrentStackActions();
+
+    console.log("Asset id: ", params.assetId, ", stackId: ", params.stackId);
 
     const { data } = useStackQuery(params.stackId);
 

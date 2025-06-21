@@ -5,6 +5,10 @@ import { ArmyGenerationStatElement, FightAssetStackModel, StatGenerationRule, St
 import { CreateStackPayload } from "./elements/stacksGenerator/stackCreator";
 import { UpdateRulesPayload } from "./elements/stacksGenerator/generationParams/ruleSelector";
 import { UpdateConcreteCreaturesPayload } from "./elements/stacksGenerator/generationParams";
+import { FightAssetArtifactsModel } from "./elements/artifactsGenerator/types";
+import { CreateArtifactsAssetPayload } from "./elements/artifactsGenerator/creator";
+import { AddRequiredArtifactPayload, RemoveRequiredArtifactPayload } from "./elements/artifactsGenerator/required";
+import { AddOptionalArtifactPayload, RemoveOptionalArtifactPayload } from "./elements/artifactsGenerator/optional";
 
 export class FightGeneratorApi {
     static async loadStack(stackId: number): Promise<FightAssetStackModel> {
@@ -48,12 +52,34 @@ export class FightGeneratorApi {
     }
 
     static async updateStatParamElementRule(elementId: number, rule: StatGenerationRule): Promise<void> {
-        //console.log("Element id: ", elementId, " rule: ", rule);
         return invoke("update_stat_generation_element_rule", {elementId: elementId, rule: rule});
     }
 
     static async updateStatParamElementStats(elementId: number, stats: StatGenerationType []): Promise<void> {
-        //console.log("Element id: ", elementId, " stats: ", stats);
         return invoke("update_stat_generation_params", {elementId: elementId, params: stats});
+    }
+
+    static async createArtifactsAsset(payload: CreateArtifactsAssetPayload): Promise<FightAssetArtifactsModel> {
+        return invoke<FightAssetArtifactsModel>("create_artifacts_data_for_asset", payload);
+    }
+
+    static async tryLoadArtifactAsset(assetId: number): Promise<FightAssetArtifactsModel | null> {
+        return invoke<FightAssetArtifactsModel | null>("try_load_artifacts_data_for_asset", {assetId: assetId});
+    }
+
+    static async addRequiredArtifact(payload: AddRequiredArtifactPayload): Promise<void> {
+        return invoke("add_required_artifact", payload);
+    }
+
+    static async removeRequiredArtifact(payload: RemoveRequiredArtifactPayload): Promise<void> {
+        return invoke("remove_required_artifact", payload);
+    }
+
+    static async addOptionalArtifact(payload: AddOptionalArtifactPayload): Promise<void> {
+        return invoke("add_optional_artifact", payload);
+    }
+
+    static async removeOptionalArtifact(payload: RemoveOptionalArtifactPayload): Promise<void> {
+        return invoke("remove_optional_artifact", payload);
     }
 }

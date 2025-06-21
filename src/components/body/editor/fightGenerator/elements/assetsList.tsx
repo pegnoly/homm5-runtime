@@ -8,7 +8,7 @@ function FightAssetsList(params: {
 }) {
     return (
     <SimpleGrid cols={{xl: 4, sm: 3}}>{params.assets.map((asset, index) => (
-        <Link to={`/editor/${EditorState.FightGenerator}/focused/${asset.id}`} key={index}>
+        <Link to={`/editor/${EditorState.FightGenerator}/focused/${asset.id}`} state={{assetName: asset.name}} key={index}>
             <Card radius={0} withBorder>
                 {asset.name}
             </Card>

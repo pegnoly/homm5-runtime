@@ -40,7 +40,7 @@ function FightAssetStackGenerator(params: {
                 />
             </div>
         </div>
-        <FightAssetFocusedStack assedId={params.assetId} stackId={selectedStack!}/>
+        <FightAssetFocusedStack assetId={params.assetId} stackId={selectedStack!}/>
     </div>
     )
 }

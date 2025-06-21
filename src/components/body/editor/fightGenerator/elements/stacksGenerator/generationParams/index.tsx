@@ -43,7 +43,10 @@ function TierSlotBasedGenerationData() {
         {
             currentStackId != undefined ?
             <div style={{width: '100%', display: 'flex', flexDirection: 'row'}}>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '2%', width: '50%', alignContent: 'center', justifyItems: 'center', justifySelf: 'center'}}>
+                <div 
+                style={{
+                    display: 'flex', flexDirection: 'column', gap: '2%', width: '50%', overflow: 'auto', alignContent: 'center', justifyItems: 'center', justifySelf: 'center'
+                }}>
                     <Accordion defaultValue={ParamsSelectionMode.Towns}>
                         <AccordionItem key={0} value={ParamsSelectionMode.Towns}>
                             <AccordionControl>
