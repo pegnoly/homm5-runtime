@@ -1,4 +1,4 @@
-use editor_tools::prelude::{BanksGeneratorRepo, FightGeneratorRepo};
+use editor_tools::prelude::{BanksGeneratorRepo, FightGeneratorRepo, DialogGeneratorRepo};
 use homm5_scaner::prelude::ScanerService;
 use map_modifier::{
     MapData,
@@ -63,7 +63,7 @@ pub async fn run() {
     //sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
     let quest_service = QuestService::new(pool.clone());
-    let dialog_generator_service = DialogGeneratorService::new(pool.clone());
+    let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -72,7 +72,7 @@ pub async fn run() {
             runtime_config: RwLock::new(runtime_config),
         })
         .manage(quest_service)
-        .manage(dialog_generator_service)
+        .manage(dialog_generator_repo)
         .manage(BanksGeneratorRepo::new(
             pool.clone(),
             PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/"),
@@ -116,18 +116,12 @@ pub async fn run() {
             load_speakers,
             pick_dialog_directory,
             create_new_dialog,
+            load_dialog,
             create_speaker,
             update_dialog_labels,
-            load_dialog_directory,
-            load_dialog_labels,
-            load_dialog_name,
-            load_dialog_script_name,
-            load_dialog_speakers,
             load_dialog_variant,
-            load_variant_speaker,
-            load_variant_text,
             save_dialog_variant,
-            generate_dialog,
+            // generate_dialog,
             //reserve heroes commands
             services::reserve_hero_creator::commands::load_existing_reserve_heroes,
             services::reserve_hero_creator::commands::remove_reserve_hero,

@@ -7,13 +7,13 @@ use editor_tools::prelude::{
     FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload,
     RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload,
     UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload,
-    UpdateGenerationStatElementPayload, UpdateGenerationStatParamsPayload,
+    UpdateGenerationStatElementPayload,
     UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload,
 };
 use homm5_scaner::prelude::{
     ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town,
 };
-use homm5_types::town;
+
 use itertools::Itertools;
 use std::{io::Write, path::PathBuf};
 use tauri::{AppHandle, Emitter, State};
