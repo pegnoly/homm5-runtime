@@ -1,6 +1,5 @@
-use sea_orm::{prelude::*, FromJsonQueryResult};
+use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
-
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "dialogs")]
@@ -13,19 +12,19 @@ pub struct Model {
     pub directory: String,
     pub speakers_ids: SpeakersIds,
     pub labels: Labels,
-    pub was_generated: bool
+    pub was_generated: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 
 pub struct SpeakersIds {
-    pub ids: Vec<i32>
+    pub ids: Vec<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 
 pub struct Labels {
-    pub labels: Vec<String>
+    pub labels: Vec<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

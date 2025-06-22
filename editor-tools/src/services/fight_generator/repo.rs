@@ -8,12 +8,20 @@ use super::{
     },
     payloads::{AddOptionalArtifactPayload, RemoveOptionalArtifactPayload},
     prelude::{
-        AddGenerationStatElementPayload, AddRequiredArtifactPayload, AddStackPayload, InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload,
+        AddGenerationStatElementPayload, AddRequiredArtifactPayload, AddStackPayload,
+        InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload,
         UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload,
         UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload,
     },
 };
-use crate::{error::EditorToolsError, prelude::{AssetArmySlotModel, InitFightAssetPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload}, services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns}};
+use crate::{
+    error::EditorToolsError,
+    prelude::{
+        AssetArmySlotModel, InitFightAssetPayload, UpdateStackConcreteCreaturesPayload,
+        UpdateStackTiersPayload, UpdateStackTownsPayload,
+    },
+    services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns},
+};
 use itertools::Itertools;
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait,
@@ -336,7 +344,9 @@ impl FightGeneratorRepo {
             .await?
         {
             let mut model_to_update = existing_model.into_active_model();
-            model_to_update.concrete_creatures = Set(CreatureIds { ids: payload.creatures });
+            model_to_update.concrete_creatures = Set(CreatureIds {
+                ids: payload.creatures,
+            });
             model_to_update.update(&self.db).await?;
         }
         Ok(())
@@ -344,14 +354,16 @@ impl FightGeneratorRepo {
 
     pub async fn update_stack_towns(
         &self,
-        payload: UpdateStackTownsPayload
+        payload: UpdateStackTownsPayload,
     ) -> Result<(), EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id)
             .one(&self.db)
             .await?
         {
             let mut model_to_update = existing_model.into_active_model();
-            model_to_update.towns = Set(CreatureTowns { towns: payload.towns });
+            model_to_update.towns = Set(CreatureTowns {
+                towns: payload.towns,
+            });
             model_to_update.update(&self.db).await?;
         }
         Ok(())
@@ -359,14 +371,16 @@ impl FightGeneratorRepo {
 
     pub async fn update_stack_tiers(
         &self,
-        payload: UpdateStackTiersPayload
+        payload: UpdateStackTiersPayload,
     ) -> Result<(), EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id)
             .one(&self.db)
             .await?
         {
             let mut model_to_update = existing_model.into_active_model();
-            model_to_update.tiers = Set(CreatureTiers { tiers: payload.tiers });
+            model_to_update.tiers = Set(CreatureTiers {
+                tiers: payload.tiers,
+            });
             model_to_update.update(&self.db).await?;
         }
         Ok(())
@@ -374,14 +388,16 @@ impl FightGeneratorRepo {
 
     pub async fn update_stack_rules(
         &self,
-        payload: UpdateGenerationRulesPayload
+        payload: UpdateGenerationRulesPayload,
     ) -> Result<(), EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id)
             .one(&self.db)
             .await?
         {
             let mut model_to_update = existing_model.into_active_model();
-            model_to_update.generation_rule = Set(ArmySlotGenerationRule { params: payload.rules } );
+            model_to_update.generation_rule = Set(ArmySlotGenerationRule {
+                params: payload.rules,
+            });
             model_to_update.update(&self.db).await?;
         }
         Ok(())
@@ -439,7 +455,7 @@ impl FightGeneratorRepo {
             }
             if let Some(stats) = payload.stats {
                 model_to_update.stats = Set(ArmyGenerationStats { values: stats });
-            } 
+            }
             model_to_update.update(&self.db).await?;
         }
         Ok(())

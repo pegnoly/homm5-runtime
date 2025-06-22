@@ -1,6 +1,10 @@
 use std::{fs::OpenOptions, io::Write, path::PathBuf};
 
-use editor_tools::prelude::{CreateDialogPayload, CreateSpeakerPayload, DialogGeneratorRepo, DialogModel, DialogVariantModel, GetVariantPayload, SaveVariantPayload, SpeakerModel, SpeakerType, UpdateLabelsPayload};
+use editor_tools::prelude::{
+    CreateDialogPayload, CreateDialogVariantPayload, CreateSpeakerPayload, DialogGeneratorRepo,
+    DialogModel, DialogVariantModel, GetDialogVariantPayload, SaveVariantPayload, SpeakerModel,
+    SpeakerType, UpdateLabelsPayload,
+};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -9,7 +13,7 @@ use crate::{error::Error, utils::LocalAppManager};
 #[tauri::command]
 pub async fn load_dialogs(
     app_manager: State<'_, LocalAppManager>,
-    dialog_generator_repo: State<'_, DialogGeneratorRepo>
+    dialog_generator_repo: State<'_, DialogGeneratorRepo>,
 ) -> Result<Vec<DialogModel>, Error> {
     let current_map_id = app_manager
         .runtime_config
@@ -17,14 +21,17 @@ pub async fn load_dialogs(
         .await
         .current_selected_map
         .unwrap();
-    Ok(dialog_generator_repo.load_dialogs(current_map_id as i32).await?)
+    Ok(dialog_generator_repo
+        .load_dialogs(current_map_id as i32)
+        .await?)
 }
 
 #[tauri::command]
 pub async fn load_speakers(
-    dialog_generator_repo: State<'_, DialogGeneratorRepo>
+    dialog_generator_repo: State<'_, DialogGeneratorRepo>,
 ) -> Result<Vec<SpeakerModel>, Error> {
-    Ok(dialog_generator_repo.load_speakers().await?)
+    let speakers = dialog_generator_repo.load_speakers().await?;
+    Ok(speakers)
 }
 
 #[tauri::command]
@@ -71,13 +78,15 @@ pub async fn create_new_dialog(
         .await
         .current_selected_map
         .unwrap();
-    Ok(dialog_generator_repo.create_dialog(CreateDialogPayload {
-        mission_id: current_map_id as i32,
-        name,
-        script_name,
-        directory,
-        speakers
-    }).await?)
+    Ok(dialog_generator_repo
+        .create_dialog(CreateDialogPayload {
+            mission_id: current_map_id as i32,
+            name,
+            script_name,
+            directory,
+            speakers,
+        })
+        .await?)
 }
 
 #[tauri::command]
@@ -88,18 +97,20 @@ pub async fn create_speaker(
     color: String,
     speaker_type: SpeakerType,
 ) -> Result<SpeakerModel, Error> {
-    Ok(dialog_generator_repo.create_speaker(CreateSpeakerPayload {
-        name,
-        script_name,
-        color,
-        speaker_type
-    }).await?)
+    Ok(dialog_generator_repo
+        .create_speaker(CreateSpeakerPayload {
+            name,
+            script_name,
+            color,
+            speaker_type,
+        })
+        .await?)
 }
 
 #[tauri::command]
 pub async fn load_dialog(
     dialog_generator_repo: State<'_, DialogGeneratorRepo>,
-    id: i32
+    id: i32,
 ) -> Result<Option<DialogModel>, Error> {
     Ok(dialog_generator_repo.get_dialog(id).await?)
 }
@@ -110,7 +121,9 @@ pub async fn update_dialog_labels(
     dialog_id: i32,
     labels: Vec<String>,
 ) -> Result<(), Error> {
-    Ok(dialog_generator_repo.update_dialog_labels(UpdateLabelsPayload { dialog_id, labels }).await?)
+    Ok(dialog_generator_repo
+        .update_dialog_labels(UpdateLabelsPayload { dialog_id, labels })
+        .await?)
 }
 
 #[tauri::command]
@@ -119,8 +132,20 @@ pub async fn load_dialog_variant(
     dialog_id: i32,
     step: i32,
     label: String,
-) -> Result<Option<DialogVariantModel>, Error> {
-    Ok(dialog_generator_repo.get_variant(GetVariantPayload { dialog_id, step, label }).await?)
+) -> Result<DialogVariantModel, Error> {
+    if let Some(variant) = dialog_generator_repo
+        .get_variant(GetDialogVariantPayload { dialog_id, step, label: label.clone()}).await?
+    {
+        Ok(variant)
+    } else {
+        Ok(dialog_generator_repo
+            .create_variant(CreateDialogVariantPayload {
+                dialog_id,
+                step,
+                label,
+            })
+            .await?)
+    }
 }
 
 #[tauri::command]
@@ -130,7 +155,9 @@ pub async fn save_dialog_variant(
     speaker: i32,
     text: String,
 ) -> Result<(), Error> {
-    Ok(dialog_generator_repo.save_variant(SaveVariantPayload { id, text, speaker }).await?)
+    Ok(dialog_generator_repo
+        .save_variant(SaveVariantPayload { id, text, speaker })
+        .await?)
 }
 
 // #[tauri::command]

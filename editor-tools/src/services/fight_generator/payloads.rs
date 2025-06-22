@@ -94,17 +94,17 @@ pub struct UpdateStackConcreteCreaturesPayload {
 
 pub struct UpdateStackTownsPayload {
     pub stack_id: i32,
-    pub towns: Vec<Town>
+    pub towns: Vec<Town>,
 }
 
 pub struct UpdateStackTiersPayload {
     pub stack_id: i32,
-    pub tiers: Vec<i32>
+    pub tiers: Vec<i32>,
 }
 
 pub struct UpdateGenerationRulesPayload {
     pub stack_id: i32,
-    pub rules: Vec<ArmyGenerationRuleParam>
+    pub rules: Vec<ArmyGenerationRuleParam>,
 }
 
 pub struct AddGenerationStatElementPayload {
@@ -122,7 +122,7 @@ pub struct UpdateGenerationStatElementPayload {
     pub element_id: i32,
     pub rule: Option<ArmyGenerationStatRule>,
     pub priority: Option<i32>,
-    pub stats: Option<Vec<ArmyGenerationStatParam>>
+    pub stats: Option<Vec<ArmyGenerationStatParam>>,
 }
 
 impl UpdateGenerationStatElementPayload {

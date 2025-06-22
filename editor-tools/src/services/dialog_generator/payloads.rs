@@ -5,35 +5,36 @@ pub struct CreateDialogPayload {
     pub name: String,
     pub script_name: String,
     pub directory: String,
-    pub speakers: Vec<i32>
+    pub speakers: Vec<i32>,
 }
 
 pub struct CreateSpeakerPayload {
     pub name: String,
     pub script_name: String,
     pub color: String,
-    pub speaker_type: SpeakerType
+    pub speaker_type: SpeakerType,
 }
 
-pub struct GetVariantPayload {
+#[derive(Debug)]
+pub struct GetDialogVariantPayload {
     pub dialog_id: i32,
     pub step: i32,
-    pub label: String
+    pub label: String,
 }
 
 pub struct UpdateLabelsPayload {
     pub dialog_id: i32,
-    pub labels: Vec<String>
+    pub labels: Vec<String>,
 }
 
-pub struct CreateVariantPayload {
+pub struct CreateDialogVariantPayload {
     pub dialog_id: i32,
     pub step: i32,
-    pub label: String
+    pub label: String,
 }
 
 pub struct SaveVariantPayload {
     pub id: i32,
     pub text: String,
-    pub speaker: i32
+    pub speaker: i32,
 }

@@ -34,17 +34,17 @@ pub struct ArmySlotId {
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct CreatureTowns {
-    pub towns: Vec<Town>
+    pub towns: Vec<Town>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct CreatureTiers {
-    pub tiers: Vec<i32>
+    pub tiers: Vec<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct CreatureIds {
-    pub ids: Vec<i32>
+    pub ids: Vec<i32>,
 }
 
 #[derive(

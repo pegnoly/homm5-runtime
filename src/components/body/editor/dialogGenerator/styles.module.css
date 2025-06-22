@@ -1,0 +1,52 @@
+.header {
+    width: 100%;
+    height: 15%;
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    background-color: aquamarine;
+}
+
+.manage_panel {
+    height: 100%;
+    width: 70%;
+    /* background-color: blueviolet; */
+    display: flex;
+    gap: 2%;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.body {
+    width: 100%;
+    height: 85%;
+}
+
+.body_layout {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.textarea {
+    width: 70%;
+    height: 100%;
+    background-color: cadetblue;
+}
+
+.side_panel {
+    width: 30%;
+    height: 100%;
+}
+
+.side_panel_layout {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    align-items: center;
+    background-color: violet;
+}

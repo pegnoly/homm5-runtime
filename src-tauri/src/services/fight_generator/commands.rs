@@ -7,8 +7,8 @@ use editor_tools::prelude::{
     FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload,
     RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload,
     UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload,
-    UpdateGenerationStatElementPayload,
-    UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload,
+    UpdateGenerationStatElementPayload, UpdateStackConcreteCreaturesPayload,
+    UpdateStackTiersPayload, UpdateStackTownsPayload,
 };
 use homm5_scaner::prelude::{
     ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town,
@@ -534,8 +534,7 @@ pub async fn generate_current_hero_script(
                             &filter_function
                         );
                     } else {
-                        inner_getter_function +=
-                            "\t\t\tlocal id = Random.FromTable(possible_creatures)\n\t\t\treturn id";
+                        inner_getter_function += "\t\t\tlocal id = Random.FromTable(possible_creatures)\n\t\t\treturn id";
                     }
                     army_generation_rules_script +=
                         &format!("{}\n\t\tend,\n", inner_getter_function);
@@ -543,57 +542,57 @@ pub async fn generate_current_hero_script(
                     let stat_element = &stats_elements[0];
                     let mut sort_function = String::new();
                     // if stat_element.stats.values.len() > 0 {
-                        let towns = asset.towns.towns.iter().join(", ");
-                        let tiers = asset.tiers.tiers.iter().join(", ");
-                        sort_function += &format!(
-                            "{}\n\t\t\tlocal id = list_iterator.{}(\n\t\t\t\t{},\n\t\t\t\tfunction(creature)\n\t\t\t\t\tlocal result = ",
-                            if asset.generation_rule.params.len() > 0 {
-                                format!(
-                                    "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})\n{}",
-                                    towns, tiers, filter_function
-                                )
-                            } else {
-                                format!(
-                                    "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})",
-                                    towns, tiers
-                                )
-                            },
-                            if stat_element.rule == ArmyGenerationStatRule::MaxBy {
-                                "MaxBy"
-                            } else {
-                                "MinBy"
-                            },
-                            if asset.generation_rule.params.len() > 0 {
-                                "filtered_creatures"
-                            } else {
-                                "possible_creatures"
+                    let towns = asset.towns.towns.iter().join(", ");
+                    let tiers = asset.tiers.tiers.iter().join(", ");
+                    sort_function += &format!(
+                        "{}\n\t\t\tlocal id = list_iterator.{}(\n\t\t\t\t{},\n\t\t\t\tfunction(creature)\n\t\t\t\t\tlocal result = ",
+                        if asset.generation_rule.params.len() > 0 {
+                            format!(
+                                "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})\n{}",
+                                towns, tiers, filter_function
+                            )
+                        } else {
+                            format!(
+                                "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})",
+                                towns, tiers
+                            )
+                        },
+                        if stat_element.rule == ArmyGenerationStatRule::MaxBy {
+                            "MaxBy"
+                        } else {
+                            "MinBy"
+                        },
+                        if asset.generation_rule.params.len() > 0 {
+                            "filtered_creatures"
+                        } else {
+                            "possible_creatures"
+                        }
+                    );
+                    for param in &stat_element.stats.values {
+                        match param {
+                            ArmyGenerationStatParam::Attack => {
+                                sort_function += "Creature.Params.Attack(creature) + ";
                             }
-                        );
-                        for param in &stat_element.stats.values {
-                            match param {
-                                ArmyGenerationStatParam::Attack => {
-                                    sort_function += "Creature.Params.Attack(creature) + ";
-                                }
-                                ArmyGenerationStatParam::Defence => {
-                                    sort_function += "Creature.Params.Defence(creature) + ";
-                                }
-                                ArmyGenerationStatParam::Initiative => {
-                                    sort_function += "Creature.Params.Initiative(creature) + ";
-                                }
-                                ArmyGenerationStatParam::Speed => {
-                                    sort_function += "Creature.Params.Speed(creature) + ";
-                                }
-                                ArmyGenerationStatParam::Hitpoints => {
-                                    sort_function += "Creature.Params.Health(creature) + ";
-                                }
+                            ArmyGenerationStatParam::Defence => {
+                                sort_function += "Creature.Params.Defence(creature) + ";
+                            }
+                            ArmyGenerationStatParam::Initiative => {
+                                sort_function += "Creature.Params.Initiative(creature) + ";
+                            }
+                            ArmyGenerationStatParam::Speed => {
+                                sort_function += "Creature.Params.Speed(creature) + ";
+                            }
+                            ArmyGenerationStatParam::Hitpoints => {
+                                sort_function += "Creature.Params.Health(creature) + ";
                             }
                         }
-                        sort_function = sort_function
-                            .trim_end()
-                            .trim_end_matches("+")
-                            .trim_end()
-                            .to_string();
-                        sort_function += "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
+                    }
+                    sort_function = sort_function
+                        .trim_end()
+                        .trim_end_matches("+")
+                        .trim_end()
+                        .to_string();
+                    sort_function += "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
                     // }
                     army_generation_rules_script += &format!("{}\n\t\tend,\n", sort_function);
                 }

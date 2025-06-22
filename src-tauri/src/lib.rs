@@ -1,4 +1,4 @@
-use editor_tools::prelude::{BanksGeneratorRepo, FightGeneratorRepo, DialogGeneratorRepo};
+use editor_tools::prelude::{BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo};
 use homm5_scaner::prelude::ScanerService;
 use map_modifier::{
     MapData,
