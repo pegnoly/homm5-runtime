@@ -136,4 +136,12 @@ impl DialogGeneratorRepo {
         }
         Ok(())
     }
+
+    pub async fn get_speakers_by_ids(&self, ids: Vec<i32>) -> Result<Vec<SpeakerModel>, EditorToolsError> {
+        Ok(speaker::Entity::find().filter(speaker::Column::Id.is_in(ids)).all(&self.db).await?)
+    }
+
+    pub async fn get_all_variants_for_dialog(&self, id: i32) -> Result<Vec<DialogVariantModel>, EditorToolsError> {
+        Ok(variant::Entity::find().filter(variant::Column::DialogId.eq(id)).all(&self.db).await?)
+    }
 }

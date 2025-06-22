@@ -1,4 +1,5 @@
 import { EditorState, useEditorState } from '../../../stores/EditorStateStore';
+import DialogGeneratorGlobals from '../editor/dialogGenerator/globals';
 import FightGeneratorGlobals from '../editor/fightGenerator/globals';
 import styles from '../styles.module.css';
 
@@ -17,6 +18,8 @@ function RenderEditorGlobals() {
     switch (editorState) {
         case EditorState.FightGenerator:
             return <FightGeneratorGlobals/> 
+        case EditorState.Dialog:
+            return <DialogGeneratorGlobals/>
         default:
             return null;
     }

@@ -121,7 +121,7 @@ pub async fn run() {
             update_dialog_labels,
             load_dialog_variant,
             save_dialog_variant,
-            // generate_dialog,
+            generate_dialog,
             //reserve heroes commands
             services::reserve_hero_creator::commands::load_existing_reserve_heroes,
             services::reserve_hero_creator::commands::remove_reserve_hero,

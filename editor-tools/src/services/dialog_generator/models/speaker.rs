@@ -1,9 +1,9 @@
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
-use strum::EnumString;
+use strum::{Display, EnumString};
 
 #[derive(
-    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize,
+    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum SpeakerType {
