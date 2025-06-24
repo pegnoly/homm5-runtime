@@ -4,7 +4,7 @@
     display: flex;
     flex-direction: row;
     justify-content: end;
-    background-color: aquamarine;
+    /* background-color: aquamarine; */
 }
 
 .manage_panel {
@@ -33,7 +33,7 @@
 .textarea {
     width: 70%;
     height: 100%;
-    background-color: cadetblue;
+    /* background-color: cadetblue; */
 }
 
 .side_panel {
@@ -48,5 +48,5 @@
     flex-direction: column;
     justify-items: center;
     align-items: center;
-    background-color: violet;
+    /* background-color: violet; */
 }

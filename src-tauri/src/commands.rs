@@ -1,6 +1,7 @@
 use std::io::Write;
 use std::path::PathBuf;
 
+use editor_tools::prelude::{QuestGeneratorRepo, QuestModel};
 use homm5_repacker::Repacker;
 use homm5_scaner::prelude::ScanerService;
 use itertools::Itertools;
@@ -10,9 +11,8 @@ use runtime_main::RuntimeRunner;
 use serde::{Serialize, Serializer};
 use tauri::State;
 
-use crate::services::QuestService;
-use crate::utils::{LocalAppManager, MapFrontendModel, RepackerFrontendData};
-use crate::{DataContainer, RuntimeData};
+use crate::utils::{LocalAppManager, MapFrontendModel, RepackerFrontendData, RuntimeData};
+use crate::DataContainer;
 
 #[tauri::command]
 pub async fn execute_scan(
@@ -151,11 +151,12 @@ impl Serialize for ModificationsError {
 #[tauri::command]
 pub async fn apply_modifications(
     app_manager: State<'_, LocalAppManager>,
-    quest_service: State<'_, QuestService>,
+    quests_repo: State<'_, QuestGeneratorRepo>,
     data_containter: State<'_, DataContainer>,
 ) -> Result<(), super::error::Error> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     let base_config_locked = app_manager.base_config.read().await;
+    let mut modifiers_config_locked = app_manager.modifiers_config.write().await;
     let current_map_id = runtime_config_locked.current_selected_map.unwrap();
     let map = base_config_locked
         .maps
@@ -174,24 +175,27 @@ pub async fn apply_modifications(
 
     // get all quests data for these ids and convert db models to quests
 
-    let models = quest_service.get_quests_to_apply(current_map_id).await?;
+    let this_mission_quests = quests_repo.load_quests(current_map_id as i32).await?;
+    let models_to_generate = this_mission_quests.iter()
+        .filter(|m| modifiers_config_locked.data.quests_generation_queue.contains(&m.id))
+        .collect::<Vec<&QuestModel>>();
 
-    for model in models {
-        let progresses = quest_service.get_quest_progresses(model.id).await?;
-        let request = QuestCreationRequest::new(PathBuf::from(model.directory), model.script_name)
-            .with_name(model.name)
-            .with_desc(model.desc)
+    for model in &models_to_generate {
+        let progresses = quests_repo.load_progresses(model.id).await?;
+        let request = QuestCreationRequest::new(PathBuf::from(model.directory.clone()), model.script_name.clone())
+            .with_name(model.name.clone())
+            .with_desc(model.desc.clone())
             .with_progresses(
                 progresses
                     .into_iter()
                     .map(|p| QuestProgress {
-                        number: p.number,
+                        number: p.number as u32,
                         text: p.text,
                         concatenate: p.concatenate,
                     })
                     .collect(),
             )
-            .with_mission_data(model.campaign_number as u8, model.mission_number as u8)
+            .with_mission_data(map.campaign, map.mission)
             .secondary(model.is_secondary)
             .initialy_active(model.is_active);
 
@@ -212,9 +216,11 @@ pub async fn apply_modifications(
     println!("Secondary quests: {:?}", &modifiers_queue.secondary_quests);
 
     modifiers_queue.apply_changes_to_map(map, &mut runtime_config_locked.current_map_data);
-    quest_service
-        .delete_quests_from_queue(current_map_id)
-        .await?;
+    let altered_queue = modifiers_config_locked.data.quests_generation_queue.iter()
+        .filter(|q| !models_to_generate.iter().any(|m| m.id == **q))
+        .map(|q| *q)
+        .collect::<Vec<i32>>();
+    modifiers_config_locked.data.quests_generation_queue = altered_queue;
 
     Ok(())
 }

@@ -1,56 +1,26 @@
-use editor_tools::prelude::{BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo};
+use editor_tools::prelude::{BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo, QuestGeneratorRepo};
 use homm5_scaner::prelude::ScanerService;
-use map_modifier::{
-    MapData,
-    artifacts::ArtifactConfigEntity,
-    buildings::{BankConfigEntity, BuildingConfigEntity},
-};
-use serde::{Deserialize, Serialize};
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
 use std::path::PathBuf;
 use tokio::sync::RwLock;
-use utils::{Config, LocalAppManager, RuntimeConfig};
+use utils::{LocalAppManager, RuntimeConfig, DataContainer, GlobalConfig, ModifiersConfig};
+use crate::error::Error;
 
 mod commands;
-mod error;
+pub mod error;
 mod services;
-mod source;
 mod utils;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RuntimeData {
-    pub current_selected_map: u16,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DataContainer {
-    pub banks: Vec<BankConfigEntity>,
-    pub buildings: Vec<BuildingConfigEntity>,
-    pub artifacts: Vec<ArtifactConfigEntity>,
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub async fn run() {
+pub async fn run() -> Result<(), Error> {
     let exe_path = std::env::current_exe().unwrap();
     let cfg_path = exe_path.parent().unwrap().join("cfg\\");
 
-    let cfg_string = std::fs::read_to_string(cfg_path.join("main.json")).unwrap();
-    let cfg: Config = serde_json::from_str(&cfg_string).unwrap();
-
-    let runtime_cfg_string = std::fs::read_to_string(cfg_path.join("runtime.json")).unwrap();
-    let runtime_data: RuntimeData = serde_json::from_str(&runtime_cfg_string).unwrap();
-    let current_map_string =
-        std::fs::read_to_string(cfg_path.join("current_map_data.json")).unwrap();
-    let current_map_data: MapData = serde_json::from_str(&current_map_string).unwrap();
-
-    let runtime_config = RuntimeConfig {
-        current_selected_map: Some(runtime_data.current_selected_map),
-        current_map_data,
-    };
-
-    let data_string = std::fs::read_to_string(cfg_path.join("objects_data.json")).unwrap();
-    let data: DataContainer = serde_json::from_str(&data_string).unwrap();
+    let global_config = GlobalConfig::new(&cfg_path)?;
+    let runtime_config = RuntimeConfig::new(&cfg_path)?;
+    let modifiers_config = ModifiersConfig::new(&cfg_path)?;
+    let data_container = DataContainer::new(&cfg_path)?;
 
     let db_path = cfg_path.join("runtime_database.db");
     if !db_path.exists() {
@@ -62,24 +32,26 @@ pub async fn run() {
         .unwrap();
     //sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
-    let quest_service = QuestService::new(pool.clone());
+    let quest_generator_repo = QuestGeneratorRepo::new(pool.clone());
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
+    let fight_generator_repo = FightGeneratorRepo::new(pool.clone());
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(LocalAppManager {
-            base_config: RwLock::new(cfg),
+            base_config: RwLock::new(global_config),
             runtime_config: RwLock::new(runtime_config),
+            modifiers_config: RwLock::new(modifiers_config)
         })
-        .manage(quest_service)
+        .manage(quest_generator_repo)
         .manage(dialog_generator_repo)
         .manage(BanksGeneratorRepo::new(
             pool.clone(),
             PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/"),
         ))
-        .manage(FightGeneratorRepo::new(pool.clone()))
+        .manage(fight_generator_repo)
         .manage(ScanerService::new(pool.clone()))
-        .manage(data)
+        .manage(data_container)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             commands::execute_scan,
@@ -91,24 +63,18 @@ pub async fn run() {
             commands::select_map,
             commands::apply_modifications,
             // quest commands
-            collect_quests_for_selection,
+            load_quests,
+            load_quest,
             pick_quest_directory,
             create_quest,
+            load_quest_progress,
             save_progress,
-            load_progress,
-            update_progress_concatenation,
             update_quest_directory,
             update_quest_script_name,
             update_quest_name,
             update_quest_desc,
             update_is_secondary,
             update_is_active,
-            load_quest_name,
-            load_quest_desc,
-            load_quest_directory,
-            load_quest_script_name,
-            load_quest_is_secondary,
-            load_quest_is_active,
             save_quest_text,
             add_quest_to_queue,
             // dialog commands
@@ -183,4 +149,5 @@ pub async fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+    Ok(())
 }

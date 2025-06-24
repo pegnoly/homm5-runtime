@@ -1,22 +1,43 @@
 use std::path::PathBuf;
 
+use editor_tools::prelude::{CreateQuestPayload, GetProgressPayload, QuestGeneratorRepo, QuestModel, QuestProgressModel, SaveProgressPayload, UpdateQuestPayload};
 use map_modifier::quest::write_quest_text_file;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
-use uuid::Uuid;
 
-use crate::{
-    services::quest_creator::data::QuestProgressFrontendModel,
-    utils::{Config, LocalAppManager},
-};
-
-use super::{data::QuestLoadingModel, service::QuestService};
+use crate::{error::Error, utils::{GlobalConfig, LocalAppManager}};
 
 #[tauri::command]
-pub async fn collect_quests_for_selection(
+pub async fn load_quests(
     app_manager: State<'_, LocalAppManager>,
-    quest_service: State<'_, QuestService>,
-) -> Result<Vec<QuestLoadingModel>, ()> {
+    quests_repo: State<'_, QuestGeneratorRepo>
+) -> Result<Vec<QuestModel>, Error> {
+    let current_map_id = app_manager
+        .runtime_config
+        .read()
+        .await
+        .current_selected_map
+        .unwrap();
+    Ok(quests_repo.load_quests(current_map_id as i32).await?)
+}
+
+#[tauri::command]
+pub async fn load_quest(
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    id: i32
+) -> Result<Option<QuestModel>, Error> {
+    Ok(quests_repo.load_quest(id).await?)
+}
+
+
+#[tauri::command]
+pub async fn create_quest(
+    app_manager: State<'_, LocalAppManager>,
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    directory: String,
+    script_name: String,
+    name: String,
+) -> Result<QuestModel, Error> {
     let current_map_id = app_manager
         .runtime_config
         .read()
@@ -24,120 +45,7 @@ pub async fn collect_quests_for_selection(
         .current_selected_map
         .unwrap();
 
-    let base_config_locked = app_manager.base_config.read().await;
-    let current_map = base_config_locked
-        .maps
-        .iter()
-        .find(|m| m.id == current_map_id)
-        .unwrap();
-
-    match quest_service
-        .get_quests_by_mission_data(current_map.campaign as u32, current_map.mission as u32)
-        .await
-    {
-        Ok(quests) => Ok(quests
-            .into_iter()
-            .map(|q| QuestLoadingModel::from(q))
-            .collect()),
-        Err(_error) => Err(()),
-    }
-}
-
-#[tauri::command]
-pub async fn load_quest_name(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-) -> Result<String, ()> {
-    match quest_service.get_quest_name(quest_id).await {
-        Ok(name) => Ok(name),
-        Err(_error) => Err(()),
-    }
-}
-
-#[tauri::command]
-pub async fn load_quest_desc(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-) -> Result<String, ()> {
-    match quest_service.get_quest_desc(quest_id).await {
-        Ok(desc) => Ok(desc),
-        Err(_error) => Err(()),
-    }
-}
-
-#[tauri::command]
-pub async fn load_quest_script_name(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-) -> Result<String, ()> {
-    match quest_service.get_quest_script_name(quest_id).await {
-        Ok(script_name) => Ok(script_name),
-        Err(_error) => Err(()),
-    }
-}
-
-#[tauri::command]
-pub async fn load_quest_directory(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-) -> Result<String, ()> {
-    match quest_service.get_quest_directory(quest_id).await {
-        Ok(directory) => Ok(directory),
-        Err(_error) => Err(()),
-    }
-}
-
-#[tauri::command]
-pub async fn load_quest_is_secondary(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-) -> Result<bool, ()> {
-    match quest_service.is_secondary_quest(quest_id).await {
-        Ok(is_secondary) => Ok(is_secondary),
-        Err(_error) => Err(()),
-    }
-}
-
-#[tauri::command]
-pub async fn load_quest_is_active(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-) -> Result<bool, ()> {
-    match quest_service.is_active_quest(quest_id).await {
-        Ok(is_active) => Ok(is_active),
-        Err(_error) => Err(()),
-    }
-}
-
-#[tauri::command]
-pub async fn create_quest(
-    app_manager: State<'_, LocalAppManager>,
-    quest_service: State<'_, QuestService>,
-    directory: String,
-    script_name: String,
-    name: String,
-) -> Result<Uuid, ()> {
-    let runtime_config_locked = app_manager.runtime_config.read().await;
-    let base_config_locked = app_manager.base_config.read().await;
-    let map = base_config_locked
-        .maps
-        .iter()
-        .find(|m| m.id == runtime_config_locked.current_selected_map.unwrap())
-        .unwrap();
-
-    match quest_service
-        .create_quest(
-            &directory,
-            &script_name,
-            &name,
-            map.campaign as u32,
-            map.mission as u32,
-        )
-        .await
-    {
-        Ok(id) => Ok(id),
-        Err(_error) => Err(()),
-    }
+    Ok(quests_repo.create_quest(CreateQuestPayload { mission_id: current_map_id as i32, name, script_name, directory }).await?)
 }
 
 #[tauri::command]
@@ -179,132 +87,84 @@ pub async fn pick_quest_directory(
 
 #[tauri::command]
 pub async fn update_quest_directory(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
     directory: String,
-) -> Result<(), ()> {
-    match quest_service
-        .update_quest_directory(quest_id, &directory)
-        .await
-    {
-        Ok(()) => Ok(()),
-        _ => Err(()),
-    }
+) -> Result<(), Error> {
+    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_directory(directory)).await?)
 }
 
 #[tauri::command]
 pub async fn update_quest_script_name(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
     script_name: String,
-) -> Result<(), ()> {
-    match quest_service
-        .update_quest_script_name(quest_id, &script_name)
-        .await
-    {
-        Ok(()) => Ok(()),
-        _ => Err(()),
-    }
+) -> Result<(), Error> {
+    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_script_name(script_name)).await?)
 }
 
 #[tauri::command]
 pub async fn update_quest_name(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
     name: String,
-) -> Result<(), ()> {
-    match quest_service.update_quest_name(quest_id, &name).await {
-        Ok(()) => Ok(()),
-        _ => Err(()),
-    }
+) -> Result<(), Error> {
+    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_name(name)).await?)
 }
 
 #[tauri::command]
 pub async fn update_quest_desc(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
     desc: String,
-) -> Result<(), ()> {
-    match quest_service.update_quest_desc(quest_id, &desc).await {
-        Ok(()) => Ok(()),
-        _ => Err(()),
-    }
+) -> Result<(), Error> {
+    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_desc(desc)).await?)
 }
 
 #[tauri::command]
 pub async fn update_is_secondary(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
     is_secondary: bool,
-) -> Result<(), ()> {
-    match quest_service
-        .update_quest_is_secondary(quest_id, is_secondary)
-        .await
-    {
-        Ok(()) => Ok(()),
-        _ => Err(()),
-    }
+) -> Result<(), Error> {
+    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_secondary(is_secondary)).await?)
 }
 
 #[tauri::command]
 pub async fn update_is_active(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
     is_active: bool,
-) -> Result<(), ()> {
-    match quest_service
-        .update_quest_is_active(quest_id, is_active)
-        .await
-    {
-        Ok(()) => Ok(()),
-        _ => Err(()),
-    }
+) -> Result<(), Error> {
+    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_active(is_active)).await?)
 }
 
 #[tauri::command]
-pub async fn load_progress(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-    number: u32,
-) -> Result<QuestProgressFrontendModel, ()> {
-    match quest_service.get_quest_progress(quest_id, number).await {
-        Ok(progress) => Ok(QuestProgressFrontendModel::from(progress)),
-        _ => Err(()),
+pub async fn load_quest_progress(
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
+    number: i32,
+) -> Result<QuestProgressModel, Error> {
+    if let Some(progress) = quests_repo.get_progress(GetProgressPayload { quest_id, number }).await? {
+        Ok(progress)
+    } else {
+        Ok(quests_repo.create_progress(GetProgressPayload { quest_id, number }).await?)
     }
 }
 
 #[tauri::command]
 pub async fn save_progress(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-    number: u32,
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    id: i32,
     text: String,
-) -> Result<(), ()> {
-    match quest_service.save_progress(quest_id, number, &text).await {
-        Ok(_) => Ok(()),
-        _ => Err(()),
-    }
-}
-
-#[tauri::command]
-pub async fn update_progress_concatenation(
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-    number: u32,
-    concatenate: bool,
-) -> Result<(), ()> {
-    match quest_service
-        .update_progress_concatenation(quest_id, number, concatenate)
-        .await
-    {
-        Ok(_) => Ok(()),
-        _ => Err(()),
-    }
+    concatenate: bool
+) -> Result<(), Error> {
+    Ok(quests_repo.save_progress(SaveProgressPayload { id, text, concatenate }).await?)
 }
 
 #[tauri::command]
 pub async fn save_quest_text(
-    config: State<'_, Config>,
+    config: State<'_, GlobalConfig>,
     quest_directory: String,
     text_name: String,
     text: String,
@@ -318,25 +178,12 @@ pub async fn save_quest_text(
     Ok(())
 }
 
-// This must just push quest id into db for modifications.
 #[tauri::command]
 pub async fn add_quest_to_queue(
     app_manager: State<'_, LocalAppManager>,
-    quest_service: State<'_, QuestService>,
-    quest_id: Uuid,
-) -> Result<(), ()> {
-    let current_map_id = app_manager
-        .runtime_config
-        .read()
-        .await
-        .current_selected_map
-        .unwrap();
-
-    match quest_service
-        .add_quest_to_queue(quest_id, current_map_id)
-        .await
-    {
-        Ok(_) => Ok(()),
-        _ => Err(()),
-    }
+    quest_id: i32,
+) -> Result<(), Error> {
+    let mut modifiers_config = app_manager.modifiers_config.write().await;
+    modifiers_config.data.quests_generation_queue.push(quest_id);
+    Ok(())
 }

@@ -1,6 +1,6 @@
 import { create } from "zustand"
-import { ArtifactSlotType } from "../components/hero_generator/artsConfigurator/types"
-import { TownType } from "../components/hero_generator/stacksConfigurator/main"
+import { ArtifactSlotType } from "../components/body/editor/fightGenerator/elements/artifactsGenerator/types"
+import { TownType } from "../components/body/editor/fightGenerator/types"
 
 export type ArtifactModel = {
     id: number,
