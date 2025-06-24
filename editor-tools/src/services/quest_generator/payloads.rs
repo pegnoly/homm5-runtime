@@ -1,5 +1,3 @@
-use serde::de;
-
 pub struct CreateQuestPayload {
     pub mission_id: i32,
     pub name: String,

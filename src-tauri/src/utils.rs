@@ -92,11 +92,6 @@ pub struct LocalAppManager {
     pub modifiers_config: RwLock<ModifiersConfig>
 }
 
-pub enum AppMode {
-    Dev,
-    User,
-}
-
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct RepackerPathsData {
     pub from: String,

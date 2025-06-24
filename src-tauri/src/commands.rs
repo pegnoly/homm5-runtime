@@ -221,6 +221,7 @@ pub async fn apply_modifications(
         .map(|q| *q)
         .collect::<Vec<i32>>();
     modifiers_config_locked.data.quests_generation_queue = altered_queue;
+    modifiers_config_locked.update()?;
 
     Ok(())
 }
