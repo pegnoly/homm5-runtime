@@ -184,6 +184,9 @@ pub async fn add_quest_to_queue(
     quest_id: i32,
 ) -> Result<(), Error> {
     let mut modifiers_config = app_manager.modifiers_config.write().await;
-    modifiers_config.data.quests_generation_queue.push(quest_id);
+    if !modifiers_config.data.quests_generation_queue.contains(&quest_id) {
+        modifiers_config.data.quests_generation_queue.push(quest_id);
+        modifiers_config.update()?;
+    }
     Ok(())
 }

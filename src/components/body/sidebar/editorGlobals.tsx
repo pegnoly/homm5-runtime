@@ -1,6 +1,7 @@
 import { EditorState, useEditorState } from '../../../stores/EditorStateStore';
 import DialogGeneratorGlobals from '../editor/dialogGenerator/globals';
 import FightGeneratorGlobals from '../editor/fightGenerator/globals';
+import QuestGeneratorGlobals from '../editor/questGenerator/globals';
 import styles from '../styles.module.css';
 
 function EditorGlobals() {
@@ -20,6 +21,8 @@ function RenderEditorGlobals() {
             return <FightGeneratorGlobals/> 
         case EditorState.Dialog:
             return <DialogGeneratorGlobals/>
+        case EditorState.Quest: 
+            return <QuestGeneratorGlobals/>
         default:
             return null;
     }

@@ -23,3 +23,24 @@
     height: 85%;
     /* background-color: blueviolet; */
 }
+
+.body_layout {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.data_panel {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    background-color: aqua;
+}
+
+.progresses_panel {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    background-color: cadetblue;
+}

@@ -28,6 +28,9 @@ impl QuestGeneratorRepo {
             name: Set(payload.name),
             script_name: Set(payload.script_name),
             directory: Set(payload.directory),
+            desc: Set(String::new()),
+            is_active: Set(false),
+            is_secondary: Set(false),
             ..Default::default()
         };
         Ok(model_to_insert.insert(&self.db).await?)
@@ -69,6 +72,8 @@ impl QuestGeneratorRepo {
         let model_to_insert = progress::ActiveModel {
             number: Set(payload.number),
             quest_id: Set(payload.quest_id),
+            text: Set(String::new()),
+            concatenate: Set(false),
             ..Default::default()
         };
         Ok(model_to_insert.insert(&self.db).await?)

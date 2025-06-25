@@ -3,6 +3,7 @@ import { Text, TextInput, Button, Group, Box } from '@mantine/core';
 import { IconCheck, IconPencilCheck } from '@tabler/icons-react';
 
 function EditableProperty(params: {
+  type?: "input" | "textarea"
   label: string,
   initialValue: string,
   onSave: (value: string) => void
@@ -20,6 +21,7 @@ function EditableProperty(params: {
   };
 
   return (
+  <>
     <Box style={{display: 'flex', flexDirection: 'row', justifySelf: 'center'}}>
       {isEditing ? (
         <Group align="flex-end" gap="xs">
@@ -55,7 +57,8 @@ function EditableProperty(params: {
         </div>
       )}
     </Box>
-  );
+  </>
+  )
 }
 
 export default EditableProperty;
