@@ -1,9 +1,9 @@
 import { Button, Stack, Text } from "@mantine/core";
-import { useFightAssetActions, useFightAssetId, useFightAssetName } from "./store";
+import { useFightAssetId, useFightAssetName } from "./store";
 import { invoke } from "@tauri-apps/api/core";
 
 function FightGeneratorGlobals() {
-    const actions = useFightAssetActions();
+    //const _actions = useFightAssetActions();
     const assetId = useFightAssetId();
     const assetName = useFightAssetName();
 

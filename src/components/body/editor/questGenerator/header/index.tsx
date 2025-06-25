@@ -6,7 +6,7 @@ import { QuestGeneratorApi } from "../api";
 import { useQuestsActions } from "../store";
 import { useCurrentMapId } from "../../../../../stores/common";
 
-function useQuestsData() {
+function useQuestsData( ) {
     return useQuery({
         queryKey: ["quests"],
         queryFn: async() => {
@@ -19,9 +19,11 @@ function QuestGeneratorHeader() {
     const currentMapId = useCurrentMapId(); // weird but i need this now for compability
     const actions = useQuestsActions();
 
+    console.log(currentMapId);
+
     const { data } = useQuestsData();
     if (data != undefined) {
-        console.log("Quests loaded: ", data)
+        //console.log("Quests loaded: ", data)
         actions.loadQuests(data);
     }
 

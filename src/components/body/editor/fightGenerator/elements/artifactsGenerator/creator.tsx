@@ -1,4 +1,4 @@
-import { Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select, Stack } from "@mantine/core"
+import { Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select } from "@mantine/core"
 import { AssetGenerationType } from "../../types"
 import { FightAssetArtifactsModel } from "./types"
 import { useDisclosure } from "@mantine/hooks"
