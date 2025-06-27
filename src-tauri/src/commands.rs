@@ -35,7 +35,7 @@ pub async fn execute_scan(
 pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), ()> {
     let base_config_locked = app_manager.base_config.read().await;
     let bin_path = &base_config_locked.bin_path;
-    let mut runtime_runner = RuntimeRunner::new(PathBuf::from(bin_path));
+    let mut runtime_runner = RuntimeRunner::new(PathBuf::from(format!("{}{}", bin_path, &base_config_locked.exe_name)));
     runtime_runner.run();
     Ok(())
 }

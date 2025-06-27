@@ -30,7 +30,7 @@ type Store = {
     currentVariantId: number | undefined,
     currentVariantStep: number | undefined,
     currentVariantLabel: string | undefined,
-    currentVariantSpeaker: number | null | undefined ,
+    currentVariantSpeaker: number | null,
     currentVariantText: string | undefined,
 
     actions: Actions
@@ -50,7 +50,7 @@ const dialogGeneratorStore = create<Store>((set) => ({
     currentVariantId: undefined,
     currentVariantStep: undefined,
     currentVariantLabel: undefined,
-    currentVariantSpeaker: undefined,
+    currentVariantSpeaker: null,
     currentVariantText: undefined,
 
     actions: {
@@ -74,10 +74,10 @@ const dialogGeneratorStore = create<Store>((set) => ({
             set({
                 currentVariantId: value.id,
                 currentVariantStep: value.step,
-                currentVariantSpeaker: value.speaker,
+                currentVariantSpeaker: value.speaker_id,
                 currentVariantLabel: value.label,
                 currentVariantText: value.text
-            })
+            });
         },
         setCurrentDialogId(value) {
             set({currentDialogId: value});

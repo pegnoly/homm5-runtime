@@ -1,45 +1,44 @@
 use std::{io::{stdin, Read}, path::PathBuf, sync::LazyLock};
 
-use frida::{Device, DeviceManager, Frida, Message, Process, Script, ScriptHandler, ScriptOption, SpawnOptions};
+use frida::{Device, Frida, Message, ScriptHandler, ScriptOption, SpawnOptions};
 
 static FRIDA: LazyLock<Frida> = LazyLock::new(|| unsafe { Frida::obtain() });
-const EXE_NAME: &'static str = "H5_Game_MCCS_PEST_SKILLS.exe";
 
 struct Homm5Handler;
 
 impl ScriptHandler for Homm5Handler {
-    fn on_message(&mut self, message: &Message, data: Option<Vec<u8>>) {
-        println!("Message: {:?}", message)
+    fn on_message(&mut self, _message: &Message, _data: Option<Vec<u8>>) {
+        //println!("Message: {:?}", message)
     }
 }
 
 pub struct RuntimeRunner {
-    game_bin_path: PathBuf,
+    exe_path: PathBuf,
     process_id: i32 
 }
 
 impl RuntimeRunner {
     pub fn new(path: PathBuf) -> Self {
         RuntimeRunner {
-            game_bin_path: path,
+            exe_path: path,
             process_id: -1
         }
     }
 
     pub fn run(&mut self) {
-        std::env::set_current_dir(&self.game_bin_path).unwrap();
+        std::env::set_current_dir(&self.exe_path.parent().unwrap()).unwrap();
         let device_manager = frida::DeviceManager::obtain(&FRIDA);
         let mut local_device = device_manager.get_device_by_type(frida::DeviceType::Local).unwrap();
         match local_device.resume(self.process_id as u32) {
             Ok(()) => {
-                println!("Process already exists");
+                //println!("Process already exists");
             },
-            Err(err) => {
+            Err(_err) => {
 
                 kill_helpers(&mut local_device);
 
                 let pid = local_device.spawn(
-                    format!("{}{}", &self.game_bin_path.to_str().unwrap(), EXE_NAME), 
+                    format!("{}", &self.exe_path.to_str().unwrap()), 
                     &SpawnOptions::default()
                 ).unwrap();
 
@@ -95,12 +94,12 @@ impl RuntimeRunner {
                         script.handle_message(Homm5Handler{}).unwrap();
                         local_device.resume(pid).unwrap();
         
-                        while let Some(process) = local_device.enumerate_processes().iter().find(|p| p.get_pid() == pid) {
-                            println!("Process exists: {}", process.get_name());
+                        while let Some(_process) = local_device.enumerate_processes().iter().find(|p| p.get_pid() == pid) {
+                            //println!("Process exists: {}", process.get_name());
                             let mut v = vec![];
                             stdin().read_exact(&mut v).unwrap();
                         }
-                        println!("Process doesn't exist anymore");
+                        //println!("Process doesn't exist anymore");
                         script.unload().unwrap();
                         session.detach().unwrap();
                     },

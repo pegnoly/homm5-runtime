@@ -35,6 +35,6 @@ export type DialogVariant = {
     dialogId: number,
     step: number,
     label: string,
-    speaker: number | null,
+    speaker_id: number | null,
     text: string
 }

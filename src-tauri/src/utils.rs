@@ -6,6 +6,7 @@ use crate::error::Error;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalConfig {
+    pub exe_name: String,
     pub bin_path: String,
     pub data_path: String,
     pub mod_path: String,
