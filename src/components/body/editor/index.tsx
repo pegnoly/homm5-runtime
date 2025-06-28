@@ -6,6 +6,7 @@ import DialogGeneratorLayout from "./dialogGenerator";
 import ReserveHeroesGeneratorLayout from "./reserveHeroesGenerator";
 import BankGeneratorLayout from "./bankGenerator";
 import FightGeneratorLayout from "./fightGenerator";
+import HeroCreatorLayout from "./heroCreator";
 
 function EditorMain() {
     const { state } = useParams();
@@ -34,6 +35,8 @@ function RenderEditorMode(params: {
             return <BankGeneratorLayout/>
         case EditorState.FightGenerator:
             return <FightGeneratorLayout/>
+        case EditorState.HeroCreator:
+            return <HeroCreatorLayout/>
         default:
             break;
     }

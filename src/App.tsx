@@ -23,18 +23,6 @@ function App() {
             .then((values) => setCreatures(values));
     }
 
-    // return <div style={{display: 'flex', flexDirection: 'column', height: '100%', gap: 10}}>
-    //     <Row>
-    //         <Col span={12}>
-    //             <RuntimeRunner/>
-    //         </Col>
-    //         <Col span={8} offset={4}>
-    //             <MapSelector/>
-    //         </Col>
-    //     </Row>
-    //     <RepackController/>
-    //     <Editor/>
-    // </div>
     return (
         <>
             <Header/>
