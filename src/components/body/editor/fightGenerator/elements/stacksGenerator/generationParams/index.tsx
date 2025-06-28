@@ -5,7 +5,7 @@ import TiersSelector from "./tiersSelector";
 import TownSelector from "./townSelector";
 import AssetStackRuleSelector from "./ruleSelector";
 import FightAssetStackStatsData from "./statSelector";
-import { Accordion, AccordionControl, AccordionItem, AccordionPanel, Group, MultiSelect, Select, Stack } from "@mantine/core";
+import { Accordion, AccordionControl, AccordionItem, AccordionPanel, ComboboxItem, Group, MultiSelect, OptionsFilter, Select, Stack } from "@mantine/core";
 import { useState } from "react";
 import { TownType } from "../../../types";
 import useGameDataStore from "../../../../../../../stores/GameDataStore";
@@ -169,14 +169,25 @@ function CreatureSelector(params: {
         onSuccess(_data, variables, _context) {
             actions.setConcreteCreatures(variables.creatures);
         },
-    })
+    });
+
+    const optionsFilter: OptionsFilter = ({ options }) => {
+        return (options as ComboboxItem[]).filter((option) => {
+            const creature = creatures.find(c => c.id == parseInt(option.value));
+            return creature?.town == params.town && creature?.tier == params.tier
+        });
+    };
 
     return (
     <MultiSelect
+        radius={0}
+        pr="sm"
         onChange={(values) => mutation.mutate({stackId: currentStackId!, creatures: values.map(v => parseInt(v))})}
         disabled={!params.town || !params.tier || mutation.isPending}
-        value={concreteCreatures?.ids.map(i => i.toString())}
-        data={creatures.filter(c => c.town == params.town && c.tier == params.tier).map(c => ({
+        // searchable
+        filter={optionsFilter}
+        value={creatures.filter(i => concreteCreatures?.ids.includes(i.id)).map(i => i.id.toString())}
+        data={creatures.map(c => ({
             value: c.id.toString(), label: c.name
         }))}
     />
