@@ -9,7 +9,10 @@ function HeroCreatorLayout() {
     const [town, setTown] = useState<TownType | undefined>(undefined);
 
     async function create() {
-        await invoke("create_hero", {heroName: name, heroScriptName: scriptName, town: town})
+        await invoke("create_hero", {heroName: name, heroScriptName: scriptName, town: town});
+        setName(undefined);
+        setScriptName(undefined);
+        setTown(undefined);
     }
 
     return (
