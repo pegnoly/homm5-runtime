@@ -6,6 +6,9 @@ use crate::error::Error;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalConfig {
+    pub generic_hero_xdb: Option<String>,
+    pub generic_icon_128: Option<String>,
+    pub generic_icon_dds: Option<String>,
     pub exe_name: String,
     pub bin_path: String,
     pub data_path: String,
@@ -18,7 +21,17 @@ pub struct GlobalConfig {
 impl GlobalConfig {
     pub fn new(path: &PathBuf) -> Result<Self, Error> {
         let cfg_string = std::fs::read_to_string(path.join("main.json"))?;
-        Ok(serde_json::from_str(&cfg_string)?)
+        let mut cfg = serde_json::from_str::<GlobalConfig>(&cfg_string)?;
+        if !cfg.generic_hero_xdb.is_some() {
+            cfg.generic_hero_xdb = Some(path.join("Hero.(AdvMapHeroShared).xdb").to_string_lossy().to_string());
+        }
+        if !cfg.generic_icon_128.is_some() {
+            cfg.generic_icon_128 = Some(path.join("Icon.xdb").to_string_lossy().to_string());
+        }
+        if !cfg.generic_icon_dds.is_some() {
+            cfg.generic_icon_dds = Some(path.join("Icon.dds").to_string_lossy().to_string());
+        }
+        Ok(cfg)
     }
 }
 

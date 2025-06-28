@@ -62,6 +62,7 @@ pub async fn run() -> Result<(), Error> {
             commands::load_current_map,
             commands::select_map,
             commands::apply_modifications,
+            commands::create_hero,
             // quest commands
             load_quests,
             load_quest,

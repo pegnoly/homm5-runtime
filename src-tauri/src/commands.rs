@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use editor_tools::prelude::{QuestGeneratorRepo, QuestModel};
 use homm5_repacker::Repacker;
-use homm5_scaner::prelude::ScanerService;
+use homm5_scaner::prelude::{ScanerService, Town};
 use itertools::Itertools;
 use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
@@ -11,6 +11,7 @@ use runtime_main::RuntimeRunner;
 use serde::{Serialize, Serializer};
 use tauri::State;
 
+use crate::error::Error;
 use crate::utils::{LocalAppManager, MapFrontendModel, RepackerFrontendData, RuntimeData};
 use crate::DataContainer;
 
@@ -223,5 +224,25 @@ pub async fn apply_modifications(
     modifiers_config_locked.data.quests_generation_queue = altered_queue;
     modifiers_config_locked.update()?;
 
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn create_hero(
+    app_manager: State<'_, LocalAppManager>,
+    hero_name: String,
+    hero_script_name: String,
+    town: Town
+) -> Result<(), Error> {
+    let global_config_locked = app_manager.base_config.read().await;
+    editor_tools::prelude::process_files(
+        &PathBuf::from(global_config_locked.generic_hero_xdb.as_ref().unwrap()), 
+        &PathBuf::from(global_config_locked.generic_icon_128.as_ref().unwrap()),
+        &PathBuf::from(global_config_locked.generic_icon_dds.as_ref().unwrap()), 
+        format!("{}GOG_Mod\\", &global_config_locked.data_path), 
+        town, 
+        hero_script_name, 
+        hero_name
+    )?;
     Ok(())
 }
