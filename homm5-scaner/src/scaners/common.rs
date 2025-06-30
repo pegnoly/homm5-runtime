@@ -43,7 +43,48 @@ pub enum Town {
     TownStronghold
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum HeroClass {
+    #[sea_orm(string_value = "HERO_CLASS_NONE")]
+    #[serde(rename = "HERO_CLASS_NONE")]
+    #[strum(serialize = "HERO_CLASS_NONE")]
+    None,
+    #[sea_orm(string_value = "HERO_CLASS_KNIGHT")]
+    #[serde(rename = "HERO_CLASS_KNIGHT")]
+    #[strum(serialize = "HERO_CLASS_KNIGHT")]
+    Knight,
+    #[sea_orm(string_value = "HERO_CLASS_DEMON_LORD")]
+    #[serde(rename = "HERO_CLASS_DEMON_LORD")]
+    #[strum(serialize = "HERO_CLASS_DEMON_LORD")]
+    DemonLord,
+    #[sea_orm(string_value = "HERO_CLASS_NECROMANCER")]
+    #[serde(rename = "HERO_CLASS_NECROMANCER")]
+    #[strum(serialize = "HERO_CLASS_NECROMANCER")]
+    Necromancer,
+    #[sea_orm(string_value = "HERO_CLASS_RANGER")]
+    #[serde(rename = "HERO_CLASS_RANGER")]
+    #[strum(serialize = "HERO_CLASS_RANGER")]
+    Ranger,
+    #[sea_orm(string_value = "HERO_CLASS_WARLOCK")]
+    #[serde(rename = "HERO_CLASS_WARLOCK")]
+    #[strum(serialize = "HERO_CLASS_WARLOCK")]
+    Warlock,
+    #[sea_orm(string_value = "HERO_CLASS_WIZARD")]
+    #[serde(rename = "HERO_CLASS_WIZARD")]
+    #[strum(serialize = "HERO_CLASS_WIZARD")]
+    Wizard,
+    #[sea_orm(string_value = "HERO_CLASS_RUNEMAGE")]
+    #[serde(rename = "HERO_CLASS_RUNEMAGE")]
+    #[strum(serialize = "HERO_CLASS_RUNEMAGE")]
+    Runemage,
+    #[sea_orm(string_value = "HERO_CLASS_BARBARIAN")]
+    #[serde(rename = "HERO_CLASS_BARBARIAN")]
+    #[strum(serialize = "HERO_CLASS_BARBARIAN")]
+    Barbarian
+}
+
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum Mastery {
     #[sea_orm(string_value = "MASTERY_NONE")]
@@ -68,7 +109,7 @@ pub enum Mastery {
     MasteryExtraExpert
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, PartialEq, Eq, Clone, Serialize, Deserialize, EnumString)]
+#[derive(Debug, DeriveActiveEnum, EnumIter, PartialEq, Eq, Clone, Serialize, Deserialize, EnumString, Display)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum MagicElement {
     #[sea_orm(string_value = "ELEMENT_NONE")]

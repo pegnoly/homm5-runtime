@@ -5,6 +5,8 @@ use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
+use crate::core::ToLua;
+
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "artifacts")]
 pub struct Model {
@@ -66,7 +68,7 @@ pub enum ArtifactSlotType {
     Inventory
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum ArtifactClassType {
     #[sea_orm(string_value = "ARTF_CLASS_MINOR")]
@@ -118,5 +120,30 @@ impl From<AdvMapArtifactShared> for Model {
             cost: value.CostOfGold as i32,
             is_generatable: value.CanBeGeneratedToSell
         }
+    }
+}
+
+impl ToLua for Model {
+    fn to_lua_string(&self) -> String {
+        let is_sellable = if self.is_generatable == true {"1"} else {"nil"};
+        format!(
+            "\t[{}] = {{
+        is_sellable = {},
+        name = \"{}\",
+        desc = \"{}\",
+        icon = \"{}\",
+        cost = {},
+        slot = {},
+        type = {}
+    }},\n", 
+            self.id,
+            is_sellable,
+            self.name_txt,
+            self.desc_txt,
+            self.icon_xdb,
+            self.cost,
+            self.slot,
+            self.class
+        )
     }
 }

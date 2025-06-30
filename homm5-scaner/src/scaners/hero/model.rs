@@ -3,7 +3,7 @@ use std::str::FromStr;
 use homm5_types::hero::AdvMapHeroShared;
 use sea_orm::{prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
-use crate::scaners::common::{Mastery, Town};
+use crate::{core::ToLua, scaners::common::{HeroClass, Mastery, Town}};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "heroes")]
@@ -11,6 +11,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: String,
     pub script_name: String,
+    pub class: HeroClass,
     pub icon_xdb: String,
     pub specialization: String,
     pub primary_skill: SkillWithMasteryModel,
@@ -52,6 +53,7 @@ impl From<AdvMapHeroShared> for Model {
             } else {
                 String::new()
             },
+            class: HeroClass::from_str(&value.Class).unwrap_or(HeroClass::None),
             specialization: value.Specialization,
             primary_skill: SkillWithMasteryModel {
                 mastery: Mastery::from_str(&value.PrimarySkill.Mastery).unwrap_or(Mastery::MasteryNone),
@@ -96,5 +98,35 @@ impl From<AdvMapHeroShared> for Model {
                 bio: Default::default()
             }
         }
+    }
+}
+
+impl ToLua for Model {
+    fn to_lua_string(&self) -> String {
+        // let is_scenario_lua = if self.ScenarioHero == true {"1"} else {"nil"};
+            format!(
+            "\t[\"{}\"] = {{
+        hero_class = {},
+        spec = {},
+        spec_name = \"{}\",
+        spec_desc = \"{}\",
+        spec_icon = \"{}\",
+        icon = \"{}\",
+        town = {},
+        name = \"{}\",
+        bio = \"{}\"
+    }},\n", 
+            self.script_name, 
+            // is_scenario_lua, 
+            self.class, 
+            self.specialization, 
+            self.spec_name_txt, 
+            self.spec_desc_txt, 
+            self.spec_icon, 
+            self.icon,
+            self.town,
+            self.editable.name_txt,
+            self.editable.bio_txt
+        )
     }
 }

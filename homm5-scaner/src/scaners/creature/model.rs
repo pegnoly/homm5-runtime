@@ -1,10 +1,9 @@
 use std::str::FromStr;
-
 use homm5_types::common::FileRef;
 use sea_orm::{prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 
-use crate::scaners::common::{MagicElement, Mastery, ResourcesModel, Town};
+use crate::{core::ToLua, scaners::common::{MagicElement, Mastery, ResourcesModel, Town}};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "creatures")]
@@ -17,6 +16,7 @@ pub struct Model {
     pub max_damage: i32,
     pub speed: i32,
     pub initiative: i32,
+    pub health: i32,
     pub is_flying: bool,
     pub known_spells: KnownSpellsModel,
     pub spell_points: i32,
@@ -75,6 +75,7 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             min_damage: value.MinDamage as i32,
             max_damage: value.MaxDamage as i32,
             speed: value.Speed as i32,
+            health: value.Health as i32,
             initiative: value.Initiative as i32,
             is_flying: value.Flying,
             known_spells: if let Some(spells) = value.KnownSpells.spells {
@@ -143,5 +144,76 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                 }
             }
         }
+    }
+}
+
+impl ToLua for Model {
+    fn to_lua_string(&self) -> String {
+        let is_generatable = if self.is_generatable == true {"1"} else {"nil"};
+        let is_flying = if self.is_flying == true {"1"} else {"nil"};
+        // let is_upgrade = if self.Upgrade == true {"1"} else {"nil"};
+        let mut abilities_string = String::new();
+        for ability in &self.abilities.abilities {
+            abilities_string += &format!("{}, ", &ability);
+        }
+        let mut spells_string = String::new();
+        for spell in &self.known_spells.spells {
+            spells_string += &format!("[{}] = {}, ", &spell.spell, &spell.mastery);
+        }
+        format!(
+            "\t[{}] = {{
+        is_generatable = {},
+        attack = {},
+        defence = {},
+        dmg_min = {},
+        dmg_max = {},
+        speed = {},
+        ini = {},
+        health = {},
+        sp = {},
+        size = {},
+        exp = {},
+        power = {},
+        town = {},
+        first_element = {},
+        second_element = {},
+        grow = {},
+        tier = {},
+        cost = {},
+        range = {},
+        name = \"{}\",
+        desc = \"{}\",
+        icon = \"{}\",
+        is_flying = {},
+        abilities = {{{}}},
+        known_spells = {{{}}}
+    }},\n", 
+            self.id,
+            is_generatable, 
+            self.attack, 
+            self.defence, 
+            self.min_damage, 
+            self.max_damage,
+            self.speed,
+            self.initiative,
+            self.health,
+            self.spell_points,
+            self.size,
+            self.exp,
+            self.power,
+            self.town,
+            self.magic_element.first,
+            self.magic_element.second,
+            self.grow,
+            self.tier,
+            self.cost.gold,
+            self.range,
+            self.name_txt,
+            self.desc_txt,
+            self.icon_xdb,
+            is_flying,
+            abilities_string,
+            spells_string
+        )
     }
 }

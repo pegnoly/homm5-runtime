@@ -1,7 +1,8 @@
 use crate::{error::ScanerError, pak::FileStructure};
 use homm5_types::common::FileRef;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use zip::ZipWriter;
+use std::{collections::HashMap, fs::File};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
@@ -39,7 +40,11 @@ pub trait Output {
     type Input;
 
     fn output_single(&mut self, object: Self::Input) -> Result<(), ScanerError>;
-    async fn finish_output(&self) -> Result<(), ScanerError>;
+    async fn finish_output(&self, zip_file: &mut ZipWriter<File>) -> Result<(), ScanerError>;
+}
+
+pub trait ToLua {
+    fn to_lua_string(&self) -> String;
 }
 
 pub struct ScanProcessor<T, C: CollectFiles, S: Scan<Output = T>, W: Output<Input = T>> {
@@ -61,7 +66,7 @@ impl<T, C: CollectFiles, S: Scan<Output = T>, W: Output<Input = T>> ScanProcesso
         }
     }
 
-    pub async fn run(&mut self, files: &HashMap<String, FileStructure>) -> Result<(), ScanerError> {
+    pub async fn run(&mut self, files: &HashMap<String, FileStructure>, zip_file: &mut ZipWriter<File>) -> Result<(), ScanerError> {
         let mut actual_files = vec![];
         self.collector.collect(files, &mut actual_files)?;
         for file in actual_files {
@@ -69,7 +74,7 @@ impl<T, C: CollectFiles, S: Scan<Output = T>, W: Output<Input = T>> ScanProcesso
                 self.writer.output_single(scanned_file)?;
             }
         }
-        self.writer.finish_output().await?;
+        self.writer.finish_output(zip_file).await?;
         Ok(())
     }
 }

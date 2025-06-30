@@ -1,6 +1,9 @@
-use sea_orm::{sea_query::OnConflict, DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait};
+use std::{fs::File, io::Write};
 
-use crate::{core::Output, error::ScanerError};
+use sea_orm::{sea_query::OnConflict, DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait};
+use zip::{write::FileOptions, ZipWriter};
+
+use crate::{core::{Output, ToLua}, error::ScanerError};
 
 use super::model::Column;
 
@@ -23,7 +26,7 @@ impl<'a> Output for CreatureDataOutput<'a> {
         Ok(())
     }
 
-    async fn finish_output(&self) -> Result<(), ScanerError> {
+    async fn finish_output(&self, zip_writer: &mut ZipWriter<File>) -> Result<(), ScanerError> {
         let transaction = self.db.begin().await?;
         let on_conflict = OnConflict::new()
             .update_columns(
@@ -41,6 +44,16 @@ impl<'a> Output for CreatureDataOutput<'a> {
             super::model::Entity::insert(active_model).on_conflict(on_conflict.clone()).exec(&transaction).await?;
         }
         transaction.commit().await?;
+
+        let mut script_file = String::from("MCCS_CREATURE_GENERATED_TABLE = {\n");
+        for model in &self.entities {
+            script_file += &model.to_lua_string();
+        }
+        script_file.push_str("}");
+        zip_writer.start_file("scripts/generated/creatures.lua", FileOptions::default())?;
+        zip_writer.write_all(script_file.as_bytes())?;
+
+
         Ok(())
     }
 }

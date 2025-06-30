@@ -3,7 +3,9 @@ use std::str::FromStr;
 use homm5_types::spell::SpellShared;
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
-use strum_macros::EnumString;
+use strum_macros::{Display, EnumString};
+
+use crate::core::ToLua;
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "spells")]
@@ -22,7 +24,7 @@ pub struct Model {
     pub is_area: bool
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum MagicSchoolType {
     #[sea_orm(string_value = "MAGIC_SCHOOL_NONE")]
@@ -95,5 +97,31 @@ impl From<SpellShared> for Model {
             is_aimed: value.IsAimed,
             is_area: value.IsAreaAttack
         }
+    }
+}
+
+impl ToLua for Model {
+    fn to_lua_string(&self) -> String {
+        let is_aimed = if self.is_aimed == true {"1"} else {"nil"};
+        let is_area = if self.is_area == true {"1"} else {"nil"};
+        format!(
+            "\t[{}] = {{
+        name = \"{}\",
+        desc = \"{}\",
+        icon = \"{}\",
+        school = {},
+        level = {},
+        is_aimed = {},
+        is_area = {}
+    }},\n", 
+            self.id,
+            self.name_txt,
+            self.desc_txt,
+            self.icon_xdb,
+            self.school,
+            self.level,
+            is_aimed,
+            is_area
+        )
     }
 }

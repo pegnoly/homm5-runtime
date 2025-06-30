@@ -54,10 +54,13 @@ impl ScanerService {
             SpellDataOutput::new(&self.db)
         );
 
-        creature_scan_processor.run(&mut files).await.unwrap();
-        hero_scan_processor.run(&mut files).await.unwrap();
-        artifact_scan_processor.run(&mut files).await.unwrap();
-        spell_scan_processor.run(&mut files).await.unwrap();
+        let zip_file = std::fs::File::create(output_path).unwrap();
+        let mut zip_writer = zip::ZipWriter::new(zip_file);
+
+        creature_scan_processor.run(&mut files, &mut zip_writer).await.unwrap();
+        hero_scan_processor.run(&mut files, &mut zip_writer).await.unwrap();
+        artifact_scan_processor.run(&mut files, &mut zip_writer).await.unwrap();
+        spell_scan_processor.run(&mut files, &mut zip_writer).await.unwrap();
     }
 
     pub async fn get_artifact_models(&self) -> Result<Vec<ArtifactDBModel>, ScanerError> {
