@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use homm5_types::common::FileRef;
+use itertools::Itertools;
 use sea_orm::{prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 
@@ -36,7 +37,10 @@ pub struct Model {
     pub desc_txt: String,
     pub desc: String,
     pub icon_xdb: String,
-    pub abilities: AbilitiesModel
+    pub base_creature: String,
+    pub pair_creature: String,
+    pub abilities: AbilitiesModel,
+    pub upgrades: UpgradesModel
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -59,6 +63,11 @@ pub struct MagicElementModel {
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct AbilitiesModel {
     pub abilities: Vec<String>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+pub struct UpgradesModel {
+    pub upgrades: Vec<String>
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -142,7 +151,16 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                 } else {
                     vec![]
                 }
-            }
+            },
+            upgrades: UpgradesModel {
+                upgrades: if let Some(upgrades) = value.Upgrades.upgrages {
+                    upgrades
+                } else {
+                    vec![]
+                }
+            },
+            base_creature: value.BaseCreature.unwrap_or("CREATURE_UNKNOWN".to_string()),
+            pair_creature: value.PairCreature
         }
     }
 }
@@ -151,18 +169,17 @@ impl ToLua for Model {
     fn to_lua_string(&self) -> String {
         let is_generatable = if self.is_generatable == true {"1"} else {"nil"};
         let is_flying = if self.is_flying == true {"1"} else {"nil"};
-        // let is_upgrade = if self.Upgrade == true {"1"} else {"nil"};
-        let mut abilities_string = String::new();
-        for ability in &self.abilities.abilities {
-            abilities_string += &format!("{}, ", &ability);
-        }
-        let mut spells_string = String::new();
-        for spell in &self.known_spells.spells {
-            spells_string += &format!("[{}] = {}, ", &spell.spell, &spell.mastery);
-        }
+        let is_upgrade = if self.base_creature == "CREATURE_UNKNOWN" && self.upgrades.upgrades.len() > 0 { "nil" } else { "1" };
+        let abilities_string = self.abilities.abilities.iter().join(", ");
+        let spells_string = self.known_spells.spells.iter()
+            .map(|s| {
+                format!("[{}] = {}", &s.spell, &s.mastery)
+            })
+            .join(", ");
         format!(
             "\t[{}] = {{
         is_generatable = {},
+        is_upgrade = {},
         attack = {},
         defence = {},
         dmg_min = {},
@@ -189,7 +206,8 @@ impl ToLua for Model {
         known_spells = {{{}}}
     }},\n", 
             self.id,
-            is_generatable, 
+            is_generatable,
+            is_upgrade, 
             self.attack, 
             self.defence, 
             self.min_damage, 

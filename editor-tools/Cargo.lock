@@ -1200,6 +1200,7 @@ version = "0.1.2"
 dependencies = [
  "bincode",
  "homm5-types",
+ "itertools 0.14.0",
  "quick-xml 0.30.0",
  "rc-zip",
  "sea-orm",

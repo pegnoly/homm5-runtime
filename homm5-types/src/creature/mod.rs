@@ -52,6 +52,12 @@ pub struct CreatureVisual {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct Upgrades {
+    #[serde(rename = "Item")]
+    pub upgrages: Option<Vec<String>>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct AdvMapCreatureShared {
     pub AttackSkill: u16,
@@ -79,8 +85,7 @@ pub struct AdvMapCreatureShared {
     pub Visual: Option<FileRef>,
     pub Range: i8,
     pub BaseCreature: Option<String>,
-    #[serde(rename = "Item")]
-    pub Upgrades: Option<Vec<String>>,
+    pub Upgrades: Upgrades,
     pub Abilities: Abilities,
     pub VisualExplained: Option<CreatureVisual>,
 }
