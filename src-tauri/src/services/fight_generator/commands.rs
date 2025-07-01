@@ -447,8 +447,15 @@ pub async fn generate_current_hero_script(
 ) -> Result<(), Error> {
     if let Some(main_asset) = fight_generator_repo.get_asset(asset_id).await? {
         let mut output_file =
-            std::fs::File::create(format!("{}\\script.lua", &main_asset.path_to_generate))?;
-        let mut script = format!("{} = {{\n", &main_asset.table_name);
+            std::fs::File::create(format!("{}\\{}.lua", &main_asset.path_to_generate, main_asset.table_name))?;
+        let mut script = 
+        format!(
+            "
+while not UNIT_COUNT_GENERATION_MODE_POWER_BASED and not UNIT_COUNT_GENERATION_MODE_RAW do
+    sleep()
+end
+
+{} = {{\n", &main_asset.table_name);
         // stacks script
         let stacks_assets = fight_generator_repo.get_stacks(main_asset.id).await?;
         let mut stack_gen_type_script = String::from("\tstack_count_generation_logic = {\n");
