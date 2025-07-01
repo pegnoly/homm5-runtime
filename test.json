@@ -1,0 +1,390 @@
+{
+  "TemplateName": "[S3]Universe_S",
+  "Zones": [
+    {
+      "ZoneId": 1,
+      "TerrainType": "FirstPlayer",
+      "DwellingGenerationConfig": {
+        "MinCount": 8,
+        "MaxCount": 8,
+        "MinTiersCount": 4,
+        "MaxTiersCount": 4,
+        "UniformDistribution": true,
+        "AllowedTiers": [
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "MineGenerationConfig": {
+        "Wood": {
+          "MinValue": 2,
+          "MaxValue": 2
+        },
+        "Ore": {
+          "MinValue": 2,
+          "MaxValue": 2
+        },
+        "Mercury": {
+          "MinValue": 1,
+          "MaxValue": 1
+        },
+        "Crystals": {
+          "MinValue": 1,
+          "MaxValue": 1
+        },
+        "Sulfur": {
+          "MinValue": 1,
+          "MaxValue": 1
+        },
+        "Gems": {
+          "MinValue": 1,
+          "MaxValue": 1
+        },
+        "Gold": {
+          "MinValue": 3,
+          "MaxValue": 3
+        }
+      },
+      "DwellingTexture": "Default",
+      "UpgBuildingsDensity": {
+        "MinValue": 42,
+        "MaxValue": 48
+      },
+      "Prisons": {
+        "MinValue": 0,
+        "MaxValue": 0
+      },
+      "ShopPoints": {
+        "MinValue": 15,
+        "MaxValue": 15
+      },
+      "ResourceBuildingsDensity": {
+        "MinValue": 60,
+        "MaxValue": 60
+      },
+      "TreasureBuildingPoints": {
+        "MinValue": 70,
+        "MaxValue": 70
+      },
+      "TreasureBlocksTotalValue": {
+        "MinValue": 25000,
+        "MaxValue": 25000
+      }
+    },
+    {
+      "ZoneId": 2,
+      "TerrainType": "SecondPlayer",
+      "MirrorZoneId": 1,
+      "DwellingTexture": "Default"
+    },
+    {
+      "ZoneId": 3,
+      "TerrainType": "FirstPlayer",
+      "DwellingGenerationConfig": {
+        "MinCount": 6,
+        "MaxCount": 6,
+        "MinTiersCount": 3,
+        "MaxTiersCount": 3,
+        "UniformDistribution": true,
+        "AllowedTiers": [
+          5,
+          6,
+          7
+        ]
+      },
+      "MineGenerationConfig": {
+        "Gold": {
+          "MinValue": 3,
+          "MaxValue": 3
+        }
+      },
+      "DwellingTexture": "Default",
+      "UpgBuildingsDensity": {
+        "MinValue": 92,
+        "MaxValue": 98
+      },
+      "ShopPoints": {
+        "MinValue": 0,
+        "MaxValue": 0
+      },
+      "ResourceBuildingsDensity": {
+        "MinValue": 40,
+        "MaxValue": 40
+      },
+      "TreasureBuildingPoints": {
+        "MinValue": 120,
+        "MaxValue": 120
+      },
+      "TreasureBlocksTotalValue": {
+        "MinValue": 20000,
+        "MaxValue": 20000
+      },
+      "DenOfThieves": {
+        "MinValue": 1,
+        "MaxValue": 1
+      },
+      "Town": true
+    },
+    {
+      "ZoneId": 4,
+      "TerrainType": "SecondPlayer",
+      "MirrorZoneId": 3,
+      "DwellingTexture": "Default"
+    },
+    {
+      "ZoneId": 5,
+      "TerrainType": "Terrain1",
+      "DwellingTexture": "Default",
+      "UpgBuildingsDensity": {
+        "MinValue": 90,
+        "MaxValue": 90
+      },
+      "TreasureBuildingPoints": {
+        "MinValue": 160,
+        "MaxValue": 160
+      },
+      "TreasureBlocksTotalValue": {
+        "MinValue": 555000,
+        "MaxValue": 555000
+      },
+      "DistBetweenTreasureBlocks": {
+        "MinValue": 4,
+        "MaxValue": 4
+      }
+    }
+  ],
+  "BaseArmyMultiplier": 0.0,
+  "ArmyMultipliers": {},
+  "Connections": [
+    {
+      "SourceZoneIndex": 4,
+      "DestZoneIndex": 5,
+      "IsMain": true,
+      "GuardStrenght": 40
+    },
+    {
+      "SourceZoneIndex": 4,
+      "DestZoneIndex": 5,
+      "IsMain": false,
+      "GuardStrenght": 40
+    },
+    {
+      "SourceZoneIndex": 3,
+      "DestZoneIndex": 5,
+      "IsMain": true,
+      "GuardStrenght": 40
+    },
+    {
+      "SourceZoneIndex": 3,
+      "DestZoneIndex": 5,
+      "IsMain": false,
+      "GuardStrenght": 40
+    },
+    {
+      "SourceZoneIndex": 1,
+      "DestZoneIndex": 3,
+      "IsMain": true,
+      "GuardStrenght": 2
+    },
+    {
+      "SourceZoneIndex": 1,
+      "DestZoneIndex": 3,
+      "IsMain": false,
+      "GuardStrenght": 2
+    },
+    {
+      "SourceZoneIndex": 2,
+      "DestZoneIndex": 4,
+      "IsMain": true,
+      "GuardStrenght": 2
+    },
+    {
+      "SourceZoneIndex": 2,
+      "DestZoneIndex": 4,
+      "IsMain": false,
+      "GuardStrenght": 2
+    }
+  ],
+  "ShopBuildingConfigs": [
+    {
+      "Id": 1,
+      "Value": 40,
+      "GuardStrenght": 0,
+      "XdbRef": "/MapObjects/Dragon_Utopia.(AdvMapBuildingShared).xdb#xpointer(/AdvMapBuildingShared)"
+    },
+    {
+      "Id": 2,
+      "Value": 40,
+      "GuardStrenght": 0,
+      "XdbRef": "/MapObjects/Universe_mod/OrcDeposit.(AdvMapBuildingShared).xdb#xpointer(/AdvMapBuildingShared)"
+    },
+    {
+      "Id": 3,
+      "Value": 15,
+      "GuardStrenght": 0,
+      "XdbRef": "/MapObjects/H5A2/SpellShop.xdb#xpointer(/AdvMapBuildingShared)"
+    },
+    {
+      "Id": 4,
+      "Value": 15,
+      "GuardStrenght": 0,
+      "XdbRef": "/MapObjects/TreantThicket.(AdvMapBuildingShared).xdb#xpointer(/AdvMapBuildingShared)"
+    },
+    {
+      "Id": 5,
+      "Value": 15,
+      "GuardStrenght": 0,
+      "XdbRef": "/MapObjects/WitchBank.(AdvMapBuildingShared).xdb#xpointer(/AdvMapBuildingShared)"
+    },
+    {
+      "Id": 6,
+      "Value": 15,
+      "GuardStrenght": 0,
+      "XdbRef": "/MapObjects/Universe_mod/NecroEstate.(AdvMapBuildingShared).xdb#xpointer(/AdvMapBuildingShared)"
+    },
+    {
+      "Id": 7,
+      "Value": 10,
+      "GuardStrenght": 0,
+      "XdbRef": "/MapObjects/Elemantal_Stockpile.(AdvMapBuildingShared).xdb#xpointer(/AdvMapBuildingShared)"
+    },
+    {
+      "Id": 8,
+      "Value": 10,
+      "GuardStrenght": 0,
+      "XdbRef": "/MapObjects/DwarvenTreasury.(AdvMapBuildingShared).xdb#xpointer(/AdvMapBuildingShared)"
+    }
+  ],
+  "TerrainConfig": [
+    {
+      "TerrainType": "FirstPlayer",
+      "BuildingsToDelete": [
+        "Magic_Spring",
+        "Tree_of_Knowledge",
+        "LibraryOfEnlightenment"
+      ],
+      "BuildingsToAdd": [],
+      "NewShopBuildings": {
+        "ClearBuildings": true,
+        "BuildingsToDelete": [],
+        "BuildingsToAdd": [
+          3
+        ]
+      },
+      "NewTreasuryBuildings": {
+        "BuildingsToDelete": [
+          "DwarvenTreasury",
+          "Elemantal_Stockpile"
+        ],
+        "BuildingsToAdd": []
+      },
+      "NewBuffBuildings": {
+        "ClearBuildings": true,
+        "BuildingsToDelete": [],
+        "BuildingsToAdd": [
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      }
+    },
+    {
+      "TerrainType": "SecondPlayer",
+      "MirrorTerrainType": 0,
+      "BuildingsToDelete": [],
+      "BuildingsToAdd": []
+    },
+    {
+      "TerrainType": "Terrain1",
+      "BuildingsToDelete": [],
+      "BuildingsToAdd": [],
+      "NewBuffBuildings": {
+        "ClearBuildings": true,
+        "BuildingsToDelete": [],
+        "BuildingsToAdd": [
+          1,
+          2
+        ]
+      }
+    }
+  ],
+  "EntitiesBanConfig": {
+    "BannedHeroes": [],
+    "BannedSpells": [
+      "Regeneration",
+      "Armageddon"
+    ],
+    "BannedArtifacts": [
+      "TomeOfChaos",
+      "TomeOfLight",
+      "TomeOfDark",
+      "TomeOfSummon"
+    ],
+    "BannedBases": {
+      "CommonBannedSkills": ["Leadership", "Training"],
+      "SkillsBannedForClass": [
+        {
+          "Class": "Barbarian",
+          "Skills": ["Voice", "DemonicRage", "Luck"]
+        },
+        {
+          "Class": "Ranger",
+          "Skills": ["BarbarianLearning", "Learning"]
+        }
+      ]
+    }
+  },
+  "GeneralData": {
+    "MineGoldGuardLevel": 10
+  },
+  "StartBuildingConfigs": [
+    {
+      "ApplyAllTerrains": true,
+      "TerrainType": "FirstPlayer",
+      "Buildings": [
+        "T1",
+        "T2",
+        "T3",
+        "Forge",
+        "Market1"
+      ],
+      "BuildingMode": "StartCastle"
+    },
+    {
+      "TerrainType": "FirstPlayer",
+      "Buildings": [
+        "Gm1",
+        "Gm2",
+        "Gm3",
+        "StrongholdHallOfTrial",
+        "StrongholdHallOfMastership",
+        "StrongholdTravellerShelter"
+      ],
+      "BuildingMode": "NeutralCastle"
+    },
+    {
+      "TerrainType": "SecondPlayer",
+      "Buildings": [
+        "Gm1",
+        "Gm2",
+        "Gm3",
+        "StrongholdHallOfTrial",
+        "StrongholdHallOfMastership",
+        "StrongholdTravellerShelter"
+      ],
+      "BuildingMode": "NeutralCastle"
+    },
+    {
+      "ApplyAllTerrains": true,
+      "TerrainType": "FirstPlayer",
+      "Buildings": [
+        "Tavern"
+      ],
+      "BuildingMode": "NeutralCastle"
+    }
+  ]
+}

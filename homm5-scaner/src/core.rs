@@ -1,8 +1,8 @@
 use crate::{error::ScanerError, pak::FileStructure};
 use homm5_types::common::FileRef;
 use serde::{Deserialize, Serialize};
-use zip::ZipWriter;
 use std::{collections::HashMap, fs::File};
+use zip::ZipWriter;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
@@ -50,23 +50,23 @@ pub trait ToLua {
 pub struct ScanProcessor<T, C: CollectFiles, S: Scan<Output = T>, W: Output<Input = T>> {
     collector: C,
     scaner: S,
-    writer: W
+    writer: W,
 }
 
 impl<T, C: CollectFiles, S: Scan<Output = T>, W: Output<Input = T>> ScanProcessor<T, C, S, W> {
-    pub fn new(
-        collector: C,
-        scaner: S,
-        writer: W
-    ) -> Self {
+    pub fn new(collector: C, scaner: S, writer: W) -> Self {
         ScanProcessor {
             collector,
             scaner,
-            writer
+            writer,
         }
     }
 
-    pub async fn run(&mut self, files: &HashMap<String, FileStructure>, zip_file: &mut ZipWriter<File>) -> Result<(), ScanerError> {
+    pub async fn run(
+        &mut self,
+        files: &HashMap<String, FileStructure>,
+        zip_file: &mut ZipWriter<File>,
+    ) -> Result<(), ScanerError> {
         let mut actual_files = vec![];
         self.collector.collect(files, &mut actual_files)?;
         for file in actual_files {

@@ -1,24 +1,33 @@
 use std::{fs::File, io::Write};
 
-use sea_orm::{sea_query::OnConflict, DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait};
-use zip::{write::FileOptions, ZipWriter};
+use sea_orm::{
+    DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait,
+    sea_query::OnConflict,
+};
+use zip::{ZipWriter, write::FileOptions};
 
-use crate::{core::{Output, ToLua}, error::ScanerError};
+use crate::{
+    core::{Output, ToLua},
+    error::ScanerError,
+};
 
 use super::model::Column;
 
 pub struct ArtifactDataOutput<'a> {
     entities: Vec<super::model::Model>,
-    db: &'a DatabaseConnection
+    db: &'a DatabaseConnection,
 }
 
 impl<'a> ArtifactDataOutput<'a> {
     pub fn new(db: &'a DatabaseConnection) -> Self {
-        ArtifactDataOutput { entities: vec![], db }
+        ArtifactDataOutput {
+            entities: vec![],
+            db,
+        }
     }
 }
 
-impl<'a> Output for ArtifactDataOutput<'a> { 
+impl<'a> Output for ArtifactDataOutput<'a> {
     type Input = super::model::Model;
 
     fn output_single(&mut self, object: Self::Input) -> Result<(), ScanerError> {
@@ -31,20 +40,22 @@ impl<'a> Output for ArtifactDataOutput<'a> {
         let on_conflict = OnConflict::new()
             .update_columns(
                 super::model::Column::iter()
-                    .filter_map(|column| {
-                        match column {
-                            Column::Id => None,
-                            _=> Some(column)
-                        }
+                    .filter_map(|column| match column {
+                        Column::Id => None,
+                        _ => Some(column),
                     })
-                    .collect::<Vec<super::model::Column>>()
-            ).to_owned();
+                    .collect::<Vec<super::model::Column>>(),
+            )
+            .to_owned();
         for entity in &self.entities {
             let active_model = entity.clone().into_active_model();
-            super::model::Entity::insert(active_model).on_conflict(on_conflict.clone()).exec(&transaction).await?;
+            super::model::Entity::insert(active_model)
+                .on_conflict(on_conflict.clone())
+                .exec(&transaction)
+                .await?;
         }
         transaction.commit().await?;
-        
+
         let mut script_file = String::from("MCCS_ARTIFACTS_GENERATED_TABLE = {\n");
         for model in &self.entities {
             script_file += &model.to_lua_string();

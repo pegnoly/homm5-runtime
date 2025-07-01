@@ -22,7 +22,7 @@ use tauri_plugin_dialog::DialogExt;
 #[tauri::command]
 pub async fn load_all_assets(
     app_manager: State<'_, LocalAppManager>,
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
 ) -> Result<Vec<AssetModel>, Error> {
     let current_map_id = app_manager
         .runtime_config
@@ -30,7 +30,7 @@ pub async fn load_all_assets(
         .await
         .current_selected_map
         .unwrap();
-    Ok(heroes_repo.get_all_assets(current_map_id as i32).await?)
+    Ok(fight_generator_repo.get_all_assets(current_map_id as i32).await?)
 }
 
 #[tauri::command]
@@ -64,7 +64,7 @@ pub async fn pick_hero_lua_generation_directory(
 
 #[tauri::command]
 pub async fn init_new_asset(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     app_manager: State<'_, LocalAppManager>,
     name: String,
     path: String,
@@ -82,15 +82,15 @@ pub async fn init_new_asset(
         lua_table_name: table_name,
         mission_id: current_map_id as i32,
     };
-    Ok(heroes_repo.init_new_asset(payload).await?)
+    Ok(fight_generator_repo.init_new_asset(payload).await?)
 }
 
 #[tauri::command]
 pub async fn load_asset(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     id: i32,
 ) -> Result<Option<AssetModel>, Error> {
-    Ok(heroes_repo.get_asset(id).await?)
+    Ok(fight_generator_repo.get_asset(id).await?)
 }
 
 #[tauri::command]
@@ -109,15 +109,15 @@ pub async fn load_creature_models(
 
 #[tauri::command]
 pub async fn try_load_artifacts_data_for_asset(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
 ) -> Result<Option<AssetArtifactsModel>, Error> {
-    Ok(heroes_repo.get_artifacts_model(asset_id).await?)
+    Ok(fight_generator_repo.get_artifacts_model(asset_id).await?)
 }
 
 #[tauri::command]
 pub async fn create_artifacts_data_for_asset(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
     generation_type: AssetGenerationType,
 ) -> Result<AssetArtifactsModel, Error> {
@@ -125,18 +125,18 @@ pub async fn create_artifacts_data_for_asset(
         asset_id,
         generation_type,
     };
-    Ok(heroes_repo.add_artifacts_model(payload).await?)
+    Ok(fight_generator_repo.add_artifacts_model(payload).await?)
 }
 
 #[tauri::command]
 pub async fn update_artifacts_base_cost(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     container_id: i32,
     difficulty: DifficultyType,
     value: String,
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo
+    fight_generator_repo
         .update_artifacts_base_generation_power(UpdateDifficultyBasedPowerPayload {
             id: container_id,
             difficulty,
@@ -148,13 +148,13 @@ pub async fn update_artifacts_base_cost(
 
 #[tauri::command]
 pub async fn update_artifacts_cost_grow(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     container_id: i32,
     difficulty: DifficultyType,
     value: String,
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo
+    fight_generator_repo
         .update_artifacts_grow_power(UpdateDifficultyBasedPowerPayload {
             id: container_id,
             difficulty,
@@ -166,11 +166,11 @@ pub async fn update_artifacts_cost_grow(
 
 #[tauri::command]
 pub async fn add_required_artifact(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
     artifact_id: i32,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .add_required_artifact_id(AddRequiredArtifactPayload {
             asset_id,
             artifact_id,
@@ -180,11 +180,11 @@ pub async fn add_required_artifact(
 
 #[tauri::command]
 pub async fn remove_required_artifact(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
     artifact_id: i32,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .remove_required_artifact_id(RemoveRequiredArtifactPayload {
             asset_id,
             artifact_id,
@@ -194,12 +194,12 @@ pub async fn remove_required_artifact(
 
 #[tauri::command]
 pub async fn add_optional_artifact(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
     slot: ArtifactSlotType,
     artifact_id: i32,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .add_optional_artifact_id(AddOptionalArtifactPayload {
             asset_id,
             slot,
@@ -210,12 +210,12 @@ pub async fn add_optional_artifact(
 
 #[tauri::command]
 pub async fn remove_optional_artifact(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
     slot: ArtifactSlotType,
     artifact_id: i32,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .remove_optional_artifact_id(RemoveOptionalArtifactPayload {
             asset_id,
             slot,
@@ -226,15 +226,15 @@ pub async fn remove_optional_artifact(
 
 #[tauri::command]
 pub async fn load_stacks_ids(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
 ) -> Result<Vec<i32>, Error> {
-    Ok(heroes_repo.get_stacks_ids(asset_id).await?)
+    Ok(fight_generator_repo.get_stacks_ids(asset_id).await?)
 }
 
 #[tauri::command]
 pub async fn create_stack(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
     type_generation_mode: ArmySlotStackUnitGenerationMode,
     count_generation_mode: ArmySlotStackCountGenerationMode,
@@ -250,26 +250,26 @@ pub async fn create_stack(
             generation_type.unwrap_or(AssetGenerationType::Static),
         )
     }
-    Ok(heroes_repo.add_stack(payload).await?)
+    Ok(fight_generator_repo.add_stack(payload).await?)
 }
 
 #[tauri::command]
 pub async fn load_stack(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
 ) -> Result<Option<AssetArmySlotModel>, Error> {
-    Ok(heroes_repo.get_stack(stack_id).await?)
+    Ok(fight_generator_repo.get_stack(stack_id).await?)
 }
 
 #[tauri::command]
 pub async fn update_stack_base_powers(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     container_id: i32,
     difficulty: DifficultyType,
     value: String,
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo
+    fight_generator_repo
         .update_stack_base_power(UpdateDifficultyBasedPowerPayload {
             id: container_id,
             difficulty,
@@ -281,13 +281,13 @@ pub async fn update_stack_base_powers(
 
 #[tauri::command]
 pub async fn update_stack_powers_grow(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     container_id: i32,
     difficulty: DifficultyType,
     value: String,
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo
+    fight_generator_repo
         .update_stack_power_grow(UpdateDifficultyBasedPowerPayload {
             id: container_id,
             difficulty,
@@ -299,13 +299,13 @@ pub async fn update_stack_powers_grow(
 
 #[tauri::command]
 pub async fn update_stack_concrete_count(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     container_id: i32,
     difficulty: DifficultyType,
     value: String,
 ) -> Result<i32, Error> {
     let actual_value = value.parse::<i32>()?;
-    heroes_repo
+    fight_generator_repo
         .update_stack_creature_count(UpdateDifficultyBasedPowerPayload {
             id: container_id,
             difficulty,
@@ -317,11 +317,11 @@ pub async fn update_stack_concrete_count(
 
 #[tauri::command]
 pub async fn update_stack_concrete_creatures(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
     creatures: Vec<i32>,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .update_stack_concrete_creatures(UpdateStackConcreteCreaturesPayload {
             stack_id,
             creatures,
@@ -331,73 +331,73 @@ pub async fn update_stack_concrete_creatures(
 
 #[tauri::command]
 pub async fn update_stack_towns(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
     towns: Vec<Town>,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .update_stack_towns(UpdateStackTownsPayload { stack_id, towns })
         .await?)
 }
 
 #[tauri::command]
 pub async fn update_stack_tiers(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
     tiers: Vec<i32>,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .update_stack_tiers(UpdateStackTiersPayload { stack_id, tiers })
         .await?)
 }
 
 #[tauri::command]
 pub async fn update_stack_rules(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
     rules: Vec<ArmyGenerationRuleParam>,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .update_stack_rules(UpdateGenerationRulesPayload { stack_id, rules })
         .await?)
 }
 
 #[tauri::command]
 pub async fn load_stats_generation_elements(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
 ) -> Result<Vec<ArmyStatGenerationModel>, Error> {
-    Ok(heroes_repo.get_stat_generation_elements(stack_id).await?)
+    Ok(fight_generator_repo.get_stat_generation_elements(stack_id).await?)
 }
 
 #[tauri::command]
 pub async fn add_stat_generation_element(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
     rule: ArmyGenerationStatRule,
 ) -> Result<ArmyStatGenerationModel, Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .add_stat_generation_element(AddGenerationStatElementPayload { stack_id, rule })
         .await?)
 }
 
 #[tauri::command]
 pub async fn remove_stat_generation_element(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     element_id: i32,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .delete_stat_generation_element(element_id)
         .await?)
 }
 
 #[tauri::command]
 pub async fn update_stat_generation_element_priority(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     element_id: i32,
     priority: i32,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .update_stat_generation_element(
             UpdateGenerationStatElementPayload::new(element_id).with_priority(priority),
         )
@@ -406,11 +406,11 @@ pub async fn update_stat_generation_element_priority(
 
 #[tauri::command]
 pub async fn update_stat_generation_element_rule(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     element_id: i32,
     rule: ArmyGenerationStatRule,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .update_stat_generation_element(
             UpdateGenerationStatElementPayload::new(element_id).with_rule(rule),
         )
@@ -419,11 +419,11 @@ pub async fn update_stat_generation_element_rule(
 
 #[tauri::command]
 pub async fn update_stat_generation_params(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     element_id: i32,
     params: Vec<ArmyGenerationStatParam>,
 ) -> Result<(), Error> {
-    Ok(heroes_repo
+    Ok(fight_generator_repo
         .update_stat_generation_element(
             UpdateGenerationStatElementPayload::new(element_id).with_stats(params),
         )
@@ -431,16 +431,26 @@ pub async fn update_stat_generation_params(
 }
 
 #[tauri::command]
+pub async fn get_average_creatures_count(
+    scaner_repo: State<'_, ScanerService>,
+    power: i32,
+    towns: Vec<Town>,
+    tiers: Vec<i32>
+) -> Result<Option<i32>, Error> {
+    Ok(scaner_repo.get_average_counts_for_power(power, towns, tiers).await?)
+}
+
+#[tauri::command]
 pub async fn generate_current_hero_script(
-    heroes_repo: State<'_, FightGeneratorRepo>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,
 ) -> Result<(), Error> {
-    if let Some(main_asset) = heroes_repo.get_asset(asset_id).await? {
+    if let Some(main_asset) = fight_generator_repo.get_asset(asset_id).await? {
         let mut output_file =
             std::fs::File::create(format!("{}\\script.lua", &main_asset.path_to_generate))?;
         let mut script = format!("{} = {{\n", &main_asset.table_name);
         // stacks script
-        let stacks_assets = heroes_repo.get_stacks(main_asset.id).await?;
+        let stacks_assets = fight_generator_repo.get_stacks(main_asset.id).await?;
         let mut stack_gen_type_script = String::from("\tstack_count_generation_logic = {\n");
         let mut base_army_count_data_script = String::from("\tarmy_base_count_data = {\n");
         let mut army_count_grow_script = String::from("\tarmy_counts_grow = {\n");
@@ -525,7 +535,7 @@ pub async fn generate_current_hero_script(
                     &generation_rules_script
                 );
 
-                let stats_elements = heroes_repo.get_stat_generation_elements(asset.id).await?;
+                let stats_elements = fight_generator_repo.get_stat_generation_elements(asset.id).await?;
                 //println!("Stats elements: {:#?}", &stats_elements);
                 if stats_elements.len() == 0 || stats_elements[0].stats.values.len() == 0 {
                     if asset.generation_rule.params.len() > 0 {
@@ -604,7 +614,7 @@ pub async fn generate_current_hero_script(
         script += &format!("{}\t}},\n\n", army_generation_rules_script);
 
         // artifacts script
-        if let Some(artifacts_asset) = heroes_repo.get_artifacts_model(asset_id).await? {
+        if let Some(artifacts_asset) = fight_generator_repo.get_artifacts_model(asset_id).await? {
             script += "\trequired_artifacts = {";
             for artifact_id in artifacts_asset.required.ids {
                 script += &format!("{}, ", artifact_id);

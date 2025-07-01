@@ -1,6 +1,10 @@
+use crate::{
+    core::{CollectFiles, FileObjects},
+    error::ScanerError,
+    pak::FileStructure,
+};
+use quick_xml::{Reader, events::Event};
 use std::collections::HashMap;
-use quick_xml::{events::Event, Reader};
-use crate::{core::{CollectFiles, FileObjects}, error::ScanerError, pak::FileStructure};
 
 pub struct SpellFileCollector;
 

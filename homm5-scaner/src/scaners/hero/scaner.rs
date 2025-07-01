@@ -1,27 +1,25 @@
 use std::collections::HashMap;
 
 use homm5_types::{common::FileRef, hero::AdvMapHeroShared};
-use quick_xml::{events::Event, Reader};
+use quick_xml::{Reader, events::Event};
 
 use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure_path};
 
 use super::model;
 
 pub struct HeroScaner {
-    id: String
+    id: String,
 }
 
 impl HeroScaner {
     pub fn new() -> Self {
-        HeroScaner { 
-            id: String::new()
-        }
+        HeroScaner { id: String::new() }
     }
 }
 
 impl Scan for HeroScaner {
     type Output = model::Model;
-    
+
     fn scan(
         &mut self,
         file_key: &String,
@@ -145,16 +143,20 @@ impl Scan for HeroScaner {
                                             }
                                         }
                                         if !db_model.editable.name_txt.is_empty() {
-                                            if let Some(data) = files.get(&db_model.editable.name_txt) {
+                                            if let Some(data) =
+                                                files.get(&db_model.editable.name_txt)
+                                            {
                                                 db_model.editable.name = data.content.clone();
                                             }
                                         }
                                         if !db_model.editable.bio_txt.is_empty() {
-                                            if let Some(data) = files.get(&db_model.editable.bio_txt) {
+                                            if let Some(data) =
+                                                files.get(&db_model.editable.bio_txt)
+                                            {
                                                 db_model.editable.bio = data.content.clone();
                                             }
-                                        }                     
-                                        break Ok(Some(db_model))                   
+                                        }
+                                        break Ok(Some(db_model));
                                     }
                                     Err(e) => {
                                         println!(

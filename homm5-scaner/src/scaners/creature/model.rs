@@ -1,10 +1,13 @@
-use std::str::FromStr;
 use homm5_types::common::FileRef;
 use itertools::Itertools;
-use sea_orm::{prelude::*, FromJsonQueryResult};
+use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
-use crate::{core::ToLua, scaners::common::{MagicElement, Mastery, ResourcesModel, Town}};
+use crate::{
+    core::ToLua,
+    scaners::common::{MagicElement, Mastery, ResourcesModel, Town},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "creatures")]
@@ -40,34 +43,34 @@ pub struct Model {
     pub base_creature: String,
     pub pair_creature: String,
     pub abilities: AbilitiesModel,
-    pub upgrades: UpgradesModel
+    pub upgrades: UpgradesModel,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct SpellWithMasteryModel {
     pub spell: String,
-    pub mastery: Mastery
+    pub mastery: Mastery,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct KnownSpellsModel {
-    pub spells: Vec<SpellWithMasteryModel>
+    pub spells: Vec<SpellWithMasteryModel>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct MagicElementModel {
     pub first: MagicElement,
-    pub second: MagicElement
+    pub second: MagicElement,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct AbilitiesModel {
-    pub abilities: Vec<String>
+    pub abilities: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct UpgradesModel {
-    pub upgrades: Vec<String>
+    pub upgrades: Vec<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -89,25 +92,27 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             is_flying: value.Flying,
             known_spells: if let Some(spells) = value.KnownSpells.spells {
                 KnownSpellsModel {
-                    spells: spells.iter().map(|spell| {
-                        SpellWithMasteryModel {
+                    spells: spells
+                        .iter()
+                        .map(|spell| SpellWithMasteryModel {
                             spell: spell.Spell.clone(),
-                            mastery: Mastery::from_str(&spell.Mastery).unwrap_or(Mastery::MasteryNone)
-                        }
-                    }).collect::<Vec<SpellWithMasteryModel>>()
+                            mastery: Mastery::from_str(&spell.Mastery)
+                                .unwrap_or(Mastery::MasteryNone),
+                        })
+                        .collect::<Vec<SpellWithMasteryModel>>(),
                 }
             } else {
-                KnownSpellsModel {
-                    spells: vec![]
-                }
+                KnownSpellsModel { spells: vec![] }
             },
             spell_points: value.SpellPoints as i32,
             exp: value.Exp as i32,
             power: value.Power as i32,
             tier: value.CreatureTier as i32,
-            magic_element: MagicElementModel { 
-                first: MagicElement::from_str(&value.MagicElement.First).unwrap_or(MagicElement::ElementNone), 
-                second: MagicElement::from_str(&value.MagicElement.Second).unwrap_or(MagicElement::ElementNone) 
+            magic_element: MagicElementModel {
+                first: MagicElement::from_str(&value.MagicElement.First)
+                    .unwrap_or(MagicElement::ElementNone),
+                second: MagicElement::from_str(&value.MagicElement.Second)
+                    .unwrap_or(MagicElement::ElementNone),
             },
             town: Town::from_str(&value.CreatureTown).unwrap_or(Town::TownNoType),
             grow: value.WeeklyGrowth as i32,
@@ -119,7 +124,7 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                 sulfur: value.Cost.Sulfur as i32,
                 crystal: value.Cost.Crystal as i32,
                 gem: value.Cost.Gem as i32,
-                gold: value.Cost.Gold as i32
+                gold: value.Cost.Gold as i32,
             },
             shared: if let Some(shared) = value.MonsterShared {
                 shared.href.unwrap_or(String::new())
@@ -129,19 +134,43 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             size: value.CombatSize as i32,
             range: value.Range as i32,
             name_txt: if let Some(ref visual) = value.VisualExplained {
-                visual.CreatureNameFileRef.as_ref().unwrap_or(&FileRef { href: Some(String::new()) }).href.clone().unwrap_or(String::new())
+                visual
+                    .CreatureNameFileRef
+                    .as_ref()
+                    .unwrap_or(&FileRef {
+                        href: Some(String::new()),
+                    })
+                    .href
+                    .clone()
+                    .unwrap_or(String::new())
             } else {
                 String::new()
             },
             name: Default::default(),
             desc_txt: if let Some(ref visual) = value.VisualExplained {
-                visual.DescriptionFileRef.as_ref().unwrap_or(&FileRef { href: Some(String::new()) }).href.clone().unwrap_or(String::new())
+                visual
+                    .DescriptionFileRef
+                    .as_ref()
+                    .unwrap_or(&FileRef {
+                        href: Some(String::new()),
+                    })
+                    .href
+                    .clone()
+                    .unwrap_or(String::new())
             } else {
                 String::new()
             },
             desc: Default::default(),
             icon_xdb: if let Some(ref visual) = value.VisualExplained {
-                visual.Icon128.as_ref().unwrap_or(&FileRef { href: Some(String::new()) }).href.clone().unwrap_or(String::new())
+                visual
+                    .Icon128
+                    .as_ref()
+                    .unwrap_or(&FileRef {
+                        href: Some(String::new()),
+                    })
+                    .href
+                    .clone()
+                    .unwrap_or(String::new())
             } else {
                 String::new()
             },
@@ -150,31 +179,41 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                     abilities
                 } else {
                     vec![]
-                }
+                },
             },
             upgrades: UpgradesModel {
                 upgrades: if let Some(upgrades) = value.Upgrades.upgrages {
                     upgrades
                 } else {
                     vec![]
-                }
+                },
             },
             base_creature: value.BaseCreature.unwrap_or("CREATURE_UNKNOWN".to_string()),
-            pair_creature: value.PairCreature
+            pair_creature: value.PairCreature,
         }
     }
 }
 
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
-        let is_generatable = if self.is_generatable == true {"1"} else {"nil"};
-        let is_flying = if self.is_flying == true {"1"} else {"nil"};
-        let is_upgrade = if self.base_creature == "CREATURE_UNKNOWN" && self.upgrades.upgrades.len() > 0 { "nil" } else { "1" };
+        let is_generatable = if self.is_generatable == true {
+            "1"
+        } else {
+            "nil"
+        };
+        let is_flying = if self.is_flying == true { "1" } else { "nil" };
+        let is_upgrade =
+            if self.base_creature == "CREATURE_UNKNOWN" && self.upgrades.upgrades.len() > 0 {
+                "nil"
+            } else {
+                "1"
+            };
         let abilities_string = self.abilities.abilities.iter().join(", ");
-        let spells_string = self.known_spells.spells.iter()
-            .map(|s| {
-                format!("[{}] = {}", &s.spell, &s.mastery)
-            })
+        let spells_string = self
+            .known_spells
+            .spells
+            .iter()
+            .map(|s| format!("[{}] = {}", &s.spell, &s.mastery))
             .join(", ");
         format!(
             "\t[{}] = {{
@@ -204,13 +243,13 @@ impl ToLua for Model {
         is_flying = {},
         abilities = {{{}}},
         known_spells = {{{}}}
-    }},\n", 
+    }},\n",
             self.id,
             is_generatable,
-            is_upgrade, 
-            self.attack, 
-            self.defence, 
-            self.min_damage, 
+            is_upgrade,
+            self.attack,
+            self.defence,
+            self.min_damage,
             self.max_damage,
             self.speed,
             self.initiative,

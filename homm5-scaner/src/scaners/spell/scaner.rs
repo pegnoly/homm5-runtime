@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use homm5_types::{common::FileRef, spell::SpellShared};
-use quick_xml::{events::Event, Reader};
+use quick_xml::{Reader, events::Event};
 
 use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure_path};
 

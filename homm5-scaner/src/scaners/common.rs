@@ -1,8 +1,19 @@
-use sea_orm::{prelude::*, FromJsonQueryResult};
+use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
+#[derive(
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    Display,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum Town {
     #[sea_orm(string_value = "TOWN_NO_TYPE")]
@@ -40,10 +51,21 @@ pub enum Town {
     #[sea_orm(string_value = "TOWN_STRONGHOLD")]
     #[serde(rename = "TOWN_STRONGHOLD")]
     #[strum(serialize = "TOWN_STRONGHOLD")]
-    TownStronghold
+    TownStronghold,
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
+#[derive(
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    Display,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum HeroClass {
     #[sea_orm(string_value = "HERO_CLASS_NONE")]
@@ -81,10 +103,21 @@ pub enum HeroClass {
     #[sea_orm(string_value = "HERO_CLASS_BARBARIAN")]
     #[serde(rename = "HERO_CLASS_BARBARIAN")]
     #[strum(serialize = "HERO_CLASS_BARBARIAN")]
-    Barbarian
+    Barbarian,
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
+#[derive(
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    Display,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum Mastery {
     #[sea_orm(string_value = "MASTERY_NONE")]
@@ -106,10 +139,21 @@ pub enum Mastery {
     #[sea_orm(string_value = "MASTERY_EXTRA_EXPERT")]
     #[serde(rename = "MASTERY_EXTRA_EXPERT")]
     #[strum(serialize = "MASTERY_EXTRA_EXPERT")]
-    MasteryExtraExpert
+    MasteryExtraExpert,
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, PartialEq, Eq, Clone, Serialize, Deserialize, EnumString, Display)]
+#[derive(
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    EnumString,
+    Display,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum MagicElement {
     #[sea_orm(string_value = "ELEMENT_NONE")]
@@ -131,7 +175,7 @@ pub enum MagicElement {
     #[sea_orm(string_value = "ELEMENT_EARTH")]
     #[serde(rename = "ELEMENT_EARTH")]
     #[strum(serialize = "ELEMENT_EARTH")]
-    ElementEarth
+    ElementEarth,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize, FromJsonQueryResult)]
@@ -142,5 +186,5 @@ pub struct ResourcesModel {
     pub sulfur: i32,
     pub crystal: i32,
     pub gem: i32,
-    pub gold: i32
+    pub gold: i32,
 }

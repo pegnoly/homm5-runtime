@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
-use homm5_types::{common::FileRef, creature::{AdvMapCreatureShared, CreatureVisual}};
-use quick_xml::{events::Event, Reader};
+use homm5_types::{
+    common::FileRef,
+    creature::{AdvMapCreatureShared, CreatureVisual},
+};
+use quick_xml::{Reader, events::Event};
 
 use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure_path};
 
@@ -165,16 +168,20 @@ impl Scan for CreatureScaner {
                                             let mut db_model = super::model::Model::from(creature);
                                             db_model.id = self.id;
                                             if !db_model.name_txt.is_empty() {
-                                                if let Some(name_data) = files.get(&db_model.name_txt) {
+                                                if let Some(name_data) =
+                                                    files.get(&db_model.name_txt)
+                                                {
                                                     db_model.name = name_data.content.clone();
                                                 }
-                                            } 
+                                            }
                                             if !db_model.desc_txt.is_empty() {
-                                                if let Some(desc_data) = files.get(&db_model.desc_txt) {
+                                                if let Some(desc_data) =
+                                                    files.get(&db_model.desc_txt)
+                                                {
                                                     db_model.desc = desc_data.content.clone();
                                                 }
-                                            } 
-                                            break Ok(Some(db_model))
+                                            }
+                                            break Ok(Some(db_model));
                                         }
                                         Err(e) => {
                                             println!(

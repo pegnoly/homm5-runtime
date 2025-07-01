@@ -1,9 +1,12 @@
 use std::str::FromStr;
 
+use crate::{
+    core::ToLua,
+    scaners::common::{HeroClass, Mastery, Town},
+};
 use homm5_types::hero::AdvMapHeroShared;
-use sea_orm::{prelude::*, FromJsonQueryResult};
+use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
-use crate::{core::ToLua, scaners::common::{HeroClass, Mastery, Town}};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "heroes")]
@@ -22,13 +25,13 @@ pub struct Model {
     pub spec_icon: String,
     pub icon: String,
     pub town: Town,
-    pub editable: Editable
+    pub editable: Editable,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct SkillWithMasteryModel {
     pub mastery: Mastery,
-    pub skill: String
+    pub skill: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -36,7 +39,7 @@ pub struct Editable {
     pub name_txt: String,
     pub name: String,
     pub bio_txt: String,
-    pub bio: String
+    pub bio: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -56,8 +59,9 @@ impl From<AdvMapHeroShared> for Model {
             class: HeroClass::from_str(&value.Class).unwrap_or(HeroClass::None),
             specialization: value.Specialization,
             primary_skill: SkillWithMasteryModel {
-                mastery: Mastery::from_str(&value.PrimarySkill.Mastery).unwrap_or(Mastery::MasteryNone),
-                skill: value.PrimarySkill.SkillID
+                mastery: Mastery::from_str(&value.PrimarySkill.Mastery)
+                    .unwrap_or(Mastery::MasteryNone),
+                skill: value.PrimarySkill.SkillID,
             },
             script_name: value.InternalName,
             spec_name_txt: if let Some(ref file) = value.SpecializationNameFileRef {
@@ -95,8 +99,8 @@ impl From<AdvMapHeroShared> for Model {
                 } else {
                     String::new()
                 },
-                bio: Default::default()
-            }
+                bio: Default::default(),
+            },
         }
     }
 }
@@ -104,7 +108,7 @@ impl From<AdvMapHeroShared> for Model {
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
         // let is_scenario_lua = if self.ScenarioHero == true {"1"} else {"nil"};
-            format!(
+        format!(
             "\t[\"{}\"] = {{
         hero_class = {},
         spec = {},
@@ -115,14 +119,14 @@ impl ToLua for Model {
         town = {},
         name = \"{}\",
         bio = \"{}\"
-    }},\n", 
-            self.script_name, 
-            // is_scenario_lua, 
-            self.class, 
-            self.specialization, 
-            self.spec_name_txt, 
-            self.spec_desc_txt, 
-            self.spec_icon, 
+    }},\n",
+            self.script_name,
+            // is_scenario_lua,
+            self.class,
+            self.specialization,
+            self.spec_name_txt,
+            self.spec_desc_txt,
+            self.spec_icon,
             self.icon,
             self.town,
             self.editable.name_txt,

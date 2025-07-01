@@ -21,10 +21,21 @@ pub struct Model {
     pub level: i32,
     pub school: MagicSchoolType,
     pub is_aimed: bool,
-    pub is_area: bool
+    pub is_area: bool,
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
+#[derive(
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    Display,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum MagicSchoolType {
     #[sea_orm(string_value = "MAGIC_SCHOOL_NONE")]
@@ -58,11 +69,11 @@ pub enum MagicSchoolType {
     #[sea_orm(string_value = "MAGIC_SCHOOL_RUNIC")]
     #[serde(rename = "MAGIC_SCHOOL_RUNIC")]
     #[strum(serialize = "MAGIC_SCHOOL_RUNIC")]
-    Runic, 
+    Runic,
     #[sea_orm(string_value = "MAGIC_SCHOOL_WARCRIES")]
     #[serde(rename = "MAGIC_SCHOOL_WARCRIES")]
     #[strum(serialize = "MAGIC_SCHOOL_WARCRIES")]
-    Warcries    
+    Warcries,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -95,15 +106,15 @@ impl From<SpellShared> for Model {
             level: value.Level as i32,
             school: MagicSchoolType::from_str(&value.MagicSchool).unwrap_or(MagicSchoolType::None),
             is_aimed: value.IsAimed,
-            is_area: value.IsAreaAttack
+            is_area: value.IsAreaAttack,
         }
     }
 }
 
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
-        let is_aimed = if self.is_aimed == true {"1"} else {"nil"};
-        let is_area = if self.is_area == true {"1"} else {"nil"};
+        let is_aimed = if self.is_aimed == true { "1" } else { "nil" };
+        let is_area = if self.is_area == true { "1" } else { "nil" };
         format!(
             "\t[{}] = {{
         name = \"{}\",
@@ -113,7 +124,7 @@ impl ToLua for Model {
         level = {},
         is_aimed = {},
         is_area = {}
-    }},\n", 
+    }},\n",
             self.id,
             self.name_txt,
             self.desc_txt,

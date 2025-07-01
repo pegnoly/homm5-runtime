@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use homm5_types::{art::AdvMapArtifactShared, common::FileRef};
-use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure_path};
 use super::model;
+use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure_path};
+use homm5_types::{art::AdvMapArtifactShared, common::FileRef};
+use std::collections::HashMap;
 
 pub struct ArtScaner {
     pub id: i32,
@@ -20,8 +20,16 @@ impl Scan for ArtScaner {
             quick_xml::de::from_str(entity);
         match art_de {
             Ok(mut art) => {
-                let name = configure_path(art.NameFileRef.as_ref().unwrap().href.as_ref(), file_key, files);
-                let desc = configure_path(art.DescriptionFileRef.as_ref().unwrap().href.as_ref(), file_key, files);
+                let name = configure_path(
+                    art.NameFileRef.as_ref().unwrap().href.as_ref(),
+                    file_key,
+                    files,
+                );
+                let desc = configure_path(
+                    art.DescriptionFileRef.as_ref().unwrap().href.as_ref(),
+                    file_key,
+                    files,
+                );
                 let icon_key = art
                     .Icon
                     .as_ref()

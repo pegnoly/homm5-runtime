@@ -17,15 +17,13 @@ use super::{
 use crate::{
     error::EditorToolsError,
     prelude::{
-        AssetArmySlotModel, InitFightAssetPayload, UpdateStackConcreteCreaturesPayload,
-        UpdateStackTiersPayload, UpdateStackTownsPayload,
+        AssetArmySlotModel, InitFightAssetPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
     },
     services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns},
 };
 use itertools::Itertools;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait,
-    IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection, sqlx::SqlitePool,
+    sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection
 };
 
 pub struct FightGeneratorRepo {

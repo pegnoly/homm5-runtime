@@ -20,10 +20,22 @@ pub struct Model {
     pub class: ArtifactClassType,
     pub icon_xdb: String,
     pub cost: i32,
-    pub is_generatable: bool 
+    pub is_generatable: bool,
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Hash, Display)]
+#[derive(
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    Hash,
+    Display,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum ArtifactSlotType {
     #[sea_orm(string_value = "PRIMARY")]
@@ -65,10 +77,21 @@ pub enum ArtifactSlotType {
     #[sea_orm(string_value = "INVENTORY")]
     #[serde(rename = "INVENTORY")]
     #[strum(serialize = "INVENTORY")]
-    Inventory
+    Inventory,
 }
 
-#[derive(Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display)]
+#[derive(
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    Display,
+)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum ArtifactClassType {
     #[sea_orm(string_value = "ARTF_CLASS_MINOR")]
@@ -86,7 +109,7 @@ pub enum ArtifactClassType {
     #[sea_orm(string_value = "ARTF_CLASS_GRAIL")]
     #[serde(rename = "ARTF_CLASS_GRAIL")]
     #[strum(serialize = "ARTF_CLASS_GRAIL")]
-    Grail
+    Grail,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -118,14 +141,18 @@ impl From<AdvMapArtifactShared> for Model {
                 String::new()
             },
             cost: value.CostOfGold as i32,
-            is_generatable: value.CanBeGeneratedToSell
+            is_generatable: value.CanBeGeneratedToSell,
         }
     }
 }
 
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
-        let is_sellable = if self.is_generatable == true {"1"} else {"nil"};
+        let is_sellable = if self.is_generatable == true {
+            "1"
+        } else {
+            "nil"
+        };
         format!(
             "\t[{}] = {{
         is_sellable = {},
@@ -135,7 +162,7 @@ impl ToLua for Model {
         cost = {},
         slot = {},
         type = {}
-    }},\n", 
+    }},\n",
             self.id,
             is_sellable,
             self.name_txt,

@@ -1,12 +1,22 @@
-import { useEffect, useState } from 'react';
+import { ComponentType, ReactNode, useEffect, useState } from 'react';
 import { Text, TextInput, Button, Group, Box } from '@mantine/core';
 import { IconCheck, IconPencilCheck } from '@tabler/icons-react';
+
+export type EditablePropertyWrapperProps = {
+  children: ReactNode,
+  value: string
+}
+
+export type EditablePropertyWrapper = {
+  component: ComponentType<EditablePropertyWrapperProps>,
+};
 
 function EditableProperty(params: {
   type?: "input" | "textarea"
   label: string,
   initialValue: string,
-  onSave: (value: string) => void
+  onSave: (value: string) => void,
+  tooltip?: EditablePropertyWrapper
 }) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [value, setValue] = useState<string>(params.initialValue);
@@ -43,18 +53,33 @@ function EditableProperty(params: {
           </Button>
         </Group>
       ) : (
-        <div style={{display: 'flex', flexDirection: 'row', gap: '2.5%', alignItems: 'center'}}>
-          <Button
-            variant="transparent"
-            size='xs'
-            onClick={() => setIsEditing(true)}
-            // leftSection={<IconPencilCheck size={15} />}
-          >
-            <IconPencilCheck/>
-          </Button>
-          <Text style={{fontWeight: 'bold', fontFamily: 'cursive'}}>{params.label}</Text>
-          <Text>{value}</Text>
-        </div>
+        (
+          params.tooltip ? 
+          <params.tooltip.component value={value}>
+            <div style={{display: 'flex', flexDirection: 'row', gap: '2.5%', alignItems: 'center'}}>
+              <Button
+                variant="transparent"
+                size='xs'
+                onClick={() => setIsEditing(true)}
+              >
+                <IconPencilCheck/>
+              </Button>
+              <Text style={{fontWeight: 'bold', fontFamily: 'cursive'}}>{params.label}</Text>
+              <Text>{value}</Text>
+            </div>
+          </params.tooltip.component> :
+          <div style={{display: 'flex', flexDirection: 'row', gap: '2.5%', alignItems: 'center'}}>
+            <Button
+              variant="transparent"
+              size='xs'
+              onClick={() => setIsEditing(true)}
+            >
+              <IconPencilCheck/>
+            </Button>
+            <Text style={{fontWeight: 'bold', fontFamily: 'cursive'}}>{params.label}</Text>
+            <Text>{value}</Text>
+          </div>
+        )
       )}
     </Box>
   </>

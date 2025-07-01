@@ -2,6 +2,7 @@ import { AssetGenerationType } from '../../types';
 import DifficultyValues from '../common/difficultyValues';
 import styles from '../styles.module.css';
 import FightAssetCurrentStackData from './data';
+import AverageCreaturesTooltip from './helper';
 import { useBasePowers, useConcreteCounts, useCountGenerationMode, useCurrentStackActions, useCurrentStackId, usePowerBasetGenerationType, usePowersGrow } from './store';
 import { StackCountGenerationType } from './types';
 
@@ -9,7 +10,9 @@ function FightAssetStackCountsData() {
     const countGenerationType = useCountGenerationMode();
     return (
     <div className={styles.stack_counts_panel}>
-        <FightAssetCurrentStackData/>
+        <div style={{display: 'flex', flexDirection: 'row', gap: '5%'}}>
+            <FightAssetCurrentStackData/>
+        </div>
         {
             countGenerationType == StackCountGenerationType.PowerBased ?
             <PowerBasedSelector/> :
@@ -52,6 +55,7 @@ function PowerBasedSelector() {
                 values={basePowers!}
                 updateCallback={actions.setBasePowers}
                 containerId={currentStackId!}
+                tooltipComponent={{component: AverageCreaturesTooltip}}
             />
         </div>
         {
@@ -63,6 +67,7 @@ function PowerBasedSelector() {
                     values={powersGrow!}
                     updateCallback={actions.setPowersGrow}
                     containerId={currentStackId!}
+                    tooltipComponent={{component: AverageCreaturesTooltip}}
                 />
             </div> :
             null

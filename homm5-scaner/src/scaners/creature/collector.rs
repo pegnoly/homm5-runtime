@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
-use quick_xml::{events::Event, Reader};
+use quick_xml::{Reader, events::Event};
 
-use crate::{core::{CollectFiles, FileObjects}, error::ScanerError, pak::FileStructure};
+use crate::{
+    core::{CollectFiles, FileObjects},
+    error::ScanerError,
+    pak::FileStructure,
+};
 
 pub struct CreatureFilesCollector;
 

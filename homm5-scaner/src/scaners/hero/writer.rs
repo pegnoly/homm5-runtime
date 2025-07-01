@@ -1,24 +1,33 @@
 use std::{fs::File, io::Write};
 
-use sea_orm::{sea_query::OnConflict, DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait};
-use zip::{write::FileOptions, ZipWriter};
+use sea_orm::{
+    DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait,
+    sea_query::OnConflict,
+};
+use zip::{ZipWriter, write::FileOptions};
 
-use crate::{core::{Output, ToLua}, error::ScanerError};
+use crate::{
+    core::{Output, ToLua},
+    error::ScanerError,
+};
 
 use super::model::Column;
 
 pub struct HeroDataOutput<'a> {
     entities: Vec<super::model::Model>,
-    db: &'a DatabaseConnection
+    db: &'a DatabaseConnection,
 }
 
 impl<'a> HeroDataOutput<'a> {
     pub fn new(db: &'a DatabaseConnection) -> Self {
-        HeroDataOutput { entities: vec![], db }
+        HeroDataOutput {
+            entities: vec![],
+            db,
+        }
     }
 }
 
-impl<'a> Output for HeroDataOutput<'a> { 
+impl<'a> Output for HeroDataOutput<'a> {
     type Input = super::model::Model;
 
     fn output_single(&mut self, object: Self::Input) -> Result<(), ScanerError> {
@@ -31,17 +40,19 @@ impl<'a> Output for HeroDataOutput<'a> {
         let on_conflict = OnConflict::new()
             .update_columns(
                 super::model::Column::iter()
-                    .filter_map(|column| {
-                        match column {
-                            Column::Id => None,
-                            _=> Some(column)
-                        }
+                    .filter_map(|column| match column {
+                        Column::Id => None,
+                        _ => Some(column),
                     })
-                    .collect::<Vec<super::model::Column>>()
-            ).to_owned();
+                    .collect::<Vec<super::model::Column>>(),
+            )
+            .to_owned();
         for entity in &self.entities {
             let active_model = entity.clone().into_active_model();
-            super::model::Entity::insert(active_model).on_conflict(on_conflict.clone()).exec(&transaction).await?;
+            super::model::Entity::insert(active_model)
+                .on_conflict(on_conflict.clone())
+                .exec(&transaction)
+                .await?;
         }
         transaction.commit().await?;
 

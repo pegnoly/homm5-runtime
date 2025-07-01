@@ -1,14 +1,15 @@
 import { invoke } from "@tauri-apps/api/core";
 import { Text } from "@mantine/core";
 import { DifficultyMappedValue, DifficultyType, gameDifficultyNames } from "../../types";
-import EditableProperty from "../../../../../common/editableProperty";
+import EditableProperty, { EditablePropertyWrapper } from "../../../../../common/editableProperty";
 
 function DifficultyValues(params: {
     name: string,
     containerId: number, 
     values: DifficultyMappedValue, 
     updateCallback: (newValues: DifficultyMappedValue) => void,
-    tauriFunction: string
+    tauriFunction: string,
+    tooltipComponent?: EditablePropertyWrapper
 }) {
 
     async function updateEasyValue(newValue: string) {
@@ -50,21 +51,25 @@ function DifficultyValues(params: {
                 label={gameDifficultyNames.get(DifficultyType.Easy)!} 
                 initialValue={params.values.data[DifficultyType.Easy].toString()}
                 onSave={updateEasyValue}
+                tooltip={params.tooltipComponent != undefined ? {component: params.tooltipComponent?.component!} : undefined}
             />
             <EditableProperty 
                 label={gameDifficultyNames.get(DifficultyType.Medium)!} 
                 initialValue={params.values.data[DifficultyType.Medium].toString()} 
                 onSave={updateMediumValue}
+                tooltip={params.tooltipComponent != undefined ? {component: params.tooltipComponent?.component!} : undefined}
             />
             <EditableProperty 
                 label={gameDifficultyNames.get(DifficultyType.Hard)!} 
                 initialValue={params.values.data[DifficultyType.Hard].toString()} 
                 onSave={updateHardValue}
+                tooltip={params.tooltipComponent != undefined ? {component: params.tooltipComponent?.component!} : undefined}
             />
             <EditableProperty 
                 label={gameDifficultyNames.get(DifficultyType.Heroic)!} 
                 initialValue={params.values.data[DifficultyType.Heroic].toString()} 
                 onSave={updateHeroicValue}
+                tooltip={params.tooltipComponent != undefined ? {component: params.tooltipComponent?.component!} : undefined}
             />
         </div>
     </div>

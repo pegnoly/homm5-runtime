@@ -92,7 +92,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                         },
                                     );
                                 }
-                            },
+                            }
                             Err(_error) => {
                                 files.insert(
                                     name.to_lowercase().replace("\\", "/"),
@@ -154,7 +154,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                     },
                                 );
                             }
-                        },
+                        }
                         Err(_error) => {
                             files.insert(
                                 name.to_lowercase().replace("\\", "/"),

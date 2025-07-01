@@ -1,17 +1,35 @@
+use sea_orm::{
+    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect,
+    SqlxSqlitePoolConnection, prelude::Expr, sea_query::SimpleExpr, sqlx::SqlitePool,
+};
 use std::{collections::HashMap, path::PathBuf};
 
-use sea_orm::{sqlx::SqlitePool, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, SqlxSqlitePoolConnection};
-
-use crate::{core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{ArtifactDBColumn, ArtifactDBModel, CreatureDBColumn, CreatureDBModel}, scaners::{self, prelude::{ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput, CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner, SpellDataOutput, SpellFileCollector, SpellScaner}}};
+use crate::{
+    core::ScanProcessor,
+    error::ScanerError,
+    pak::{self, EXTENSIONS, FileStructure},
+    prelude::{
+        ArtifactDBColumn, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel,
+        Town,
+    },
+    scaners::{
+        self,
+        prelude::{
+            ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput,
+            CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner,
+            SpellDataOutput, SpellFileCollector, SpellScaner,
+        },
+    },
+};
 
 pub struct ScanerService {
-    db: DatabaseConnection
+    db: DatabaseConnection,
 }
 
 impl ScanerService {
     pub fn new(pool: SqlitePool) -> Self {
         ScanerService {
-            db: DatabaseConnection::SqlxSqlitePoolConnection(SqlxSqlitePoolConnection::from(pool))
+            db: DatabaseConnection::SqlxSqlitePoolConnection(SqlxSqlitePoolConnection::from(pool)),
         }
     }
 
@@ -31,50 +49,99 @@ impl ScanerService {
         }
 
         let mut creature_scan_processor = ScanProcessor::new(
-            CreatureFilesCollector, 
-            CreatureScaner {id: -1}, 
-            CreatureDataOutput::new(&self.db)
+            CreatureFilesCollector,
+            CreatureScaner { id: -1 },
+            CreatureDataOutput::new(&self.db),
         );
 
         let mut hero_scan_processor = ScanProcessor::new(
-            HeroFilesCollector, 
-            HeroScaner::new(), 
-            HeroDataOutput::new(&self.db)
+            HeroFilesCollector,
+            HeroScaner::new(),
+            HeroDataOutput::new(&self.db),
         );
 
         let mut artifact_scan_processor = ScanProcessor::new(
             ArtFileCollector,
-            ArtScaner { id: -1 }, 
-            ArtifactDataOutput::new(&self.db)
+            ArtScaner { id: -1 },
+            ArtifactDataOutput::new(&self.db),
         );
 
         let mut spell_scan_processor = ScanProcessor::new(
             SpellFileCollector,
-            SpellScaner { id: 0 }, 
-            SpellDataOutput::new(&self.db)
+            SpellScaner { id: 0 },
+            SpellDataOutput::new(&self.db),
         );
 
         let zip_file = std::fs::File::create(output_path).unwrap();
         let mut zip_writer = zip::ZipWriter::new(zip_file);
 
-        creature_scan_processor.run(&mut files, &mut zip_writer).await.unwrap();
-        hero_scan_processor.run(&mut files, &mut zip_writer).await.unwrap();
-        artifact_scan_processor.run(&mut files, &mut zip_writer).await.unwrap();
-        spell_scan_processor.run(&mut files, &mut zip_writer).await.unwrap();
+        creature_scan_processor
+            .run(&mut files, &mut zip_writer)
+            .await
+            .unwrap();
+        hero_scan_processor
+            .run(&mut files, &mut zip_writer)
+            .await
+            .unwrap();
+        artifact_scan_processor
+            .run(&mut files, &mut zip_writer)
+            .await
+            .unwrap();
+        spell_scan_processor
+            .run(&mut files, &mut zip_writer)
+            .await
+            .unwrap();
     }
 
     pub async fn get_artifact_models(&self) -> Result<Vec<ArtifactDBModel>, ScanerError> {
-        Ok(scaners::prelude::ArtifactDBEntity::find().filter(ArtifactDBColumn::IsGeneratable.eq(true)).all(&self.db).await?)
+        Ok(scaners::prelude::ArtifactDBEntity::find()
+            .filter(ArtifactDBColumn::IsGeneratable.eq(true))
+            .all(&self.db)
+            .await?)
     }
 
     pub async fn get_creature_models(&self) -> Result<Vec<CreatureDBModel>, ScanerError> {
-        Ok(
-            scaners::prelude::CreatureDBEntity::find()
-                .filter(CreatureDBColumn::Initiative.between(2, 30))
-                .filter(CreatureDBColumn::Speed.between(2, 30))
-                .filter(CreatureDBColumn::Power.between(2, 100000))
-                .all(&self.db)
-                .await?
-        )
+        Ok(scaners::prelude::CreatureDBEntity::find()
+            .filter(CreatureDBColumn::Initiative.between(2, 30))
+            .filter(CreatureDBColumn::Speed.between(2, 30))
+            .filter(CreatureDBColumn::Power.between(2, 100000))
+            .all(&self.db)
+            .await?)
+    }
+
+    pub async fn get_average_counts_for_power(
+        &self,
+        power: i32,
+        towns: Vec<Town>,
+        tiers: Vec<i32>,
+    ) -> Result<Option<i32>, ScanerError> {
+        let towns_condition = Condition::all().add_option(if towns.len() > 0 {
+            Some(Expr::col(CreatureDBColumn::Town).is_in(towns))
+        } else {
+            None::<SimpleExpr>
+        });
+        let tiers_condition = Condition::all().add_option(if tiers.len() > 0 {
+            Some(Expr::col(CreatureDBColumn::Tier).is_in(tiers))
+        } else {
+            None::<SimpleExpr>
+        });
+
+        let data = CreatureDBEntity::find()
+            .filter(towns_condition)
+            .filter(tiers_condition)
+            .filter(CreatureDBColumn::Id.between(1, 179))
+            .select_only()
+            .column_as(CreatureDBColumn::Power.sum(), "sum")
+            .column_as(CreatureDBColumn::Power.count(), "count")
+            .into_tuple::<(i32, i64)>()
+            .one(&self.db)
+            .await?;
+
+        if let Some(data) = data {
+            let average_power = data.0 / data.1 as i32;
+            Ok(Some(power / average_power as i32))
+        } else {
+            Ok(None)
+        }
     }
 }
