@@ -188,7 +188,7 @@ function CreatureSelector(params: {
         filter={optionsFilter}
         value={creatures.filter(i => concreteCreatures?.ids.includes(i.id)).map(i => i.id.toString())}
         data={creatures.map(c => ({
-            value: c.id.toString(), label: c.name
+            value: c.id.toString(), label: c.inner_name ? c.inner_name : c.name
         }))}
     />
     )

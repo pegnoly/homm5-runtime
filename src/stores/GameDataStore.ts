@@ -21,7 +21,7 @@ export type CreatureModel = {
     grow: number,
     is_generatable: boolean,
     name: string,
-
+    inner_name: string | null
 }
 
 type Data = {
