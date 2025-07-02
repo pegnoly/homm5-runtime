@@ -2,9 +2,10 @@ import { AssetGenerationType } from '../../types';
 import DifficultyValues from '../common/difficultyValues';
 import styles from '../styles.module.css';
 import FightAssetCurrentStackData from './data';
-import AverageCreaturesTooltip from './helper';
-import { useBasePowers, useConcreteCounts, useCountGenerationMode, useCurrentStackActions, useCurrentStackId, usePowerBasetGenerationType, usePowersGrow } from './store';
-import { StackCountGenerationType } from './types';
+import { useBasePowers, useConcreteCounts, useCountGenerationMode, useCurrentStackActions, useCurrentStackId, usePowerBasetGenerationType, usePowersGrow, useTypeGenerationMode } from './store';
+import ConcreteCreaturesTooltip from './tooltips/concreteCreaturesTooltip';
+import AverageTownsTiersTooltip from './tooltips/towsTiersTooltip';
+import { StackCountGenerationType, StackUnitGenerationType } from './types';
 
 function FightAssetStackCountsData() {
     const countGenerationType = useCountGenerationMode();
@@ -46,31 +47,63 @@ function PowerBasedSelector() {
     const basePowers = useBasePowers();
     const powersGrow = usePowersGrow();
     const actions = useCurrentStackActions();
+    const typeGenerationMode = useTypeGenerationMode()
 
     return <div style={{display: 'flex', width: '100%', flexDirection: 'row', justifyContent: 'space-between'}}>
-        <div style={{width: '50%', display: 'flex'}}>
-            <DifficultyValues
-                name="Stack base powers"
-                tauriFunction="update_stack_base_powers"
-                values={basePowers!}
-                updateCallback={actions.setBasePowers}
-                containerId={currentStackId!}
-                tooltipComponent={{component: AverageCreaturesTooltip}}
-            />
-        </div>
         {
-            generationType == AssetGenerationType.Dynamic ?
-            <div style={{width: '50%', display: 'flex'}}>
-                <DifficultyValues
-                    name="Stack powers grow"
-                    tauriFunction="update_stack_powers_grow"
-                    values={powersGrow!}
-                    updateCallback={actions.setPowersGrow}
-                    containerId={currentStackId!}
-                    tooltipComponent={{component: AverageCreaturesTooltip}}
-                />
-            </div> :
-            null
+            typeGenerationMode == StackUnitGenerationType.TierSlotBased ?
+            <>
+                <div style={{width: '50%', display: 'flex'}}>
+                    <DifficultyValues
+                        name="Stack base powers"
+                        tauriFunction="update_stack_base_powers"
+                        values={basePowers!}
+                        updateCallback={actions.setBasePowers}
+                        containerId={currentStackId!}
+                        tooltipComponent={{component: AverageTownsTiersTooltip}}
+                    />
+                </div>
+                {
+                    generationType == AssetGenerationType.Dynamic ?
+                    <div style={{width: '50%', display: 'flex'}}>
+                        <DifficultyValues
+                            name="Stack powers grow"
+                            tauriFunction="update_stack_powers_grow"
+                            values={powersGrow!}
+                            updateCallback={actions.setPowersGrow}
+                            containerId={currentStackId!}
+                            tooltipComponent={{component: AverageTownsTiersTooltip}}
+                        />
+                    </div> :
+                    null
+                }
+            </> :
+            <>
+                <div style={{width: '50%', display: 'flex'}}>
+                    <DifficultyValues
+                        name="Stack base powers"
+                        tauriFunction="update_stack_base_powers"
+                        values={basePowers!}
+                        updateCallback={actions.setBasePowers}
+                        containerId={currentStackId!}
+                        tooltipComponent={{component: ConcreteCreaturesTooltip}}
+                    />
+                </div>
+                {
+                    generationType == AssetGenerationType.Dynamic ?
+                    <div style={{width: '50%', display: 'flex'}}>
+                        <DifficultyValues
+                            name="Stack powers grow"
+                            tauriFunction="update_stack_powers_grow"
+                            values={powersGrow!}
+                            updateCallback={actions.setPowersGrow}
+                            containerId={currentStackId!}
+                            tooltipComponent={{component: ConcreteCreaturesTooltip}}
+                        />
+                    </div> :
+                    null
+                }
+            </>
         }
     </div>
 }

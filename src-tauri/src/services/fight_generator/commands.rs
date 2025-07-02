@@ -441,6 +441,15 @@ pub async fn get_average_creatures_count(
 }
 
 #[tauri::command]
+pub async fn get_average_concrete_creatures_count(
+    scaner_repo: State<'_, ScanerService>,
+    power: i32,
+    creatures: Vec<i32>
+) -> Result<Option<i32>, Error> {
+    Ok(scaner_repo.get_average_concrete_creatures_count_for_power(power, creatures).await?)
+}
+
+#[tauri::command]
 pub async fn generate_current_hero_script(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     asset_id: i32,

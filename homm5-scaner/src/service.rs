@@ -138,8 +138,36 @@ impl ScanerService {
             .await?;
 
         if let Some(data) = data {
-            let average_power = data.0 / data.1 as i32;
-            Ok(Some(power / average_power as i32))
+            let average_power = (data.0 as f64 / data.1 as f64).ceil();
+            Ok(Some((power as f64 / average_power).ceil() as i32))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn get_average_concrete_creatures_count_for_power(
+        &self,
+        power: i32,
+        creatures: Vec<i32>
+    ) -> Result<Option<i32>, ScanerError> {
+        let condition = Condition::all()
+            .add_option(if creatures.len() > 0 {
+                Some(Expr::col(CreatureDBColumn::Id).is_in(creatures))
+            } else {
+                None::<SimpleExpr>
+            });
+        let data = CreatureDBEntity::find()
+            .filter(condition)
+            .select_only()
+            .column_as(CreatureDBColumn::Power.sum(), "sum")
+            .column_as(CreatureDBColumn::Power.count(), "count")
+            .into_tuple::<(i32, i64)>()
+            .one(&self.db)
+            .await?;
+
+        if let Some(data) = data {
+            let average_power = (data.0 as f64 / data.1 as f64).ceil();
+            Ok(Some((power as f64 / average_power).ceil() as i32))
         } else {
             Ok(None)
         }
