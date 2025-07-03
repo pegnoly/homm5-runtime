@@ -15,7 +15,7 @@ use homm5_scaner::prelude::{
 };
 
 use itertools::Itertools;
-use std::{io::Write, path::PathBuf};
+use std::{collections::HashMap, io::Write, path::PathBuf};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -447,6 +447,16 @@ pub async fn get_average_concrete_creatures_count(
     creatures: Vec<i32>
 ) -> Result<Option<i32>, Error> {
     Ok(scaner_repo.get_average_concrete_creatures_count_for_power(power, creatures).await?)
+}
+
+#[tauri::command]
+pub async fn get_average_artifacts_cost(
+    scaner_repo: State<'_, ScanerService>,
+    artifacts: HashMap<ArtifactSlotType, Vec<i32>>
+) -> Result<Option<i32>, Error> {
+    let artifacts_list = artifacts.into_values().flatten().collect_vec();
+    println!("Artifacts: {:?}", &artifacts_list);
+    Ok(scaner_repo.get_average_artifacts_cost(artifacts_list).await?)
 }
 
 #[tauri::command]

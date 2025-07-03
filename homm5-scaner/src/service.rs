@@ -7,10 +7,9 @@ use std::{collections::HashMap, path::PathBuf};
 use crate::{
     core::ScanProcessor,
     error::ScanerError,
-    pak::{self, EXTENSIONS, FileStructure},
+    pak::{self, FileStructure, EXTENSIONS},
     prelude::{
-        ArtifactDBColumn, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel,
-        Town,
+        ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, Town
     },
     scaners::{
         self,
@@ -168,6 +167,33 @@ impl ScanerService {
         if let Some(data) = data {
             let average_power = (data.0 as f64 / data.1 as f64).ceil();
             Ok(Some((power as f64 / average_power).ceil() as i32))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn get_average_artifacts_cost(
+        &self,
+        artifacts: Vec<i32>
+    ) -> Result<Option<i32>, ScanerError> {
+        let condition = Condition::all()
+            .add_option(if artifacts.len() > 0 {
+                Some(Expr::col(ArtifactDBColumn::Id).is_in(artifacts))
+            } else {
+                None::<SimpleExpr>
+            });
+        let data = ArtifactDBEntity::find()
+            .filter(condition)
+            .select_only()
+            .column_as(ArtifactDBColumn::Cost.sum(), "sum")
+            .column_as(ArtifactDBColumn::Cost.count(), "count")
+            .into_tuple::<(i32, i64)>()
+            .one(&self.db)
+            .await?;
+        
+        if let Some(data) = data {
+            let average_cost = (data.0 as f64 / data.1 as f64).ceil();
+            Ok(Some(average_cost as i32))
         } else {
             Ok(None)
         }

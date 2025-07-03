@@ -1,6 +1,7 @@
 import { AssetGenerationType } from "../../types";
 import DifficultyValues from "../common/difficultyValues";
 import { useArtifactsBasePowers, useArtifactsGenerationType, useArtifactsPowerGrow, useCurrentArtifactsActions, useCurrentArtifactsAssetId } from "./store";
+import AverageArtifactsCostTooltip from "./tooltips/averageArtifactsCost";
 
 function ArtifactsAssetCostsData() {
     const artifactsAssetId = useCurrentArtifactsAssetId();
@@ -17,6 +18,7 @@ function ArtifactsAssetCostsData() {
                 tauriFunction="update_artifacts_base_cost"
                 updateCallback={actions.setBasePowers}
                 values={basePowers!}
+                tooltipComponent={{component: AverageArtifactsCostTooltip}}
             />
         </div>
         {
@@ -28,6 +30,7 @@ function ArtifactsAssetCostsData() {
                 tauriFunction="update_artifacts_cost_grow"
                 updateCallback={actions.setBasePowers}
                 values={powersGrow!}
+                tooltipComponent={{component: AverageArtifactsCostTooltip}}
             />
             </div> :
             null
