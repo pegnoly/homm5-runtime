@@ -19,7 +19,7 @@ use crate::DataContainer;
 pub async fn execute_scan(
     app_manager: State<'_, LocalAppManager>,
     scaner_service: State<'_, ScanerService>,
-) -> Result<(), ()> {
+) -> Result<(), Error> {
     let base_config_locked = app_manager.base_config.read().await;
     let data_path = PathBuf::from(&base_config_locked.data_path);
     let root_folder = data_path.parent().unwrap();
@@ -28,7 +28,7 @@ pub async fn execute_scan(
     let output_path = data_path.join("MCCS_GeneratedFiles.pak");
     scaner_service
         .run(vec![data_path, maps_path, mods_path], output_path)
-        .await;
+        .await?;
     Ok(())
 }
 

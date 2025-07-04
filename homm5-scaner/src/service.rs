@@ -9,7 +9,7 @@ use crate::{
     error::ScanerError,
     pak::{self, FileStructure, EXTENSIONS},
     prelude::{
-        ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, Town
+        AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, Town
     },
     scaners::{
         self,
@@ -32,15 +32,15 @@ impl ScanerService {
         }
     }
 
-    pub async fn run(&self, paths_to_scan: Vec<PathBuf>, output_path: PathBuf) {
+    pub async fn run(&self, paths_to_scan: Vec<PathBuf>, output_path: PathBuf) -> Result<(), ScanerError> {
         let mut files: HashMap<String, FileStructure> = HashMap::new();
         for dir in paths_to_scan {
-            let entries = std::fs::read_dir(&dir).unwrap();
+            let entries = std::fs::read_dir(&dir)?;
             for f in entries {
-                let name = f.as_ref().unwrap().file_name();
+                let name = f?.file_name();
                 if EXTENSIONS
                     .iter()
-                    .any(|e| name.to_str().unwrap().ends_with(e))
+                    .any(|e| name.to_str().unwrap_or("").ends_with(e))
                 {
                     pak::check_pak(dir.join(&name), &mut files);
                 }
@@ -71,25 +71,32 @@ impl ScanerService {
             SpellDataOutput::new(&self.db),
         );
 
-        let zip_file = std::fs::File::create(output_path).unwrap();
+        let mut ability_scan_processor = ScanProcessor::new(
+            AbilityFileCollector, 
+            AbilityScaner { id: -1 }, 
+            AbilityDataOutput::new(&self.db)
+        );
+
+        let zip_file = std::fs::File::create(output_path)?;
         let mut zip_writer = zip::ZipWriter::new(zip_file);
 
         creature_scan_processor
             .run(&mut files, &mut zip_writer)
-            .await
-            .unwrap();
+            .await?;
         hero_scan_processor
             .run(&mut files, &mut zip_writer)
-            .await
-            .unwrap();
+            .await?;
         artifact_scan_processor
             .run(&mut files, &mut zip_writer)
-            .await
-            .unwrap();
+            .await?;
         spell_scan_processor
             .run(&mut files, &mut zip_writer)
-            .await
-            .unwrap();
+            .await?;
+        ability_scan_processor
+            .run(&mut files, &mut zip_writer)
+            .await?;
+
+        Ok(())
     }
 
     pub async fn get_artifact_models(&self) -> Result<Vec<ArtifactDBModel>, ScanerError> {

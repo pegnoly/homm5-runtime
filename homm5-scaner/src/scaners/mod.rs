@@ -4,3 +4,4 @@ mod creature;
 mod hero;
 pub mod prelude;
 mod spell;
+mod ability;
