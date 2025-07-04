@@ -45,7 +45,7 @@ pub struct Model {
     pub abilities: AbilitiesModel,
     pub upgrades: UpgradesModel,
     pub inner_name: Option<String>,
-    pub visual_path: String
+    pub xdb: Option<String>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -193,7 +193,7 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             base_creature: value.BaseCreature.unwrap_or("CREATURE_UNKNOWN".to_string()),
             pair_creature: value.PairCreature,
             inner_name: value.InnerName,
-            visual_path: value.Visual.unwrap_or(FileRef { href: Some(String::new()) }).href.unwrap_or(String::new())
+            xdb: None
         }
     }
 }

@@ -181,6 +181,9 @@ impl Scan for CreatureScaner {
                                                     db_model.desc = desc_data.content.clone();
                                                 }
                                             }
+                                            if self.id < 180 {
+                                                db_model.xdb = Some(entity.clone());
+                                            }
                                             break Ok(Some(db_model));
                                         }
                                         Err(e) => {
