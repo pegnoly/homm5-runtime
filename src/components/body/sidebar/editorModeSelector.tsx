@@ -14,6 +14,7 @@ function EditorModeSelector() {
             <EditorModeLink key={EditorState.ReserveHeroes} label='ReserveHeroes' state={EditorState.ReserveHeroes}/>
             <EditorModeLink key={EditorState.FightGenerator} label='FightGenerator' state={EditorState.FightGenerator}/>
             <EditorModeLink key={EditorState.HeroCreator} label='HeroCreator' state={EditorState.HeroCreator}/>
+            <EditorModeLink key={EditorState.CreatureCopyCreator} label='CreatureCreator' state={EditorState.CreatureCopyCreator}/>
         </List>
     </div>
     )

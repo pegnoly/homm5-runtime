@@ -24,25 +24,36 @@ export type CreatureModel = {
     inner_name: string | null
 }
 
+export type AbilityModel = {
+    id: number,
+    name: string
+}
+
 type Data = {
     artifacts: ArtifactModel[],
-    creatures: CreatureModel[]
+    creatures: CreatureModel[],
+    abilities: AbilityModel[]
 }
 
 type Action = {
-    load_artifacts: (values: ArtifactModel[]) => void
-    load_creatures: (values: CreatureModel[]) => void
+    load_artifacts: (values: ArtifactModel[]) => void,
+    load_creatures: (values: CreatureModel[]) => void,
+    load_abilities: (values: AbilityModel[]) => void
 }
 
 const useGameDataStore = create<Data & Action>((set) => ({
     artifacts: [],
     creatures: [],
+    abilities: [],
 
     load_artifacts(values) {
         set({artifacts: values});
     },
     load_creatures(values) {
         set({creatures: values});
+    },
+    load_abilities(values) {
+        set({abilities: values});
     },
 }))
 

@@ -5,20 +5,16 @@ use sea_orm::{
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
-    core::ScanProcessor,
-    error::ScanerError,
-    pak::{self, FileStructure, EXTENSIONS},
-    prelude::{
-        AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, Town
-    },
-    scaners::{
+    core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{
+        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, Town
+    }, query_models::CreatureXdbModel, scaners::{
         self,
         prelude::{
             ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput,
             CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner,
             SpellDataOutput, SpellFileCollector, SpellScaner,
         },
-    },
+    }
 };
 
 pub struct ScanerService {
@@ -201,6 +197,27 @@ impl ScanerService {
         if let Some(data) = data {
             let average_cost = (data.0 as f64 / data.1 as f64).ceil();
             Ok(Some(average_cost as i32))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn get_abilities(
+        &self
+    ) -> Result<Vec<AbilityDBModel>, ScanerError> {
+        Ok(AbilityDBEntity::find().filter(AbilityDBColumn::Id.between(1, 200)).all(&self.db).await?)
+    }
+
+    pub async fn get_vanilla_creature_xdb(
+        &self,
+        id: i32
+    ) -> Result<Option<String>, ScanerError> {
+        if let Some(model)  = CreatureDBEntity::find_by_id(id)
+            .into_partial_model::<CreatureXdbModel>()
+            .one(&self.db)
+            .await? 
+        {
+            Ok(model.xdb)
         } else {
             Ok(None)
         }

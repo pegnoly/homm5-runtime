@@ -63,6 +63,7 @@ pub async fn run() -> Result<(), Error> {
             commands::select_map,
             commands::apply_modifications,
             commands::create_hero,
+            commands::generate_creature,
             // quest commands
             load_quests,
             load_quest,
@@ -118,6 +119,7 @@ pub async fn run() -> Result<(), Error> {
             // hero generator
             services::fight_generator::commands::load_artifact_models,
             services::fight_generator::commands::load_creature_models,
+            services::fight_generator::commands::load_abilities_models,
             services::fight_generator::commands::pick_hero_lua_generation_directory,
             services::fight_generator::commands::init_new_asset,
             services::fight_generator::commands::load_all_assets,

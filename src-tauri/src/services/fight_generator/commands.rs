@@ -11,7 +11,7 @@ use editor_tools::prelude::{
     UpdateStackTiersPayload, UpdateStackTownsPayload,
 };
 use homm5_scaner::prelude::{
-    ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town,
+    AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town
 };
 
 use itertools::Itertools;
@@ -105,6 +105,13 @@ pub async fn load_creature_models(
     scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<CreatureDBModel>, Error> {
     Ok(scaner_repo.get_creature_models().await?)
+}
+
+#[tauri::command]
+pub async fn load_abilities_models(
+    scaner_repo: State<'_, ScanerService>
+) -> Result<Vec<AbilityDBModel>, Error> {
+    Ok(scaner_repo.get_abilities().await?)
 }
 
 #[tauri::command]

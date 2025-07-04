@@ -7,6 +7,7 @@ import ReserveHeroesGeneratorLayout from "./reserveHeroesGenerator";
 import BankGeneratorLayout from "./bankGenerator";
 import FightGeneratorLayout from "./fightGenerator";
 import HeroCreatorLayout from "./heroCreator";
+import CreatureCopyCreatorLayout from "./creatureCopyCreator";
 
 function EditorMain() {
     const { state } = useParams();
@@ -37,6 +38,8 @@ function RenderEditorMode(params: {
             return <FightGeneratorLayout/>
         case EditorState.HeroCreator:
             return <HeroCreatorLayout/>
+        case EditorState.CreatureCopyCreator:
+            return <CreatureCopyCreatorLayout/>
         default:
             break;
     }

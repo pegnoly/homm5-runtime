@@ -6,7 +6,8 @@ export enum EditorState {
     ReserveHeroes = "ReserveHeroes",
     Banks = "Banks",
     FightGenerator = "FightGenerator",
-    HeroCreator = "HeroCreator"
+    HeroCreator = "HeroCreator",
+    CreatureCopyCreator = "CreatureCopyCreator"
 }
 
 type Actions = {
