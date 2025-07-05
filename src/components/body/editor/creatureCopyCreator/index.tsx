@@ -5,6 +5,7 @@ import CreatureGenerationParams from "./generationParams";
 import CreatureCopyCreator from "./store";
 import CreatureGenerationInitializator from "./initializator";
 import { invoke } from "@tauri-apps/api/core";
+import CreatureGenerationSessionLoader from "./loader";
 
 function CreatureCopyCreatorLayout() {
 
@@ -45,7 +46,7 @@ function CreatureCopyCreatorLayout() {
                         disabled={currentId == undefined}
                         onClick={saveSession}
                     >Save session</Button>
-                    <Button radius={0} bg="cyan" disabled={currentId == undefined}>Load session</Button>
+                    <CreatureGenerationSessionLoader/>
                     <Button 
                         disabled={currentId == undefined}
                         radius={0} 

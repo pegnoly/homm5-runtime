@@ -153,7 +153,9 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::get_average_artifacts_cost,
 
             services::creature_generator::commands::save_generation_session,
-            services::creature_generator::commands::generate_creatures
+            services::creature_generator::commands::generate_creatures,
+            services::creature_generator::commands::pick_session_file,
+            services::creature_generator::commands::load_session
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

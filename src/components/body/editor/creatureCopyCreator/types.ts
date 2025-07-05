@@ -5,3 +5,11 @@ export type CreatableCreatureModel = {
     parent_creature: number | undefined,
     upgrades: number[]
 }
+
+export type SessionConfig = {
+    name: string,
+    current_id: number,
+    created_ids: number [],
+    models: CreatableCreatureModel [],
+    selected_abilities: number []
+}

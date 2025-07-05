@@ -1,6 +1,7 @@
 use std::{io::Write, path::PathBuf};
 use homm5_scaner::prelude::ScanerService;
-use tauri::State;
+use tauri::{AppHandle, Emitter, Listener, State};
+use tauri_plugin_dialog::DialogExt;
 use crate::{error::Error, services::creature_generator::{types::{CreatableCreatureModel, CreatureGeneratorSessionConfig}, utils::process_generation}, utils::LocalAppManager};
 
 #[tauri::command]
@@ -47,4 +48,25 @@ pub async fn generate_creatures(
     } 
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn pick_session_file(
+    app: AppHandle
+) -> Result<(), Error> {
+    app.dialog()
+        .file()
+        .add_filter("Session files", &["json"])
+        .pick_file(move |f| {
+            app.emit("session_file_picked", f).unwrap()
+        });
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn load_session(
+    session_file: String
+) -> Result<CreatureGeneratorSessionConfig, Error> {
+    let session_data = std::fs::read_to_string(&session_file)?;
+    Ok(serde_json::from_str(&session_data)?)
 }

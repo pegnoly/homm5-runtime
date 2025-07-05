@@ -1,9 +1,10 @@
 import { create } from "zustand"
-import { CreatableCreatureModel } from "./types"
+import { CreatableCreatureModel, SessionConfig } from "./types"
 
 
 type Actions = {
     initializeSession: (startId: number, name: string) => void,
+    loadSession: (config: SessionConfig) => void,
     setCurrentId: (value: number) => void,
     updateCreatedIds: (value: number []) => void,
     updateSelectedAbilities: (value: number []) => void,
@@ -37,6 +38,15 @@ const store = create<Store>((set, get) => ({
                 selectedAbilities: [],
                 models: [],
                 currentName: name
+            })
+        },
+        loadSession(config) {
+            set({
+                currentName: config.name,
+                currentId: config.current_id,
+                createdIds: config.created_ids,
+                models: config.models,
+                selectedAbilities: config.selected_abilities
             })
         },
         setCurrentId(value) {
