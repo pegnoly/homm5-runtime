@@ -3,37 +3,40 @@ import { CreatableCreatureModel } from "./types"
 
 
 type Actions = {
-    initializeSession: (value: number) => void,
+    initializeSession: (startId: number, name: string) => void,
     setCurrentId: (value: number) => void,
     updateCreatedIds: (value: number []) => void,
-    updateSelectedAbilities: (value: string []) => void,
+    updateSelectedAbilities: (value: number []) => void,
     addModel: (value: number) => void,
     removeModel: (value: number) => void,
     updateModel: (value: CreatableCreatureModel) => void
 }
 
 type Store = {
+    currentName: string | undefined,
     currentId: number | undefined,
     createdIds: number [],
-    selectedAbilities: string [],
+    selectedAbilities: number [],
     models: CreatableCreatureModel [],
 
     actions: Actions
 }
 
 const store = create<Store>((set, get) => ({
+    currentName: undefined,
     currentId: undefined,
     createdIds: [],
     selectedAbilities: [],
     models: [],
 
     actions: {
-        initializeSession(value) {
+        initializeSession(startId, name) {
             set({
-                currentId: value,
+                currentId: startId,
                 createdIds: [],
                 selectedAbilities: [],
-                models: []
+                models: [],
+                currentName: name
             })
         },
         setCurrentId(value) {
@@ -46,7 +49,7 @@ const store = create<Store>((set, get) => ({
             set({selectedAbilities: value});
         },
         addModel(value) {
-            set({models: [...get().models, {id: value, baseCreature: undefined, parentCreature: undefined, upgrades: [], innerName: undefined}]});
+            set({models: [...get().models, {id: value, base_creature: undefined, parent_creature: undefined, upgrades: [], inner_name: undefined}]});
             set({currentId: value});
             set({createdIds: [...get().createdIds, value]})
         },
@@ -68,6 +71,7 @@ const store = create<Store>((set, get) => ({
 
 
 namespace CreatureCopyCreator {
+    export const useName = () => store(state => state.currentName);
     export const useCurrentId = () => store(state => state.currentId)
     export const useIds = () => store(state => state.createdIds);
     export const useAbilities = () => store(state => state.selectedAbilities);

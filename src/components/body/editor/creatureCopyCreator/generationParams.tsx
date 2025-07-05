@@ -10,9 +10,9 @@ function CreatureGenerationParams() {
     return (
     <MultiSelect
         label="Add these abilities to generated creatures"
-        value={selectedAbilities}
+        value={selectedAbilities.map(a => a.toString())}
         searchable
-        onChange={(value) => actions.updateSelectedAbilities(value)}
+        onChange={(values) => actions.updateSelectedAbilities(values.map(v => parseInt(v)))}
         data={abilities.filter(a => a.id != 0).map(a => ({
             label: a.name, value: a.id.toString()
         }))}

@@ -4,12 +4,34 @@ import CreatableCreatureItem from "./model";
 import CreatureGenerationParams from "./generationParams";
 import CreatureCopyCreator from "./store";
 import CreatureGenerationInitializator from "./initializator";
+import { invoke } from "@tauri-apps/api/core";
 
 function CreatureCopyCreatorLayout() {
 
     const models = CreatureCopyCreator.useModels();
+    const name = CreatureCopyCreator.useName();
     const currentId = CreatureCopyCreator.useCurrentId();
+    const abilities = CreatureCopyCreator.useAbilities();
+    const createdIds = CreatureCopyCreator.useIds();
+
     const actions = CreatureCopyCreator.useActions();
+
+    async function saveSession() {
+        await invoke("save_generation_session", {
+            sessionName: name,
+            currentId: currentId, 
+            createdIds: createdIds, 
+            models: models, 
+            selectedAbilities: abilities
+        });
+    }
+
+    async function generate() {
+        await invoke("generate_creatures", {
+            models: models,
+            selectedAbilities: abilities
+        });
+    }
 
     return (
     <div className={styles.editor_layout}>
@@ -17,7 +39,12 @@ function CreatureCopyCreatorLayout() {
             <div style={{height: '10%', width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
                 <ButtonGroup>
                     <CreatureGenerationInitializator/>
-                    <Button radius={0} bg="dark" disabled={currentId == undefined}>Save session</Button>
+                    <Button 
+                        radius={0} 
+                        bg="dark" 
+                        disabled={currentId == undefined}
+                        onClick={saveSession}
+                    >Save session</Button>
                     <Button radius={0} bg="cyan" disabled={currentId == undefined}>Load session</Button>
                     <Button 
                         disabled={currentId == undefined}
@@ -26,6 +53,12 @@ function CreatureCopyCreatorLayout() {
                             actions.addModel(currentId! + 1);
                         }}}
                     >Add</Button>
+                    <Button
+                        radius={0}
+                        disabled={currentId == undefined}
+                        bg="green"
+                        onClick={generate}
+                    >Generate</Button>
                 </ButtonGroup>
                 <Text>{`Generation session active with start id ${currentId}`}</Text>
             </div>
