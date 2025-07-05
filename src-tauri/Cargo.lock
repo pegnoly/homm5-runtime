@@ -2214,6 +2214,8 @@ dependencies = [
  "homm5-types",
  "itertools 0.14.0",
  "map-modifier",
+ "quick-xml 0.38.0",
+ "roxmltree",
  "runtime-main",
  "serde",
  "serde_json",
@@ -2237,6 +2239,7 @@ dependencies = [
  "itertools 0.14.0",
  "quick-xml 0.30.0",
  "rc-zip",
+ "roxmltree",
  "sea-orm",
  "serde",
  "serde_json",
@@ -4295,6 +4298,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "quick-xml"
+version = "0.38.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8927b0664f5c5a98265138b7e3f90aa19a6b21353182469ace36d4ac527b7b1b"
+dependencies = [
+ "memchr",
+ "serde",
+]
+
+[[package]]
 name = "quinn"
 version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4731,6 +4744,12 @@ name = "rle-decode-fast"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3582f63211428f83597b51b2ddb88e2a91a9d52d12831f9d08f5e624e8977422"
+
+[[package]]
+name = "roxmltree"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c20b6793b5c2fa6553b250154b78d6d0db37e72700ae35fad9387a46f487c97"
 
 [[package]]
 name = "rsa"

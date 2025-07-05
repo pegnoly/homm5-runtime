@@ -85,8 +85,8 @@ pub struct AdvMapCreatureShared {
     pub Visual: Option<FileRef>,
     pub Range: i8,
     pub BaseCreature: Option<String>,
-    pub Upgrades: Upgrades,
-    pub Abilities: Abilities,
+    pub Upgrades: Option<Upgrades>,
+    pub Abilities: Option<Abilities>,
     pub VisualExplained: Option<CreatureVisual>,
     pub InnerName: Option<String>
 }

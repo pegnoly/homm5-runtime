@@ -114,6 +114,10 @@ impl ScanerService {
             .await?)
     }
 
+    pub async fn get_all_creature_models(&self) -> Result<Vec<CreatureDBModel>, ScanerError> {
+        Ok(CreatureDBEntity::find().all(&self.db).await?)
+    }
+
     pub async fn get_average_counts_for_power(
         &self,
         power: i32,

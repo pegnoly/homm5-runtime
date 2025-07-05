@@ -9,6 +9,7 @@ pub struct GlobalConfig {
     pub generic_hero_xdb: Option<String>,
     pub generic_icon_128: Option<String>,
     pub generic_icon_dds: Option<String>,
+    pub session_configs_path: Option<String>,
     pub exe_name: String,
     pub bin_path: String,
     pub data_path: String,
@@ -30,6 +31,9 @@ impl GlobalConfig {
         }
         if !cfg.generic_icon_dds.is_some() {
             cfg.generic_icon_dds = Some(path.join("Icon.dds").to_string_lossy().to_string());
+        }
+        if !cfg.session_configs_path.is_some() {
+            cfg.session_configs_path = Some(path.join("sessions\\").to_string_lossy().to_string());
         }
         Ok(cfg)
     }

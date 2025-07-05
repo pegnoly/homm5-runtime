@@ -1,4 +1,4 @@
-use homm5_types::common::FileRef;
+use homm5_types::{common::FileRef, creature::{Abilities, Upgrades}};
 use itertools::Itertools;
 use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -179,14 +179,14 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                 String::new()
             },
             abilities: AbilitiesModel {
-                abilities: if let Some(abilities) = value.Abilities.Abilities {
+                abilities: if let Some(abilities) = value.Abilities.unwrap_or(Abilities { Abilities: None }).Abilities {
                     abilities
                 } else {
                     vec![]
                 },
             },
             upgrades: UpgradesModel {
-                upgrades: if let Some(upgrades) = value.Upgrades.upgrages {
+                upgrades: if let Some(upgrades) = value.Upgrades.unwrap_or(Upgrades { upgrages: None}).upgrages {
                     upgrades
                 } else {
                     vec![]

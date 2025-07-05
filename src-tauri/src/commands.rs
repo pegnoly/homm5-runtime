@@ -246,11 +246,3 @@ pub async fn create_hero(
     )?;
     Ok(())
 }
-
-#[tauri::command]
-pub async fn generate_creature(
-    app_manager: State<'_, LocalAppManager>
-) -> Result<(), Error> {
-
-    Ok(())
-}
