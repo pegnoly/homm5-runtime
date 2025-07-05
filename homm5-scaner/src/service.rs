@@ -6,8 +6,8 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{
-        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, Town
-    }, query_models::CreatureXdbModel, scaners::{
+        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, Town, TypesXmlScaner
+    }, scaners::{
         self,
         prelude::{
             ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput,
@@ -43,9 +43,12 @@ impl ScanerService {
             }
         }
 
+        let mut types_xml_scaner = TypesXmlScaner { creature_items: vec![] };
+        types_xml_scaner.parse(&files)?;
+
         let mut creature_scan_processor = ScanProcessor::new(
             CreatureFilesCollector,
-            CreatureScaner { id: -1 },
+            CreatureScaner { id: -1, types_data: types_xml_scaner.creature_items },
             CreatureDataOutput::new(&self.db),
         );
 
@@ -208,18 +211,10 @@ impl ScanerService {
         Ok(AbilityDBEntity::find().filter(AbilityDBColumn::Id.between(1, 200)).all(&self.db).await?)
     }
 
-    pub async fn get_vanilla_creature_xdb(
+    pub async fn get_creature(
         &self,
         id: i32
-    ) -> Result<Option<String>, ScanerError> {
-        if let Some(model)  = CreatureDBEntity::find_by_id(id)
-            .into_partial_model::<CreatureXdbModel>()
-            .one(&self.db)
-            .await? 
-        {
-            Ok(model.xdb)
-        } else {
-            Ok(None)
-        }
+    ) -> Result<Option<CreatureDBModel>, ScanerError> {
+        Ok(CreatureDBEntity::find_by_id(id).one(&self.db).await?)
     }
 }

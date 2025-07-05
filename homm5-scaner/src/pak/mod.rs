@@ -8,7 +8,7 @@ use utf16string::WStr;
 
 pub(crate) const EXTENSIONS: [&str; 4] = [".pak", ".h5m", ".h5c", ".h5u"];
 
-const IGNORED_PARTS: [&'static str; 35] = [
+const IGNORED_PARTS: [&'static str; 34] = [
     "_(Model)/",
     "Characters/",
     "Arenas/",
@@ -42,7 +42,6 @@ const IGNORED_PARTS: [&'static str; 35] = [
     ".dds",
     ".ogg",
     ".tga",
-    "types.xml",
     ".git",
 ];
 

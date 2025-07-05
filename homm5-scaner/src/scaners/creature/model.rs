@@ -14,6 +14,7 @@ use crate::{
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
+    pub game_id: String,
     pub attack: i32,
     pub defence: i32,
     pub min_damage: i32,
@@ -84,6 +85,7 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
     fn from(value: homm5_types::creature::AdvMapCreatureShared) -> Self {
         Model {
             id: Default::default(),
+            game_id: Default::default(),
             attack: value.AttackSkill as i32,
             defence: value.DefenceSkill as i32,
             min_damage: value.MinDamage as i32,

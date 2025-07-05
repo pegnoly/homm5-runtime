@@ -6,10 +6,11 @@ use homm5_types::{
 };
 use quick_xml::{Reader, events::Event};
 
-use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure_path};
+use crate::{core::Scan, error::ScanerError, pak::FileStructure, scaners::types_scaner::CreatureTypeItem, utils::configure_path};
 
 pub struct CreatureScaner {
     pub id: i32,
+    pub types_data: Vec<CreatureTypeItem>
 }
 
 impl CreatureScaner {
@@ -167,6 +168,11 @@ impl Scan for CreatureScaner {
                                             }
                                             let mut db_model = super::model::Model::from(creature);
                                             db_model.id = self.id;
+                                            db_model.game_id = self.types_data.iter()
+                                                .find(|item| item.value == self.id)
+                                                .unwrap()
+                                                .name
+                                                .clone();
                                             if !db_model.name_txt.is_empty() {
                                                 if let Some(name_data) =
                                                     files.get(&db_model.name_txt)
