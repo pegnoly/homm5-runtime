@@ -527,9 +527,9 @@ end
                 let creatures_list = asset.concrete_creatures.ids.iter().join(", ");
                 army_generation_rules_script += &format!(
                     "\t\t[{}] = function ()
-                    \t\t\tlocal result = Random.FromTable({{{}}})
-                    \t\t\treturn result
-                    \t\tend,\n",
+            local result = Random.FromTable({{{}}})
+            return result
+        end,\n",
                     stack_count, creatures_list
                 );
             } else {
@@ -656,11 +656,7 @@ end
             script += "\toptional_artifacts = {\n";
             for (slot, ids) in artifacts_asset.optional.values {
                 if !ids.is_empty() {
-                    script += &format!("\t\t[{}] = {{", &slot);
-                    for id in ids {
-                        script += &format!("{}, ", id);
-                    }
-                    script += "},\n"
+                    script += &format!("\t\t[{}] = {{{}}},\n", &slot, ids.iter().join(", "));
                 }
             }
             script.push_str("\t},\n\n");
