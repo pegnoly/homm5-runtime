@@ -6,13 +6,15 @@ import { Route, Routes } from 'react-router';
 import FightAssetsList from './elements/assetsList';
 import FightAssetFocused from './elements/assetFocused';
 import { invoke } from '@tauri-apps/api/core';
+import { useCurrentMapId } from '@/stores/common';
 
 function FightGeneratorLayout() {
+    const currentMapId = useCurrentMapId();
     const [assets, setAssets] = useState<FightAssetSimple[]>([]);
 
     useEffect(() => {
         loadAssets();
-    }, [])
+    }, [currentMapId])
 
     const loadAssets = async () => {
         await invoke<FightAssetSimple[]>("load_all_assets")

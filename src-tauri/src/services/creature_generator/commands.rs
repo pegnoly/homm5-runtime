@@ -1,6 +1,6 @@
 use std::{io::Write, path::PathBuf};
 use homm5_scaner::prelude::ScanerService;
-use tauri::{AppHandle, Emitter, Listener, State};
+use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use crate::{error::Error, services::creature_generator::{types::{CreatableCreatureModel, CreatureGeneratorSessionConfig}, utils::process_generation}, utils::LocalAppManager};
 
