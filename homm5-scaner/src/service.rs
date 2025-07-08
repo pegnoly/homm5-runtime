@@ -6,7 +6,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{
-        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, Town, TypesXmlScaner
+        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, Town, TypesXmlScaner
     }, scaners::{
         self,
         prelude::{
@@ -43,7 +43,7 @@ impl ScanerService {
             }
         }
 
-        let mut types_xml_scaner = TypesXmlScaner { creature_items: vec![] };
+        let mut types_xml_scaner = TypesXmlScaner { creature_items: vec![], skills_items: vec![] };
         types_xml_scaner.parse(&files)?;
 
         let mut creature_scan_processor = ScanProcessor::new(
@@ -76,6 +76,12 @@ impl ScanerService {
             AbilityDataOutput::new(&self.db)
         );
 
+        let mut skill_scan_processor = ScanProcessor::new(
+            SkillFileCollector, 
+            SkillScaner { id: -1, game_types: types_xml_scaner.skills_items }, 
+            SkillDataOutput::new(&self.db)
+        );
+
         let zip_file = std::fs::File::create(output_path)?;
         let mut zip_writer = zip::ZipWriter::new(zip_file);
 
@@ -92,6 +98,9 @@ impl ScanerService {
             .run(&mut files, &mut zip_writer)
             .await?;
         ability_scan_processor
+            .run(&mut files, &mut zip_writer)
+            .await?;
+        skill_scan_processor
             .run(&mut files, &mut zip_writer)
             .await?;
 

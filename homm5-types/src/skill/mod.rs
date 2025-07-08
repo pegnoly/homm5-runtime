@@ -1,0 +1,15 @@
+use serde::{Deserialize, Serialize};
+
+use crate::common::FileRef;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SkillNames {
+    #[serde(rename = "Item")]
+    pub names: Option<Vec<FileRef>>
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Skill {
+    pub NameFileRef: SkillNames
+}

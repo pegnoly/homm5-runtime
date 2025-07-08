@@ -6,11 +6,11 @@ use homm5_types::{
 };
 use quick_xml::{Reader, events::Event};
 
-use crate::{core::Scan, error::ScanerError, pak::FileStructure, scaners::types_scaner::CreatureTypeItem, utils::configure_path};
+use crate::{core::Scan, error::ScanerError, pak::FileStructure, scaners::types_scaner::GameTypeItem, utils::configure_path};
 
 pub struct CreatureScaner {
     pub id: i32,
-    pub types_data: Vec<CreatureTypeItem>
+    pub types_data: Vec<GameTypeItem>
 }
 
 impl CreatureScaner {

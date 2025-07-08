@@ -7,6 +7,7 @@ pub mod hero;
 pub mod player;
 pub mod quest;
 pub mod spell;
+pub mod skill;
 pub mod town;
 pub mod treasure;
 

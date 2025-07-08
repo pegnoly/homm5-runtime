@@ -6,3 +6,4 @@ pub mod prelude;
 mod spell;
 mod ability;
 mod types_scaner;
+mod skill;
