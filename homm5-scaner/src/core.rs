@@ -47,6 +47,10 @@ pub trait ToLua {
     fn to_lua_string(&self) -> String;
 }
 
+pub trait ToJsonCompatibleString {
+    fn to_json_compatible_repr(&self) -> &str;
+}
+
 pub struct ScanProcessor<T, C: CollectFiles, S: Scan<Output = T>, W: Output<Input = T>> {
     collector: C,
     scaner: S,

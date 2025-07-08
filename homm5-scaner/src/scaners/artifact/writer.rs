@@ -1,14 +1,16 @@
 use std::{fs::File, io::Write};
 
+use itertools::Itertools;
 use sea_orm::{
     DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait,
     sea_query::OnConflict,
 };
+use serde::{Deserialize, Serialize};
 use zip::{ZipWriter, write::FileOptions};
 
 use crate::{
-    core::{Output, ToLua},
-    error::ScanerError,
+    core::{Output, ToJsonCompatibleString, ToLua},
+    error::ScanerError, prelude::ArtifactDBModel,
 };
 
 use super::model::Column;
@@ -23,6 +25,29 @@ impl<'a> ArtifactDataOutput<'a> {
         ArtifactDataOutput {
             entities: vec![],
             db,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JsonCompatibleModel<'a> {
+    #[serde(rename(serialize = "ArtifactType"))]
+    pub id: i32,
+    #[serde(rename(serialize = "ArtifactCategory"))]
+    pub class: &'a str,
+    #[serde(rename(serialize = "ArtifactSlot"))]
+    pub slot: &'a str,
+    #[serde(rename(serialize = "Cost"))]
+    pub cost: i32
+}
+
+impl<'a> From<&'a ArtifactDBModel> for JsonCompatibleModel<'a> {
+    fn from(value: &'a ArtifactDBModel) -> Self {
+        JsonCompatibleModel { 
+            id: value.id, 
+            class: value.class.to_json_compatible_repr(), 
+            slot: value.slot.to_json_compatible_repr(), 
+            cost: value.cost 
         }
     }
 }
@@ -63,6 +88,17 @@ impl<'a> Output for ArtifactDataOutput<'a> {
         script_file.push_str("}");
         zip_writer.start_file("scripts/generated/artifacts.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
+
+        let json_models = self.entities.iter()
+            .map(|m| {
+                JsonCompatibleModel::from(m)
+            })
+            .collect_vec();
+
+
+        let json_string = serde_json::to_string_pretty(&json_models)?;
+        let mut file = std::fs::File::create("D:\\arts.json")?;
+        file.write_all(json_string.as_bytes())?;
 
         Ok(())
     }

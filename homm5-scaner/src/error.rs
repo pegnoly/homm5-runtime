@@ -11,5 +11,7 @@ pub enum ScanerError {
     #[error(transparent)]
     Zip(#[from] ZipError),
     #[error(transparent)]
-    IO(#[from] std::io::Error)
+    IO(#[from] std::io::Error),
+    #[error(transparent)]
+    Json(#[from] serde_json::Error),
 }

@@ -5,7 +5,7 @@ use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
-use crate::core::ToLua;
+use crate::core::{ToJsonCompatibleString, ToLua};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "artifacts")]
@@ -80,6 +80,23 @@ pub enum ArtifactSlotType {
     Inventory,
 }
 
+impl ToJsonCompatibleString for ArtifactSlotType {
+    fn to_json_compatible_repr(&self) -> &str {
+        match self {
+            ArtifactSlotType::Primary => "Primary",
+            ArtifactSlotType::Secondary => "Secondary",
+            ArtifactSlotType::Head => "Head",
+            ArtifactSlotType::Miscslot1 => "MiscSlot",
+            ArtifactSlotType::Chest => "Chest",
+            ArtifactSlotType::Finger => "Finger",
+            ArtifactSlotType::Neck => "Neck",
+            ArtifactSlotType::Feet => "Feet",
+            ArtifactSlotType::Shoulders => "Shoulders",
+            ArtifactSlotType::Inventory => "Inventory"
+        }
+    }
+}
+
 #[derive(
     Debug,
     DeriveActiveEnum,
@@ -110,6 +127,17 @@ pub enum ArtifactClassType {
     #[serde(rename = "ARTF_CLASS_GRAIL")]
     #[strum(serialize = "ARTF_CLASS_GRAIL")]
     Grail,
+}
+
+impl ToJsonCompatibleString for ArtifactClassType {
+    fn to_json_compatible_repr(&self) -> &str {
+        match self {
+            ArtifactClassType::Minor => "Minor",
+            ArtifactClassType::Major => "Major",
+            ArtifactClassType::Relic => "Relic",
+            ArtifactClassType::Grail => "Grail",
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

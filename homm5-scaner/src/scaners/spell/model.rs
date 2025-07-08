@@ -5,7 +5,7 @@ use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
-use crate::core::ToLua;
+use crate::core::{ToJsonCompatibleString, ToLua};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "spells")]
@@ -57,7 +57,7 @@ pub enum MagicSchoolType {
     #[sea_orm(string_value = "MAGIC_SCHOOL_DESTRUCTIVE")]
     #[serde(rename = "MAGIC_SCHOOL_DESTRUCTIVE")]
     #[strum(serialize = "MAGIC_SCHOOL_DESTRUCTIVE")]
-    Desctuctive,
+    Destructive,
     #[sea_orm(string_value = "MAGIC_SCHOOL_SUMMONING")]
     #[serde(rename = "MAGIC_SCHOOL_SUMMONING")]
     #[strum(serialize = "MAGIC_SCHOOL_SUMMONING")]
@@ -74,6 +74,22 @@ pub enum MagicSchoolType {
     #[serde(rename = "MAGIC_SCHOOL_WARCRIES")]
     #[strum(serialize = "MAGIC_SCHOOL_WARCRIES")]
     Warcries,
+}
+
+impl ToJsonCompatibleString for MagicSchoolType {
+    fn to_json_compatible_repr(&self) -> &str {
+        match self {
+            MagicSchoolType::Adventure => "Adventure",
+            MagicSchoolType::Dark => "Dark",
+            MagicSchoolType::None => "None",
+            MagicSchoolType::Special => "Special",
+            MagicSchoolType::Light => "Light",
+            MagicSchoolType::Destructive => "Destructive",
+            MagicSchoolType::Summoning => "Summoning",
+            MagicSchoolType::Runic => "Runic",
+            MagicSchoolType::Warcries => "Warcries",
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
