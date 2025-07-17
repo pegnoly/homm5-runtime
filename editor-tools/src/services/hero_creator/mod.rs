@@ -1,12 +1,8 @@
 use std::{fs::File, io::{BufWriter, Write}, path::PathBuf};
-
-use bincode::config::Configuration;
 use ddsfile::Dds;
 use homm5_scaner::prelude::Town;
 use image::{imageops::FilterType, ImageReader};
-use itertools::Itertools;
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event}, Reader, Writer};
-use utf16string::{LittleEndian, WStr, LE};
 use widestring::Utf16String;
 
 use crate::error::EditorToolsError;

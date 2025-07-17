@@ -3,4 +3,5 @@ mod dialog_generator;
 mod fight_generator;
 mod quest_generator;
 mod hero_creator;
+mod reserve_hero_creator;
 pub mod prelude;
