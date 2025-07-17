@@ -22,7 +22,7 @@ impl Scan for SkillScaner {
             quick_xml::de::from_str(entity);
         match skill_de {
             Ok(skill) => {
-                let actual_name_paths = if let Some(paths) = skill.NameFileRef.names {
+                let actual_name_paths = if let Some(paths) = skill.obj.NameFileRef.names {
                     paths.iter().map(|p| {
                         configure_path(p.href.as_ref(), file_key, files)
                     })
@@ -40,18 +40,13 @@ impl Scan for SkillScaner {
                     })
                     .collect_vec();
                 self.id += 1;
-                let game_id = self.game_types.iter()
-                    .find(|t| {
-                        t.value == self.id
-                    })
-                    .unwrap()
-                    .name
-                    .clone();
                 let model = Model {
                     id: self.id,
-                    game_id,
+                    game_id: skill.ID,
                     name_paths: NamePaths { paths: actual_name_paths },
-                    names: Names { names: actual_names }
+                    names: Names { names: actual_names },
+                    hero_class: skill.obj.HeroClass,
+                    basic_skill: skill.obj.BasicSkillID
                 };
                 Ok(Some(model))
             }

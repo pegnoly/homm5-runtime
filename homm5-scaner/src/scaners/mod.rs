@@ -5,5 +5,6 @@ mod hero;
 pub mod prelude;
 mod spell;
 mod ability;
+mod hero_class;
 mod types_scaner;
 mod skill;

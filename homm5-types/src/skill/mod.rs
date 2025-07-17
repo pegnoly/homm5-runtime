@@ -10,6 +10,15 @@ pub struct SkillNames {
 
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
+pub struct SkillObject {
+    pub NameFileRef: SkillNames,
+    pub HeroClass: String,
+    pub BasicSkillID: String
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Skill {
-    pub NameFileRef: SkillNames
+    pub ID: String,
+    pub obj: SkillObject
 }

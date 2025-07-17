@@ -14,4 +14,6 @@ pub enum ScanerError {
     IO(#[from] std::io::Error),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
+    #[error(transparent)]
+    ROXmlTree(#[from] roxmltree::Error)
 }

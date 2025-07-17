@@ -6,7 +6,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{
-        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, Town, TypesXmlScaner
+        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, Town, TypesXmlScaner
     }, scaners::{
         self,
         prelude::{
@@ -43,8 +43,14 @@ impl ScanerService {
             }
         }
 
-        let mut types_xml_scaner = TypesXmlScaner { creature_items: vec![], skills_items: vec![] };
+        let mut types_xml_scaner = TypesXmlScaner { creature_items: vec![], skills_items: vec![], spells_items: vec![] };
         types_xml_scaner.parse(&files)?;
+
+        let mut hero_class_scan_processor = ScanProcessor::new(
+            HeroClassFileCollector, 
+            HeroClassScaner { id: -1 }, 
+            HeroClassDataOutput::new(&self.db)
+        );
 
         let mut creature_scan_processor = ScanProcessor::new(
             CreatureFilesCollector,
@@ -66,7 +72,7 @@ impl ScanerService {
 
         let mut spell_scan_processor = ScanProcessor::new(
             SpellFileCollector,
-            SpellScaner { id: 0 },
+            SpellScaner { id: 0, game_types: types_xml_scaner.spells_items },
             SpellDataOutput::new(&self.db),
         );
 
@@ -85,6 +91,9 @@ impl ScanerService {
         let zip_file = std::fs::File::create(output_path)?;
         let mut zip_writer = zip::ZipWriter::new(zip_file);
 
+        hero_class_scan_processor
+            .run(&mut files, &mut zip_writer)
+            .await?;
         creature_scan_processor
             .run(&mut files, &mut zip_writer)
             .await?;
@@ -229,5 +238,12 @@ impl ScanerService {
         id: i32
     ) -> Result<Option<CreatureDBModel>, ScanerError> {
         Ok(CreatureDBEntity::find_by_id(id).one(&self.db).await?)
+    }
+
+    pub async fn get_perks_for_skill(
+        &self,
+        skill: String
+    ) -> Result<Vec<SkillDBModel>, ScanerError> {
+        Ok(SkillDBEntity::find().filter(SkillDBColumn::BasicSkill.eq(skill)).all(&self.db).await?)
     }
 }

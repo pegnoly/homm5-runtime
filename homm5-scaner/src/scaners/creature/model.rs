@@ -46,6 +46,7 @@ pub struct Model {
     pub abilities: AbilitiesModel,
     pub upgrades: UpgradesModel,
     pub inner_name: Option<String>,
+    #[serde(skip)]
     pub xdb: Option<String>
 }
 

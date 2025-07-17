@@ -92,9 +92,13 @@ impl<'a> Output for SpellDataOutput<'a> {
             })
             .collect_vec();
 
-        let json_string = serde_json::to_string_pretty(&json_models)?;
-        let mut file = std::fs::File::create("D:\\spells.json")?;
-        file.write_all(json_string.as_bytes())?;
+        // let json_string = serde_json::to_string_pretty(&json_models)?;
+        // let mut file = std::fs::File::create("D:\\spells.json")?;
+        // file.write_all(json_string.as_bytes())?;
+
+        let mut json_file = std::fs::File::create("D:\\spells.json")?;
+        let json_string = serde_json::to_string_pretty(&self.entities)?;
+        json_file.write_all(json_string.as_bytes())?;
 
         Ok(())
     }

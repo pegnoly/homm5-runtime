@@ -7,11 +7,12 @@ use strum_macros::{Display, EnumString};
 
 use crate::core::{ToJsonCompatibleString, ToLua};
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "spells")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
+    pub game_id: String,
     pub name_txt: String,
     pub name: String,
     pub desc_txt: String,
@@ -21,7 +22,7 @@ pub struct Model {
     pub level: i32,
     pub school: MagicSchoolType,
     pub is_aimed: bool,
-    pub is_area: bool,
+    pub is_area: bool
 }
 
 #[derive(
@@ -101,6 +102,7 @@ impl From<SpellShared> for Model {
     fn from(value: SpellShared) -> Self {
         Model {
             id: Default::default(),
+            game_id: Default::default(),
             name_txt: if let Some(ref file) = value.NameFileRef {
                 file.href.clone().unwrap_or(String::new())
             } else {

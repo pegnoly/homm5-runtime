@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use homm5_types::{common::FileRef, spell::SpellShared};
 use quick_xml::{Reader, events::Event};
 
-use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure_path};
+use crate::{core::Scan, error::ScanerError, pak::FileStructure, scaners::types_scaner::GameTypeItem, utils::configure_path};
 
 use super::model;
 
 pub struct SpellScaner {
     pub id: i32,
+    pub game_types: Vec<GameTypeItem>
 }
 
 impl Scan for SpellScaner {
@@ -69,9 +70,16 @@ impl Scan for SpellScaner {
                                             Some(FileRef { href: Some(desc) });
                                         spell.Texture = Some(FileRef { href: Some(icon) });
                                         self.id += 1;
-
+                                        let game_id = self.game_types.iter()
+                                            .find(|t| {
+                                                t.value == self.id
+                                            })
+                                            .unwrap()
+                                            .name
+                                            .clone();
                                         let mut db_model = model::Model::from(spell);
                                         db_model.id = self.id;
+                                        db_model.game_id = game_id;
                                         if !db_model.name_txt.is_empty() {
                                             if let Some(data) = files.get(&db_model.name_txt) {
                                                 db_model.name = data.content.clone();

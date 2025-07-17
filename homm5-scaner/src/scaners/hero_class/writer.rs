@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write};
+use std::fs::File;
 
 use sea_orm::{
     DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait,
@@ -13,21 +13,21 @@ use crate::{
 
 use super::model::Column;
 
-pub struct AbilityDataOutput<'a> {
+pub struct HeroClassDataOutput<'a> {
     entities: Vec<super::model::Model>,
     db: &'a DatabaseConnection,
 }
 
-impl<'a> AbilityDataOutput<'a> {
+impl<'a> HeroClassDataOutput<'a> {
     pub fn new(db: &'a DatabaseConnection) -> Self {
-        AbilityDataOutput {
+        HeroClassDataOutput {
             entities: vec![],
             db,
         }
     }
 }
 
-impl<'a> Output for AbilityDataOutput<'a> {
+impl<'a> Output for HeroClassDataOutput<'a> {
     type Input = super::model::Model;
 
     fn output_single(&mut self, object: Self::Input) -> Result<(), ScanerError> {
@@ -56,17 +56,17 @@ impl<'a> Output for AbilityDataOutput<'a> {
         }
         transaction.commit().await?;
 
-        // let mut script_file = String::from("MCCS_ARTIFACTS_GENERATED_TABLE = {\n");
+        // let mut script_file = String::from("MCCS_CREATURE_GENERATED_TABLE = {\n");
         // for model in &self.entities {
         //     script_file += &model.to_lua_string();
         // }
         // script_file.push_str("}");
-        // zip_writer.start_file("scripts/generated/artifacts.lua", FileOptions::default())?;
+        // zip_writer.start_file("scripts/generated/creatures.lua", FileOptions::default())?;
         // zip_writer.write_all(script_file.as_bytes())?;
 
-        let mut json_file = std::fs::File::create("D:\\abilities.json")?;
-        let json_string = serde_json::to_string_pretty(&self.entities)?;
-        json_file.write_all(json_string.as_bytes())?;
+        // let mut json_file = std::fs::File::create("D:\\creatures.json")?;
+        // let json_string = serde_json::to_string_pretty(&self.entities)?;
+        // json_file.write_all(json_string.as_bytes())?;
 
         Ok(())
     }

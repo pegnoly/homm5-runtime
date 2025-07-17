@@ -3,6 +3,7 @@ pub mod art;
 pub mod building;
 pub mod common;
 pub mod creature;
+pub mod hero_class;
 pub mod hero;
 pub mod player;
 pub mod quest;

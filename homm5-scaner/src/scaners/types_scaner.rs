@@ -9,7 +9,8 @@ pub struct GameTypeItem {
 
 pub struct TypesXmlScaner {
     pub creature_items: Vec<GameTypeItem>,
-    pub skills_items: Vec<GameTypeItem>
+    pub skills_items: Vec<GameTypeItem>,
+    pub spells_items: Vec<GameTypeItem>
 }
 
 impl TypesXmlScaner {
@@ -64,6 +65,26 @@ impl TypesXmlScaner {
             } else if n.tag_name() == "Value".into() {
                 value = n.text().unwrap().parse::<i32>().unwrap();
                 self.skills_items.push(GameTypeItem { name: name.clone(), value: value });
+            }
+        });
+
+        let spell_elem = document.descendants()
+            .find(|n| n.tag_name() == "TypeName".into() && n.text().unwrap() == "SpellID")
+            .unwrap()
+            .parent()
+            .unwrap();
+
+        let spells_entries_node = spell_elem.descendants()
+            .find(|n| n.tag_name() == "Entries".into())
+            .unwrap();
+        let mut name = String::new();
+        let mut value = -1;
+        spells_entries_node.descendants().for_each(|n| {
+            if n.tag_name() == "Name".into() {
+                name = n.text().unwrap().to_string();
+            } else if n.tag_name() == "Value".into() {
+                value = n.text().unwrap().parse::<i32>().unwrap();
+                self.spells_items.push(GameTypeItem { name: name.clone(), value: value });
             }
         });
 

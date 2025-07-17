@@ -8,7 +8,9 @@ pub struct Model {
     pub id: i32,
     pub game_id: String,
     pub name_paths: NamePaths,
-    pub names: Names
+    pub names: Names,
+    pub hero_class: String,
+    pub basic_skill: String
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
