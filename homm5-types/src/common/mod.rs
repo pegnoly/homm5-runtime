@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 /// Common types suitable for any others.
 
 /// Position of object on the map
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Pos {
     pub x: f32,
     pub y: f32,

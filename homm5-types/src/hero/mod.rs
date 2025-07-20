@@ -44,7 +44,7 @@ pub struct FavoriteEnemies {
     pub items: Option<Vec<String>>
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[allow(non_snake_case)]
 pub struct Editable {
     pub NameFileRef: Option<FileRef>,
@@ -63,7 +63,7 @@ pub struct Editable {
     pub TalismanLevel: Option<u8>
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Textures {
     #[serde(rename = "Icon128x128")]
     pub icon128: Option<String>,
@@ -142,7 +142,7 @@ pub struct IsUntransferable {
     pub items: Option<Vec<u8>>
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct AdvMapHero {
     #[serde(rename = "Pos")]
     pub pos: Pos,

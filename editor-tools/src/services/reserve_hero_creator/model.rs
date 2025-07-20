@@ -1,4 +1,5 @@
 use homm5_scaner::prelude::Mastery;
+use homm5_types::{common::{ArmySlot, FileRef}, hero::{AdvMapHero, Editable, Perks, Skill, Skills, SpellIds}, player::PlayerID, town::ArmySlots};
 use sea_orm::{prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 
@@ -42,3 +43,37 @@ pub struct ReserveHeroSpells {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl From<Model> for AdvMapHero {
+    fn from(value: Model) -> Self {
+        AdvMapHero {
+            player_id: PlayerID::PlayerNone,
+            army_slots: Some(ArmySlots { army_slots: Some( vec![ {ArmySlot { creature: String::from("CREATURE_1000"), count: 1}}])}),
+            editable: Editable {
+                skills: Some(Skills { 
+                    items: Some(
+                        Vec::from_iter(value.skills.skills.iter()
+                            .map(|s| Skill { Mastery: s.mastery.to_string(), SkillID: s.skill.clone()} )
+                        ))
+                    }),
+                perkIDs: Some(Perks {
+                    items: Some(
+                        Vec::from_iter(value.skills.skills.iter()
+                            .map(|s| s.perks.clone())
+                            .flatten()
+                    ))
+                }),
+                spellIDs: Some(SpellIds {
+                    items: Some(
+                        Vec::from_iter(value.spells.spells.iter()
+                        .map(|s| s.clone())
+                    ))
+                }),
+                ..Default::default()
+            },
+            primary_skill_mastery: value.skills.skills.iter().find(|s| s.slot == 0).unwrap().mastery.to_string(),
+            shared: FileRef { href: Some(format!("/{}#xpointer(/AdvMapHeroShared)", &value.xdb_path))},
+            ..Default::default()
+        }
+    }
+}

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { MagicSchool, SpellData } from "../../types";
 import { ReserveHeroesGenerator } from "../../store";
-import { Group } from "lucide-react";
 import { ActionIcon, Select } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";

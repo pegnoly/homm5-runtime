@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::path::PathBuf;
 
-use editor_tools::prelude::{QuestGeneratorRepo, QuestModel};
+use editor_tools::prelude::{QuestGeneratorRepo, QuestModel, ReserveHeroCreatorRepo};
 use homm5_repacker::Repacker;
 use homm5_scaner::prelude::{ScanerService, Town};
 use itertools::Itertools;
@@ -154,6 +154,7 @@ pub async fn apply_modifications(
     app_manager: State<'_, LocalAppManager>,
     quests_repo: State<'_, QuestGeneratorRepo>,
     data_containter: State<'_, DataContainer>,
+    reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>
 ) -> Result<(), super::error::Error> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     let base_config_locked = app_manager.base_config.read().await;
@@ -216,7 +217,7 @@ pub async fn apply_modifications(
     println!("Primary quests: {:?}", &modifiers_queue.primary_quests);
     println!("Secondary quests: {:?}", &modifiers_queue.secondary_quests);
 
-    modifiers_queue.apply_changes_to_map(map, &mut runtime_config_locked.current_map_data);
+    modifiers_queue.apply_changes_to_map(map, &mut runtime_config_locked.current_map_data, &reserve_heroes_repo).await;
     let altered_queue = modifiers_config_locked.data.quests_generation_queue.iter()
         .filter(|q| !models_to_generate.iter().any(|m| m.id == **q))
         .map(|q| *q)

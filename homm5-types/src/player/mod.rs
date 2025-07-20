@@ -4,10 +4,11 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use strum_macros::{EnumIter, EnumString, FromRepr};
 
-#[derive(Debug, Serialize, Deserialize, EnumString, Clone, EnumIter, Eq, PartialEq, Hash, FromRepr)]
+#[derive(Debug, Serialize, Deserialize, EnumString, Clone, EnumIter, Eq, PartialEq, Hash, FromRepr, Default)]
 #[repr(i32)]
 pub enum PlayerID {
     #[serde(rename = "PLAYER_NONE")]
+    #[default]
     PlayerNone = 0,
     #[serde(rename = "PLAYER_1")]
     Player1 = 1,

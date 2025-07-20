@@ -37,15 +37,15 @@ impl MonstersModifier {
         let empty = String::new();
         let default_file_ref = FileRef::default();
         let shared = monster.shared.as_ref().unwrap_or(&default_file_ref).href.as_ref().unwrap_or(&empty).as_str();
-        if RANDOM_STACKS.iter().any(|rs| *rs == shared) && monster.runtime_generated {
+        if RANDOM_STACKS.iter().any(|rs| *rs == shared) && monster.runtime_generated.unwrap_or(false) {
             self.random_stacks_count += 1;
             let name = format!("GENERATABLE_STACK_{}", self.random_stacks_count);
             monster.name = Some(name.clone());
             self.random_stacks.insert(name.clone(), RandomStackModel { 
                 is_runtime_generated: true, 
-                min_stacks: monster.generated_stacks_min, 
-                max_stacks: monster.generated_stacks_max, 
-                total_power: monster.total_power 
+                min_stacks: monster.generated_stacks_min.unwrap_or(0), 
+                max_stacks: monster.generated_stacks_max.unwrap_or(0), 
+                total_power: monster.total_power.unwrap_or(0) 
             });
         }
         if monster.additional_stacks.is_some() && monster.additional_stacks.as_ref().unwrap().items.is_none() {

@@ -193,13 +193,13 @@ pub struct AdvMapMonster {
     #[serde(rename = "relationsOverrides")]
     pub relations_override: Option<String>,
     #[serde(rename = "RuntimeGenerated")]
-    pub runtime_generated: bool,
+    pub runtime_generated: Option<bool>,
     #[serde(rename = "GeneratedStacksMin")]
-    pub generated_stacks_min: u8,
+    pub generated_stacks_min: Option<u8>,
     #[serde(rename = "GeneratedStacksMax")]
-    pub generated_stacks_max: u8,
+    pub generated_stacks_max: Option<u8>,
     #[serde(rename = "TotalPower")]
-    pub total_power: u32
+    pub total_power: Option<u32>
 }
 
 impl Homm5Type for AdvMapMonster {}
