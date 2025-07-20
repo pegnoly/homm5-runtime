@@ -7,18 +7,20 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
+    pub map_id: i32,
+    pub player_id: i32,
     pub name: String,
     pub xdb_path: String,
-    pub primary_skill: BaseSkill,
     pub skills: ReserveHeroSkills,
-    pub perks: ReserveHeroPerks,
     pub spells: ReserveHeroSpells
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct BaseSkill {
+    pub slot: i32,
     pub skill: String,
-    pub mastery: Mastery
+    pub mastery: Mastery,
+    pub perks: Vec<String>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]

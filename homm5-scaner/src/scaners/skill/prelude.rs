@@ -4,3 +4,4 @@ pub use super::model::{
 };
 pub use super::scaner::SkillScaner;
 pub use super::writer::SkillDataOutput;
+pub use super::model::BASE_SKILLS;

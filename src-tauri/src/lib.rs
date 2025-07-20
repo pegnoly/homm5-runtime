@@ -1,4 +1,4 @@
-use editor_tools::prelude::{BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo, QuestGeneratorRepo};
+use editor_tools::prelude::{BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo, QuestGeneratorRepo, ReserveHeroCreatorRepo};
 use homm5_scaner::prelude::ScanerService;
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
@@ -35,6 +35,7 @@ pub async fn run() -> Result<(), Error> {
     let quest_generator_repo = QuestGeneratorRepo::new(pool.clone());
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
     let fight_generator_repo = FightGeneratorRepo::new(pool.clone());
+    let reserve_hero_creator_repo = ReserveHeroCreatorRepo::new(pool.clone());
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -50,6 +51,7 @@ pub async fn run() -> Result<(), Error> {
             PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/"),
         ))
         .manage(fight_generator_repo)
+        .manage(reserve_hero_creator_repo)
         .manage(ScanerService::new(pool.clone()))
         .manage(data_container)
         .plugin(tauri_plugin_shell::init())
@@ -89,10 +91,6 @@ pub async fn run() -> Result<(), Error> {
             load_dialog_variant,
             save_dialog_variant,
             generate_dialog,
-            //reserve heroes commands
-            services::reserve_hero_creator::commands::load_existing_reserve_heroes,
-            services::reserve_hero_creator::commands::remove_reserve_hero,
-            services::reserve_hero_creator::commands::add_reserve_hero,
             //banks
             services::banks_configurator::commands::get_all_banks,
             services::banks_configurator::commands::load_bank,
@@ -151,11 +149,23 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::get_average_creatures_count,
             services::fight_generator::commands::get_average_concrete_creatures_count,
             services::fight_generator::commands::get_average_artifacts_cost,
-
+            //
             services::creature_generator::commands::save_generation_session,
             services::creature_generator::commands::generate_creatures,
             services::creature_generator::commands::pick_session_file,
-            services::creature_generator::commands::load_session
+            services::creature_generator::commands::load_session,
+            //
+            services::reserve_hero_creator::commands::load_heroes_data,
+            services::reserve_hero_creator::commands::load_heroes,
+            services::reserve_hero_creator::commands::init_new_hero,
+            services::reserve_hero_creator::commands::load_base_skills,
+            services::reserve_hero_creator::commands::load_existing_reserved_hero,
+            services::reserve_hero_creator::commands::add_skill,
+            services::reserve_hero_creator::commands::update_skill,
+            services::reserve_hero_creator::commands::load_perks,
+            services::reserve_hero_creator::commands::load_spells,
+            services::reserve_hero_creator::commands::add_spell,
+            services::reserve_hero_creator::commands::remove_spell
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

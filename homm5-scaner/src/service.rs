@@ -6,7 +6,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{
-        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, Town, TypesXmlScaner
+        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, Town, TypesXmlScaner, BASE_SKILLS
     }, scaners::{
         self,
         prelude::{
@@ -114,6 +114,11 @@ impl ScanerService {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn get_heroes_models(&self, town: Town) -> Result<Vec<HeroDBModel>, ScanerError> {
+        let heroes = HeroDBEntity::find().filter(HeroDBColumn::Town.eq(town)).all(&self.db).await?;
+        Ok(heroes)
     }
 
     pub async fn get_artifact_models(&self) -> Result<Vec<ArtifactDBModel>, ScanerError> {
@@ -245,5 +250,18 @@ impl ScanerService {
         skill: String
     ) -> Result<Vec<SkillDBModel>, ScanerError> {
         Ok(SkillDBEntity::find().filter(SkillDBColumn::BasicSkill.eq(skill)).all(&self.db).await?)
+    }
+
+    pub async fn get_base_skills(&self) -> Result<Vec<SkillDBModel>, ScanerError> {
+        Ok(
+            SkillDBEntity::find()
+                .filter(SkillDBColumn::GameId.is_in(BASE_SKILLS.clone()))
+                .all(&self.db)
+                .await?
+        )
+    }
+
+    pub async fn get_spells_for_school(&self, school: MagicSchoolType) -> Result<Vec<SpellDBModel>, ScanerError> {
+        Ok(SpellDBEntity::find().filter(SpellDBColumn::School.eq(school)).all(&self.db).await?)
     }
 }

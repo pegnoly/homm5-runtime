@@ -8,7 +8,7 @@ use homm5_types::hero::AdvMapHeroShared;
 use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "heroes")]
 pub struct Model {
     #[sea_orm(primary_key)]
