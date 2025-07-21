@@ -17,6 +17,7 @@ function ReservedHeroSkillItem({skill}: {skill: ConcreteSkill}) {
         const updatedSkills = skillsToUpdate?.map(s => {
             if (s.slot == skill.slot) {
                 s.skill = value;
+                s.perks = [];
                 return s;
             } 
             return s;
@@ -47,7 +48,7 @@ function ReservedHeroSkillItem({skill}: {skill: ConcreteSkill}) {
                 value={skill.skill}
                 onChange={(value) => updateSkill(value!)}
                 searchable
-                data={baseSkills?.map(skill => ({
+                data={baseSkills?.filter(bs => !skills?.skills.some(s => s.skill != skill.skill && s.skill == bs.game_id)).map(skill => ({
                     value: skill.game_id, label: skill.names.names[0]
                 }))}
             />
@@ -61,7 +62,6 @@ function ReservedHeroSkillItem({skill}: {skill: ConcreteSkill}) {
 }
 
 function MasterySelector({current, onSelected}: {current: Mastery, onSelected: (value: Mastery) => void}) {
-
     return (
     <Select
         radius={0}
