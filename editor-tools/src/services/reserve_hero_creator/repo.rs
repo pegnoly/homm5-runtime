@@ -61,6 +61,20 @@ impl ReserveHeroCreatorRepo {
         Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string())))
     }
 
+    pub async fn remove_skill(&self, id: i32, slot: i32) -> Result<(), EditorToolsError> {
+        if let Some(hero) = model::Entity::find_by_id(id).one(&self.db).await? {
+            let mut model_to_update = hero.into_active_model();
+            if let Some(mut skills) = model_to_update.skills.take() {
+                skills.skills.retain(|s| s.slot != slot);
+                model_to_update.skills = Set(skills);
+                model_to_update.update(&self.db).await?;
+                return Ok(());
+            }
+            return Err(EditorToolsError::Default);
+        }
+        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string())))
+    }
+
     pub async fn update_skill(&self, id: i32, slot: i32, skill: BaseSkill) -> Result<(), EditorToolsError> {
         if let Some(hero) = model::Entity::find_by_id(id).one(&self.db).await? {
             let mut model_to_update = hero.into_active_model();

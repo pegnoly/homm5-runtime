@@ -57,6 +57,15 @@ pub async fn add_skill(
 }
 
 #[tauri::command]
+pub async fn remove_skill(
+    reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
+    id: i32,
+    slot: i32
+) -> Result<(), Error> {
+    Ok(reserve_heroes_repo.remove_skill(id, slot).await?)
+}
+
+#[tauri::command]
 pub async fn update_skill(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     id: i32,

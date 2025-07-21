@@ -161,6 +161,7 @@ pub async fn run() -> Result<(), Error> {
             services::reserve_hero_creator::commands::load_base_skills,
             services::reserve_hero_creator::commands::load_existing_reserved_hero,
             services::reserve_hero_creator::commands::add_skill,
+            services::reserve_hero_creator::commands::remove_skill,
             services::reserve_hero_creator::commands::update_skill,
             services::reserve_hero_creator::commands::load_perks,
             services::reserve_hero_creator::commands::load_spells,
