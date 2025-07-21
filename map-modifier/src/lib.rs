@@ -113,12 +113,12 @@ impl<'a> ModifiersQueue<'a> {
                             let mut artifact: AdvMapArtifact = quick_xml::de::from_str(&format!("<AdvMapArtifact>{}</AdvMapArtifact>", &text)).unwrap();
                             self.artifacts_modifier.modify(&mut artifact, &mut writer);
                         },
-                        "AdvMapMonster" => {
-                            let end = e.to_end().into_owned();
-                            let text = reader.read_text(end.name()).unwrap().to_string();
-                            let mut monster: AdvMapMonster = quick_xml::de::from_str(&format!("<AdvMapMonster>{}</AdvMapMonster>", &text)).unwrap();
-                            self.monsters_modifier.modify(&mut monster, &mut writer);
-                        }
+                        // "AdvMapMonster" => {
+                        //     let end = e.to_end().into_owned();
+                        //     let text = reader.read_text(end.name()).unwrap().to_string();
+                        //     let mut monster: AdvMapMonster = quick_xml::de::from_str(&format!("<AdvMapMonster>{}</AdvMapMonster>", &text)).unwrap();
+                        //     self.monsters_modifier.modify(&mut monster, &mut writer);
+                        // }
                         "Objectives" => {
                             println!("Objectives found");
                             let end = e.to_end().into_owned();
@@ -151,6 +151,8 @@ impl<'a> ModifiersQueue<'a> {
                                         }).unwrap();
                                 }
                                 writer.write_event(Event::End(BytesEnd::new("ReserveHeroes"))).unwrap();
+                            } else {
+                                writer.create_element("ReserveHeroes").write_empty().unwrap();
                             }
                         },
                         _=> {
