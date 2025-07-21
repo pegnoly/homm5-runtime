@@ -14,14 +14,16 @@ function ReserveHeroSpellsList() {
     }
 
     return (
-    <List>{spells?.spells.map((s, i) => (
-        <div key={i} style={{display: 'flex', flexDirection: 'row'}}>
-            <Text size="xs">{s}</Text>
-            <ActionIcon size="xs" onClick={() => removeSpell(s)}>
-                <IconTrash/>
-            </ActionIcon>
-        </div>
-    ))}</List>
+    <div style={{display: 'flex', justifyContent: 'center', paddingTop: '2%'}}>
+        <List>{spells?.spells.map((s, i) => (
+            <div key={i} style={{display: 'flex', flexDirection: 'row', gap: '5%', justifyContent: 'space-around', alignItems: 'center'}}>
+                <Text style={{fontFamily: 'cursive', fontSize: 11}}>{s}</Text>
+                <ActionIcon size="xs" onClick={() => removeSpell(s)}>
+                    <IconTrash/>
+                </ActionIcon>
+            </div>
+        ))}</List>
+    </div>
     )
 }
 

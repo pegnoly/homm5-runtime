@@ -8,7 +8,7 @@ function ReserveHeroSpellsPanel() {
     const [school, setSchool] = useState<MagicSchool>(MagicSchool.Destructive);
 
     return (
-    <div style={{width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto'}}>
+    <div style={{width: '100%', height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto', paddingRight: '2%'}}>
         <Select
             size="xs"
             radius={0}

@@ -11,6 +11,7 @@ function ReserveHeroSpellsSelector({school}: { school: MagicSchool }) {
     const [selectedSpell, setSelectedSpell] = useState<string | undefined>(undefined);
 
     const id = ReserveHeroesGenerator.useCurrentId();
+    const currentSpells = ReserveHeroesGenerator.useSpells();
     const actions = ReserveHeroesGenerator.useActions();
 
     async function addSpell() {
@@ -25,10 +26,11 @@ function ReserveHeroSpellsSelector({school}: { school: MagicSchool }) {
             <Select
                 size="xs"
                 radius={0}
+                searchable
                 label="Select spell"
                 value={selectedSpell}
                 onChange={(value) => setSelectedSpell(value!)}
-                data={spells.map(s => ({
+                data={spells.filter(s => !currentSpells?.spells.includes(s.game_id)).map(s => ({
                     value: s.game_id,
                     label: s.name
                 }))}

@@ -1,18 +1,22 @@
 import { Link } from "react-router";
 import { ReserveHeroesGenerator } from "./store";
 import { List, Text } from "@mantine/core";
+import { EditorState } from "@/stores/EditorStateStore";
 
 function ReserveHeroesList() {
     const heroes = ReserveHeroesGenerator.useHeroes();
+    const currentId = ReserveHeroesGenerator.useCurrentId();
 
     return (
     <div style={{width: '10%', height: '100%', display: 'flex', justifyContent: 'center'}}>        
     {
         heroes == undefined ? null :
         <List>{heroes!.map((h, i) => (
-            <Link to={`focused/${h.id}`} key={i}>
-                <div>
-                    <Text>{h.name}</Text>
+            <Link 
+                style={{textDecoration: 'none'}} 
+                to={`/editor/${EditorState.ReserveHeroes}/focused/${h.id}`} key={i}>
+                <div style={{backgroundColor: h.id == currentId ? 'greenyellow' : 'transparent'}}>
+                    <Text c="dark" fw="bold">{h.name}</Text>
                 </div>
             </Link>
         ))}</List>

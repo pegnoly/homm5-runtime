@@ -6,17 +6,23 @@ import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { useCurrentMapId } from "@/stores/common";
 import { ReservedHero } from "./types";
+import { ReserveHeroesGenerator } from "./store";
 
 function ReserveHeroesGeneratorHeroCreator({player}: {player: number}) {
     const [opened, {open, close}] = useDisclosure(false);
 
     const mapId = useCurrentMapId();
+    const currentHeroes = ReserveHeroesGenerator.useHeroes();
+    const actions = ReserveHeroesGenerator.useActions();
  
     const [name, setName] = useState<string | undefined>(undefined);
     const [xdb, setXdb] = useState<string | undefined>(undefined);
 
     async function create() {
-        await invoke<ReservedHero[]>("init_new_hero", {mapId: mapId, playerId: player, name: name, xdb: xdb});
+        await invoke<ReservedHero>("init_new_hero", {mapId: mapId, playerId: player, name: name, xdb: xdb})
+            .then((value) => {
+                actions.loadHeroes([...currentHeroes!, value]);
+            });
         close();
     }
 
