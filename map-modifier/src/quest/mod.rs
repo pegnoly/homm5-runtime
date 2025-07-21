@@ -1,10 +1,7 @@
-use std::{fmt::format, fs::File, io::Write, marker::PhantomData, path::PathBuf};
-
-use homm5_types::{common::FileRef, quest::Quest, Homm5Type};
-use quick_xml::se;
+use std::{fs::File, io::Write, path::PathBuf};
+use homm5_types::{common::FileRef, quest::Quest};
 
 use crate::GenerateBoilerplate;
-
 
 pub fn test_convert(quest: Quest) {
     let s = quick_xml::se::to_string(&quest).unwrap();

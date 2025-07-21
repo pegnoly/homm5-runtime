@@ -1,7 +1,6 @@
 use derive_more::derive::Debug;
 use editor_tools::prelude::*;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BankSimpleModel {

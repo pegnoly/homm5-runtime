@@ -1,8 +1,6 @@
 use core::str;
 use std::io::Read;
 use std::{collections::HashMap, path::PathBuf};
-
-use bincode::config::Config;
 use rc_zip::prelude::ReadZip;
 use utf16string::WStr;
 

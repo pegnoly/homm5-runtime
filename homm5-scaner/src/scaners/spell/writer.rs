@@ -82,7 +82,7 @@ impl<'a> Output for SpellDataOutput<'a> {
         zip_writer.start_file("scripts/generated/spells.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
         
-        let json_models = self.entities.iter()
+        let _json_models = self.entities.iter()
             .filter_map(|m| {
                 if m.school != MagicSchoolType::None {
                     Some(JsonCompatibleModel::from(m))

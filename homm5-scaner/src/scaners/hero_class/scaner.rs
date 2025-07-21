@@ -1,4 +1,4 @@
-use homm5_types::{ability::AbilityShared, hero_class::HeroClass};
+use homm5_types::hero_class::HeroClass;
 
 use super::model;
 use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure_path};

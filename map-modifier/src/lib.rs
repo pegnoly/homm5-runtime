@@ -4,7 +4,7 @@ use std::{collections::HashMap, io::Write};
 use artifacts::{ArtifactConfigEntity, ArtifactsModifier};
 use buildings::{BankConfigEntity, BuildingConfigEntity, BuildingsModifier};
 use editor_tools::prelude::ReserveHeroCreatorRepo;
-use homm5_types::{art::AdvMapArtifact, building::AdvMapBuilding, creature::AdvMapMonster, hero::{self, AdvMapHero}};
+use homm5_types::{art::AdvMapArtifact, building::AdvMapBuilding, creature::AdvMapMonster, hero::AdvMapHero, player::PlayerID};
 pub use homm5_types::{common::FileRef, quest::{Objectives, Quest, QuestList}, Homm5Type};
 use monsters::MonstersModifier;
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, Event}, Reader, Writer};
@@ -77,7 +77,7 @@ impl<'a> ModifiersQueue<'a> {
         }
     }
 
-    pub async fn apply_changes_to_map(&mut self, map: &Map, map_data: &mut MapData, reserve_heroes_repo: &ReserveHeroCreatorRepo) {
+    pub async fn apply_changes_to_map(&mut self, map: &Map, _map_data: &mut MapData, reserve_heroes_repo: &ReserveHeroCreatorRepo) {
         let mut output_map: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output_map, b' ', 4);
     
@@ -136,8 +136,8 @@ impl<'a> ModifiersQueue<'a> {
                                 let mut heroes_count = 0;
                                 for hero in heroes {
                                     heroes_count += 1;
-                                    let adv_map_hero = AdvMapHero::from(hero);
-                                    println!("AdvMapHero converted: {:#?}", &adv_map_hero);
+                                    let mut adv_map_hero = AdvMapHero::from(hero);
+                                    adv_map_hero.player_id = PlayerID::from_repr(players_count).unwrap();
                                     writer.create_element("Item")
                                         .with_attributes(
                                             vec![
@@ -200,8 +200,6 @@ impl<'a> ModifiersQueue<'a> {
                 !primary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name)
             }).collect::<Vec<&Quest>>();
 
-            println!("Primary quests to apply: {:?}", &quests_to_apply);
-
             for quest in quests_to_apply {
                 primary_quests_items.objectives.as_mut().unwrap().items.as_mut().unwrap().push(quest.clone());
             }
@@ -215,8 +213,6 @@ impl<'a> ModifiersQueue<'a> {
             let quests_to_apply = self.secondary_quests.iter().filter(|q| {
                 !secondary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name)
             }).collect::<Vec<&Quest>>();
-
-            println!("Secondary quests to apply: {:?}", &quests_to_apply);
 
             for quest in quests_to_apply {
                 secondary_quests_items.objectives.as_mut().unwrap().items.as_mut().unwrap().push(quest.clone());
@@ -292,10 +288,10 @@ impl MapData {
                         }
                     }
                 }
-                Ok(Event::Text(e)) => {
+                Ok(Event::Text(_e)) => {
                 },
                 Ok(Event::End(e)) => {
-                    let elem = BytesEnd::new(str::from_utf8(e.name().0).unwrap());
+                    let _elem = BytesEnd::new(str::from_utf8(e.name().0).unwrap());
                 },
                 _ => ()
             }
@@ -339,10 +335,10 @@ impl MapData {
                         }
                     }
                 }
-                Ok(Event::Text(e)) => {
+                Ok(Event::Text(_e)) => {
                 },
                 Ok(Event::End(e)) => {
-                    let elem = BytesEnd::new(str::from_utf8(e.name().0).unwrap());
+                    let _elem = BytesEnd::new(str::from_utf8(e.name().0).unwrap());
                 },
                 _ => ()
             }

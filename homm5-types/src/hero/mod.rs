@@ -1,4 +1,4 @@
-use crate::{common::{FileRef, Pos, Trigger, XmlArray}, player::PlayerID, town::ArmySlots};
+use crate::{common::{FileRef, Pos, Trigger}, player::PlayerID, town::ArmySlots};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

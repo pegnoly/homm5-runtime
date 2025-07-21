@@ -1,6 +1,6 @@
-use std::{io::{Read, Write}, iter::Zip, path::PathBuf};
+use std::{io::{Read, Write}, path::PathBuf};
 
-use zip::{unstable::write::FileOptionsExt, write::{ExtendedFileOptions, FileOptions, SimpleFileOptions}};
+use zip::write::SimpleFileOptions;
 
 pub struct Repacker {
     pub from: PathBuf,
@@ -32,7 +32,7 @@ impl Repacker {
                         zipped_file.write_all(&container.as_slice()).unwrap();
                     }
                 },
-                Err(error) => {}
+                Err(_error) => {}
             }
         }
     }

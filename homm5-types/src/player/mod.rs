@@ -1,5 +1,5 @@
 use crate::{
-    common::{FileRef, Trigger, XmlArray}, hero::AdvMapHero, town::TownType, Homm5Type
+    common::{FileRef, Trigger}, hero::AdvMapHero, town::TownType, Homm5Type
 };
 use serde::{Deserialize, Serialize};
 use strum_macros::{EnumIter, EnumString, FromRepr};

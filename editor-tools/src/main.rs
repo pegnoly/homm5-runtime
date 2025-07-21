@@ -1,8 +1,5 @@
 use google_drive3::{
-    DriveHub,
-    api::{File, Scope},
-    hyper_rustls, hyper_util,
-    yup_oauth2::{self, ServiceAccountKey},
+    api::File, hyper_rustls, hyper_util, yup_oauth2, DriveHub
 };
 
 #[tokio::main]
