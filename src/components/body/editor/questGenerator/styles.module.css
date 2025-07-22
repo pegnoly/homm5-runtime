@@ -4,7 +4,7 @@
     display: flex;
     flex-direction: row;
     justify-content: end;
-    background-color: aquamarine;
+    /* background-color: aquamarine; */
 }
 
 .manage_panel {
@@ -35,12 +35,12 @@
     width: 50%;
     height: 100%;
     display: flex;
-    background-color: aqua;
+    /* background-color: aqua; */
 }
 
 .progresses_panel {
     width: 50%;
     height: 100%;
     display: flex;
-    background-color: cadetblue;
+    /* background-color: cadetblue; */
 }
