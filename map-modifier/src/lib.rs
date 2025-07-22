@@ -97,13 +97,11 @@ impl<'a> ModifiersQueue<'a> {
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
                 Ok(Event::Eof) => break,
                 Ok(Event::Start(e)) => {
-                    // gets actual name of tag
                     let actual_tag = std::str::from_utf8(e.name().as_ref()).unwrap().to_string();
                     match actual_tag.as_str() {
                         "AdvMapBuilding" => { 
                             let end = e.to_end().into_owned();
                             let text = reader.read_text(end.name()).unwrap().to_string();
-                            println!("Building text: {}", &text);
                             let mut building: AdvMapBuilding = quick_xml::de::from_str(&format!("<AdvMapBuilding>{}</AdvMapBuilding>", &text)).unwrap();
                             self.buildings_modifier.modify(&mut building, &mut writer);
                         },
@@ -113,12 +111,12 @@ impl<'a> ModifiersQueue<'a> {
                             let mut artifact: AdvMapArtifact = quick_xml::de::from_str(&format!("<AdvMapArtifact>{}</AdvMapArtifact>", &text)).unwrap();
                             self.artifacts_modifier.modify(&mut artifact, &mut writer);
                         },
-                        // "AdvMapMonster" => {
-                        //     let end = e.to_end().into_owned();
-                        //     let text = reader.read_text(end.name()).unwrap().to_string();
-                        //     let mut monster: AdvMapMonster = quick_xml::de::from_str(&format!("<AdvMapMonster>{}</AdvMapMonster>", &text)).unwrap();
-                        //     self.monsters_modifier.modify(&mut monster, &mut writer);
-                        // }
+                        "AdvMapMonster" => {
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            let mut monster: AdvMapMonster = quick_xml::de::from_str(&format!("<AdvMapMonster>{}</AdvMapMonster>", &text)).unwrap();
+                            self.monsters_modifier.modify(&mut monster, &mut writer);
+                        }
                         "Objectives" => {
                             println!("Objectives found");
                             let end = e.to_end().into_owned();
