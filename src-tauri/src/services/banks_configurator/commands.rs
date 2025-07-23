@@ -11,12 +11,8 @@ use tauri::State;
 #[tauri::command]
 pub async fn get_all_banks(
     bank_service: State<'_, BanksGeneratorRepo>,
-) -> Result<Vec<BankSimpleModel>, Error> {
-    let banks = bank_service.get_banks().await?;
-    Ok(banks
-        .into_iter()
-        .map(|bank| BankSimpleModel::from(bank))
-        .collect_vec())
+) -> Result<Vec<BankDBModel>, Error> {
+    Ok(bank_service.get_banks().await?)
 }
 
 #[tauri::command]
@@ -24,11 +20,7 @@ pub async fn load_bank(
     bank_service: State<'_, BanksGeneratorRepo>,
     id: i32,
 ) -> Result<Option<BankDBModel>, Error> {
-    if let Some(bank) = bank_service.get_bank(id).await? {
-        Ok(Some(bank))
-    } else {
-        Ok(None)
-    }
+    Ok(bank_service.get_bank(id).await?)
 }
 
 #[tauri::command]

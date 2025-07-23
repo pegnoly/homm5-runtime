@@ -65,6 +65,7 @@ pub enum BankType {
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
+    #[sea_orm(column_name = "type")]
     pub _type: BankType,
     pub name: String,
     pub recharge_count: i32,

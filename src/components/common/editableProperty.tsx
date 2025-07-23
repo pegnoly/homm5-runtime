@@ -1,5 +1,5 @@
 import { ComponentType, ReactNode, useEffect, useState } from 'react';
-import { Text, TextInput, Button, Group, Box } from '@mantine/core';
+import { Text, TextInput, Button, Group, Box, MantineFontSize } from '@mantine/core';
 import { IconCheck, IconPencilCheck } from '@tabler/icons-react';
 
 export type EditablePropertyWrapperProps = {
@@ -11,23 +11,31 @@ export type EditablePropertyWrapper = {
   component: ComponentType<EditablePropertyWrapperProps>,
 };
 
-function EditableProperty(params: {
-  type?: "input" | "textarea"
+function EditableProperty({
+  size = "sm", 
+  // type = "input", 
+  label, 
+  initialValue, 
+  onSave, 
+  tooltip
+}: {
+  size? : MantineFontSize,
+  // type?: "input" | "textarea",
   label: string,
   initialValue: string,
   onSave: (value: string) => void,
   tooltip?: EditablePropertyWrapper
 }) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [value, setValue] = useState<string>(params.initialValue);
+  const [value, setValue] = useState<string>(initialValue);
 
   useEffect(() => {
-    setValue(params.initialValue);
-  }, [params.initialValue])
+    setValue(initialValue);
+  }, [initialValue])
 
   const handleSave = () => {
     setIsEditing(false);
-    params.onSave(value);
+    onSave(value);
   };
 
   return (
@@ -54,8 +62,8 @@ function EditableProperty(params: {
         </Group>
       ) : (
         (
-          params.tooltip ? 
-          <params.tooltip.component value={value}>
+          tooltip ? 
+          <tooltip.component value={value}>
             <div style={{display: 'flex', flexDirection: 'row', gap: '2.5%', alignItems: 'center'}}>
               <Button
                 variant="transparent"
@@ -64,10 +72,10 @@ function EditableProperty(params: {
               >
                 <IconPencilCheck/>
               </Button>
-              <Text style={{fontWeight: 'bold', fontFamily: 'cursive'}}>{params.label}</Text>
+              <Text size={size} style={{fontWeight: 'bold', fontFamily: 'cursive'}}>{label}</Text>
               <Text>{value}</Text>
             </div>
-          </params.tooltip.component> :
+          </tooltip.component> :
           <div style={{display: 'flex', flexDirection: 'row', gap: '2.5%', alignItems: 'center'}}>
             <Button
               variant="transparent"
@@ -76,7 +84,7 @@ function EditableProperty(params: {
             >
               <IconPencilCheck/>
             </Button>
-            <Text style={{fontWeight: 'bold', fontFamily: 'cursive'}}>{params.label}</Text>
+            <Text size={size} style={{fontWeight: 'bold', fontFamily: 'cursive'}}>{label}</Text>
             <Text>{value}</Text>
           </div>
         )

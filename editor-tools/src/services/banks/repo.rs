@@ -27,7 +27,9 @@ impl BanksGeneratorRepo {
     }
 
     pub async fn get_banks(&self) -> Result<Vec<models::bank::Model>, EditorToolsError> {
-        Ok(bank::Entity::find().all(&self.db).await?)
+        let models = bank::Entity::find().all(&self.db).await?;
+        println!("Models: {:#?}", &models);
+        Ok(models)
     }
 
     pub async fn get_bank(
