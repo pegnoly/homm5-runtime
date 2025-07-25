@@ -23,8 +23,9 @@ use crate::{
 };
 use itertools::Itertools;
 use sea_orm::{
-    sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection
+    sqlx::{types::uuid, SqlitePool}, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection
 };
+use uuid::Uuid;
 
 pub struct FightGeneratorRepo {
     db: DatabaseConnection,
@@ -47,28 +48,28 @@ impl FightGeneratorRepo {
             .await?)
     }
 
-    pub async fn get_asset(&self, id: i32) -> Result<Option<asset::Model>, EditorToolsError> {
+    pub async fn get_asset(&self, id: Uuid) -> Result<Option<asset::Model>, EditorToolsError> {
         Ok(asset::Entity::find_by_id(id).one(&self.db).await?)
     }
 
     pub async fn init_new_asset(
         &self,
         payload: InitFightAssetPayload,
-    ) -> Result<asset::Model, EditorToolsError> {
+    ) -> Result<Uuid, EditorToolsError> {
         let model_to_insert = asset::ActiveModel {
             mission_id: Set(payload.mission_id),
-            table_name: Set(payload.lua_table_name),
-            path_to_generate: Set(payload.path_to_generate),
-            name: Set(payload.name),
-            ..Default::default()
+            table_name: Set(payload.lua_table_name.clone()),
+            path_to_generate: Set(payload.path_to_generate.clone()),
+            name: Set(payload.name.clone()),
+            id: Set(Uuid::new_v4())
         };
-        let model = model_to_insert.insert(&self.db).await?;
-        Ok(model)
+        let res = asset::Entity::insert(model_to_insert).exec_with_returning(&self.db).await?;
+        Ok(res.id)
     }
 
     pub async fn get_artifacts_model(
         &self,
-        asset_id: i32,
+        asset_id: Uuid,
     ) -> Result<Option<artifacts::Model>, EditorToolsError> {
         Ok(artifacts::Entity::find()
             .filter(artifacts::Column::AssetId.eq(asset_id))
@@ -226,7 +227,7 @@ impl FightGeneratorRepo {
         Ok(())
     }
 
-    pub async fn get_stacks_ids(&self, asset_id: i32) -> Result<Vec<i32>, EditorToolsError> {
+    pub async fn get_stacks_ids(&self, asset_id: Uuid) -> Result<Vec<i32>, EditorToolsError> {
         let ids = army_slot::Entity::find()
             .filter(army_slot::Column::AssetId.eq(asset_id))
             .into_partial_model::<ArmySlotId>()
@@ -238,7 +239,7 @@ impl FightGeneratorRepo {
 
     pub async fn get_stacks(
         &self,
-        asset_id: i32,
+        asset_id: Uuid,
     ) -> Result<Vec<AssetArmySlotModel>, EditorToolsError> {
         Ok(army_slot::Entity::find()
             .filter(army_slot::Column::AssetId.eq(asset_id))

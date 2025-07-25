@@ -1,12 +1,15 @@
+import { UUID } from "crypto"
 import { create } from "zustand"
 
 type Actions = {
-    setCurrentAssetId: (value: number) => void,
-    setCurrentAssetName: (value: string) => void
+    setCurrentAssetId: (value: UUID) => void,
+    setCurrentAssetName: (value: string) => void,
+
+    unloadAsset: () => void
 }
 
 type Store = {
-    assetId: number | undefined,
+    assetId: UUID | undefined,
     assetName: string | undefined,
 
     actions: Actions
@@ -22,6 +25,12 @@ const fightAssetStore = create<Store>((set) => ({
         },
         setCurrentAssetName(value) {
             set({assetName: value})
+        },
+        unloadAsset() {
+            set({
+                assetName: undefined,
+                assetId: undefined
+            })
         },
     }
 }));

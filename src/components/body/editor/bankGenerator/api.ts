@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { BankFullModel, BankLoadingModel } from "./types";
+import { BankDifficulty, BankDifficultyType, BankFullModel, BankLoadingModel, BankVariant } from "./types";
 
 export class BankGeneratorApi {
     static async loadBanks(): Promise<BankLoadingModel[]> {
@@ -24,5 +24,21 @@ export class BankGeneratorApi {
 
     static async updateMoraleLoss(id: number, loss: string): Promise<number> {
         return invoke("update_bank_luck_loss", {id: id, loss: loss});
+    }
+
+    static async loadDifficulty(id: number, type: BankDifficultyType): Promise<BankDifficulty | null> {
+        return invoke<BankDifficulty | null>("load_difficulty", {bankId: id, difficulty: type});
+    }
+
+    static async updateChance(id: number, chance: string): Promise<number> {
+        return invoke<number>("update_bank_difficulty_chance", {id: id, chance: chance});
+    }
+
+    static async loadVariants(id: number, difficulty: BankDifficultyType): Promise<BankVariant[]> {
+        return invoke<BankVariant[]>("load_bank_variants", {bankId: id, difficulty: difficulty});
+    }
+
+    static async createVariant(bankId: number, label: string, difficulty: BankDifficultyType): Promise<BankVariant> {
+        return invoke<BankVariant>("create_bank_variant", {bankId: bankId, label: label, difficulty: difficulty});
     }
 }

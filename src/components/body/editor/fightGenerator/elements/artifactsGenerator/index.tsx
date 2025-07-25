@@ -7,8 +7,9 @@ import styles from "../styles.module.css";
 import ArtifactsAssetCostsData from "./costs"
 import RequiredArtifactsList from "./required"
 import OptionalArtifactsList from "./optional"
+import { UUID } from "crypto"
 
-function useArtifactsAsset(assetId: number) {
+function useArtifactsAsset(assetId: UUID) {
     return useQuery({
         queryKey: ["artifacts_asset", assetId],
         queryFn: async() => {
@@ -17,13 +18,11 @@ function useArtifactsAsset(assetId: number) {
     })
 }
 
-function FightAssetArtifactsGenerator(params: {
-    assetId: number
-}) {
+function FightAssetArtifactsGenerator({assetId}: {assetId: UUID}) {
     const actions = useCurrentArtifactsActions();
     const artifactsAssetId = useCurrentArtifactsAssetId();
 
-    const { data } = useArtifactsAsset(params.assetId);
+    const { data } = useArtifactsAsset(assetId);
     if (data != undefined) {
         actions.loadAsset(data);
     }
@@ -36,7 +35,7 @@ function FightAssetArtifactsGenerator(params: {
     <div className={styles.artifacts_panel}>
         {
             artifactsAssetId == undefined ?
-            <ArtifactsAssetCreator assetId={params.assetId} assetCreatedCallback={assetCreated}/> :
+            <ArtifactsAssetCreator assetId={assetId} onCreated={assetCreated}/> :
             <div style={{width: '100%', display: 'flex', flexDirection: 'row'}}>
                 <div style={{width: '40%', paddingLeft: '10%'}}>
                     <ArtifactsAssetCostsData/>

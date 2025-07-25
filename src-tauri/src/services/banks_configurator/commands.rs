@@ -1,10 +1,8 @@
-use crate::{
-    error::Error,
-    services::banks_configurator::types::{BankDifficultyModel, BankSimpleModel},
-};
+use crate::error::Error;
 use editor_tools::prelude::*;
 use homm5_scaner::prelude::*;
 use itertools::Itertools;
+use uuid::Uuid;
 use std::io::Write;
 use tauri::State;
 
@@ -72,17 +70,13 @@ pub async fn update_bank_luck_loss(
 }
 
 #[tauri::command]
-pub async fn load_bank_difficulties(
+pub async fn load_difficulty(
     bank_service: State<'_, BanksGeneratorRepo>,
     bank_id: i32,
-) -> Result<Vec<BankDifficultyModel>, Error> {
-    Ok(bank_service
-        .get_difficulties(bank_id)
-        .await?
-        .into_iter()
-        .map(|d| BankDifficultyModel::from(d))
-        .collect_vec())
-}
+    difficulty: BankDifficultyType
+) -> Result<Option<BankDifficultyDBModel>, Error> {
+    Ok(bank_service.load_difficulty(bank_id, difficulty).await?)
+}   
 
 #[tauri::command]
 pub async fn update_bank_difficulty_chance(
@@ -93,6 +87,15 @@ pub async fn update_bank_difficulty_chance(
     let actual_chance = chance.parse::<i32>()?;
     bank_service.update_difficulty(id, actual_chance).await?;
     Ok(actual_chance)
+}
+
+#[tauri::command]
+pub async fn load_bank_variants(
+    bank_service: State<'_, BanksGeneratorRepo>,
+    bank_id: i32,
+    difficulty: BankDifficultyType
+) -> Result<Vec<BankVariantDBModel>, Error> {
+    Ok(bank_service.get_variants(bank_id, difficulty).await?)
 }
 
 #[tauri::command]
@@ -115,7 +118,7 @@ pub async fn create_bank_variant(
 #[tauri::command]
 pub async fn load_bank_variant(
     bank_service: State<'_, BanksGeneratorRepo>,
-    id: i32,
+    id: Uuid,
 ) -> Result<Option<BankVariantDBModel>, Error> {
     if let Some(variant) = bank_service.get_variant(id).await? {
         Ok(Some(variant))
@@ -125,18 +128,9 @@ pub async fn load_bank_variant(
 }
 
 #[tauri::command]
-pub async fn load_bank_variants(
-    bank_service: State<'_, BanksGeneratorRepo>,
-    bank_id: i32,
-) -> Result<Vec<BankVariantDBModel>, Error> {
-    let variants = bank_service.get_variants(bank_id).await?;
-    Ok(variants)
-}
-
-#[tauri::command]
 pub async fn update_bank_variant_label(
     bank_service: State<'_, BanksGeneratorRepo>,
-    id: i32,
+    id: Uuid,
     label: String,
 ) -> Result<(), Error> {
     let payload = UpdateBankVariantPayload::new(id).with_label(label);
@@ -147,7 +141,7 @@ pub async fn update_bank_variant_label(
 #[tauri::command]
 pub async fn update_bank_variant_difficulty(
     bank_service: State<'_, BanksGeneratorRepo>,
-    id: i32,
+    id: Uuid,
     difficulty: BankDifficultyType,
 ) -> Result<(), Error> {
     let payload = UpdateBankVariantPayload::new(id).with_difficulty(difficulty.into());
@@ -251,70 +245,70 @@ pub async fn update_creature_slot_tier(
 pub async fn generate_banks_script(
     bank_service: State<'_, BanksGeneratorRepo>,
 ) -> Result<(), Error> {
-    let banks = bank_service.get_banks().await?;
-    for bank in banks {
-        let bank_local_type = BankType::from(bank._type.clone());
-        let bank_file_name = bank_service.path.join(format!(
-            "{}.lua",
-            bank_local_type
-                .to_string()
-                .replace("BTD_BANK_", "")
-                .to_lowercase()
-        ));
-        let mut bank_file = std::fs::File::create(bank_file_name)?;
-        // loading data
-        let mut bank_data_string = format!(
-            "while not {} and BTD_BANKS_DATA do\n\tsleep()\nend\n\n",
-            bank_local_type
-        );
-        // base bank info
-        bank_data_string += &format!("BTD_BANKS_DATA[{}] = {{\n", bank_local_type);
-        bank_data_string += &format!(
-            "\trecharges_count = {},\n\trecharge_timer = {},\n\tmorale_loss = {},\n\tluck_loss = {},\n",
-            bank.recharge_count, bank.recharge_timer, bank.morale_loss, bank.luck_loss
-        );
-        // bank difficulties info
-        let bank_difficulties_data = bank_service.get_difficulties(bank.id).await?;
-        bank_data_string += "\tgeneration_chances = {\n";
-        for difficulty in bank_difficulties_data {
-            bank_data_string += &format!(
-                "\t\t[{}] = {},\n",
-                BankDifficultyType::from(difficulty.difficulty_type),
-                difficulty.chance
-            )
-        }
-        bank_data_string += "\t},\n";
-        // bank variants info
-        let bank_variants = bank_service.get_variants(bank.id).await?;
-        bank_data_string += "\tvariants = {\n";
-        for (variants_count, variant) in bank_variants.into_iter().enumerate() {
-            bank_data_string += &format!(
-                "\t\t[{}] = {{\n\t\t\tdifficulty = {},\n",
-                variants_count,
-                BankDifficultyType::from(variant.difficulty)
-            );
-            let creature_slots = bank_service.load_full_creature_entries(variant.id).await?;
-            bank_data_string += "\t\t\tcreatures = {\n";
-            for slot in creature_slots {
-                bank_data_string += &format!("\t\t\t\t{{\n\t\t\t\t\ttype = {},\n", slot._type);
-                if let Some(town) = slot.data.creature_town {
-                    bank_data_string += &format!("\t\t\t\t\ttown = {},\n", town);
-                }
-                if let Some(tier) = slot.data.creature_tier {
-                    bank_data_string += &format!("\t\t\t\t\ttier = {},\n", tier);
-                }
-                if let Some(base_power) = slot.data.base_power {
-                    bank_data_string += &format!("\t\t\t\t\tbase_power = {},\n", base_power);
-                }
-                if let Some(power_grow) = slot.data.power_grow {
-                    bank_data_string += &format!("\t\t\t\t\tpower_grow = {}, \n", power_grow);
-                }
-                bank_data_string.push_str("\t\t\t\t},\n");
-            }
-            bank_data_string.push_str("\t\t\t}\n\t\t},\n");
-        }
-        bank_data_string.push_str("\t}\n}");
-        bank_file.write_all(bank_data_string.as_bytes())?;
-    }
+    // let banks = bank_service.get_banks().await?;
+    // for bank in banks {
+    //     let bank_local_type = BankType::from(bank._type.clone());
+    //     let bank_file_name = bank_service.path.join(format!(
+    //         "{}.lua",
+    //         bank_local_type
+    //             .to_string()
+    //             .replace("BTD_BANK_", "")
+    //             .to_lowercase()
+    //     ));
+    //     let mut bank_file = std::fs::File::create(bank_file_name)?;
+    //     // loading data
+    //     let mut bank_data_string = format!(
+    //         "while not {} and BTD_BANKS_DATA do\n\tsleep()\nend\n\n",
+    //         bank_local_type
+    //     );
+    //     // base bank info
+    //     bank_data_string += &format!("BTD_BANKS_DATA[{}] = {{\n", bank_local_type);
+    //     bank_data_string += &format!(
+    //         "\trecharges_count = {},\n\trecharge_timer = {},\n\tmorale_loss = {},\n\tluck_loss = {},\n",
+    //         bank.recharge_count, bank.recharge_timer, bank.morale_loss, bank.luck_loss
+    //     );
+    //     // bank difficulties info
+    //     let bank_difficulties_data = bank_service.get_difficulties(bank.id).await?;
+    //     bank_data_string += "\tgeneration_chances = {\n";
+    //     for difficulty in bank_difficulties_data {
+    //         bank_data_string += &format!(
+    //             "\t\t[{}] = {},\n",
+    //             BankDifficultyType::from(difficulty.difficulty_type),
+    //             difficulty.chance
+    //         )
+    //     }
+    //     bank_data_string += "\t},\n";
+    //     // bank variants info
+    //     let bank_variants = bank_service.get_variants(bank.id).await?;
+    //     bank_data_string += "\tvariants = {\n";
+    //     for (variants_count, variant) in bank_variants.into_iter().enumerate() {
+    //         bank_data_string += &format!(
+    //             "\t\t[{}] = {{\n\t\t\tdifficulty = {},\n",
+    //             variants_count,
+    //             BankDifficultyType::from(variant.difficulty)
+    //         );
+    //         let creature_slots = bank_service.load_full_creature_entries(variant.id).await?;
+    //         bank_data_string += "\t\t\tcreatures = {\n";
+    //         for slot in creature_slots {
+    //             bank_data_string += &format!("\t\t\t\t{{\n\t\t\t\t\ttype = {},\n", slot._type);
+    //             if let Some(town) = slot.data.creature_town {
+    //                 bank_data_string += &format!("\t\t\t\t\ttown = {},\n", town);
+    //             }
+    //             if let Some(tier) = slot.data.creature_tier {
+    //                 bank_data_string += &format!("\t\t\t\t\ttier = {},\n", tier);
+    //             }
+    //             if let Some(base_power) = slot.data.base_power {
+    //                 bank_data_string += &format!("\t\t\t\t\tbase_power = {},\n", base_power);
+    //             }
+    //             if let Some(power_grow) = slot.data.power_grow {
+    //                 bank_data_string += &format!("\t\t\t\t\tpower_grow = {}, \n", power_grow);
+    //             }
+    //             bank_data_string.push_str("\t\t\t\t},\n");
+    //         }
+    //         bank_data_string.push_str("\t\t\t}\n\t\t},\n");
+    //     }
+    //     bank_data_string.push_str("\t}\n}");
+    //     bank_file.write_all(bank_data_string.as_bytes())?;
+    // }
     Ok(())
 }

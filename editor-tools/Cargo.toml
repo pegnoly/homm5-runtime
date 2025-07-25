@@ -22,3 +22,4 @@ quick-xml = { version = "0.37.5", features = ["serde"] }
 bincode = "2.0.1"
 utf16string = "0.2.0"
 widestring = "1.2.0"
+uuid = { version = "1.17.0", features = ["v4", "serde"] }

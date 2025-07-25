@@ -1,5 +1,6 @@
 use crate::services::banks::models::bank_difficulty::BankDifficultyType;
 use homm5_scaner::prelude::Town;
+use sea_orm::prelude::Uuid;
 
 pub struct CreateVariantPayload {
     pub bank_id: i32,
@@ -47,13 +48,13 @@ impl UpdateBankPayload {
 
 #[derive(Debug, Default)]
 pub struct UpdateBankVariantPayload {
-    pub id: i32,
+    pub id: Uuid,
     pub label: Option<String>,
     pub difficulty: Option<BankDifficultyType>,
 }
 
 impl UpdateBankVariantPayload {
-    pub fn new(id: i32) -> Self {
+    pub fn new(id: Uuid) -> Self {
         UpdateBankVariantPayload {
             id,
             ..Default::default()

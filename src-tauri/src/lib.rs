@@ -94,7 +94,7 @@ pub async fn run() -> Result<(), Error> {
             //banks
             services::banks_configurator::commands::get_all_banks,
             services::banks_configurator::commands::load_bank,
-            services::banks_configurator::commands::load_bank_difficulties,
+            services::banks_configurator::commands::load_difficulty,
             services::banks_configurator::commands::update_bank_difficulty_chance,
             services::banks_configurator::commands::create_bank_variant,
             services::banks_configurator::commands::update_bank_recharges_count,

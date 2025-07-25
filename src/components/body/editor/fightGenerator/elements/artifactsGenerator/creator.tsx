@@ -5,15 +5,16 @@ import { useDisclosure } from "@mantine/hooks"
 import { useState } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { FightGeneratorApi } from "../../api"
+import { UUID } from "crypto"
 
 export type CreateArtifactsAssetPayload = {
-    assetId: number,
+    assetId: UUID,
     generationType: AssetGenerationType
 }
 
-function ArtifactsAssetCreator(params: {
-    assetId: number,
-    assetCreatedCallback: (value: FightAssetArtifactsModel) => void
+function ArtifactsAssetCreator({assetId, onCreated}: {
+    assetId: UUID,
+    onCreated: (value: FightAssetArtifactsModel) => void
 }) {
     const [opened, {open, close}] = useDisclosure(false);
     const [selectedType, setSelectedType] = useState<AssetGenerationType | null>(null);
@@ -24,7 +25,7 @@ function ArtifactsAssetCreator(params: {
         },
         onSuccess(data, _variables, _context) {
             close();
-            params.assetCreatedCallback(data);
+            onCreated(data);
         },
     })
 
@@ -52,7 +53,7 @@ function ArtifactsAssetCreator(params: {
                     <Group justify="end">
                         <Button 
                             disabled={!selectedType} 
-                            onClick={() => mutation.mutate({assetId: params.assetId, generationType: selectedType!})} 
+                            onClick={() => mutation.mutate({assetId: assetId, generationType: selectedType!})} 
                             radius={0}
                         >
                             Create

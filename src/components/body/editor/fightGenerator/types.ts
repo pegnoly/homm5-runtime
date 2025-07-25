@@ -1,5 +1,7 @@
+import { UUID } from "crypto";
+
 export type FightAssetSimple = {
-    id: number,
+    id: UUID,
     name: string
 }
 

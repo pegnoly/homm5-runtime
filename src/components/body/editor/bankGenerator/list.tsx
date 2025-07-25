@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { BankGeneratorApi } from "./api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BankLoadingModel } from "./types";
 import { List } from "@mantine/core";
 import { Link } from "react-router";
@@ -40,10 +40,12 @@ function useBanks() {
 
 function BanksLoader({onLoad}: {onLoad: (values: BankLoadingModel[]) => void}) {
     const { data } = useBanks();
-    console.log('Data: ', data);
-    if (data != undefined) {
-        onLoad(data);
-    }
+
+    useEffect(() => {
+        if (data != undefined) {
+            onLoad(data);
+        }
+    }, [data])
 
     return null
 }

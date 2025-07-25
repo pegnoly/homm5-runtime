@@ -9,6 +9,7 @@ import { FightAssetArtifactsModel } from "./elements/artifactsGenerator/types";
 import { CreateArtifactsAssetPayload } from "./elements/artifactsGenerator/creator";
 import { AddRequiredArtifactPayload, RemoveRequiredArtifactPayload } from "./elements/artifactsGenerator/required";
 import { AddOptionalArtifactPayload, RemoveOptionalArtifactPayload } from "./elements/artifactsGenerator/optional";
+import { UUID } from "crypto";
 
 export class FightGeneratorApi {
     static async loadStack(stackId: number): Promise<FightAssetStackModel> {
@@ -63,7 +64,7 @@ export class FightGeneratorApi {
         return invoke<FightAssetArtifactsModel>("create_artifacts_data_for_asset", payload);
     }
 
-    static async tryLoadArtifactAsset(assetId: number): Promise<FightAssetArtifactsModel | null> {
+    static async tryLoadArtifactAsset(assetId: UUID): Promise<FightAssetArtifactsModel | null> {
         return invoke<FightAssetArtifactsModel | null>("try_load_artifacts_data_for_asset", {assetId: assetId});
     }
 

@@ -4,12 +4,10 @@ use super::models::{
     bank_difficulty, bank_variant,
 };
 use super::payloads::*;
-use crate::error::EditorToolsError;
+use crate::{error::EditorToolsError, prelude::{BankDifficultyDBModel, BankDifficultyType}};
 use itertools::Itertools;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait,
-    FromQueryResult, IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, QueryTrait,
-    SqlxSqlitePoolConnection, sqlx::SqlitePool,
+    prelude::Uuid, sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, QueryTrait, SqlxSqlitePoolConnection
 };
 use std::path::PathBuf;
 
@@ -59,13 +57,11 @@ impl BanksGeneratorRepo {
         Ok(())
     }
 
-    pub async fn get_difficulties(
-        &self,
-        bank_id: i32,
-    ) -> Result<Vec<bank_difficulty::Model>, EditorToolsError> {
+    pub async fn load_difficulty(&self, bank_id: i32, difficulty: BankDifficultyType) -> Result<Option<BankDifficultyDBModel>, EditorToolsError> {
         Ok(bank_difficulty::Entity::find()
             .filter(bank_difficulty::Column::BankId.eq(bank_id))
-            .all(&self.db)
+            .filter(bank_difficulty::Column::DifficultyType.eq(difficulty))
+            .one(&self.db)
             .await?)
     }
 
@@ -83,7 +79,7 @@ impl BanksGeneratorRepo {
 
     pub async fn get_variant(
         &self,
-        id: i32,
+        id: Uuid,
     ) -> Result<Option<bank_variant::Model>, EditorToolsError> {
         Ok(bank_variant::Entity::find_by_id(id).one(&self.db).await?)
     }
@@ -91,9 +87,11 @@ impl BanksGeneratorRepo {
     pub async fn get_variants(
         &self,
         bank_id: i32,
+        difficulty: BankDifficultyType
     ) -> Result<Vec<bank_variant::Model>, EditorToolsError> {
         Ok(bank_variant::Entity::find()
             .filter(bank_variant::Column::BankId.eq(bank_id))
+            .filter(bank_variant::Column::Difficulty.eq(difficulty))
             .all(&self.db)
             .await?)
     }
@@ -106,7 +104,7 @@ impl BanksGeneratorRepo {
             bank_id: Set(payload.bank_id),
             label: Set(payload.label),
             difficulty: Set(payload.difficulty),
-            ..Default::default()
+            id: Set(Uuid::new_v4())
         };
         Ok(model_to_insert.insert(&self.db).await?)
     }
@@ -131,7 +129,7 @@ impl BanksGeneratorRepo {
         Ok(())
     }
 
-    pub async fn delete_variant(&self, id: i32) -> Result<(), EditorToolsError> {
+    pub async fn delete_variant(&self, id: Uuid) -> Result<(), EditorToolsError> {
         if let Some(model_to_delete) = bank_variant::Entity::find_by_id(id).one(&self.db).await? {
             model_to_delete.delete(&self.db).await?;
         }

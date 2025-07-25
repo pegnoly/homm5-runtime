@@ -10,7 +10,7 @@ use super::common::{AssetGenerationType, DifficultyMappedValue};
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub asset_id: i32,
+    pub asset_id: Uuid,
     pub generation_type: AssetGenerationType,
     pub base_powers: DifficultyMappedValue,
     pub powers_grow: Option<DifficultyMappedValue>,

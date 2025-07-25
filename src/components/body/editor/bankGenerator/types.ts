@@ -1,3 +1,5 @@
+import { UUID } from "crypto"
+
 export enum BankType {
     Crypt = "BTD_BANK_CRYPT",
     Pyramid = "BTD_BANK_PYRAMID",
@@ -24,4 +26,22 @@ export type BankFullModel = {
     recharge_timer: number,
     luck_loss: number,
     morale_loss: number
+}
+
+export enum BankDifficultyType {
+    Easy = "BANK_DIFFICULTY_EASY",
+    Medium = "BANK_DIFFICULTY_MEDIUM",
+    Hard = "BANK_DIFFICULTY_HARD",
+    Critical = "BANK_DIFFICULTY_CRITICAL",
+    Boss = "BANK_DIFFICULTY_BOSS"
+}
+
+export type BankDifficulty = {
+    id: number,
+    chance: number
+}
+
+export type BankVariant = {
+    id: UUID,
+    label: string
 }

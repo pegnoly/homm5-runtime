@@ -6,8 +6,8 @@ use super::{bank, bank_difficulty::BankDifficultyType};
 #[derive(Debug, Clone, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "bank_variants")]
 pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: i32,
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub id: Uuid,
     pub bank_id: i32,
     pub label: String,
     pub difficulty: BankDifficultyType,

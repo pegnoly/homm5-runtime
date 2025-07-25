@@ -8,7 +8,7 @@ function BankGeneratorLayout() {
     <div className={styles.editor_layout}>
         <Routes>
             <Route path='/' element={<BanksList/>}/>
-            <Route path="/focused/:id" element={<BankFocused/>}/>
+            <Route path="/focused/:id/*" element={<BankFocused/>}/>
         </Routes>
     </div>
     )

@@ -15,22 +15,17 @@ use homm5_scaner::prelude::{
 };
 
 use itertools::Itertools;
+use uuid::Uuid;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
 pub async fn load_all_assets(
-    app_manager: State<'_, LocalAppManager>,
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    map_id: i32
 ) -> Result<Vec<AssetModel>, Error> {
-    let current_map_id = app_manager
-        .runtime_config
-        .read()
-        .await
-        .current_selected_map
-        .unwrap();
-    Ok(fight_generator_repo.get_all_assets(current_map_id as i32).await?)
+    Ok(fight_generator_repo.get_all_assets(map_id).await?)
 }
 
 #[tauri::command]
@@ -69,7 +64,7 @@ pub async fn init_new_asset(
     name: String,
     path: String,
     table_name: String,
-) -> Result<AssetModel, Error> {
+) -> Result<Uuid, Error> {
     let current_map_id = app_manager
         .runtime_config
         .read()
@@ -88,7 +83,7 @@ pub async fn init_new_asset(
 #[tauri::command]
 pub async fn load_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    id: i32,
+    id: Uuid,
 ) -> Result<Option<AssetModel>, Error> {
     Ok(fight_generator_repo.get_asset(id).await?)
 }
@@ -117,7 +112,7 @@ pub async fn load_abilities_models(
 #[tauri::command]
 pub async fn try_load_artifacts_data_for_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: i32,
+    asset_id: Uuid,
 ) -> Result<Option<AssetArtifactsModel>, Error> {
     Ok(fight_generator_repo.get_artifacts_model(asset_id).await?)
 }
@@ -125,7 +120,7 @@ pub async fn try_load_artifacts_data_for_asset(
 #[tauri::command]
 pub async fn create_artifacts_data_for_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: i32,
+    asset_id: Uuid,
     generation_type: AssetGenerationType,
 ) -> Result<AssetArtifactsModel, Error> {
     let payload = InitAssetArtifactsDataPayload {
@@ -234,7 +229,7 @@ pub async fn remove_optional_artifact(
 #[tauri::command]
 pub async fn load_stacks_ids(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: i32,
+    asset_id: Uuid,
 ) -> Result<Vec<i32>, Error> {
     Ok(fight_generator_repo.get_stacks_ids(asset_id).await?)
 }
@@ -242,7 +237,7 @@ pub async fn load_stacks_ids(
 #[tauri::command]
 pub async fn create_stack(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: i32,
+    asset_id: Uuid,
     type_generation_mode: ArmySlotStackUnitGenerationMode,
     count_generation_mode: ArmySlotStackCountGenerationMode,
     generation_type: Option<AssetGenerationType>,
@@ -469,7 +464,7 @@ pub async fn get_average_artifacts_cost(
 #[tauri::command]
 pub async fn generate_current_hero_script(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: i32,
+    asset_id: Uuid,
 ) -> Result<(), Error> {
     if let Some(main_asset) = fight_generator_repo.get_asset(asset_id).await? {
         let mut output_file =

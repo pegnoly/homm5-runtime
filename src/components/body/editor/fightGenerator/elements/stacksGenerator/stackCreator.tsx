@@ -8,14 +8,14 @@ import { useMutation } from "@tanstack/react-query";
 import { FightGeneratorApi } from "../../api";
 
 export type CreateStackPayload = {
-    assetId: number,
+    assetId: string,
     typeGenerationMode: StackUnitGenerationType,
     countGenerationMode: StackCountGenerationType,
     generationType: AssetGenerationType
 }
 
 function FightAssetStackCreator(params: {
-    assetId: number,
+    assetId: string,
     disabled: boolean,
     stackCreatedCallback: (value: number) => void
 }) {

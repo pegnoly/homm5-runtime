@@ -15,7 +15,7 @@ function useStackQuery(stackId: number) {
 }
 
 function FightAssetFocusedStack(params: {
-    assetId: number,
+    assetId: string,
     stackId: number
 }) {
     const currentStackId = useCurrentStackId();

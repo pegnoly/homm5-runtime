@@ -1,4 +1,5 @@
 use homm5_scaner::prelude::{ArtifactSlotType, Town};
+use sea_orm::prelude::Uuid;
 
 use super::{
     models::{
@@ -20,7 +21,7 @@ pub struct InitFightAssetPayload {
 }
 
 pub struct InitAssetArtifactsDataPayload {
-    pub asset_id: i32,
+    pub asset_id: Uuid,
     pub generation_type: AssetGenerationType,
 }
 
@@ -58,7 +59,7 @@ pub struct RemoveRequiredArtifactPayload {
 }
 
 pub struct AddStackPayload {
-    pub asset_id: i32,
+    pub asset_id: Uuid,
     pub unit_generation_type: ArmySlotStackUnitGenerationMode,
     pub count_generation_type: ArmySlotStackCountGenerationMode,
     pub power_based_generation_type: Option<AssetGenerationType>,
@@ -66,7 +67,7 @@ pub struct AddStackPayload {
 
 impl AddStackPayload {
     pub fn new(
-        asset_id: i32,
+        asset_id: Uuid,
         unit_generation_type: ArmySlotStackUnitGenerationMode,
         count_generation_type: ArmySlotStackCountGenerationMode,
     ) -> Self {

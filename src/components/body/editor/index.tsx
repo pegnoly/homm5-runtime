@@ -8,12 +8,15 @@ import BankGeneratorLayout from "./bankGenerator";
 import FightGeneratorLayout from "./fightGenerator";
 import HeroCreatorLayout from "./heroCreator";
 import CreatureCopyCreatorLayout from "./creatureCopyCreator";
+import { useEffect } from "react";
 
 function EditorMain() {
     const { state } = useParams();
     const actions = useEditorStateActions();
 
-    actions.setEditorState(state as EditorState);
+    useEffect(() => {
+        actions.setEditorState(state as EditorState);
+    }, [state]);
 
     return (
     <div className={styles.editor}>

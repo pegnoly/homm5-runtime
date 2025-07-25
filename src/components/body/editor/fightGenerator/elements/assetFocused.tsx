@@ -3,6 +3,7 @@ import styles from './styles.module.css'
 import FightAssetStackGenerator from "./stacksGenerator";
 import FightAssetArtifactsGenerator from "./artifactsGenerator";
 import { useFightAssetActions } from "../store";
+import { UUID } from "crypto";
 
 function FightAssetFocused() {
     const { id } = useParams();
@@ -12,14 +13,14 @@ function FightAssetFocused() {
     const actions = useFightAssetActions();
 
     if (assetName != undefined && id != undefined) {
-        actions.setCurrentAssetId(parseInt(id));
+        actions.setCurrentAssetId(id as UUID);
         actions.setCurrentAssetName(assetName as string);
     }
 
     return (
     <div className={styles.focused_panel}>
-        <FightAssetStackGenerator assetId={parseInt(id!)}/>
-        <FightAssetArtifactsGenerator assetId={parseInt(id!)}/>
+        <FightAssetStackGenerator assetId={id as UUID}/>
+        <FightAssetArtifactsGenerator assetId={id as UUID}/>
     </div>
     )
 }

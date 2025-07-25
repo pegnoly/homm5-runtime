@@ -4,9 +4,10 @@ import { useState } from "react";
 import { FightAssetSimple } from "../types";
 import { invoke } from "@tauri-apps/api/core";
 import { Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Stack, Text, TextInput, Tooltip } from "@mantine/core";
+import { UUID } from "crypto";
 
-function FightAssetCreator(params: {
-    assetCreatedCallback: (value: FightAssetSimple) => void
+function FightAssetCreator({onCreated}: {
+    onCreated: (value: FightAssetSimple) => void
 }) {
     const [opened, {open, close}] = useDisclosure(false);
     const [directory, setDirectory] = useState<string | null>(null);
@@ -17,8 +18,8 @@ function FightAssetCreator(params: {
 
     async function create() {
         close();
-        await invoke<FightAssetSimple>("init_new_asset", {name: name, path: directory, tableName: tableName})
-            .then((value) => params.assetCreatedCallback(value));
+        await invoke<UUID>("init_new_asset", {name: name, path: directory, tableName: tableName})
+            .then((value) => onCreated({id: value, name: name!}));
     }
 
     return <div style={{position: 'sticky'}}>
@@ -34,7 +35,7 @@ function FightAssetCreator(params: {
                     <Stack>
                         <Button 
                             onClick={() => invoke("pick_hero_lua_generation_directory")}
-                        >Pick directory to generate hero script</Button>
+                        >Pick directory to generate script</Button>
                         <Tooltip label={directory}>
                             <Text lineClamp={1}>{directory}</Text>
                         </Tooltip>

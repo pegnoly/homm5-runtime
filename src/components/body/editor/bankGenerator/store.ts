@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { BankFullModel } from "./types"
+import { UUID } from "crypto"
 
 type Actions = {
     loadBank: (value: BankFullModel) => void,
@@ -20,14 +21,14 @@ type Store = {
     actions: Actions
 }
 
-const store = create<Store>((set, get) => ({
+const store = create<Store>((set) => ({
     bankId: undefined,
     name: undefined,
     rechargeCount: undefined,
     rechargeTimer: undefined,
     luckLoss: undefined,
     moraleLoss: undefined,
-
+    
     actions: {
         loadBank(value) {
             set({

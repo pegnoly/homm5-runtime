@@ -7,38 +7,53 @@ import FightAssetsList from './elements/assetsList';
 import FightAssetFocused from './elements/assetFocused';
 import { invoke } from '@tauri-apps/api/core';
 import { useCurrentMapId } from '@/stores/common';
+import { useQuery } from '@tanstack/react-query';
 
 function FightGeneratorLayout() {
-    const currentMapId = useCurrentMapId();
     const [assets, setAssets] = useState<FightAssetSimple[]>([]);
-
-    useEffect(() => {
-        loadAssets();
-    }, [currentMapId])
-
-    const loadAssets = async () => {
-        await invoke<FightAssetSimple[]>("load_all_assets")
-            .then((data) => setAssets(data));
-    }
-
     async function assetCreated(value: FightAssetSimple) {
         setAssets([...assets, value]);
     }
 
     return (
-    <Routes>
-        <Route 
-            path='/*' 
-            element={
-                <div className={styles.editor_layout}>
-                    <FightAssetCreator assetCreatedCallback={assetCreated}/>
-                    <FightAssetsList assets={assets}/>
-                </div>
-            }
-        />
-        <Route path='/focused/:id' element={<FightAssetFocused/>}/>
-    </Routes>
+    <>
+        <Routes>
+            <Route 
+                path='/*' 
+                element={
+                    <div className={styles.editor_layout}>
+                        <FightAssetCreator onCreated={assetCreated}/>
+                        <FightAssetsList assets={assets}/>
+                    </div>
+                }
+            />
+            <Route path='/focused/:id' element={<FightAssetFocused/>}/>
+        </Routes>
+        <FightAssetsLoader onLoad={setAssets}/>
+    </>
     )
+}
+
+function useFightAssets(mapId: number) {
+    return useQuery({
+        queryKey: ['fight_assets', mapId],
+        queryFn: async() => {
+           return invoke<FightAssetSimple[]>("load_all_assets", {mapId: mapId}); 
+        }
+    })
+}
+
+function FightAssetsLoader({onLoad}: {onLoad: (values: FightAssetSimple[]) => void}) {
+    const currentMapId = useCurrentMapId();
+    const { data } = useFightAssets(currentMapId!);
+
+    useEffect(() => {
+        if (data != undefined) {
+            onLoad(data);
+        }
+    }, [data]);
+
+    return null;
 }
 
 export default FightGeneratorLayout;
