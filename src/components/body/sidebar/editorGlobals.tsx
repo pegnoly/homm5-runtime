@@ -1,4 +1,5 @@
 import { EditorState, useEditorState } from '../../../stores/EditorStateStore';
+import BankGeneratorGlobals from '../editor/bankGenerator/globals';
 import DialogGeneratorGlobals from '../editor/dialogGenerator/globals';
 import FightGeneratorGlobals from '../editor/fightGenerator/globals';
 import QuestGeneratorGlobals from '../editor/questGenerator/globals';
@@ -26,6 +27,8 @@ function RenderEditorGlobals() {
             return <QuestGeneratorGlobals/>
         case EditorState.ReserveHeroes: 
             return <ReserveHeroesGeneratorGlobals/>
+        case EditorState.Banks:
+            return <BankGeneratorGlobals/>
         default:
             return null;
     }
