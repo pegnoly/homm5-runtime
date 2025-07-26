@@ -302,15 +302,15 @@ pub async fn generate_banks_script(
                             base_army_count_data_script +=
                                 &format!("\t\t\t\t\t\t\t\t[{}] = {},\n", &difficulty, power);
                         }
-                        base_army_count_data_script += "\t\t\t\t\t\t},\n";
+                        base_army_count_data_script += "\t\t\t\t\t\t\t},\n";
 
                         if asset.power_based_generation_type == AssetGenerationType::Dynamic {
                             army_count_grow_script += &format!("\t\t\t\t\t\t\t[{}] = {{\n", stack_count);
                             for (difficulty, power) in asset.powers_grow.data {
                                 army_count_grow_script +=
-                                    &format!("\t\t\t\t\t\t\t[{}] = {},\n", &difficulty, power);
+                                    &format!("\t\t\t\t\t\t\t\t[{}] = {},\n", &difficulty, power);
                             }
-                            army_count_grow_script += "\t\t\t\t\t\t},\n";
+                            army_count_grow_script += "\t\t\t\t\t\t\t},\n";
                         }
                     } else {
                         for (difficulty, power) in asset.concrete_count.data {
@@ -331,7 +331,7 @@ pub async fn generate_banks_script(
                             stack_count, creatures_list
                         );
                     } else {
-                        army_generation_rules_script += &format!("\t\t\t\t\t\t\t[{}] = function ()\n", stack_count);
+                        army_generation_rules_script += &format!(r#"                            [{}] = function ()"#, stack_count);
 
                         let mut generation_rules_script = String::from("local result = ");
                         for rule in &asset.generation_rule.params {
@@ -358,11 +358,17 @@ pub async fn generate_banks_script(
                         let towns = asset.towns.towns.iter().join(", ");
                         let tiers = asset.tiers.tiers.iter().join(", ");
                         let mut inner_getter_function = format!(
-                            "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})\n",
+                            r#"local possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})"#,
                             towns, tiers
                         );
                         let filter_function = format!(
-                            "\t\t\tlocal filtered_creatures = list_iterator.Filter(\n\t\t\t\tpossible_creatures,\n\t\t\t\tfunction(creature)\n\t\t\t\t\t{}\n\t\t\t\t\treturn result\n\t\t\t\tend)",
+                            r#"
+                                local filtered_creatures = list_iterator.Filter(
+                                    possible_creatures,
+                                    function(creature)
+                                        {}
+                                        return result
+                                    end)"#,
                             &generation_rules_script
                         );
 
@@ -371,14 +377,19 @@ pub async fn generate_banks_script(
                         if stats_elements.len() == 0 || stats_elements[0].stats.values.len() == 0 {
                             if asset.generation_rule.params.len() > 0 {
                                 inner_getter_function += &format!(
-                                    "{}\n\t\t\t\t\t\t\tlocal id = Random.FromTable(filtered_creatures)\n\t\t\t\t\t\treturn id",
-                                    &filter_function
-                                );
+                            r#"{}
+                                local id = Random.FromTable(filtered_creatures)
+                                return id"#, &filter_function);
                             } else {
-                                inner_getter_function += "\t\t\t\t\t\tlocal id = Random.FromTable(possible_creatures)\n\t\t\t\t\t\treturn id";
+                                inner_getter_function += r#"
+                                local id = Random.FromTable(possible_creatures)
+                                return id"#;
                             }
                             army_generation_rules_script +=
-                                &format!("{}\n\t\tend,\n", inner_getter_function);
+                                &format!(r#"
+                                {}
+                            end,
+                        "#, inner_getter_function);
                         } else {
                             let stat_element = &stats_elements[0];
                             let mut sort_function = String::new();
@@ -442,12 +453,12 @@ pub async fn generate_banks_script(
                 bank_data_string += &format!("{}\t\t\t\t\t\t}},\n\n", stack_gen_type_script);
                 bank_data_string += &format!("{}\t\t\t\t\t\t}},\n\n", base_army_count_data_script);
                 bank_data_string += &format!("{}\t\t\t\t\t\t}},\n\n", army_count_grow_script);
-                bank_data_string += &format!("{}\t\t\t\t\t\t}},\n", army_generation_rules_script);
+                bank_data_string += &format!("{}}},\n", army_generation_rules_script);
                 bank_data_string.push_str("\t\t\t\t\t}\n");
                 bank_data_string.push_str("\t\t\t\t},\n");
             }
-            bank_data_string.push_str("\t},\n");
-            bank_data_string.push_str("\t},\n");
+            bank_data_string.push_str("\t\t\t},\n");
+            bank_data_string.push_str("\t\t},\n");
         }
         bank_data_string.push_str("\t}\n}");
         bank_file.write_all(bank_data_string.as_bytes())?;

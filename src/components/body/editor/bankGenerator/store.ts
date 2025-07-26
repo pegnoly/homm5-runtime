@@ -1,6 +1,5 @@
 import { create } from "zustand"
 import { BankFullModel } from "./types"
-import { UUID } from "crypto"
 
 type Actions = {
     loadBank: (value: BankFullModel) => void,
