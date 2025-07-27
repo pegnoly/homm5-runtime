@@ -158,7 +158,6 @@ pub async fn apply_modifications(
 ) -> Result<(), super::error::Error> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     let base_config_locked = app_manager.base_config.read().await;
-    let mut modifiers_config_locked = app_manager.modifiers_config.write().await;
     let current_map_id = runtime_config_locked.current_selected_map.unwrap();
     let map = base_config_locked
         .maps
@@ -178,11 +177,7 @@ pub async fn apply_modifications(
     // get all quests data for these ids and convert db models to quests
 
     let this_mission_quests = quests_repo.load_quests(current_map_id as i32).await?;
-    let models_to_generate = this_mission_quests.iter()
-        .filter(|m| modifiers_config_locked.data.quests_generation_queue.contains(&m.id))
-        .collect::<Vec<&QuestModel>>();
-
-    for model in &models_to_generate {
+    for model in &this_mission_quests {
         let progresses = quests_repo.load_progresses(model.id).await?;
         let request = QuestCreationRequest::new(PathBuf::from(model.directory.clone()), model.script_name.clone())
             .with_name(model.name.clone())
@@ -201,16 +196,15 @@ pub async fn apply_modifications(
             .secondary(model.is_secondary)
             .initialy_active(model.is_active);
 
-        if let Ok(quest) = request.generate(Some(&QuestBoilerplateHelper {
+        let quest = request.generate(Some(&QuestBoilerplateHelper {
             mod_path: mod_path.clone(),
             map_data_path: map.data_path.clone(),
             texts_path: base_config_locked.texts_path.clone(),
-        })) {
-            if model.is_secondary {
-                modifiers_queue.secondary_quests.push(quest);
-            } else {
-                modifiers_queue.primary_quests.push(quest);
-            }
+        }))?;
+        if model.is_secondary {
+            modifiers_queue.secondary_quests.push(quest);
+        } else {
+            modifiers_queue.primary_quests.push(quest);
         }
     }
 
@@ -218,12 +212,6 @@ pub async fn apply_modifications(
     println!("Secondary quests: {:?}", &modifiers_queue.secondary_quests);
 
     modifiers_queue.apply_changes_to_map(map, &mut runtime_config_locked.current_map_data, &reserve_heroes_repo).await;
-    let altered_queue = modifiers_config_locked.data.quests_generation_queue.iter()
-        .filter(|q| !models_to_generate.iter().any(|m| m.id == **q))
-        .map(|q| *q)
-        .collect::<Vec<i32>>();
-    modifiers_config_locked.data.quests_generation_queue = altered_queue;
-    modifiers_config_locked.update()?;
 
     Ok(())
 }

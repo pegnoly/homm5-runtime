@@ -43,7 +43,7 @@ function CurrentProgress() {
             style={{
                 pointerEvents: currentQuestId == undefined ? 'none' : 'auto', 
                 width: '100%', 
-                height: '100%', 
+                height: '85%', 
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'stretch',

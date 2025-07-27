@@ -61,6 +61,7 @@ const questGeneratorStore = create<Store>((set) => ({
             set({quests: value});
         },
         loadCurrentQuest(value) {
+            console.log("Loading ", value)
             set({
                 currentQuestId: value.id,
                 currentQuestName: value.name,

@@ -22,8 +22,12 @@ function QuestGeneratorDataBlock() {
     const isSecondary = useCurrentQuestIsSecondary();
     const actions = useQuestsActions();
 
-    const [localDesc, setLocalDesc] = useState<string | undefined>(currentDesc);
+    console.log("Current desc:", currentDesc);
+
+    const [localDesc, setLocalDesc] = useState<string>(currentDesc!);
     const [descEditable, setDescEditable] = useState<boolean>(false);
+
+    console.log("Local desc:", localDesc);
 
     async function tryUpdateDirectory() {
         await invoke("pick_quest_directory", {initial: false})

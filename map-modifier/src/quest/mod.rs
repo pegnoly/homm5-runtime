@@ -148,23 +148,31 @@ impl GenerateBoilerplate for QuestCreationRequest {
         let local_quest_dir = self.path.to_str().unwrap().replace(&helper_data.mod_path, "");
 
         let quest_texts_base = format!("{}{}\\", &helper_data.texts_path, &local_quest_dir);
-        let texts_dir = format!("{}Texts\\", &quest_texts_base);
+        let texts_dir = PathBuf::from(format!("{}Texts\\", &quest_texts_base));
 
-        let dialogs_texts_dir = format!("{}Dialogs\\", &quest_texts_base);
+        let dialogs_texts_dir = PathBuf::from(format!("{}Dialogs\\", &quest_texts_base));
         let texts_path = self.path.join("Texts\\");
         let dialogs_path = self.path.join("Dialogs\\");
-        let progresses_texts_dir = format!("{}Progress\\", &quest_texts_base);
+        let progresses_texts_dir = PathBuf::from(format!("{}Progress\\", &quest_texts_base));
 
         let map_local_path = self.path.to_str().unwrap().replace(&helper_data.map_data_path, "");
 
-        std::fs::create_dir_all(&texts_dir)?;
-        std::fs::create_dir_all(&dialogs_texts_dir)?;
-        std::fs::create_dir(&dialogs_path)?;
-        std::fs::create_dir_all(&progresses_texts_dir)?;
+        if !texts_dir.exists() {
+            std::fs::create_dir_all(&texts_dir)?;
+        }
+        if !dialogs_texts_dir.exists() {
+            std::fs::create_dir_all(&dialogs_texts_dir)?;
+        }
+        if !dialogs_path.exists() {
+            std::fs::create_dir(&dialogs_path)?;
+        }
+        if !progresses_texts_dir.exists() {
+            std::fs::create_dir_all(&progresses_texts_dir)?;
+        }
 
         self.generate_name(&mut quest, &quest_texts_base, &map_local_path);
         self.generate_desc(&mut quest, &quest_texts_base, &map_local_path);
-        self.generate_progresses(&mut quest, &progresses_texts_dir, &map_local_path);
+        self.generate_progresses(&mut quest, &progresses_texts_dir.to_string_lossy().to_string(), &map_local_path);
 
         let script_boilerplate = format!("
 c{}m{}_{} = {{

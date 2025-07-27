@@ -1,14 +1,16 @@
 use core::str;
-use std::{collections::HashMap, io::Write};
+use std::{collections::HashMap, io::Write, path::PathBuf};
 
 use artifacts::{ArtifactConfigEntity, ArtifactsModifier};
 use buildings::{BankConfigEntity, BuildingConfigEntity, BuildingsModifier};
-use editor_tools::prelude::ReserveHeroCreatorRepo;
+use editor_tools::prelude::{QuestGeneratorRepo, ReserveHeroCreatorRepo};
 use homm5_types::{art::AdvMapArtifact, building::AdvMapBuilding, creature::AdvMapMonster, hero::AdvMapHero, player::PlayerID};
 pub use homm5_types::{common::FileRef, quest::{Objectives, Quest, QuestList}, Homm5Type};
 use monsters::MonstersModifier;
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, Event}, Reader, Writer};
 use serde::{Deserialize, Serialize};
+
+use crate::quest::{QuestCreationRequest, QuestProgress};
 
 pub mod quest;
 pub mod reserve_heroes;
@@ -77,7 +79,11 @@ impl<'a> ModifiersQueue<'a> {
         }
     }
 
-    pub async fn apply_changes_to_map(&mut self, map: &Map, _map_data: &mut MapData, reserve_heroes_repo: &ReserveHeroCreatorRepo) {
+    pub async fn apply_changes_to_map(
+        &mut self, map: &Map, 
+        _map_data: &mut MapData, 
+        reserve_heroes_repo: &ReserveHeroCreatorRepo
+    ) {
         let mut output_map: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output_map, b' ', 4);
     
@@ -122,7 +128,7 @@ impl<'a> ModifiersQueue<'a> {
                             let end = e.to_end().into_owned();
                             let text = reader.read_text(end.name()).unwrap().to_string();
                             let mut objectives: ObjectivesInfo = quick_xml::de::from_str(&format!("<Objectives>{}</Objectives>", &text)).unwrap();
-                            self.apply_quests(&mut writer, &mut objectives);
+                            self.apply_quests(&mut writer, &mut objectives).await;
                         },
                         "ReserveHeroes" => {
                             players_count += 1;
@@ -187,34 +193,26 @@ impl<'a> ModifiersQueue<'a> {
     }
 
 
-    fn apply_quests(&self, writer: &mut Writer<&mut Vec<u8>>, objectives_data: &mut ObjectivesInfo) {
+    async fn apply_quests(
+        &self, 
+        writer: &mut Writer<&mut Vec<u8>>, 
+        objectives_data: &mut ObjectivesInfo
+    ) {
         let primary_quests_items = &mut objectives_data.primary.player_specific.items.as_mut().unwrap()[0];
         let secondary_quests_items = &mut objectives_data.secondary.player_specific.items.as_mut().unwrap()[0];
 
         if !self.primary_quests.is_empty() {
-            if primary_quests_items.objectives.as_mut().unwrap().items.is_none() {
-                primary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
-            }
+            primary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
 
-            let quests_to_apply = self.primary_quests.iter().filter(|q| {
-                !primary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name)
-            }).collect::<Vec<&Quest>>();
-
-            for quest in quests_to_apply {
+            for quest in &self.primary_quests {
                 primary_quests_items.objectives.as_mut().unwrap().items.as_mut().unwrap().push(quest.clone());
             }
         }
 
         if !self.secondary_quests.is_empty() {
-            if secondary_quests_items.objectives.as_mut().unwrap().items.is_none() {
-                secondary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
-            }
+            secondary_quests_items.objectives.as_mut().unwrap().items = Some(vec![]);
 
-            let quests_to_apply = self.secondary_quests.iter().filter(|q| {
-                !secondary_quests_items.objectives.as_ref().unwrap().items.as_ref().unwrap().iter().any(|eq| eq.name == q.name)
-            }).collect::<Vec<&Quest>>();
-
-            for quest in quests_to_apply {
+            for quest in &self.secondary_quests {
                 secondary_quests_items.objectives.as_mut().unwrap().items.as_mut().unwrap().push(quest.clone());
             }
         }
