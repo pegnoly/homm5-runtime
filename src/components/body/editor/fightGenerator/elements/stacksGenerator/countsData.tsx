@@ -31,13 +31,16 @@ function ConcreteCountSelector() {
     const actions = useCurrentStackActions();
 
     return <div style={{display: 'flex', justifyContent: 'space-around'}}>
-        <DifficultyValues
-            name="Stack concrete counts"
-            tauriFunction="update_stack_concrete_count"
-            containerId={currentStackId!}
-            updateCallback={actions.setConcreteCounts}
-            values={concreteCounts!}
-        />
+        {
+            currentStackId == undefined ? null :
+            <DifficultyValues
+                name="Stack concrete counts"
+                tauriFunction="update_stack_concrete_count"
+                containerId={currentStackId!}
+                updateCallback={actions.setConcreteCounts}
+                values={concreteCounts!}
+            />
+        }
     </div>
 }
 
@@ -50,7 +53,9 @@ function PowerBasedSelector() {
     const typeGenerationMode = useTypeGenerationMode()
 
     return <div style={{display: 'flex', width: '100%', flexDirection: 'row', justifyContent: 'space-between'}}>
-        {
+    {
+        currentStackId == undefined ? null :
+        (
             typeGenerationMode == StackUnitGenerationType.TierSlotBased ?
             <>
                 <div style={{width: '50%', display: 'flex'}}>
@@ -104,6 +109,7 @@ function PowerBasedSelector() {
                     null
                 }
             </>
-        }
+        )
+    }
     </div>
 }

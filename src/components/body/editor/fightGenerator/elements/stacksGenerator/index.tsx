@@ -39,7 +39,7 @@ function FightAssetStackGenerator({assetId}: {assetId: UUID}) {
                 />
             </div>
         </div>
-        <FightAssetFocusedStack assetId={assetId} stackId={selectedStack!}/>
+        <FightAssetFocusedStack stackId={selectedStack!}/>
     </div>
     )
 }
