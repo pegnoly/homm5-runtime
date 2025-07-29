@@ -174,10 +174,14 @@ impl GenerateBoilerplate for QuestCreationRequest {
         self.generate_desc(&mut quest, &quest_texts_base, &map_local_path);
         self.generate_progresses(&mut quest, &progresses_texts_dir.to_string_lossy().to_string(), &map_local_path);
 
+        let script_path = self.path.join("script.lua");
+
+        if !script_path.exists() {
         let script_boilerplate = format!("
 c{}m{}_{} = {{
     name = \"{}\",
     path = {{
+        main = \"{}\",
         text = \"{}\",
         dialog = \"{}\"
     }},
@@ -190,15 +194,18 @@ c{}m{}_{} = {{
             self.campaign_number, 
             self.mission_number, 
             self.script_name.to_lowercase(), 
-            self.script_name, 
+            self.script_name,
+            self.path.to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
             texts_path.to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
             dialogs_path.to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
             self.script_name,
             self.path.join("name.txt").to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/")
         );
 
-        let mut script_file = std::fs::File::create(self.path.join("script.lua")).unwrap();
-        script_file.write_all(script_boilerplate.as_bytes()).unwrap();
+            let mut script_file = std::fs::File::create(self.path.join("script.lua")).unwrap();
+            script_file.write_all(script_boilerplate.as_bytes()).unwrap();
+        }
+    
         Ok(quest)
     }
 }
