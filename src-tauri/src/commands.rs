@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::path::PathBuf;
 
-use editor_tools::prelude::{QuestGeneratorRepo, QuestModel, ReserveHeroCreatorRepo};
+use editor_tools::prelude::{QuestGeneratorRepo, ReserveHeroCreatorRepo};
 use homm5_repacker::Repacker;
 use homm5_scaner::prelude::{ScanerService, Town};
 use itertools::Itertools;
