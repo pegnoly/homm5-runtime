@@ -1,14 +1,6 @@
 use crate::{error::Error, utils::LocalAppManager};
 use editor_tools::prelude::{
-    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload,
-    AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule,
-    ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel,
-    AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType,
-    FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload,
-    RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload,
-    UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload,
-    UpdateGenerationStatElementPayload, UpdateStackConcreteCreaturesPayload,
-    UpdateStackTiersPayload, UpdateStackTownsPayload,
+    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
 };
 use homm5_scaner::prelude::{
     AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town
@@ -261,6 +253,22 @@ pub async fn load_stack(
     stack_id: i32,
 ) -> Result<Option<AssetArmySlotModel>, Error> {
     Ok(fight_generator_repo.get_stack(stack_id).await?)
+}
+
+#[tauri::command]
+pub async fn update_stack_data(
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
+    stack_id: i32,
+    unit_generation_type: ArmySlotStackUnitGenerationMode,
+    count_generation_type: ArmySlotStackCountGenerationMode,
+    count_generation_mode: AssetGenerationType
+) -> Result<(), Error> {
+    Ok(fight_generator_repo.update_stack_base_data(UpdateStackBaseDataPayload { 
+        stack_id, 
+        unit_generation_type,
+        count_generation_type,
+        power_based_generation_type: count_generation_mode
+    }).await?)
 }
 
 #[tauri::command]

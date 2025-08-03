@@ -1,10 +1,12 @@
 import { create } from "zustand"
 import { AssetGenerationType, DifficultyMappedValue, TownType } from "../../types"
 import { ArmyGenerationStatElement, CreatureIds, CreatureTiers, CreatureTowns, FightAssetStackModel, StackCountGenerationType, StackGenerationParam, StackGenerationRules, StackUnitGenerationType, StatGenerationRule, StatGenerationType } from "./types"
+import { UpdateStackDataPayload } from "./data"
 
 type Actions = {
     loadAsset: (value: FightAssetStackModel) => void,
     loadStatsParams: (value: ArmyGenerationStatElement[]) => void,
+    updateBaseData: (value: UpdateStackDataPayload) => void,
     setBasePowers: (value: DifficultyMappedValue) => void,
     setPowersGrow: (value: DifficultyMappedValue) => void,
     setConcreteCounts: (value: DifficultyMappedValue) => void,
@@ -72,6 +74,9 @@ const useCurrentStackAssetStore = create<Store>((set, get) => ({
         },
         loadStatsParams(value) {
             set({statParams: value});
+        },
+        updateBaseData(value) {
+            set({typeGenerationMode: value.unitGenerationType, countGenerationMode: value.countGenerationType, powerBasedGenerationType: value.countGenerationMode});
         },
         setBasePowers(value) {
             set({basePowers: value});

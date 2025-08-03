@@ -10,6 +10,7 @@ import { CreateArtifactsAssetPayload } from "./elements/artifactsGenerator/creat
 import { AddRequiredArtifactPayload, RemoveRequiredArtifactPayload } from "./elements/artifactsGenerator/required";
 import { AddOptionalArtifactPayload, RemoveOptionalArtifactPayload } from "./elements/artifactsGenerator/optional";
 import { UUID } from "crypto";
+import { UpdateStackDataPayload } from "./elements/stacksGenerator/data";
 
 export class FightGeneratorApi {
     static async loadStack(stackId: number): Promise<FightAssetStackModel> {
@@ -18,6 +19,10 @@ export class FightGeneratorApi {
 
     static async createStack(payload: CreateStackPayload): Promise<number> {
         return invoke<number>("create_stack", payload);
+    }
+
+    static async updateStackData(payload: UpdateStackDataPayload): Promise<void> {
+        return invoke("update_stack_data", payload);
     }
 
     static async updateStackTowns(payload: UpdateTownsPayload): Promise<void> {

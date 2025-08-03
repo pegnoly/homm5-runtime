@@ -88,6 +88,13 @@ impl AddStackPayload {
     }
 }
 
+pub struct UpdateStackBaseDataPayload {
+    pub stack_id: i32,
+    pub unit_generation_type: ArmySlotStackUnitGenerationMode,
+    pub count_generation_type: ArmySlotStackCountGenerationMode,
+    pub power_based_generation_type: AssetGenerationType
+}
+
 pub struct UpdateStackConcreteCreaturesPayload {
     pub stack_id: i32,
     pub creatures: Vec<i32>,

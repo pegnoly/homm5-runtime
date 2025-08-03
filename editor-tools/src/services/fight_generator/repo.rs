@@ -17,7 +17,7 @@ use super::{
 use crate::{
     error::EditorToolsError,
     prelude::{
-        AssetArmySlotModel, InitFightAssetPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
+        AssetArmySlotModel, InitFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
     },
     services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns},
 };
@@ -275,6 +275,20 @@ impl FightGeneratorRepo {
         Ok(army_slot::Entity::find_by_id(stack_id)
             .one(&self.db)
             .await?)
+    }
+
+    pub async fn update_stack_base_data(
+        &self,
+        payload: UpdateStackBaseDataPayload
+    ) -> Result<(), EditorToolsError> {
+        if let Some(stack) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+            let mut model_to_update = stack.into_active_model();
+            model_to_update.type_generation_mode = Set(payload.unit_generation_type);
+            model_to_update.count_generation_mode = Set(payload.count_generation_type);
+            model_to_update.power_based_generation_type = Set(payload.power_based_generation_type);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
     }
 
     pub async fn update_stack_base_power(
