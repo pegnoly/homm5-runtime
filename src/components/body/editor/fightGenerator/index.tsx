@@ -8,11 +8,17 @@ import FightAssetFocused from './elements/assetFocused';
 import { invoke } from '@tauri-apps/api/core';
 import { useCurrentMapId } from '@/stores/common';
 import { useQuery } from '@tanstack/react-query';
+import { UUID } from 'crypto';
 
 function FightGeneratorLayout() {
     const [assets, setAssets] = useState<FightAssetSimple[]>([]);
+
     async function assetCreated(value: FightAssetSimple) {
         setAssets([...assets, value]);
+    }
+
+    async function assetDeleted(value: UUID) {
+        setAssets(assets.filter(a => a.id != value));
     }
 
     return (
@@ -23,7 +29,7 @@ function FightGeneratorLayout() {
                 element={
                     <div className={styles.editor_layout}>
                         <FightAssetCreator onCreated={assetCreated}/>
-                        <FightAssetsList assets={assets}/>
+                        <FightAssetsList assets={assets} onDelete={assetDeleted}/>
                     </div>
                 }
             />

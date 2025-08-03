@@ -67,6 +67,16 @@ impl FightGeneratorRepo {
         Ok(res.id)
     }
 
+    pub async fn delete_asset(
+        &self,
+        id: Uuid
+    ) -> Result<(), EditorToolsError> {
+        if let Some(asset) = asset::Entity::find_by_id(id).one(&self.db).await? {
+            asset.delete(&self.db).await?;
+        }
+        Ok(())
+    }
+
     pub async fn get_artifacts_model(
         &self,
         asset_id: Uuid,

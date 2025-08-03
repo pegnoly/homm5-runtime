@@ -17,6 +17,10 @@ export class FightGeneratorApi {
         return invoke<FightAssetStackModel>("load_stack", {stackId: stackId});
     }
 
+    static async deleteAsset(assetId: UUID): Promise<void> {
+        return invoke("delete_asset", {id: assetId});
+    }
+
     static async createStack(payload: CreateStackPayload): Promise<number> {
         return invoke<number>("create_stack", payload);
     }

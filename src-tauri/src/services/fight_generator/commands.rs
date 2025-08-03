@@ -81,6 +81,14 @@ pub async fn load_asset(
 }
 
 #[tauri::command]
+pub async fn delete_asset(
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
+    id: Uuid
+) -> Result<(), Error> {
+    Ok(fight_generator_repo.delete_asset(id).await?)
+}
+
+#[tauri::command]
 pub async fn load_artifact_models(
     scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<ArtifactDBModel>, Error> {

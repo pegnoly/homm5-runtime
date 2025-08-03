@@ -121,6 +121,7 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::init_new_asset,
             services::fight_generator::commands::load_all_assets,
             services::fight_generator::commands::load_asset,
+            services::fight_generator::commands::delete_asset,
             services::fight_generator::commands::try_load_artifacts_data_for_asset,
             services::fight_generator::commands::create_artifacts_data_for_asset,
             services::fight_generator::commands::update_artifacts_base_cost,
