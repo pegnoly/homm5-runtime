@@ -132,6 +132,7 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::load_stacks_ids,
             services::fight_generator::commands::create_stack,
             services::fight_generator::commands::load_stack,
+            services::fight_generator::commands::delete_stack,
             services::fight_generator::commands::update_stack_data,
             services::fight_generator::commands::update_stack_base_powers,
             services::fight_generator::commands::update_stack_powers_grow,

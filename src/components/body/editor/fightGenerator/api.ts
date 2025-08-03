@@ -21,6 +21,10 @@ export class FightGeneratorApi {
         return invoke<number>("create_stack", payload);
     }
 
+    static async deleteStack(stackId: number): Promise<void> {
+        return invoke("delete_stack", {stackId: stackId});
+    }
+
     static async updateStackData(payload: UpdateStackDataPayload): Promise<void> {
         return invoke("update_stack_data", payload);
     }

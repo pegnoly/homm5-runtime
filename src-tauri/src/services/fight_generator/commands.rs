@@ -256,6 +256,14 @@ pub async fn load_stack(
 }
 
 #[tauri::command]
+pub async fn delete_stack(
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
+    stack_id: i32
+) -> Result<(), Error> {
+    Ok(fight_generator_repo.delete_stack(stack_id).await?)
+}
+
+#[tauri::command]
 pub async fn update_stack_data(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,

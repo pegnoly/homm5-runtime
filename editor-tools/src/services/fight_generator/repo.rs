@@ -277,6 +277,16 @@ impl FightGeneratorRepo {
             .await?)
     }
 
+    pub async fn delete_stack(
+        &self,
+        stack_id: i32
+    ) -> Result<(), EditorToolsError> {
+        if let Some(stack) = army_slot::Entity::find_by_id(stack_id).one(&self.db).await? {
+            stack.delete(&self.db).await?;
+        }
+        Ok(())
+    }
+
     pub async fn update_stack_base_data(
         &self,
         payload: UpdateStackBaseDataPayload

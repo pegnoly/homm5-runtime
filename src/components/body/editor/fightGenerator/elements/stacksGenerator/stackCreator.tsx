@@ -2,7 +2,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { StackCountGenerationType, StackUnitGenerationType } from "./types";
 import { AssetGenerationType } from "../../types";
-import { Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select, Stack, UnstyledButton } from "@mantine/core";
+import { ActionIcon, Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select, Stack, Tooltip } from "@mantine/core";
 import { IconSquareRoundedPlus2 } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { FightGeneratorApi } from "../../api";
@@ -35,9 +35,11 @@ function FightAssetStackCreator(params: {
     })
 
     return <>
-        <UnstyledButton disabled={params.disabled} onClick={open} size="md">
-            <IconSquareRoundedPlus2/>
-        </UnstyledButton>
+        <Tooltip label="Use to create new stack">
+            <ActionIcon disabled={params.disabled} onClick={open} size="md" bg="green">
+                <IconSquareRoundedPlus2/>
+            </ActionIcon>
+        </Tooltip>
         <ModalRoot centered opened={opened} onClose={close}>
             <ModalOverlay/>
             <ModalContent>
