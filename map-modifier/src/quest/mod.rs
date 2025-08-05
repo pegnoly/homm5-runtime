@@ -186,9 +186,14 @@ c{}m{}_{} = {{
         dialog = \"{}\"
     }},
 
+    Load = 
+    function()
+        Quest.Names[\"{}\"] = \"{}\"
+    end,
+
     Init = 
     function ()
-        Quest.Names[\"{}\"] = \"{}\"
+
     end
 }}", 
             self.campaign_number, 
