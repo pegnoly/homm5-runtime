@@ -8,3 +8,4 @@ mod ability;
 mod hero_class;
 mod types_scaner;
 mod skill;
+mod dwelling;

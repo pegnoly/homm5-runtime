@@ -172,8 +172,8 @@ pub fn process_files(
         std::fs::create_dir_all(&xdb_file_dir)?;
     }
 
-    let mut xdb_file = std::fs::File::create(xdb_file_dir.join(format!("Hero.(AdvMapHeroShared).xdb")))?;
-    xdb_file.write(&output_hero_file)?;
+    let mut xdb_file = std::fs::File::create(xdb_file_dir.join("Hero.(AdvMapHeroShared).xdb".to_string()))?;
+    xdb_file.write_all(&output_hero_file)?;
 
     std::fs::copy(generic_icon_path, icon_file)?;
     std::fs::copy(generic_icon_dds, icon_dds)?;

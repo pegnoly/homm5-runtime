@@ -6,7 +6,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{
-        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, Town, TypesXmlScaner, BASE_SKILLS
+        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, Town, TypesXmlScaner, BASE_SKILLS
     }, scaners::{
         self,
         prelude::{
@@ -88,29 +88,38 @@ impl ScanerService {
             SkillDataOutput::new(&self.db)
         );
 
+        let mut dwelling_scan_processor = ScanProcessor::new(
+            DwellingsFileCollector, 
+            DwellingScaner, 
+            DwellingDataOutput::new()
+        );
+
         let zip_file = std::fs::File::create(output_path)?;
         let mut zip_writer = zip::ZipWriter::new(zip_file);
 
         hero_class_scan_processor
-            .run(&mut files, &mut zip_writer)
+            .run(&files, &mut zip_writer)
             .await?;
         creature_scan_processor
-            .run(&mut files, &mut zip_writer)
+            .run(&files, &mut zip_writer)
             .await?;
         hero_scan_processor
-            .run(&mut files, &mut zip_writer)
+            .run(&files, &mut zip_writer)
             .await?;
         artifact_scan_processor
-            .run(&mut files, &mut zip_writer)
+            .run(&files, &mut zip_writer)
             .await?;
         spell_scan_processor
-            .run(&mut files, &mut zip_writer)
+            .run(&files, &mut zip_writer)
             .await?;
         ability_scan_processor
-            .run(&mut files, &mut zip_writer)
+            .run(&files, &mut zip_writer)
             .await?;
         skill_scan_processor
-            .run(&mut files, &mut zip_writer)
+            .run(&files, &mut zip_writer)
+            .await?;
+        dwelling_scan_processor
+            .run(&files, &mut zip_writer)
             .await?;
 
         Ok(())
