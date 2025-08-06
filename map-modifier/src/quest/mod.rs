@@ -5,7 +5,7 @@ use crate::GenerateBoilerplate;
 
 pub fn test_convert(quest: Quest) {
     let s = quick_xml::se::to_string(&quest).unwrap();
-    println!("Quest string is: {}", s);
+    println!("Quest string is: {s}");
 }
 
 #[derive(Default)]
@@ -32,10 +32,7 @@ pub struct QuestCreationRequest {
 impl QuestCreationRequest {
 
     pub fn new(path: PathBuf, script_name: String) -> Self {
-        let mut request = QuestCreationRequest::default();
-        request.script_name = script_name;
-        request.path = path;
-        request
+        QuestCreationRequest { script_name, path, ..Default::default()}
     }
 
     pub fn with_name(mut self, name: String) -> Self {
@@ -70,28 +67,26 @@ impl QuestCreationRequest {
     }
 
     fn generate_name(&self, quest: &mut Quest, base_texts_dir: &String, map_local_data: &String) {
-
-        let mut file = std::fs::File::create(format!("{}name.txt", base_texts_dir)).unwrap();
+        let mut file = std::fs::File::create(format!("{base_texts_dir}name.txt")).unwrap();
         file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.name.encode_utf16() {
             file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
-        let local_file_name = format!("{}\\name.txt", map_local_data).replace("\\", "/");
+        let local_file_name = format!("{map_local_data}\\name.txt").replace("\\", "/");
         println!("Name generator, local file name {:?}", &local_file_name);
 
         quest.caption_file_ref = FileRef {href: Some(local_file_name)};
     }
 
     fn generate_desc(&self, quest: &mut Quest, base_texts_dir: &String, map_local_data: &String) {
-
-        let mut file = std::fs::File::create(format!("{}desc.txt", base_texts_dir)).unwrap();
+        let mut file = std::fs::File::create(format!("{base_texts_dir}desc.txt")).unwrap();
         file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.desc.encode_utf16() {
             file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
-        let local_file_name = format!("{}\\desc.txt", map_local_data).replace("\\", "/");
+        let local_file_name = format!("{map_local_data}\\desc.txt").replace("\\", "/");
         println!("Desc generator, local file name {:?}", &local_file_name);
 
         quest.description_file_ref = FileRef {href: Some(local_file_name)};
@@ -104,7 +99,7 @@ impl QuestCreationRequest {
         quest.progress_comments_file_ref.items = Some(vec![]);
 
         for progress in &self.progresses {
-            let mut file = std::fs::File::create(format!("{}{}.txt", progresses_texts_dir, progress.number)).unwrap();
+            let mut file = std::fs::File::create(format!("{progresses_texts_dir}{}.txt", progress.number)).unwrap();
             file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
 
             let current_progress = format!("<color=grey>{}<color=white>{}", &previous_progresses, &progress.text);

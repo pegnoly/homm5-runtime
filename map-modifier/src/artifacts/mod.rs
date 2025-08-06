@@ -144,7 +144,7 @@ impl<'a> ArtifactsModifier<'a> {
         NewArtifactType::iter().for_each(|_type| {
             if let Some(artifacts) = self.new_artifacts.get(&_type) {
                 for artifact in artifacts {
-                    lua_code += &format!("\t[\"{}\"] = {},\n", artifact, _type);
+                    lua_code += &format!("\t[\"{artifact}\"] = {_type},\n");
                 }
             }
         });

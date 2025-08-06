@@ -198,7 +198,7 @@ pub async fn generate_dialog(
         for variant in &variants.iter().filter(|v| {v.speaker_id.is_some()}).collect_vec() {
             let file_name = format!("{}_{}.txt", &variant.step, &variant.label);
             let mut variant_file =
-                std::fs::File::create(format!("{}\\{}", dialog_texts_path, file_name)).unwrap();
+                std::fs::File::create(format!("{dialog_texts_path}\\{file_name}")).unwrap();
             if let Some(speaker) = speakers.iter().find(|s| s.id == variant.speaker_id.unwrap()) {
                 let text = format!(
                     "<color={}>{}<color=white>: {}",
@@ -213,7 +213,7 @@ pub async fn generate_dialog(
                 let speaker_script = if speaker.speaker_type == SpeakerType::Hero {
                     format!("\"{}\"", speaker.script_name)
                 } else {
-                    format!("{}", speaker.script_name)
+                    speaker.script_name.to_string()
                 };
                 script += &format!(
                     "\t[\"{}_{}\"] = {{speaker = {}, speaker_type = {}}},\n",
@@ -226,7 +226,7 @@ pub async fn generate_dialog(
         }
 
         script += "}\n\n";
-        script_file.write_all(&mut script.as_bytes()).unwrap();
+        script_file.write_all(script.as_bytes()).unwrap();
 
         if !dialog.was_generated {
             // dialog_generator_repo
@@ -242,7 +242,7 @@ pub async fn generate_dialog(
             let mut paths_file = OpenOptions::new()
                 .append(true)
                 .create(true)
-                .open(format!("{}dialogs_paths.lua", map_data_path))
+                .open(format!("{map_data_path}dialogs_paths.lua"))
                 .unwrap();
 
             paths_file.write_all(path_script.as_bytes()).unwrap();

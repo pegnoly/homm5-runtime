@@ -156,12 +156,12 @@ impl ScanerService {
         towns: Vec<Town>,
         tiers: Vec<i32>,
     ) -> Result<Option<i32>, ScanerError> {
-        let towns_condition = Condition::all().add_option(if towns.len() > 0 {
+        let towns_condition = Condition::all().add_option(if !towns.is_empty() {
             Some(Expr::col(CreatureDBColumn::Town).is_in(towns))
         } else {
             None::<SimpleExpr>
         });
-        let tiers_condition = Condition::all().add_option(if tiers.len() > 0 {
+        let tiers_condition = Condition::all().add_option(if !tiers.is_empty() {
             Some(Expr::col(CreatureDBColumn::Tier).is_in(tiers))
         } else {
             None::<SimpleExpr>
@@ -192,7 +192,7 @@ impl ScanerService {
         creatures: Vec<i32>
     ) -> Result<Option<i32>, ScanerError> {
         let condition = Condition::all()
-            .add_option(if creatures.len() > 0 {
+            .add_option(if !creatures.is_empty() {
                 Some(Expr::col(CreatureDBColumn::Id).is_in(creatures))
             } else {
                 None::<SimpleExpr>
@@ -219,7 +219,7 @@ impl ScanerService {
         artifacts: Vec<i32>
     ) -> Result<Option<i32>, ScanerError> {
         let condition = Condition::all()
-            .add_option(if artifacts.len() > 0 {
+            .add_option(if !artifacts.is_empty() {
                 Some(Expr::col(ArtifactDBColumn::Id).is_in(artifacts))
             } else {
                 None::<SimpleExpr>

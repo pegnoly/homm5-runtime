@@ -45,7 +45,7 @@ pub fn process_files(
     let mut output_hero_file: Vec<u8> = Vec::new();
     let mut writer = Writer::new_with_indent(&mut output_hero_file, b' ', 4);
 
-    let hero_string = std::fs::read_to_string(&generic_hero_path).unwrap();
+    let hero_string = std::fs::read_to_string(generic_hero_path).unwrap();
 
     let mut reader = Reader::from_str(&hero_string);
     let reader_config = reader.config_mut();
@@ -172,7 +172,7 @@ pub fn process_files(
         std::fs::create_dir_all(&xdb_file_dir)?;
     }
 
-    let mut xdb_file = std::fs::File::create(xdb_file_dir.join("Hero.(AdvMapHeroShared).xdb".to_string()))?;
+    let mut xdb_file = std::fs::File::create(xdb_file_dir.join("Hero.(AdvMapHeroShared).xdb"))?;
     xdb_file.write_all(&output_hero_file)?;
 
     std::fs::copy(generic_icon_path, icon_file)?;

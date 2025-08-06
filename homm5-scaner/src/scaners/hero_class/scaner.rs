@@ -13,8 +13,8 @@ impl Scan for HeroClassScaner {
 
     fn scan(
         &mut self,
-        file_key: &String,
-        entity: &String,
+        file_key: &str,
+        entity: &str,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
         let class_de: Result<HeroClass, quick_xml::DeError> =
@@ -35,7 +35,7 @@ impl Scan for HeroClassScaner {
                 Ok(Some(db_model))
             }
             Err(e) => {
-                println!("error deserializing hero class {}", e.to_string());
+                println!("error deserializing hero class {e}");
                 Ok(None)
             }
         }

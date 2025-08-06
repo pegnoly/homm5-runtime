@@ -6,7 +6,7 @@ use utf16string::WStr;
 
 pub(crate) const EXTENSIONS: [&str; 4] = [".pak", ".h5m", ".h5c", ".h5u"];
 
-const IGNORED_PARTS: [&'static str; 34] = [
+const IGNORED_PARTS: [&str; 34] = [
     "_(Model)/",
     "Characters/",
     "Arenas/",
@@ -57,8 +57,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
     let archive = file.read_zip().unwrap();
     for entry in archive.entries() {
         let name = entry.name().to_string().replace("\\", "/");
-        if (IGNORED_PARTS.iter().any(|part| name.contains(part)) == false)
-            && (name.ends_with("/") == false)
+        if (!IGNORED_PARTS.iter().any(|part| name.contains(part))) && (!name.ends_with("/"))
         {
             let name = name.to_lowercase();
             if files.contains_key(&name) {
@@ -110,7 +109,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                     FileStructure {
                                         pak: path.to_str().unwrap().to_string(),
                                         modified: entry.modified().timestamp(),
-                                        content: content,
+                                        content,
                                     },
                                 );
                             }
@@ -120,39 +119,27 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                     FileStructure {
                                         pak: path.to_str().unwrap().to_string(),
                                         modified: entry.modified().timestamp(),
-                                        content: content,
+                                        content,
                                     },
                                 );
                             }
                         }
                     }
                 }
-            } else {
-                if name.ends_with(".txt") {
-                    let mut buff = vec![];
-                    match entry.reader().read_to_end(&mut buff) {
-                        Ok(_x) => {
-                            if let Ok(utf16string) = WStr::from_utf16le(&buff) {
-                                files.insert(
-                                    name.to_lowercase().replace("\\", "/"),
-                                    FileStructure {
-                                        pak: path.to_str().unwrap().to_string(),
-                                        modified: entry.modified().timestamp(),
-                                        content: utf16string.to_string(),
-                                    },
-                                );
-                            } else {
-                                files.insert(
-                                    name.to_lowercase().replace("\\", "/"),
-                                    FileStructure {
-                                        pak: path.to_str().unwrap().to_string(),
-                                        modified: entry.modified().timestamp(),
-                                        content: String::new(),
-                                    },
-                                );
-                            }
-                        }
-                        Err(_error) => {
+            } else if name.ends_with(".txt") {
+                let mut buff = vec![];
+                match entry.reader().read_to_end(&mut buff) {
+                    Ok(_x) => {
+                        if let Ok(utf16string) = WStr::from_utf16le(&buff) {
+                            files.insert(
+                                name.to_lowercase().replace("\\", "/"),
+                                FileStructure {
+                                    pak: path.to_str().unwrap().to_string(),
+                                    modified: entry.modified().timestamp(),
+                                    content: utf16string.to_string(),
+                                },
+                            );
+                        } else {
                             files.insert(
                                 name.to_lowercase().replace("\\", "/"),
                                 FileStructure {
@@ -163,29 +150,39 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                             );
                         }
                     }
-                } else {
-                    let mut content = String::new();
-                    match entry.reader().read_to_string(&mut content) {
-                        Ok(_x) => {
-                            files.insert(
-                                name.to_lowercase(),
-                                FileStructure {
-                                    pak: path.to_str().unwrap().to_string(),
-                                    modified: entry.modified().timestamp(),
-                                    content: content,
-                                },
-                            );
-                        }
-                        Err(_x) => {
-                            files.insert(
-                                name.to_lowercase(),
-                                FileStructure {
-                                    pak: path.to_str().unwrap().to_string(),
-                                    modified: entry.modified().timestamp(),
-                                    content: content,
-                                },
-                            );
-                        }
+                    Err(_error) => {
+                        files.insert(
+                            name.to_lowercase().replace("\\", "/"),
+                            FileStructure {
+                                pak: path.to_str().unwrap().to_string(),
+                                modified: entry.modified().timestamp(),
+                                content: String::new(),
+                            },
+                        );
+                    }
+                }
+            } else {
+                let mut content = String::new();
+                match entry.reader().read_to_string(&mut content) {
+                    Ok(_x) => {
+                        files.insert(
+                            name.to_lowercase(),
+                            FileStructure {
+                                pak: path.to_str().unwrap().to_string(),
+                                modified: entry.modified().timestamp(),
+                                content,
+                            },
+                        );
+                    }
+                    Err(_x) => {
+                        files.insert(
+                            name.to_lowercase(),
+                            FileStructure {
+                                pak: path.to_str().unwrap().to_string(),
+                                modified: entry.modified().timestamp(),
+                                content,
+                            },
+                        );
                     }
                 }
             }

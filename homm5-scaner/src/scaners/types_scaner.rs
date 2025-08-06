@@ -44,7 +44,7 @@ impl TypesXmlScaner {
                 name = n.text().unwrap().to_string();
             } else if n.tag_name() == "Value".into() {
                 value = n.text().unwrap().parse::<i32>().unwrap();
-                self.creature_items.push(GameTypeItem { name: name.clone(), value: value });
+                self.creature_items.push(GameTypeItem { name: name.clone(), value });
             }
         });
 
@@ -64,7 +64,7 @@ impl TypesXmlScaner {
                 name = n.text().unwrap().to_string();
             } else if n.tag_name() == "Value".into() {
                 value = n.text().unwrap().parse::<i32>().unwrap();
-                self.skills_items.push(GameTypeItem { name: name.clone(), value: value });
+                self.skills_items.push(GameTypeItem { name: name.clone(), value });
             }
         });
 
@@ -84,7 +84,7 @@ impl TypesXmlScaner {
                 name = n.text().unwrap().to_string();
             } else if n.tag_name() == "Value".into() {
                 value = n.text().unwrap().parse::<i32>().unwrap();
-                self.spells_items.push(GameTypeItem { name: name.clone(), value: value });
+                self.spells_items.push(GameTypeItem { name: name.clone(), value });
             }
         });
 

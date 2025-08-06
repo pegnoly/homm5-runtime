@@ -1,8 +1,7 @@
 use std::{fs::File, io::Write};
 
 use sea_orm::{
-    DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait,
-    sea_query::OnConflict,
+    sea_query::OnConflict, DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait
 };
 use zip::{ZipWriter, write::FileOptions};
 
@@ -40,10 +39,7 @@ impl<'a> Output for CreatureDataOutput<'a> {
         let on_conflict = OnConflict::new()
             .update_columns(
                 super::model::Column::iter()
-                    .filter_map(|column| match column {
-                        Column::Id => None,
-                        _ => Some(column),
-                    })
+                    .filter(|column| !matches!(column, Column::Id))
                     .collect::<Vec<super::model::Column>>(),
             )
             .to_owned();
@@ -60,7 +56,7 @@ impl<'a> Output for CreatureDataOutput<'a> {
         for model in &self.entities {
             script_file += &model.to_lua_string();
         }
-        script_file.push_str("}");
+        script_file.push('}');
         zip_writer.start_file("scripts/generated/creatures.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 

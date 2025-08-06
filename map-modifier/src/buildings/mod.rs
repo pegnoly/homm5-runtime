@@ -117,7 +117,7 @@ impl<'a> BuildingsModifier<'a> {
         BuildingType::iter().for_each(|_type| {
             if let Some(buildings) = self.new_buildings.get(&_type) {
                 for building in buildings {
-                    lua_code += &format!("\t[\"{}\"] = {},\n", building, _type)
+                    lua_code += &format!("\t[\"{building}\"] = {_type},\n")
                 }
             }
         });
@@ -125,7 +125,7 @@ impl<'a> BuildingsModifier<'a> {
         BankType::iter().for_each(|_type| {
             if let Some(banks) = self.new_banks.get(&_type) {
                 for bank in banks {
-                    lua_code += &format!("\t[\"{}\"] = {},\n", bank, _type)
+                    lua_code += &format!("\t[\"{bank}\"] = {_type},\n")
                 }
             }
         });

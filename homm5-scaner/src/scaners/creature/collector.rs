@@ -32,49 +32,43 @@ impl CollectFiles for CreatureFilesCollector {
             match reader.read_event_into(&mut buf) {
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
                 Ok(Event::Eof) => break Ok(()),
-                Ok(Event::Start(e)) => match e.name().as_ref() {
-                    b"objects" => {
-                        let end = e.to_end().into_owned();
-                        let text = reader.read_text(end.name()).unwrap().to_string();
-                        let text = format!("<objects>{}</objects>", text);
-                        let creatures_de: Result<FileObjects, quick_xml::DeError> =
-                            quick_xml::de::from_str(&text);
-                        match creatures_de {
-                            Ok(creatures) => {
-                                for creature in creatures.objects {
-                                    match creature.Obj {
-                                        Some(obj) => {
-                                            let creature_key = obj
-                                                .href
-                                                .as_ref()
-                                                .unwrap()
-                                                .replace("#xpointer(/Creature)", "")
-                                                .trim_start_matches("/")
-                                                .to_lowercase();
-                                            let creature_entity = files.get(&creature_key);
-                                            match creature_entity {
-                                                Some(entity) => {
-                                                    collected_files.push((
-                                                        creature_key.clone(),
-                                                        entity.clone(),
-                                                    ));
-                                                }
-                                                None => println!(
-                                                    "Key {} is not in files",
-                                                    &creature_key
-                                                ),
-                                            }
+                Ok(Event::Start(e)) => if e.name().as_ref() == b"objects" {
+                    let end = e.to_end().into_owned();
+                    let text = reader.read_text(end.name()).unwrap().to_string();
+                    let text = format!("<objects>{text}</objects>");
+                    let creatures_de: Result<FileObjects, quick_xml::DeError> =
+                        quick_xml::de::from_str(&text);
+                    match creatures_de {
+                        Ok(creatures) => {
+                            for creature in creatures.objects {
+                                if let Some(obj) = creature.Obj {
+                                    let creature_key = obj
+                                        .href
+                                        .as_ref()
+                                        .unwrap()
+                                        .replace("#xpointer(/Creature)", "")
+                                        .trim_start_matches("/")
+                                        .to_lowercase();
+                                    let creature_entity = files.get(&creature_key);
+                                    match creature_entity {
+                                        Some(entity) => {
+                                            collected_files.push((
+                                                creature_key.clone(),
+                                                entity.clone(),
+                                            ));
                                         }
-                                        None => {}
+                                        None => println!(
+                                            "Key {} is not in files",
+                                            &creature_key
+                                        ),
                                     }
                                 }
                             }
-                            Err(e) => {
-                                println!("Error deserializing creatures.xdb, {}", e.to_string())
-                            }
+                        }
+                        Err(e) => {
+                            println!("Error deserializing creatures.xdb, {e}")
                         }
                     }
-                    _ => {}
                 },
                 _ => (),
             }

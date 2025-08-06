@@ -23,13 +23,13 @@ impl Repacker {
             match entry {
                 Ok(entry) => {
                     let path = entry.path();
-                    if path.is_file() && path.to_str().unwrap().contains(".git") == false {
+                    if path.is_file() && !path.to_str().unwrap().contains(".git") {
                         let file_name = path.strip_prefix(&self.from).unwrap();
-                        let mut curr_file = std::fs::File::open(&path).unwrap();
+                        let mut curr_file = std::fs::File::open(path).unwrap();
                         let mut container = Vec::new();
                         curr_file.read_to_end(&mut container).unwrap();
                         zipped_file.start_file(file_name.to_str().unwrap(), file_options).unwrap();
-                        zipped_file.write_all(&container.as_slice()).unwrap();
+                        zipped_file.write_all(container.as_slice()).unwrap();
                     }
                 },
                 Err(_error) => {}

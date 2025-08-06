@@ -40,10 +40,7 @@ impl<'a> Output for HeroClassDataOutput<'a> {
         let on_conflict = OnConflict::new()
             .update_columns(
                 super::model::Column::iter()
-                    .filter_map(|column| match column {
-                        Column::Id => None,
-                        _ => Some(column),
-                    })
+                    .filter(|column| !matches!(column, Column::Id))
                     .collect::<Vec<super::model::Column>>(),
             )
             .to_owned();

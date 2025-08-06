@@ -133,7 +133,7 @@ impl<'a> ModifiersQueue<'a> {
                             let end = e.to_end().into_owned();
                             reader.read_to_end(end.name()).unwrap();
                             let heroes = reserve_heroes_repo.load_heroes(map.id as i32, players_count).await.unwrap();
-                            if heroes.len() > 0 {
+                            if !heroes.is_empty() {
                                 writer.write_event(Event::Start(BytesStart::new("ReserveHeroes"))).unwrap();
                                 let mut heroes_count = 0;
                                 for hero in heroes {
@@ -144,7 +144,7 @@ impl<'a> ModifiersQueue<'a> {
                                         .with_attributes(
                                             vec![
                                                 ("href", "#n:inline(AdvMapHero)"),
-                                                ("id", &format!("item_P{}_H{}", players_count, heroes_count))
+                                                ("id", &format!("item_P{players_count}_H{heroes_count}"))
                                             ]
                                         )
                                         .write_inner_content(|w| {
@@ -321,7 +321,7 @@ impl MapData {
                                     }
                                 },
                                 Err(de_error) => {
-                                    println!("Error deserializing AdvMapHero object: {}", de_error.to_string())
+                                    println!("Error deserializing AdvMapHero object: {de_error}")
                                 }
                             }
                         },

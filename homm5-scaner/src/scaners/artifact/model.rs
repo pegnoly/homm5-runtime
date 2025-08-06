@@ -176,7 +176,7 @@ impl From<AdvMapArtifactShared> for Model {
 
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
-        let is_sellable = if self.is_generatable == true {
+        let is_sellable = if self.is_generatable {
             "1"
         } else {
             "nil"

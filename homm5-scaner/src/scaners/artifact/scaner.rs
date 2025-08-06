@@ -12,8 +12,8 @@ impl Scan for ArtScaner {
 
     fn scan(
         &mut self,
-        file_key: &String,
-        entity: &String,
+        file_key: &str,
+        entity: &str,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
         let art_de: Result<AdvMapArtifactShared, quick_xml::DeError> =
@@ -59,7 +59,7 @@ impl Scan for ArtScaner {
                 Ok(Some(db_model))
             }
             Err(e) => {
-                println!("error deserializing artifact {}", e.to_string());
+                println!("error deserializing artifact {e}");
                 Ok(None)
             }
         }

@@ -27,21 +27,18 @@ impl CollectFiles for HeroClassFileCollector {
             match reader.read_event_into(&mut buf) {
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
                 Ok(Event::Eof) => break Ok(()),
-                Ok(Event::Start(e)) => match e.name().as_ref() {
-                    b"Item" => {
-                        let end = e.to_end().into_owned();
-                        let text = reader.read_text(end.name())?.to_string();
-                        let text = format!("<HeroClass>{}</HeroClass>", text);
-                        collected_files.push((
-                            "GameMechanics/RefTables/HeroClass.xdb".to_lowercase(),
-                            FileStructure {
-                                pak: hero_class_xdb.1.pak.clone(),
-                                modified: hero_class_xdb.1.modified,
-                                content: text,
-                            },
-                        ));
-                    }
-                    _ => {}
+                Ok(Event::Start(e)) => if e.name().as_ref() == b"Item" {
+                    let end = e.to_end().into_owned();
+                    let text = reader.read_text(end.name())?.to_string();
+                    let text = format!("<HeroClass>{text}</HeroClass>");
+                    collected_files.push((
+                        "GameMechanics/RefTables/HeroClass.xdb".to_lowercase(),
+                        FileStructure {
+                            pak: hero_class_xdb.1.pak.clone(),
+                            modified: hero_class_xdb.1.modified,
+                            content: text,
+                        },
+                    ));
                 },
                 _ => (),
             }

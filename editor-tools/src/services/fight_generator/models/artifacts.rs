@@ -18,16 +18,11 @@ pub struct Model {
     pub optional: OptionalArtifacts,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]
 pub struct RequiredArtifacts {
     pub ids: Vec<i32>,
 }
 
-impl Default for RequiredArtifacts {
-    fn default() -> Self {
-        RequiredArtifacts { ids: vec![] }
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct OptionalArtifacts {

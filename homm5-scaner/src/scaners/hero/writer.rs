@@ -40,10 +40,7 @@ impl<'a> Output for HeroDataOutput<'a> {
         let on_conflict = OnConflict::new()
             .update_columns(
                 super::model::Column::iter()
-                    .filter_map(|column| match column {
-                        Column::Id => None,
-                        _ => Some(column),
-                    })
+                    .filter(|column| !matches!(column, Column::Id))
                     .collect::<Vec<super::model::Column>>(),
             )
             .to_owned();
@@ -60,7 +57,7 @@ impl<'a> Output for HeroDataOutput<'a> {
         for model in &self.entities {
             script_file += &model.to_lua_string();
         }
-        script_file.push_str("}");
+        script_file.push('}');
         zip_writer.start_file("scripts/generated/heroes.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 

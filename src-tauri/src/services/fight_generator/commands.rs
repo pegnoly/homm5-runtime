@@ -516,7 +516,7 @@ end
                 "\t\t[{}] = {},\n",
                 stack_count, &asset.count_generation_mode
             );
-            base_army_count_data_script += &format!("\t\t[{}] = {{\n", stack_count);
+            base_army_count_data_script += &format!("\t\t[{stack_count}] = {{\n");
 
             if asset.count_generation_mode == ArmySlotStackCountGenerationMode::PowerBased {
                 for (difficulty, power) in asset.base_powers.data {
@@ -526,7 +526,7 @@ end
                 base_army_count_data_script += "\t\t},\n";
 
                 if asset.power_based_generation_type == AssetGenerationType::Dynamic {
-                    army_count_grow_script += &format!("\t\t[{}] = {{\n", stack_count);
+                    army_count_grow_script += &format!("\t\t[{stack_count}] = {{\n");
                     for (difficulty, power) in asset.powers_grow.data {
                         army_count_grow_script +=
                             &format!("\t\t\t[{}] = {},\n", &difficulty, power);
@@ -545,14 +545,13 @@ end
             if asset.type_generation_mode == ArmySlotStackUnitGenerationMode::ConcreteUnit {
                 let creatures_list = asset.concrete_creatures.ids.iter().join(", ");
                 army_generation_rules_script += &format!(
-                    "\t\t[{}] = function ()
-            local result = Random.FromTable({{{}}})
+                    "\t\t[{stack_count}] = function ()
+            local result = Random.FromTable({{{creatures_list}}})
             return result
-        end,\n",
-                    stack_count, creatures_list
+        end,\n"
                 );
             } else {
-                army_generation_rules_script += &format!("\t\t[{}] = function ()\n", stack_count);
+                army_generation_rules_script += &format!("\t\t[{stack_count}] = function ()\n");
 
                 let mut generation_rules_script = String::from("local result = ");
                 for rule in &asset.generation_rule.params {
@@ -579,8 +578,7 @@ end
                 let towns = asset.towns.towns.iter().join(", ");
                 let tiers = asset.tiers.tiers.iter().join(", ");
                 let mut inner_getter_function = format!(
-                    "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})\n",
-                    towns, tiers
+                    "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})\n"
                 );
                 let filter_function = format!(
                     "\t\t\tlocal filtered_creatures = list_iterator.Filter(\n\t\t\t\tpossible_creatures,\n\t\t\t\tfunction(creature)\n\t\t\t\t\t{}\n\t\t\t\t\treturn result\n\t\t\t\tend)",
@@ -589,8 +587,8 @@ end
 
                 let stats_elements = fight_generator_repo.get_stat_generation_elements(asset.id).await?;
                 //println!("Stats elements: {:#?}", &stats_elements);
-                if stats_elements.len() == 0 || stats_elements[0].stats.values.len() == 0 {
-                    if asset.generation_rule.params.len() > 0 {
+                if stats_elements.is_empty() || stats_elements[0].stats.values.is_empty() {
+                    if !asset.generation_rule.params.is_empty() {
                         inner_getter_function += &format!(
                             "{}\n\t\t\tlocal id = Random.FromTable(filtered_creatures)\n\t\t\treturn id",
                             &filter_function
@@ -599,7 +597,7 @@ end
                         inner_getter_function += "\t\t\tlocal id = Random.FromTable(possible_creatures)\n\t\t\treturn id";
                     }
                     army_generation_rules_script +=
-                        &format!("{}\n\t\tend,\n", inner_getter_function);
+                        &format!("{inner_getter_function}\n\t\tend,\n");
                 } else {
                     let stat_element = &stats_elements[0];
                     let mut sort_function = String::new();
@@ -608,15 +606,13 @@ end
                     let tiers = asset.tiers.tiers.iter().join(", ");
                     sort_function += &format!(
                         "{}\n\t\t\tlocal id = list_iterator.{}(\n\t\t\t\t{},\n\t\t\t\tfunction(creature)\n\t\t\t\t\tlocal result = ",
-                        if asset.generation_rule.params.len() > 0 {
+                        if !asset.generation_rule.params.is_empty() {
                             format!(
-                                "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})\n{}",
-                                towns, tiers, filter_function
+                                "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})\n{filter_function}"
                             )
                         } else {
                             format!(
-                                "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})",
-                                towns, tiers
+                                "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})"
                             )
                         },
                         if stat_element.rule == ArmyGenerationStatRule::MaxBy {
@@ -624,7 +620,7 @@ end
                         } else {
                             "MinBy"
                         },
-                        if asset.generation_rule.params.len() > 0 {
+                        if !asset.generation_rule.params.is_empty() {
                             "filtered_creatures"
                         } else {
                             "possible_creatures"
@@ -656,20 +652,20 @@ end
                         .to_string();
                     sort_function += "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
                     // }
-                    army_generation_rules_script += &format!("{}\n\t\tend,\n", sort_function);
+                    army_generation_rules_script += &format!("{sort_function}\n\t\tend,\n");
                 }
             }
         }
-        script += &format!("{}\t}},\n\n", stack_gen_type_script);
-        script += &format!("{}\t}},\n\n", base_army_count_data_script);
-        script += &format!("{}\t}},\n\n", army_count_grow_script);
-        script += &format!("{}\t}},\n\n", army_generation_rules_script);
+        script += &format!("{stack_gen_type_script}\t}},\n\n");
+        script += &format!("{base_army_count_data_script}\t}},\n\n");
+        script += &format!("{army_count_grow_script}\t}},\n\n");
+        script += &format!("{army_generation_rules_script}\t}},\n\n");
 
         // artifacts script
         if let Some(artifacts_asset) = fight_generator_repo.get_artifacts_model(asset_id).await? {
             script += "\trequired_artifacts = {";
             for artifact_id in artifacts_asset.required.ids {
-                script += &format!("{}, ", artifact_id);
+                script += &format!("{artifact_id}, ");
             }
             script.push_str("\t},\n");
             script += "\toptional_artifacts = {\n";
@@ -682,14 +678,14 @@ end
 
             script += "\tartifacts_base_costs = {\n";
             for (difficulty, cost) in artifacts_asset.base_powers.data {
-                script += &format!("\t\t[{}] = {},\n", difficulty, cost);
+                script += &format!("\t\t[{difficulty}] = {cost},\n");
             }
             script.push_str("\t},\n\n");
 
             if artifacts_asset.generation_type == AssetGenerationType::Dynamic {
                 script += "\tartifacts_costs_grow = {\n";
                 for (difficulty, cost) in artifacts_asset.powers_grow.unwrap().data {
-                    script += &format!("\t\t[{}] = {},\n", difficulty, cost);
+                    script += &format!("\t\t[{difficulty}] = {cost},\n");
                 }
                 script.push_str("\t},\n\n");
             }

@@ -59,14 +59,12 @@ impl From<Model> for AdvMapHero {
                 perkIDs: Some(Perks {
                     items: Some(
                         Vec::from_iter(value.skills.skills.iter()
-                            .map(|s| s.perks.clone())
-                            .flatten()
+                            .flat_map(|s| s.perks.clone())
                     ))
                 }),
                 spellIDs: Some(SpellIds {
                     items: Some(
-                        Vec::from_iter(value.spells.spells.iter()
-                        .map(|s| s.clone())
+                        Vec::from_iter(value.spells.spells.iter().cloned()
                     ))
                 }),
                 ..Default::default()

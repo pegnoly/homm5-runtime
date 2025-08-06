@@ -11,8 +11,6 @@ use crate::{
     error::ScanerError,
 };
 
-use super::model::Column;
-
 pub struct AbilityDataOutput<'a> {
     entities: Vec<super::model::Model>,
     db: &'a DatabaseConnection,
@@ -40,10 +38,7 @@ impl<'a> Output for AbilityDataOutput<'a> {
         let on_conflict = OnConflict::new()
             .update_columns(
                 super::model::Column::iter()
-                    .filter_map(|column| match column {
-                        Column::Id => None,
-                        _ => Some(column),
-                    })
+                    .filter(|column| !matches!(column, super::model::Column::Id))
                     .collect::<Vec<super::model::Column>>(),
             )
             .to_owned();

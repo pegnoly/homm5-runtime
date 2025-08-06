@@ -19,6 +19,12 @@ impl DwellingDataOutput {
     }
 }
 
+impl Default for DwellingDataOutput {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DwellingLobbyData {
     #[serde(rename = "Model")]

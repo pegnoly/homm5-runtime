@@ -26,7 +26,7 @@ impl RuntimeRunner {
     }
 
     pub fn run(&mut self) {
-        std::env::set_current_dir(&self.exe_path.parent().unwrap()).unwrap();
+        std::env::set_current_dir(self.exe_path.parent().unwrap()).unwrap();
         let device_manager = frida::DeviceManager::obtain(&FRIDA);
         let mut local_device = device_manager.get_device_by_type(frida::DeviceType::Local).unwrap();
         match local_device.resume(self.process_id as u32) {
@@ -38,7 +38,7 @@ impl RuntimeRunner {
                 kill_helpers(&mut local_device);
 
                 let pid = local_device.spawn(
-                    format!("{}", &self.exe_path.to_str().unwrap()), 
+                    self.exe_path.to_str().unwrap(), 
                     &SpawnOptions::default()
                 ).unwrap();
 
@@ -103,7 +103,7 @@ impl RuntimeRunner {
                         script.unload().unwrap();
                         session.detach().unwrap();
                     },
-                    Err(e) => {println!("Error: {}", e)}
+                    Err(e) => {println!("Error: {e}")}
                 }
             }
         } 

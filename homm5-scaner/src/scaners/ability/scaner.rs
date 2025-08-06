@@ -13,8 +13,8 @@ impl Scan for AbilityScaner {
 
     fn scan(
         &mut self,
-        file_key: &String,
-        entity: &String,
+        file_key: &str,
+        entity: &str,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
         let ability_de: Result<AbilityShared, quick_xml::DeError> =
@@ -40,7 +40,7 @@ impl Scan for AbilityScaner {
                 Ok(Some(db_model))
             }
             Err(e) => {
-                println!("error deserializing ability {}", e.to_string());
+                println!("error deserializing ability {e}");
                 Ok(None)
             }
         }

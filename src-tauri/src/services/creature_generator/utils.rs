@@ -5,15 +5,15 @@ use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event}, Rea
 use crate::{error::Error, services::creature_generator::types::CreatableCreatureModel};
 
 pub async fn process_generation(
-    creatures_data: &Vec<CreatureDBModel>,
-    abilities_data: &Vec<AbilityDBModel>,
+    creatures_data: &[CreatureDBModel],
+    abilities_data: &[AbilityDBModel],
     base_creature_model: &CreatureDBModel, 
     creature_model: &CreatableCreatureModel, 
     selected_abilities: &Vec<i32>
 ) -> Result<String, Error> {
     let mut output: Vec<u8> = Vec::new();
     let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
-    let mut reader = Reader::from_str(&base_creature_model.xdb.as_ref().unwrap());
+    let mut reader = Reader::from_str(base_creature_model.xdb.as_ref().unwrap());
     let reader_config = reader.config_mut();
     reader_config.expand_empty_elements = true;
     reader_config.trim_text(true);
@@ -60,7 +60,7 @@ pub async fn process_generation(
                         let end = e.to_end().into_owned();
                         let text = reader.read_text(end.name())?.to_string();
                         let mut upgrades = quick_xml::de::from_str::<Upgrades>(&format!("<Upgrades>{}</Upgrades>", &text))?;
-                        if creature_model.upgrades.len() > 0 {
+                        if !creature_model.upgrades.is_empty() {
                             upgrades.upgrages = Some(
                                 Vec::from_iter(creature_model.upgrades.iter()
                                     .map(|u| creatures_data.iter().find(|cr| cr.id == *u).unwrap().game_id.clone())));
@@ -73,7 +73,7 @@ pub async fn process_generation(
                         let end = e.to_end().into_owned();
                         let text = reader.read_text(end.name())?.to_string();
                         let mut abilities = quick_xml::de::from_str::<Abilities>(&format!("<Abilities>{}</Abilities>", &text))?;
-                        if selected_abilities.len() > 0 {
+                        if !selected_abilities.is_empty() {
                             if abilities.Abilities.is_none() {
                                 abilities.Abilities = Some(vec![]);
                             }

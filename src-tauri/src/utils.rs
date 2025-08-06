@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io::Write, path::PathBuf};
+use std::{collections::HashMap, io::Write, path::{Path, PathBuf}};
 use map_modifier::{artifacts::ArtifactConfigEntity, buildings::{BankConfigEntity, BuildingConfigEntity}, Map, MapData};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
@@ -20,19 +20,19 @@ pub struct GlobalConfig {
 }
 
 impl GlobalConfig {
-    pub fn new(path: &PathBuf) -> Result<Self, Error> {
+    pub fn new(path: &Path) -> Result<Self, Error> {
         let cfg_string = std::fs::read_to_string(path.join("main.json"))?;
         let mut cfg = serde_json::from_str::<GlobalConfig>(&cfg_string)?;
-        if !cfg.generic_hero_xdb.is_some() {
+        if cfg.generic_hero_xdb.is_none(){
             cfg.generic_hero_xdb = Some(path.join("Hero.(AdvMapHeroShared).xdb").to_string_lossy().to_string());
         }
-        if !cfg.generic_icon_128.is_some() {
+        if cfg.generic_icon_128.is_none() {
             cfg.generic_icon_128 = Some(path.join("Icon.xdb").to_string_lossy().to_string());
         }
-        if !cfg.generic_icon_dds.is_some() {
+        if cfg.generic_icon_dds.is_none() {
             cfg.generic_icon_dds = Some(path.join("Icon.dds").to_string_lossy().to_string());
         }
-        if !cfg.session_configs_path.is_some() {
+        if cfg.session_configs_path.is_none() {
             cfg.session_configs_path = Some(path.join("sessions\\").to_string_lossy().to_string());
         }
         Ok(cfg)
@@ -51,7 +51,7 @@ pub struct RuntimeConfig {
 }
 
 impl RuntimeConfig {
-    pub fn new(path: &PathBuf) -> Result<Self, Error> {
+    pub fn new(path: &Path) -> Result<Self, Error> {
         let runtime_cfg_string = std::fs::read_to_string(path.join("runtime.json"))?;
         let runtime_data: RuntimeData = serde_json::from_str(&runtime_cfg_string)?;
         let current_map_string = std::fs::read_to_string(path.join("current_map_data.json"))?;
@@ -75,10 +75,10 @@ pub struct ModifiersConfig {
 }
 
 impl ModifiersConfig {
-    pub fn new(path: &PathBuf) -> Result<Self, Error> {
+    pub fn new(path: &Path) -> Result<Self, Error> {
         let path = path.join("modifiers.json");
         let data_string = std::fs::read_to_string(&path)?;
-        Ok(ModifiersConfig { path: path, data: serde_json::from_str(&data_string)? })
+        Ok(ModifiersConfig { path, data: serde_json::from_str(&data_string)? })
     }
 
     pub fn update(&self) -> Result<(), Error> {
@@ -97,7 +97,7 @@ pub struct DataContainer {
 }
 
 impl DataContainer {
-    pub fn new(path: &PathBuf) -> Result<Self, Error> {   
+    pub fn new(path: &Path) -> Result<Self, Error> {   
         let data_string = std::fs::read_to_string(path.join("objects_data.json"))?;
         Ok(serde_json::from_str(&data_string)?)
     }

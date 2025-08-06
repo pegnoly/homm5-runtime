@@ -30,8 +30,8 @@ pub trait Scan {
 
     fn scan(
         &mut self,
-        file_key: &String,
-        entity: &String,
+        file_key: &str,
+        entity: &str,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError>;
 }

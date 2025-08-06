@@ -110,7 +110,7 @@ pub async fn create_bank_variant(
         .create_variant(CreateVariantPayload {
             bank_id,
             label,
-            difficulty: difficulty.into(),
+            difficulty,
         })
         .await?;
     Ok(new_variant)
@@ -145,7 +145,7 @@ pub async fn update_bank_variant_difficulty(
     id: Uuid,
     difficulty: BankDifficultyType,
 ) -> Result<(), Error> {
-    let payload = UpdateBankVariantPayload::new(id).with_difficulty(difficulty.into());
+    let payload = UpdateBankVariantPayload::new(id).with_difficulty(difficulty);
     bank_service.update_variant(payload).await?;
     Ok(())
 }
@@ -179,7 +179,7 @@ pub async fn create_creature_slot(
         }
     }
     let new_id = bank_service
-        .create_creature_entry(variant_id, slot_type.into(), slot_data)
+        .create_creature_entry(variant_id, slot_type, slot_data)
         .await?;
     Ok(new_id)
 }
@@ -249,7 +249,7 @@ pub async fn generate_banks_script(
 ) -> Result<(), Error> {
     let banks = bank_service.get_banks().await?;
     for bank in banks {
-        let bank_local_type = BankType::from(bank._type.clone());
+        let bank_local_type = bank._type.clone();
         let bank_file_name = bank_service.path.join(format!(
             "{}.lua",
             bank_local_type
@@ -260,18 +260,17 @@ pub async fn generate_banks_script(
         let mut bank_file = std::fs::File::create(bank_file_name)?;
         // loading data
         let mut bank_data_string = format!(
-            "while not {} and BTD_BANKS_DATA do\n\tsleep()\nend\n\n",
-            bank_local_type
+            "while not {bank_local_type} and BTD_BANKS_DATA do\n\tsleep()\nend\n\n"
         );
         // base bank info
-        bank_data_string += &format!("BTD_BANKS_DATA[{}] = {{\n", bank_local_type);
+        bank_data_string += &format!("BTD_BANKS_DATA[{bank_local_type}] = {{\n");
         bank_data_string += &format!(
             "\trecharges_count = {},\n\trecharge_timer = {},\n\tmorale_loss = {},\n\tluck_loss = {},\n",
             bank.recharge_count, bank.recharge_timer, bank.morale_loss, bank.luck_loss
         );
         // bank difficulties info
         bank_data_string += "\tgeneration_data = {\n";
-        let difficulties = BankDifficultyType::iter().map(|d| d ).collect_vec();
+        let difficulties = BankDifficultyType::iter().collect_vec();
         for difficulty in difficulties {
             if let Some(difficulty_data) = bank_service.load_difficulty(bank.id, difficulty.clone()).await? {
                 bank_data_string += &format!("\t\t[{}] = {{\n\t\t\tchance = {},\n", &difficulty, difficulty_data.chance)
@@ -295,7 +294,7 @@ pub async fn generate_banks_script(
                         "\t\t\t\t\t\t\t[{}] = {},\n",
                         stack_count, &asset.count_generation_mode
                     );
-                    base_army_count_data_script += &format!("\t\t\t\t\t\t\t[{}] = {{\n", stack_count);
+                    base_army_count_data_script += &format!("\t\t\t\t\t\t\t[{stack_count}] = {{\n");
 
                     if asset.count_generation_mode == ArmySlotStackCountGenerationMode::PowerBased {
                         for (difficulty, power) in asset.base_powers.data {
@@ -305,7 +304,7 @@ pub async fn generate_banks_script(
                         base_army_count_data_script += "\t\t\t\t\t\t\t},\n";
 
                         if asset.power_based_generation_type == AssetGenerationType::Dynamic {
-                            army_count_grow_script += &format!("\t\t\t\t\t\t\t[{}] = {{\n", stack_count);
+                            army_count_grow_script += &format!("\t\t\t\t\t\t\t[{stack_count}] = {{\n");
                             for (difficulty, power) in asset.powers_grow.data {
                                 army_count_grow_script +=
                                     &format!("\t\t\t\t\t\t\t\t[{}] = {},\n", &difficulty, power);
@@ -324,14 +323,13 @@ pub async fn generate_banks_script(
                     if asset.type_generation_mode == ArmySlotStackUnitGenerationMode::ConcreteUnit {
                         let creatures_list = asset.concrete_creatures.ids.iter().join(", ");
                         army_generation_rules_script += &format!(
-                            "\t\t\t\t\t\t\t[{}] = function ()
-                    local result = Random.FromTable({{{}}})
+                            "\t\t\t\t\t\t\t[{stack_count}] = function ()
+                    local result = Random.FromTable({{{creatures_list}}})
                     return result
-                end,\n",
-                            stack_count, creatures_list
+                end,\n"
                         );
                     } else {
-                        army_generation_rules_script += &format!(r#"                            [{}] = function ()"#, stack_count);
+                        army_generation_rules_script += &format!(r#"                            [{stack_count}] = function ()"#);
 
                         let mut generation_rules_script = String::from("local result = ");
                         for rule in &asset.generation_rule.params {
@@ -358,8 +356,7 @@ pub async fn generate_banks_script(
                         let towns = asset.towns.towns.iter().join(", ");
                         let tiers = asset.tiers.tiers.iter().join(", ");
                         let mut inner_getter_function = format!(
-                            r#"local possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})"#,
-                            towns, tiers
+                            r#"local possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})"#
                         );
                         let filter_function = format!(
                             r#"
@@ -374,8 +371,8 @@ pub async fn generate_banks_script(
 
                         let stats_elements = fight_generator_repo.get_stat_generation_elements(asset.id).await?;
                         //println!("Stats elements: {:#?}", &stats_elements);
-                        if stats_elements.len() == 0 || stats_elements[0].stats.values.len() == 0 {
-                            if asset.generation_rule.params.len() > 0 {
+                        if stats_elements.is_empty() || stats_elements[0].stats.values.is_empty() {
+                            if !asset.generation_rule.params.is_empty() {
                                 inner_getter_function += &format!(
                             r#"{}
                                 local id = Random.FromTable(filtered_creatures)
@@ -387,9 +384,9 @@ pub async fn generate_banks_script(
                             }
                             army_generation_rules_script +=
                                 &format!(r#"
-                                {}
+                                {inner_getter_function}
                             end,
-                        "#, inner_getter_function);
+                        "#);
                         } else {
                             let stat_element = &stats_elements[0];
                             let mut sort_function = String::new();
@@ -398,15 +395,13 @@ pub async fn generate_banks_script(
                             let tiers = asset.tiers.tiers.iter().join(", ");
                             sort_function += &format!(
                                 "{}\n\t\t\tlocal id = list_iterator.{}(\n\t\t\t\t{},\n\t\t\t\tfunction(creature)\n\t\t\t\t\tlocal result = ",
-                                if asset.generation_rule.params.len() > 0 {
+                                if !asset.generation_rule.params.is_empty() {
                                     format!(
-                                        "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})\n{}",
-                                        towns, tiers, filter_function
+                                        "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})\n{filter_function}"
                                     )
                                 } else {
                                     format!(
-                                        "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{}}}, {{{}}})",
-                                        towns, tiers
+                                        "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})"
                                     )
                                 },
                                 if stat_element.rule == ArmyGenerationStatRule::MaxBy {
@@ -414,7 +409,7 @@ pub async fn generate_banks_script(
                                 } else {
                                     "MinBy"
                                 },
-                                if asset.generation_rule.params.len() > 0 {
+                                if !asset.generation_rule.params.is_empty() {
                                     "filtered_creatures"
                                 } else {
                                     "possible_creatures"
@@ -446,14 +441,14 @@ pub async fn generate_banks_script(
                                 .to_string();
                             sort_function += "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
                             // }
-                            army_generation_rules_script += &format!("{}\n\t\tend,\n", sort_function);
+                            army_generation_rules_script += &format!("{sort_function}\n\t\tend,\n");
                         }
                     }
                 }
-                bank_data_string += &format!("{}\t\t\t\t\t\t}},\n\n", stack_gen_type_script);
-                bank_data_string += &format!("{}\t\t\t\t\t\t}},\n\n", base_army_count_data_script);
-                bank_data_string += &format!("{}\t\t\t\t\t\t}},\n\n", army_count_grow_script);
-                bank_data_string += &format!("{}}},\n", army_generation_rules_script);
+                bank_data_string += &format!("{stack_gen_type_script}\t\t\t\t\t\t}},\n\n");
+                bank_data_string += &format!("{base_army_count_data_script}\t\t\t\t\t\t}},\n\n");
+                bank_data_string += &format!("{army_count_grow_script}\t\t\t\t\t\t}},\n\n");
+                bank_data_string += &format!("{army_generation_rules_script}}},\n");
                 bank_data_string.push_str("\t\t\t\t\t}\n");
                 bank_data_string.push_str("\t\t\t\t},\n");
             }

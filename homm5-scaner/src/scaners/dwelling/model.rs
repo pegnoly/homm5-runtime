@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
 #[derive(Debug, Serialize, Deserialize, EnumString, Display, PartialEq, Eq, Hash, Clone)]
+#[allow(clippy::enum_variant_names)]
 pub enum DwellingType {
     HumanT1Dwelling,
     HumanT2Dwelling,

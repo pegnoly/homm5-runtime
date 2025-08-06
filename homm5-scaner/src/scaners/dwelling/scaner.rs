@@ -17,9 +17,9 @@ impl Scan for DwellingScaner {
     type Output = DwellingScanerOutput;
     fn scan(
         &mut self,
-        file_key: &String,
-        entity: &String,
-        files: &HashMap<String, FileStructure>,
+        file_key: &str,
+        entity: &str,
+        _files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
         let mut buf = Vec::new();
         let mut reader = Reader::from_str(entity);
@@ -30,14 +30,11 @@ impl Scan for DwellingScaner {
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
                 Ok(Event::Eof) => break Ok(None),
                 Ok(Event::Start(e)) => {
-                    match e.name().as_ref() {
-                        b"AdvMapDwellingShared" => {
-                            let end = e.to_end().into_owned();
-                            let text = reader.read_text(end.name()).unwrap().to_string();
-                            let data: Dwelling = quick_xml::de::from_str(&format!("<AdvMapDwellingShared>{}</AdvMapDwellingShared>", text)).unwrap();
-                            break Ok(Some(DwellingScanerOutput { dwell_type: DwellingType::from_str(file_key).unwrap(), data}))
-                        },
-                        _ => {}
+                    if e.name().as_ref() == b"AdvMapDwellingShared" {
+                        let end = e.to_end().into_owned();
+                        let text = reader.read_text(end.name()).unwrap().to_string();
+                        let data: Dwelling = quick_xml::de::from_str(&format!("<AdvMapDwellingShared>{text}</AdvMapDwellingShared>")).unwrap();
+                        break Ok(Some(DwellingScanerOutput { dwell_type: DwellingType::from_str(file_key).unwrap(), data}))
                     }
                 }
                 _ => (),

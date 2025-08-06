@@ -73,7 +73,7 @@ pub async fn pick_quest_directory(
         .set_directory(PathBuf::from(&map.data_path))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
-            if initial == true {
+            if initial {
                 app.emit("quest_directory_picked", f.unwrap().to_string())
                     .unwrap();
             } else {

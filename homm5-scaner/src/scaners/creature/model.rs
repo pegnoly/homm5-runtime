@@ -180,18 +180,10 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                 String::new()
             },
             abilities: AbilitiesModel {
-                abilities: if let Some(abilities) = value.Abilities.unwrap_or(Abilities { Abilities: None }).Abilities {
-                    abilities
-                } else {
-                    vec![]
-                },
+                abilities: value.Abilities.unwrap_or(Abilities { Abilities: None }).Abilities.unwrap_or_default(),
             },
             upgrades: UpgradesModel {
-                upgrades: if let Some(upgrades) = value.Upgrades.unwrap_or(Upgrades { upgrages: None}).upgrages {
-                    upgrades
-                } else {
-                    vec![]
-                },
+                upgrades: value.Upgrades.unwrap_or(Upgrades { upgrages: None}).upgrages.unwrap_or_default(),
             },
             base_creature: value.BaseCreature.unwrap_or("CREATURE_UNKNOWN".to_string()),
             pair_creature: value.PairCreature,
@@ -203,14 +195,14 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
 
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
-        let is_generatable = if self.is_generatable == true {
+        let is_generatable = if self.is_generatable {
             "1"
         } else {
             "nil"
         };
-        let is_flying = if self.is_flying == true { "1" } else { "nil" };
+        let is_flying = if self.is_flying { "1" } else { "nil" };
         let is_upgrade =
-            if self.base_creature == "CREATURE_UNKNOWN" && self.upgrades.upgrades.len() > 0 {
+            if self.base_creature == "CREATURE_UNKNOWN" && !self.upgrades.upgrades.is_empty() {
                 "nil"
             } else {
                 "1"

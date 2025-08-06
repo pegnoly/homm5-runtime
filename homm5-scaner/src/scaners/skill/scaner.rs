@@ -14,8 +14,8 @@ impl Scan for SkillScaner {
 
     fn scan(
         &mut self,
-        file_key: &String,
-        entity: &String,
+        file_key: &str,
+        entity: &str,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
         let skill_de: Result<Skill, quick_xml::DeError> =
@@ -32,11 +32,7 @@ impl Scan for SkillScaner {
                 };
                 let actual_names = actual_name_paths.iter()
                     .filter_map(|n| {
-                        if let Some(name) = files.get(n) {
-                            Some(name.content.clone())
-                        } else {
-                            None
-                        }
+                        files.get(n).map(|name| name.content.clone())
                     })
                     .collect_vec();
                 self.id += 1;
@@ -51,7 +47,7 @@ impl Scan for SkillScaner {
                 Ok(Some(model))
             }
             Err(e) => {
-                println!("error deserializing skill {}", e.to_string());
+                println!("error deserializing skill {e}");
                 Ok(None)
             }
         }

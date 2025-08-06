@@ -131,8 +131,8 @@ impl From<SpellShared> for Model {
 
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
-        let is_aimed = if self.is_aimed == true { "1" } else { "nil" };
-        let is_area = if self.is_area == true { "1" } else { "nil" };
+        let is_aimed = if self.is_aimed { "1" } else { "nil" };
+        let is_area = if self.is_area { "1" } else { "nil" };
         format!(
             "\t[{}] = {{
         name = \"{}\",

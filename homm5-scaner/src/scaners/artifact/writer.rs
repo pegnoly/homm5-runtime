@@ -13,8 +13,6 @@ use crate::{
     error::ScanerError, prelude::ArtifactDBModel,
 };
 
-use super::model::Column;
-
 pub struct ArtifactDataOutput<'a> {
     entities: Vec<super::model::Model>,
     db: &'a DatabaseConnection,
@@ -65,10 +63,7 @@ impl<'a> Output for ArtifactDataOutput<'a> {
         let on_conflict = OnConflict::new()
             .update_columns(
                 super::model::Column::iter()
-                    .filter_map(|column| match column {
-                        Column::Id => None,
-                        _ => Some(column),
-                    })
+                    .filter(|column| !matches!(column, super::model::Column::Id))
                     .collect::<Vec<super::model::Column>>(),
             )
             .to_owned();
@@ -85,7 +80,7 @@ impl<'a> Output for ArtifactDataOutput<'a> {
         for model in &self.entities {
             script_file += &model.to_lua_string();
         }
-        script_file.push_str("}");
+        script_file.push('}');
         zip_writer.start_file("scripts/generated/artifacts.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 

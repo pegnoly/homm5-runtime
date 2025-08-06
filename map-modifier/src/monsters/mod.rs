@@ -37,7 +37,7 @@ impl MonstersModifier {
         let empty = String::new();
         let default_file_ref = FileRef::default();
         let shared = monster.shared.as_ref().unwrap_or(&default_file_ref).href.as_ref().unwrap_or(&empty).as_str();
-        if RANDOM_STACKS.iter().any(|rs| *rs == shared) && monster.runtime_generated.unwrap_or(false) {
+        if RANDOM_STACKS.contains(&shared) && monster.runtime_generated.unwrap_or(false) {
             self.random_stacks_count += 1;
             let name = format!("GENERATABLE_STACK_{}", self.random_stacks_count);
             monster.name = Some(name.clone());

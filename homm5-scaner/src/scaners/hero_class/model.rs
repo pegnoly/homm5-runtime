@@ -28,7 +28,7 @@ impl From<HeroClass> for Model {
         Model { 
             id: Default::default(), 
             game_id: value.ID, 
-            name_txt: value.obj.NameFileRef.unwrap_or(FileRef { href: None }).href.unwrap_or(String::new()), 
+            name_txt: value.obj.NameFileRef.unwrap_or(FileRef { href: None }).href.unwrap_or_default(), 
             name: Default::default(), 
             skills: if let Some(skills_data) = value.obj.SkillsProbs {
                 if let Some(probs_data) = skills_data.items {
