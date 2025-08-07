@@ -1,19 +1,15 @@
 import { Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useState } from "react";
-import { TownType } from "../fightGenerator/types";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { useCurrentMapId } from "@/stores/common";
-import { ReservedHero } from "./types";
-import { ReserveHeroesGenerator } from "./store";
+import { ReservedHero } from "../types";
+import { TownType } from "../../fightGenerator/types";
 
-function ReserveHeroesGeneratorHeroCreator({player}: {player: number}) {
+function ReservedHeroCreator({player, onCreate}: {player: number, onCreate: (value: ReservedHero) => void}) {
     const [opened, {open, close}] = useDisclosure(false);
-
     const mapId = useCurrentMapId();
-    const currentHeroes = ReserveHeroesGenerator.useHeroes();
-    const actions = ReserveHeroesGenerator.useActions();
  
     const [name, setName] = useState<string | undefined>(undefined);
     const [xdb, setXdb] = useState<string | undefined>(undefined);
@@ -21,7 +17,7 @@ function ReserveHeroesGeneratorHeroCreator({player}: {player: number}) {
     async function create() {
         await invoke<ReservedHero>("init_new_hero", {mapId: mapId, playerId: player, name: name, xdb: xdb})
             .then((value) => {
-                actions.loadHeroes([...currentHeroes!, value]);
+                onCreate(value);
             });
         close();
     }
@@ -67,7 +63,7 @@ function HeroSelector({current, onSelected}: {
     current: string | undefined,
     onSelected: (value: string) => void
 }) {
-    const [town, setTown] = useState<TownType | undefined>(TownType.TownInferno);
+    const [town, setTown] = useState<TownType | undefined>(TownType.TownHeaven);
 
     return (
     <Group>
@@ -92,6 +88,30 @@ function HeroSelector({current, onSelected}: {
     )
 }
 
+function XdbSelector({town, current, onSelected}: {
+    town: TownType,
+    current: string | undefined,
+    onSelected: (value: string) => void
+}) {
+
+    const [xdbs, setXdbs] = useState<HeroXdb[]>([]);
+
+    return (
+    <>
+        <Select
+            label="Select hero xdb"
+            searchable
+            value={current}
+            onChange={(value) => onSelected(value!)}
+            data={xdbs.map(h => ({
+                value: h.id, label: h.script_name
+            }))}
+        />
+        <XdbsLoader town={town} onLoad={setXdbs}/>
+    </>
+    )
+}
+
 type HeroXdb = {
     id: string,
     script_name: string
@@ -106,27 +126,16 @@ function useHeroXdbs(town: TownType) {
     });
 }
 
-function XdbSelector({town, current, onSelected}: {
-    town: TownType,
-    current: string | undefined,
-    onSelected: (value: string) => void
-}) {
+function XdbsLoader({town, onLoad}: {town: TownType, onLoad: (values: HeroXdb[]) => void}) {
     const { data } = useHeroXdbs(town);
-    if (data == undefined) {
-        return null;
-    }
+    
+    useEffect(() => {
+        if (data != undefined) {
+            onLoad(data)
+        }
+    }, [data]);
 
-    return (
-    <Select
-        label="Select hero xdb"
-        searchable
-        value={current}
-        onChange={(value) => onSelected(value!)}
-        data={data!.map(h => ({
-            value: h.id, label: h.script_name
-        }))}
-    />
-    )
+    return null;
 }
 
-export default ReserveHeroesGeneratorHeroCreator;
+export default ReservedHeroCreator;

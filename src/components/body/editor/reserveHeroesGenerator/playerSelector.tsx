@@ -1,6 +1,6 @@
 import { SegmentedControl } from "@mantine/core"
 
-function ReserveHeroesGeneratorPlayerSelector({current, onSelected}: {
+function ReserveHeroesPlayerSelector({current, onSelected}: {
     current: number,
     onSelected: (value: number) => void
 }
@@ -25,4 +25,4 @@ function ReserveHeroesGeneratorPlayerSelector({current, onSelected}: {
     )
 }
 
-export default ReserveHeroesGeneratorPlayerSelector;
+export default ReserveHeroesPlayerSelector;

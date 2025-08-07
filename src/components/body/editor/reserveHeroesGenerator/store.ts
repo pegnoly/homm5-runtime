@@ -5,6 +5,7 @@ type Actions = {
     loadHeroes: (values: ReservedHero[]) => void,
     loadBaseSkills: (values: SkillData[]) => void,
     loadReservedHero: (value: ReservedHeroFull) => void,
+    unloadReserveHero: () => void,
     updateFreeSlots: (values: number[]) => void,
     updateSkills: (value: { skills: ConcreteSkill[] }) => void;
     addSpell: (value: string) => void,
@@ -45,6 +46,14 @@ const store = create<Store>((set, get) => ({
                 currentSkills: value.skills,
                 currentSpells: value.spells,
                 freeSlots: get().freeSlots?.filter(s => !value.skills?.skills.some(v => v.slot == s))
+            })
+        },
+        unloadReserveHero() {
+            set({
+                currentId: undefined,
+                currentSkills: undefined,
+                currentSpells: undefined,
+                freeSlots: [...Array(6).keys()]
             })
         },
         updateSkills(value) {

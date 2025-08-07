@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ReserveHeroesGenerator } from "../../store";
 import { ConcreteSkill, PerkData } from "../../types";
 import { invoke } from "@tauri-apps/api/core";
@@ -55,10 +55,13 @@ function usePerks(skill: string) {
 
 function PerksLoader({skill, onLoad}: {skill: string, onLoad: (values: PerkData[]) => void}) {
     const { data } = usePerks(skill);
-    if (data != undefined) {
-        onLoad(data);
-    }
 
+    useEffect(() => {
+        if (data != undefined) {
+            onLoad(data);
+        }
+    }, [data]);
+    
     return null;
 }
 

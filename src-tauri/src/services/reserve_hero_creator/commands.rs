@@ -48,6 +48,14 @@ pub async fn init_new_hero(
 }
 
 #[tauri::command]
+pub async fn delete_reserved_hero(
+    reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
+    id: i32
+) -> Result<(), Error> {
+    Ok(reserve_heroes_repo.delete_hero(id).await?)
+}
+
+#[tauri::command]
 pub async fn add_skill(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     id: i32,

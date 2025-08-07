@@ -1,4 +1,4 @@
-use sea_orm::{sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, SqlxSqlitePoolConnection};
+use sea_orm::{sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection};
 
 use crate::{error::EditorToolsError, services::reserve_hero_creator::{model::{self, BaseSkill, Model, ReserveHeroSkills, ReserveHeroSpells}, payloads::InitReserveHeroPayload}};
 
@@ -26,6 +26,13 @@ impl ReserveHeroCreatorRepo {
             return Ok(existing_model);
         }
         Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string())))
+    }
+
+    pub async fn delete_hero(&self, id: i32) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = model::Entity::find_by_id(id).one(&self.db).await? {
+            existing_model.delete(&self.db).await?;
+        }
+        Ok(())
     }
 
     pub async fn init_hero(&self, payload: InitReserveHeroPayload) -> Result<Model, EditorToolsError> {

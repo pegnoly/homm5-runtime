@@ -6,8 +6,8 @@ use utf16string::WStr;
 
 pub(crate) const EXTENSIONS: [&str; 4] = [".pak", ".h5m", ".h5c", ".h5u"];
 
-const IGNORED_PARTS: [&str; 34] = [
-    "_(Model)/",
+const IGNORED_PARTS: [&str; 32] = [
+    // "_(Model)/",
     "Characters/",
     "Arenas/",
     "_(AIGeometry)/",
@@ -28,7 +28,7 @@ const IGNORED_PARTS: [&str; 34] = [
     "Cameras/",
     "Custom/",
     "Editor/",
-    "_(Effect)/",
+    // "_(Effect)/",
     "Lights/",
     "DialogScenes/",
     "RMG/",

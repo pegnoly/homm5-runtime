@@ -2,9 +2,9 @@ import { Link } from "react-router";
 import { ReserveHeroesGenerator } from "./store";
 import { List, Text } from "@mantine/core";
 import { EditorState } from "@/stores/EditorStateStore";
+import { ReservedHero } from "./types";
 
-function ReserveHeroesList() {
-    const heroes = ReserveHeroesGenerator.useHeroes();
+function ReserveHeroesList({heroes}: {heroes: ReservedHero[]}) {
     const currentId = ReserveHeroesGenerator.useCurrentId();
 
     return (

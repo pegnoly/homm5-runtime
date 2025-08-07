@@ -35,30 +35,33 @@ function ReserveHeroSkillsPanel() {
     }
     
     return (
-    <>
-        <Button 
-            onClick={addSkill} 
-            disabled={skills?.skills.length == 6} 
-            radius={0}
-        >Add skill</Button>
-        <SimpleGrid cols={{ lg: 2, sm: 2 }}>{skills?.skills.map((s, i) => (
-            <Card key={i} radius={0} withBorder>
-                <CardSection>
-                    <ActionIcon 
-                        radius={0} 
-                        size="xs" 
-                        bg="red" 
-                        style={{ display: 'flex', justifySelf: 'end'}}
-                        disabled={s.slot == 0}
-                        onClick={() => removeSkill(s.slot)}
-                    >
-                        <IconX/>
-                    </ActionIcon>
-                </CardSection>
-                <ReservedHeroSkillItem skill={s}/>            
-            </Card>
-        ))}</SimpleGrid>
-    </>
+        <>
+        {id == undefined ? null : 
+            <>
+                <Button 
+                    onClick={addSkill} 
+                    disabled={skills?.skills.length == 6} 
+                    radius={0}
+                >Add skill</Button>
+                <SimpleGrid cols={{ lg: 2, sm: 2 }}>{skills?.skills.map((s, i) => (
+                    <Card key={i} radius={0} withBorder>
+                        <CardSection>
+                            <ActionIcon 
+                                radius={0} 
+                                size="xs" 
+                                bg="red" 
+                                style={{ display: 'flex', justifySelf: 'end'}}
+                                disabled={s.slot == 0}
+                                onClick={() => removeSkill(s.slot)}
+                            >
+                                <IconX/>
+                            </ActionIcon>
+                        </CardSection>
+                        <ReservedHeroSkillItem skill={s}/>            
+                    </Card>
+                ))}</SimpleGrid>
+            </>}
+        </>
     )
 }
 
