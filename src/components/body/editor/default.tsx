@@ -3,7 +3,7 @@ import styles from '../styles.module.css';
 function EditorDefault() {
     return (
     <div className={styles.editor}>
-        Default
+        Homm5 editor tools by pegn0ly
     </div>    
     )
 }

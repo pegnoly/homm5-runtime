@@ -7,7 +7,6 @@ function BankVariantFocused() {
 
     return (
     <>
-        {`Focused ${id}`}
         <FightAssetStackGenerator assetId={id as UUID}/>
     </>
     )
