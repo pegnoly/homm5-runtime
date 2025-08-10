@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Checkbox, Group, Stack, Text, Textarea, Tooltip } from "@mantine/core"
+import { ActionIcon, Checkbox, Group, Stack, Text, Tooltip } from "@mantine/core"
 import EditableProperty from "../../../../common/editableProperty"
 import { useCurrentQuestDesc, useCurrentQuestDirectory, useCurrentQuestId, useCurrentQuestIsActive, useCurrentQuestIsSecondary, useCurrentQuestName, useCurrentQuestScriptName, useQuestsActions } from "../store"
 import { useMutation } from "@tanstack/react-query"
@@ -6,7 +6,7 @@ import { QuestGeneratorApi } from "../api"
 import { IconEdit } from "@tabler/icons-react"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
-import { useState } from "react"
+import QuestDescription from "./desc"
 
 export type UpdateQuestPayloadBase = {
     questId: number
@@ -16,18 +16,11 @@ function QuestGeneratorDataBlock() {
     const currentId = useCurrentQuestId();
     const currentName = useCurrentQuestName();
     const currentScriptName = useCurrentQuestScriptName();
-    const currentDirectory = useCurrentQuestDirectory();
     const currentDesc = useCurrentQuestDesc();
+    const currentDirectory = useCurrentQuestDirectory();
     const isActive = useCurrentQuestIsActive();
     const isSecondary = useCurrentQuestIsSecondary();
     const actions = useQuestsActions();
-
-    console.log("Current desc:", currentDesc);
-
-    const [localDesc, setLocalDesc] = useState<string>(currentDesc!);
-    const [descEditable, setDescEditable] = useState<boolean>(false);
-
-    console.log("Local desc:", localDesc);
 
     async function tryUpdateDirectory() {
         await invoke("pick_quest_directory", {initial: false})
@@ -53,15 +46,6 @@ function QuestGeneratorDataBlock() {
         },
         onSuccess(_data, variables, _context) {
             actions.setCurrentQuestScriptName(variables.scriptName);
-        },
-    });
-
-    const updateDescMutation = useMutation({
-        mutationFn: async(payload: UpdateQuestPayloadBase & {desc: string}) => {
-            return QuestGeneratorApi.updateQuestDesc(payload);
-        },
-        onSuccess(_data, variables, _context) {
-            actions.setCurrentQuestDesc(variables.desc)
         },
     });
 
@@ -107,36 +91,18 @@ function QuestGeneratorDataBlock() {
                 initialValue={currentScriptName!} 
                 onSave={(value) => updateScriptNameMutation.mutate({questId: currentId!, scriptName: value})}
             />
-            <Group>
+            <div style={{display: 'flex', flexDirection: 'row', maxWidth: 500}}>
                 <Tooltip label={currentDirectory}>
-                    <Text style={{width: '80%'}} lineClamp={1}>{currentDirectory}</Text>
+                    <Text lineClamp={1}>{currentDirectory}</Text>
                 </Tooltip>
                 <ActionIcon onClick={tryUpdateDirectory}>
                     <IconEdit/>
                 </ActionIcon>
-            </Group>
-            <Textarea
-                rows={10}
-                disabled={!descEditable}
-                label="Quest description"
-                value={localDesc}
-                onChange={(e) => setLocalDesc(e.currentTarget.value)}
-            />
-            <Group justify="end">
-                <div hidden={descEditable}>
-                    <Button onClick={() => setDescEditable(true)} radius={0} size="xs">Edit desc</Button>
-                </div>
-                <div hidden={!descEditable}>
-                    <Button 
-                        radius={0} 
-                        size="xs"
-                        onClick={() => {
-                            setDescEditable(false);
-                            updateDescMutation.mutate({desc: localDesc!, questId: currentId!});
-                        }}
-                    >Save desc</Button>
-                </div>
-            </Group>
+            </div>
+            {
+                currentDesc == undefined ? null :
+                <QuestDescription initial={currentDesc}/>
+            }
             <Group justify="space-between">
                 <Checkbox 
                     label="Is active quest" 
