@@ -8,7 +8,6 @@ use itertools::Itertools;
 use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
-use serde::{Serialize, Serializer};
 use tauri::State;
 
 use crate::error::Error;
@@ -131,21 +130,6 @@ pub async fn repack(
         Ok(date)
     } else {
         Err(())
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum ModificationsError {
-    #[error(transparent)]
-    SqlxError(#[from] sqlx::Error),
-}
-
-impl Serialize for ModificationsError {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.to_string().as_ref())
     }
 }
 
