@@ -144,4 +144,13 @@ impl DialogGeneratorRepo {
     pub async fn get_all_variants_for_dialog(&self, id: i32) -> Result<Vec<DialogVariantModel>, EditorToolsError> {
         Ok(variant::Entity::find().filter(variant::Column::DialogId.eq(id)).all(&self.db).await?)
     }
+
+    pub async fn set_dialog_was_generated(&self, id: i32) -> Result<(), EditorToolsError> {
+        if let Some(existing_dialog) = dialog::Entity::find_by_id(id).one(&self.db).await? {
+            let mut model_to_update = existing_dialog.into_active_model();
+            model_to_update.was_generated = Set(true);
+            model_to_update.update(&self.db).await?;
+        } 
+        Ok(())
+    }
 }

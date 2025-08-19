@@ -182,7 +182,6 @@ pub async fn generate_dialog(
         .unwrap();
     let map_data_path = &map_data.data_path;
 
-    // get dialog data
     if let Some(dialog) = dialog_generator_repo.get_dialog(dialog_id).await? {
         let speakers = dialog_generator_repo.get_speakers_by_ids(dialog.speakers_ids.ids).await?;
         let variants = dialog_generator_repo.get_all_variants_for_dialog(dialog_id).await?;
@@ -229,10 +228,7 @@ pub async fn generate_dialog(
         script_file.write_all(script.as_bytes()).unwrap();
 
         if !dialog.was_generated {
-            // dialog_generator_repo
-            //     .set_dialog_was_generated(dialog.id, true)
-            //     .await
-            //     .unwrap();
+            dialog_generator_repo.set_dialog_was_generated(dialog_id).await?;
 
             let path_script = &format!(
                 "MiniDialog.Paths[\"{}\"] = \"{}\"\n",
