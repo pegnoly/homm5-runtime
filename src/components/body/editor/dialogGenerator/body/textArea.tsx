@@ -13,7 +13,10 @@ function DialogGeneratorTextArea() {
         minRows={20}
         maxRows={25}
         value={currentVariantText}
-        onChange={(e) => actions.setCurrentVariantText(e.currentTarget.value)}
+        onChange={(e) => {
+            actions.setCurrentVariantText(e.currentTarget.value);
+            actions.setCurrentVariantSaved(false);
+        }}
     />
     )
 }

@@ -13,7 +13,9 @@ type Actions = {
     setCurrentVariantStep: (value: number) => void,
     setCurrentVariantLabel: (value: string) => void,
     setCurrentVariantSpeaker: (value: number) => void,
-    setCurrentVariantText: (value: string) => void
+    setCurrentVariantText: (value: string) => void,
+
+    setCurrentVariantSaved: (value: boolean) => void
 }
 
 type Store = {
@@ -32,6 +34,8 @@ type Store = {
     currentVariantLabel: string | undefined,
     currentVariantSpeaker: number | null,
     currentVariantText: string | undefined,
+
+    currentVariantSaved: boolean,
 
     actions: Actions
 }
@@ -52,6 +56,8 @@ const dialogGeneratorStore = create<Store>((set) => ({
     currentVariantLabel: undefined,
     currentVariantSpeaker: null,
     currentVariantText: undefined,
+
+    currentVariantSaved: true,
 
     actions: {
         loadDialogs(value) {
@@ -97,6 +103,9 @@ const dialogGeneratorStore = create<Store>((set) => ({
         setCurrentVariantText(value) {
             set({currentVariantText: value});
         },
+        setCurrentVariantSaved(value) {
+            set({currentVariantSaved: value});
+        },
     }
 }));
 
@@ -111,3 +120,4 @@ export const useCurrentDialogVariantSpeaker = () => dialogGeneratorStore(state =
 export const useCurrentDialogVariantText = () => dialogGeneratorStore(state => state.currentVariantText);
 export const useDialogLabels = () => dialogGeneratorStore(state => state.currentDialogLabels);
 export const useDialogSpeakers = () => dialogGeneratorStore(state => state.currentDialogSpeakers);
+export const useCurrentVariantSaved = () => dialogGeneratorStore(state => state.currentVariantSaved)

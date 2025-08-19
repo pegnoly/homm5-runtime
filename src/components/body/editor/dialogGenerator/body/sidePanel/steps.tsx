@@ -1,9 +1,10 @@
 import { Button, ButtonGroup, Text } from "@mantine/core";
-import { useCurrentDialogId, useCurrentDialogVariantStep, useDialogActions } from "../../store";
+import { useCurrentDialogId, useCurrentDialogVariantStep, useCurrentVariantSaved, useDialogActions } from "../../store";
 
 function DialogStepSwitcher() {
     const dialogId = useCurrentDialogId();
     const currentStep = useCurrentDialogVariantStep();
+    const isSaved = useCurrentVariantSaved();
     const actions = useDialogActions();
 
     async function moveToNextStep() {
@@ -20,8 +21,16 @@ function DialogStepSwitcher() {
     <>
         <Text style={{fontWeight: "bold"}}>{`Current step: ${currentStep}`}</Text>
         <ButtonGroup>
-            <Button onClick={moveToPreviousStep} radius={0} disabled={currentStep == 0 || dialogId == undefined}>Previous step</Button>
-            <Button onClick={moveToNextStep} radius={0} disabled={dialogId == undefined}>Next step</Button>
+            <Button 
+                onClick={moveToPreviousStep} 
+                radius={0} 
+                disabled={currentStep == 0 || dialogId == undefined || !isSaved}
+            >Previous step</Button>
+            <Button 
+                onClick={moveToNextStep} 
+                radius={0} 
+                disabled={dialogId == undefined || !isSaved}
+            >Next step</Button>
         </ButtonGroup>
     </>
     )
