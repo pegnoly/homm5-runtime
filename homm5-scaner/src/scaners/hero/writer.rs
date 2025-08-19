@@ -61,6 +61,10 @@ impl<'a> Output for HeroDataOutput<'a> {
         zip_writer.start_file("scripts/generated/heroes.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 
+        let mut json_file = std::fs::File::create("D:\\heroes.json")?;
+        let json_string = serde_json::to_string_pretty(&self.entities)?;
+        json_file.write_all(json_string.as_bytes())?;
+
         Ok(())
     }
 }
