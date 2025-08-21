@@ -34,13 +34,13 @@ function DialogGeneratorBody() {
             </div>
             <div className={styles.side_panel}>
                 <div className={styles.side_panel_layout}>
-                    <div style={{height: "15%"}}>
+                    <div style={{height: "25%"}}>
                         <DialogStepSpeakerSelector/>
                     </div>
                     <div style={{height: "30%"}}>
                         <CurrentDialogLabels/>
                     </div>
-                    <div style={{height: "30%"}}>
+                    <div style={{height: "25%"}}>
                         <DialogStepSwitcher/>
                     </div>
                     <DialogStepSaver/>

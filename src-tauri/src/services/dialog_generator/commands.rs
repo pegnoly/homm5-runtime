@@ -128,6 +128,15 @@ pub async fn update_dialog_labels(
 }
 
 #[tauri::command]
+pub async fn add_dialog_speaker(
+    dialog_generator_repo: State<'_, DialogGeneratorRepo>,
+    id: i32,
+    speaker_id: i32
+) -> Result<(), Error> {
+    Ok(dialog_generator_repo.update_dialog_speakers(id, speaker_id).await?)
+}
+
+#[tauri::command]
 pub async fn load_dialog_variant(
     dialog_generator_repo: State<'_, DialogGeneratorRepo>,
     dialog_id: i32,

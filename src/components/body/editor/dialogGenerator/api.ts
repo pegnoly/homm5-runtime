@@ -38,4 +38,8 @@ export class DialogGeneratorApi {
     static async saveVariant(payload: SaveDialogVariantPayload): Promise<void> {
         return invoke("save_dialog_variant", payload);
     }
+
+    static async addSpeaker(id: number, speakerId: number): Promise<void> {
+        return invoke("add_dialog_speaker", {id: id, speakerId: speakerId})
+    }
 }

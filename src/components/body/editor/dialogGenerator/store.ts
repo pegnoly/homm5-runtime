@@ -8,6 +8,7 @@ type Actions = {
     loadCurrentDialog: (value: Dialog) => void,
     setCurrentDialogId: (value: number) => void,
     updateDialogLabels: (value: string []) => void,
+    updateDialogSpeakers: (value: number[]) => void, 
 
     loadVariant: (value: DialogVariant) => void,
     setCurrentVariantStep: (value: number) => void,
@@ -90,6 +91,9 @@ const dialogGeneratorStore = create<Store>((set) => ({
         },
         updateDialogLabels(value) {
             set({currentDialogLabels: value});
+        },
+        updateDialogSpeakers(value) {
+            set({currentDialogSpeakers: value});
         },
         setCurrentVariantStep(value) {
             set({currentVariantStep: value})

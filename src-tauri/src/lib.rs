@@ -88,6 +88,7 @@ pub async fn run() -> Result<(), Error> {
             load_dialog,
             create_speaker,
             update_dialog_labels,
+            add_dialog_speaker,
             load_dialog_variant,
             save_dialog_variant,
             generate_dialog,
