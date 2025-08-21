@@ -42,9 +42,10 @@ pub async fn init_new_hero(
     map_id: i32,
     player_id: i32,
     name: String,
-    xdb: String
+    xdb: String,
+    town: Town
 ) -> Result<ReserveHeroModel, Error> {
-    Ok(reserve_heroes_repo.init_hero(InitReserveHeroPayload { map_id, player_id, name, xdb }).await?)
+    Ok(reserve_heroes_repo.init_hero(InitReserveHeroPayload { map_id, player_id, name, xdb, town }).await?)
 }
 
 #[tauri::command]
@@ -115,4 +116,13 @@ pub async fn remove_spell(
     spell: String
 ) -> Result<(), Error> {
     Ok(reserve_heroes_repo.remove_spell(id, spell).await?)
+}
+
+#[tauri::command]
+pub async fn update_favorite_enemies(
+    reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
+    id: i32,
+    enemies: Vec<String>
+) -> Result<(), Error> {
+    Ok(reserve_heroes_repo.update_favorite_enemies(id, enemies).await?)
 }

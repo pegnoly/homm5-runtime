@@ -1,5 +1,5 @@
-use homm5_scaner::prelude::Mastery;
-use homm5_types::{common::{ArmySlot, FileRef}, hero::{AdvMapHero, Editable, Perks, Skill, Skills, SpellIds}, player::PlayerID, town::ArmySlots};
+use homm5_scaner::prelude::{Mastery, Town};
+use homm5_types::{common::{ArmySlot, FileRef}, hero::{AdvMapHero, Editable, FavoriteEnemies, Perks, Skill, Skills, SpellIds}, player::PlayerID, town::ArmySlots};
 use sea_orm::{prelude::*, FromJsonQueryResult};
 use serde::{Deserialize, Serialize};
 
@@ -11,9 +11,11 @@ pub struct Model {
     pub map_id: i32,
     pub player_id: i32,
     pub name: String,
+    pub town: Town,
     pub xdb_path: String,
     pub skills: ReserveHeroSkills,
-    pub spells: ReserveHeroSpells
+    pub spells: ReserveHeroSpells,
+    pub favorite_enemies: ReserveHeroFavoriteEnemies
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -37,6 +39,11 @@ pub struct ReserveHeroPerks {
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct ReserveHeroSpells {
     pub spells: Vec<String>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+pub struct ReserveHeroFavoriteEnemies {
+    pub enemies: Vec<String>
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -67,6 +74,11 @@ impl From<Model> for AdvMapHero {
                         Vec::from_iter(value.spells.spells.iter().cloned()
                     ))
                 }),
+                FavoriteEnemies: if value.favorite_enemies.enemies.is_empty() {
+                    None
+                } else {
+                    Some(FavoriteEnemies {items: Some(value.favorite_enemies.enemies)})
+                },
                 ..Default::default()
             },
             primary_skill_mastery: value.skills.skills.iter().find(|s| s.slot == 0).unwrap().mastery.to_string(),

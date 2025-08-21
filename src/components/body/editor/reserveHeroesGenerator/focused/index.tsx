@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { ReservedHeroFull } from "../types";
 import { ReserveHeroesGenerator } from "../store";
+import FavoriteEnemiesBase from "./favoriteEnemies";
 
 function FocusedReservedHero() {
     const { id } = useParams();
@@ -20,7 +21,14 @@ function FocusedReservedHero() {
                             <ReserveHeroSkillsPanel/>
                         </div>
                         <div style={{width: '29%', height: '100%'}}>
-                            <ReserveHeroSpellsPanel/>
+                            <div style={{width: '100%', height: '100%', display: 'flex', flexDirection: 'column'}}>
+                                <div style={{width: '100%', height: '60%'}}>
+                                    <ReserveHeroSpellsPanel/>
+                                </div>
+                                <div style={{width: '100%', height: '40%'}}>
+                                    <FavoriteEnemiesBase/>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

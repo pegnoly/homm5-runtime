@@ -14,7 +14,7 @@ function ReserveHeroSpellsList() {
     }
 
     return (
-    <div style={{display: 'flex', justifyContent: 'center', paddingTop: '2%'}}>
+    <div style={{display: 'flex', justifyContent: 'center', paddingTop: '2%', overflow: 'auto'}}>
         <List>{spells?.spells.map((s, i) => (
             <div key={i} style={{display: 'flex', flexDirection: 'row', gap: '5%', justifyContent: 'space-around', alignItems: 'center'}}>
                 <Text style={{fontFamily: 'cursive', fontSize: 11}}>{s}</Text>

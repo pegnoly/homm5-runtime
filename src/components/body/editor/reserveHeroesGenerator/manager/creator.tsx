@@ -13,9 +13,15 @@ function ReservedHeroCreator({player, onCreate}: {player: number, onCreate: (val
  
     const [name, setName] = useState<string | undefined>(undefined);
     const [xdb, setXdb] = useState<string | undefined>(undefined);
+    const [town, setTown] = useState<TownType | undefined>(undefined);
+
+    async function xdbSelected(value: {xdb: string, town: TownType}) {
+        setXdb(value.xdb);
+        setTown(value.town);
+    }
 
     async function create() {
-        await invoke<ReservedHero>("init_new_hero", {mapId: mapId, playerId: player, name: name, xdb: xdb})
+        await invoke<ReservedHero>("init_new_hero", {mapId: mapId, playerId: player, name: name, xdb: xdb, town: town})
             .then((value) => {
                 onCreate(value);
             });
@@ -41,7 +47,7 @@ function ReservedHeroCreator({player, onCreate}: {player: number, onCreate: (val
                             value={name}
                             onChange={(e) => setName(e.currentTarget.value)}
                         />
-                        <HeroSelector current={xdb} onSelected={setXdb}/>
+                        <HeroSelector current={xdb} onSelected={xdbSelected}/>
                         <Group justify="md">
                             <Button 
                                 radius={0}
@@ -61,7 +67,7 @@ function ReservedHeroCreator({player, onCreate}: {player: number, onCreate: (val
 
 function HeroSelector({current, onSelected}: {
     current: string | undefined,
-    onSelected: (value: string) => void
+    onSelected: (value: {xdb: string, town: TownType}) => void
 }) {
     const [town, setTown] = useState<TownType | undefined>(TownType.TownHeaven);
 
@@ -83,7 +89,7 @@ function HeroSelector({current, onSelected}: {
                 {value: TownType.TownStronghold, label: "Stronghold"}
             ]}
         />
-        <XdbSelector current={current} onSelected={onSelected} town={town!}/>
+        <XdbSelector current={current} onSelected={(value) => onSelected({xdb: value, town: town!})} town={town!}/>
     </Group>
     )
 }

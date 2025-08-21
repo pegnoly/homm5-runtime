@@ -171,7 +171,8 @@ pub async fn run() -> Result<(), Error> {
             services::reserve_hero_creator::commands::load_perks,
             services::reserve_hero_creator::commands::load_spells,
             services::reserve_hero_creator::commands::add_spell,
-            services::reserve_hero_creator::commands::remove_spell
+            services::reserve_hero_creator::commands::remove_spell,
+            services::reserve_hero_creator::commands::update_favorite_enemies
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,6 +1,6 @@
 use sea_orm::{sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection};
 
-use crate::{error::EditorToolsError, services::reserve_hero_creator::{model::{self, BaseSkill, Model, ReserveHeroSkills, ReserveHeroSpells}, payloads::InitReserveHeroPayload}};
+use crate::{error::EditorToolsError, services::reserve_hero_creator::{model::{self, BaseSkill, Model, ReserveHeroFavoriteEnemies, ReserveHeroSkills, ReserveHeroSpells}, payloads::InitReserveHeroPayload}};
 
 pub struct ReserveHeroCreatorRepo {
     db: DatabaseConnection,
@@ -38,6 +38,7 @@ impl ReserveHeroCreatorRepo {
     pub async fn init_hero(&self, payload: InitReserveHeroPayload) -> Result<Model, EditorToolsError> {
         let model_to_insert = model::ActiveModel {
             id: Default::default(),
+            town: Set(payload.town),
             map_id: Set(payload.map_id),
             player_id: Set(payload.player_id),
             xdb_path: Set(payload.xdb),
@@ -48,7 +49,8 @@ impl ReserveHeroCreatorRepo {
                 mastery: homm5_scaner::prelude::Mastery::MasteryNone,
                 perks: vec![]
             }] }),
-            spells: Set(ReserveHeroSpells { spells: vec![] })
+            spells: Set(ReserveHeroSpells { spells: vec![] }),
+            favorite_enemies: Set(ReserveHeroFavoriteEnemies { enemies: vec![] }),
         };
         Ok(model_to_insert.insert(&self.db).await?)
     }
@@ -124,4 +126,12 @@ impl ReserveHeroCreatorRepo {
         Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string()))) 
     }
 
+    pub async fn update_favorite_enemies(&self, id: i32, enemies: Vec<String>) -> Result<(), EditorToolsError> {
+        if let Some(hero) = model::Entity::find_by_id(id).one(&self.db).await? {
+            let mut model_to_update = hero.into_active_model();
+            model_to_update.favorite_enemies = Set(ReserveHeroFavoriteEnemies { enemies });
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
 }

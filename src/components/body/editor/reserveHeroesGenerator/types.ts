@@ -1,3 +1,5 @@
+import { TownType } from "../fightGenerator/types"
+
 export type ReservedHero = {
     id: number,
     name: string
@@ -5,8 +7,10 @@ export type ReservedHero = {
 
 export type ReservedHeroFull = {
     id: number,
+    town: TownType,
     skills: { skills: ConcreteSkill[] } | undefined,
-    spells: { spells: string[] } | undefined
+    spells: { spells: string[] } | undefined,
+    favorite_enemies: { enemies: string[] } |undefined
 }
 
 export enum Mastery {
