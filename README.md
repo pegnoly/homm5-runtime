@@ -5,6 +5,7 @@ It includes:
 - Powerful files parser with both database and lua scripts output.
 - In-game dialog generator.
 - In-game quests boilerplate generator.
+- In-game reserve heroes generator with all possible parameters.
 - Game texts generator with possibility to distribute it to separate game file to make localization easier.
 - Repacker for any type of game file.
 - Frida runtime that allows to inject code into game exe.
