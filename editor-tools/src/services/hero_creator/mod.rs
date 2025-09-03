@@ -1,37 +1,9 @@
-use std::{fs::File, io::{BufWriter, Write}, path::PathBuf};
-use ddsfile::Dds;
+use std::{io::Write, path::PathBuf};
 use homm5_scaner::prelude::Town;
-use image::{imageops::FilterType, ImageReader};
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event}, Reader, Writer};
 use widestring::Utf16String;
 
 use crate::error::EditorToolsError;
-
-pub fn process_png(input_path: &str, output_path: &str) -> Result<(), EditorToolsError> {
-    let image = ImageReader::open(input_path)?.decode()?;
-    let resized = image.resize_exact(128, 128, FilterType::Lanczos3);
-
-    let mut dds = Dds::new_d3d(
-        ddsfile::NewD3dParams { 
-            height: resized.height(), 
-            width: resized.width(), 
-            depth: None, 
-            format: ddsfile::D3DFormat::A8R8G8B8, 
-            mipmap_levels: None, 
-            caps2: None,
-        },
-    )?;
-
-    let rgba = resized.to_rgba8();
-
-    let mipmap = dds.get_mut_data(0)?;
-    mipmap.copy_from_slice(&rgba.into_raw());
-
-    let mut file = BufWriter::new(File::create(output_path)?);
-    dds.write(&mut file)?;
-
-    Ok(())
-}
 
 pub fn process_files(
     generic_hero_path: &PathBuf,

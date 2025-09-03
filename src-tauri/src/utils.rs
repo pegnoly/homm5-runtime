@@ -17,6 +17,7 @@ pub struct GlobalConfig {
     pub texts_path: String,
     pub repackers: HashMap<String, RepackerPathsData>,
     pub maps: Vec<Map>,
+    pub auth_path: PathBuf
 }
 
 impl GlobalConfig {
@@ -35,6 +36,7 @@ impl GlobalConfig {
         if cfg.session_configs_path.is_none() {
             cfg.session_configs_path = Some(path.join("sessions\\").to_string_lossy().to_string());
         }
+        cfg.auth_path = path.join("auth\\client-secret.json");
         Ok(cfg)
     }
 }

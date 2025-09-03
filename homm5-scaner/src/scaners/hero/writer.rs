@@ -1,17 +1,12 @@
 use std::{fs::File, io::Write};
 
-use sea_orm::{
-    DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait,
-    sea_query::OnConflict,
-};
+use sea_orm::{Condition, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter};
 use zip::{ZipWriter, write::FileOptions};
 
 use crate::{
     core::{Output, ToLua},
     error::ScanerError,
 };
-
-use super::model::Column;
 
 pub struct HeroDataOutput<'a> {
     entities: Vec<super::model::Model>,
@@ -36,23 +31,10 @@ impl<'a> Output for HeroDataOutput<'a> {
     }
 
     async fn finish_output(&self, zip_writer: &mut ZipWriter<File>) -> Result<(), ScanerError> {
-        let transaction = self.db.begin().await?;
-        let on_conflict = OnConflict::new()
-            .update_columns(
-                super::model::Column::iter()
-                    .filter(|column| !matches!(column, Column::Id))
-                    .collect::<Vec<super::model::Column>>(),
-            )
-            .to_owned();
-        for entity in &self.entities {
-            let active_model = entity.clone().into_active_model();
-            super::model::Entity::insert(active_model)
-                .on_conflict(on_conflict.clone())
-                .exec(&transaction)
-                .await?;
-        }
-        transaction.commit().await?;
-
+        super::model::Entity::delete_many().filter(Condition::all()).exec(self.db).await?;
+        super::model::Entity::insert_many(self.entities.iter().map(|model| {
+            model.clone().into_active_model()
+        })).exec(self.db).await?;
         let mut script_file = String::from("MCCS_GENERATED_HEROES_TABLE = {\n");
         for model in &self.entities {
             script_file += &model.to_lua_string();

@@ -2,6 +2,7 @@ use editor_tools::prelude::{BanksGeneratorRepo, DialogGeneratorRepo, FightGenera
 use homm5_scaner::prelude::ScanerService;
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
+use sheets_connector::service::SheetsConnectorService;
 use std::path::PathBuf;
 use tokio::sync::RwLock;
 use utils::{LocalAppManager, RuntimeConfig, DataContainer, GlobalConfig, ModifiersConfig};
@@ -36,6 +37,7 @@ pub async fn run() -> Result<(), Error> {
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
     let fight_generator_repo = FightGeneratorRepo::new(pool.clone());
     let reserve_hero_creator_repo = ReserveHeroCreatorRepo::new(pool.clone());
+    let sheets_connector_repo = SheetsConnectorService::new(&global_config.auth_path).await.unwrap();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -54,6 +56,7 @@ pub async fn run() -> Result<(), Error> {
         .manage(reserve_hero_creator_repo)
         .manage(ScanerService::new(pool.clone()))
         .manage(data_container)
+        .manage(sheets_connector_repo)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             commands::execute_scan,
@@ -153,6 +156,7 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::get_average_creatures_count,
             services::fight_generator::commands::get_average_concrete_creatures_count,
             services::fight_generator::commands::get_average_artifacts_cost,
+            services::fight_generator::commands::test_read_xlsx,
             //
             services::creature_generator::commands::save_generation_session,
             services::creature_generator::commands::generate_creatures,

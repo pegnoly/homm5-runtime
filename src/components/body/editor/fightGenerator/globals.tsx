@@ -11,6 +11,10 @@ function FightGeneratorGlobals() {
         await invoke("generate_current_hero_script", {assetId: assetId});
     }
 
+    async function sync() {
+        await invoke("test_read_xlsx");
+    }
+
     return (
     <Stack>
         {
@@ -22,6 +26,7 @@ function FightGeneratorGlobals() {
             </div>
         }
         <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>
+        <Button onClick={sync} radius={0} size="xs">Test sync</Button>
     </Stack>
     )
 }

@@ -13,13 +13,6 @@ serde_json = { version = "1.0.140", features = ["raw_value"] }
 strum = { version = "0.27.1", features = ["derive"] }
 thiserror = "2.0.12"
 tokio = { version = "1.44.2", features = ["macros"] }
-rust_xlsxwriter = "0.87.0"
-google-drive3 = "6.0.0"
-image = "0.25.6"
-ddsfile = "0.5.2"
-resize = "0.8.8"
 quick-xml = { version = "0.37.5", features = ["serde"] }
-bincode = "2.0.1"
-utf16string = "0.2.0"
 widestring = "1.2.0"
 uuid = { version = "1.17.0", features = ["v4", "serde"] }

@@ -696,3 +696,9 @@ end
     }
     Ok(())
 }
+
+#[tauri::command]
+pub async fn test_read_xlsx() -> Result<(), Error> {
+    sheets_connector::reader::read_xlsx_file().unwrap();
+    Ok(())
+}

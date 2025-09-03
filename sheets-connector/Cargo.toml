@@ -1,0 +1,10 @@
+[package]
+name = "sheets-connector"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+calamine = "0.30.0"
+google-sheets4 = "6.0.0"
+rust_xlsxwriter = { version = "0.90.0", features = ["serde"] }
+thiserror = "2.0.16"
