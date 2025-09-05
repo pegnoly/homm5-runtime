@@ -3,6 +3,8 @@ use std::{num::ParseIntError, str::Utf8Error, string::FromUtf8Error};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("{0} is not defined")]
+    UndefinedData(String),
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
     #[error(transparent)]

@@ -7,6 +7,7 @@ use homm5_scaner::prelude::{
 };
 
 use itertools::Itertools;
+use sheets_connector::service::SheetsConnectorService;
 use uuid::Uuid;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tauri::{AppHandle, Emitter, State};
@@ -52,17 +53,23 @@ pub async fn pick_hero_lua_generation_directory(
 #[tauri::command]
 pub async fn init_new_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    sheets_connector_repo: State<'_, SheetsConnectorService>,
     app_manager: State<'_, LocalAppManager>,
     name: String,
     path: String,
     table_name: String,
 ) -> Result<Uuid, Error> {
-    let current_map_id = app_manager
-        .runtime_config
-        .read()
-        .await
-        .current_selected_map
-        .unwrap();
+    let base_config_locked = app_manager.base_config.read().await;
+    let runtime_config_locked = app_manager.runtime_config.read().await;
+    let current_map_id = runtime_config_locked.current_selected_map
+        .ok_or(Error::UndefinedData("Current map id".to_string()))?;
+    let map_data = base_config_locked.maps.iter()
+        .find(|map| map.id == current_map_id)
+        .ok_or(Error::UndefinedData("Current map data".to_string()))?;
+
+    let spreadsheet_id = &map_data.fights_spreadsheet_id;
+    sheets_connector_repo.create_sheet(spreadsheet_id, &name).await?;
+
     let payload = InitFightAssetPayload {
         name,
         path_to_generate: path,

@@ -1,14 +1,21 @@
 use std::path::{Path, PathBuf};
 
 use calamine::{open_workbook, Reader, Xlsx};
-use google_sheets4::{api::{Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, Sheets};
+use google_sheets4::{api::{AddSheetRequest, BatchUpdateSpreadsheetRequest, GridCoordinate, Request, RowData, Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, UpdateCellsRequest, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, FieldMask, Sheets};
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::error::Error;
 
 pub struct SheetsConnectorService {
-    pub sheets_hub: tokio::sync::Mutex<Sheets<HttpsConnector<HttpConnector>>>
+    sheets_hub: tokio::sync::Mutex<Sheets<HttpsConnector<HttpConnector>>>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct RowTransferData {
+    pub index: i32,
+    pub row: Vec<RowData>
 }
 
 impl SheetsConnectorService {
@@ -33,14 +40,6 @@ impl SheetsConnectorService {
             );
 
         let hub = Sheets::new(client, auth);
-        let data = hub.spreadsheets()
-            .get("1dwAWSWrbMvxIrCoa3qvRrC6RqOWjNDmXtIFE7IhvBNU")
-            .doit()
-            .await
-            .unwrap();
-
-        println!("{:#?}", &data.1);
-
         Ok(SheetsConnectorService {
             sheets_hub: tokio::sync::Mutex::new(hub)
         })
@@ -56,7 +55,92 @@ impl SheetsConnectorService {
             }
         } 
         Ok(data)
-    } 
+    }
+
+    pub async fn create_sheet(&self, spreadsheet_id: &str, sheet_name: &str) -> Result<(), Error> {
+        let hub_locked = self.sheets_hub.lock().await;
+
+        let example_sheet_data = hub_locked.spreadsheets()
+            .get(spreadsheet_id)
+            .add_ranges("Example!A1:H24")
+            .param("fields", "sheets(data(rowData(values(userEnteredFormat,effectiveFormat,userEnteredValue,dataValidation))))")
+            .doit()
+            .await?.1;
+
+        // cells data from example sheet
+        let mut rows_count = 0;
+        let mut rows_data = vec![];
+        if let Some(sheets) = example_sheet_data.sheets {
+            if let Some(sheet) = sheets.first() {
+                if let Some(data) = &sheet.data {
+                    for grid_data in data {
+                        if let Some(row_data) = &grid_data.row_data {
+                            rows_data.push(RowTransferData {
+                                index: rows_count,
+                                row: row_data.clone()
+                            });
+                            rows_count+=1;
+                        }
+                    }
+                }
+            }
+        }
+
+        let sheet_creation_response = hub_locked.spreadsheets()
+            .batch_update(BatchUpdateSpreadsheetRequest {
+                requests: Some(vec![Request {
+                    add_sheet: Some(AddSheetRequest {
+                        properties: Some(SheetProperties {
+                            title: Some(sheet_name.to_string()),
+                            ..Default::default()
+                        }),
+                    }),
+                    ..Default::default()
+                }]),
+                ..Default::default()
+            }, spreadsheet_id)
+            .doit()
+            .await?
+            .1;
+
+        let created_sheet_id = sheet_creation_response.replies
+            .as_deref()
+            .and_then(|replies| replies.first())
+            .and_then(|reply| reply.add_sheet.as_ref())
+            .and_then(|response| response.properties.as_ref())
+            .and_then(|properties| properties.sheet_id)
+            .unwrap();
+
+        let mut requests = vec![];
+        for row in rows_data {
+            requests.push(Request {
+                update_cells: Some(UpdateCellsRequest {
+                    rows: Some(row.row),
+                    start: Some(GridCoordinate {
+                        column_index: Some(0),
+                        row_index: Some(row.index),
+                        sheet_id: Some(created_sheet_id)
+                    }),
+                    fields: Some(FieldMask::new(&[String::from("*")])),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            });
+        }
+        
+        let sheet_update_result = hub_locked.spreadsheets()
+            .batch_update(BatchUpdateSpreadsheetRequest {
+                requests: Some(requests),
+                ..Default::default()
+            }, spreadsheet_id)
+            .param("fields", "*")
+            .doit()
+            .await?;
+
+        println!("Update result: {:#?}", sheet_update_result.1);
+
+        Ok(())
+    }
 
     pub async fn upload_to_sheets(&self, data: Vec<Vec<String>>) -> Result<(), Error> {
         let hub_locked = self.sheets_hub.lock().await;

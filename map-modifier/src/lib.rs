@@ -246,7 +246,8 @@ pub struct Map {
     pub campaign: u8,
     pub mission: u8,
     pub xdb: String,
-    pub data_path: String
+    pub data_path: String,
+    pub fights_spreadsheet_id: String 
 }
 
 #[derive(Debug, Serialize, Deserialize)]
