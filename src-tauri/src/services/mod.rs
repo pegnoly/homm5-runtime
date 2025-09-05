@@ -4,3 +4,4 @@ pub mod fight_generator;
 pub mod quest_creator;
 pub mod reserve_hero_creator;
 pub mod creature_generator;
+pub mod sheets_connector;

@@ -7,5 +7,7 @@ pub enum Error {
     #[error(transparent)]
     CalamineXlsx(#[from]calamine::XlsxError),
     #[error(transparent)]
-    IO(#[from]std::io::Error)
+    IO(#[from]std::io::Error),
+    #[error(transparent)]
+    Sheets(#[from]google_sheets4::Error)
 }

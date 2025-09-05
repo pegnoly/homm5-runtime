@@ -12,7 +12,7 @@ function FightGeneratorGlobals() {
     }
 
     async function sync() {
-        await invoke("test_read_xlsx");
+        await invoke("upload_to_sheets");
     }
 
     return (

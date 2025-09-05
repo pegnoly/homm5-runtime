@@ -25,6 +25,8 @@ pub enum Error {
     EditorTools(#[from] editor_tools::prelude::EditorToolsError),
     #[error(transparent)]
     Scaner(#[from] homm5_scaner::prelude::ScanerError),
+    #[error(transparent)]
+    SheetsConnector(#[from] sheets_connector::error::Error)
 }
 
 impl Serialize for Error {
