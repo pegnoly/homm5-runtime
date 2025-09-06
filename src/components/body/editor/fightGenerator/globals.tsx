@@ -12,7 +12,7 @@ function FightGeneratorGlobals() {
     }
 
     async function sync() {
-        await invoke("upload_to_sheets");
+        await invoke("sync_asset", {assetId: assetId});
     }
 
     return (

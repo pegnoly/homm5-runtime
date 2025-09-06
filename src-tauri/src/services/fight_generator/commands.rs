@@ -1,4 +1,4 @@
-use crate::{error::Error, utils::LocalAppManager};
+use crate::{error::Error, services::fight_generator::utils::SheetToArmyAssetsConverter, utils::LocalAppManager};
 use editor_tools::prelude::{
     AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
 };
@@ -68,13 +68,14 @@ pub async fn init_new_asset(
         .ok_or(Error::UndefinedData("Current map data".to_string()))?;
 
     let spreadsheet_id = &map_data.fights_spreadsheet_id;
-    sheets_connector_repo.create_sheet(spreadsheet_id, &name).await?;
+    let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &name).await?;
 
     let payload = InitFightAssetPayload {
         name,
         path_to_generate: path,
         lua_table_name: table_name,
         mission_id: current_map_id as i32,
+        sheet_id: created_sheet_id
     };
     Ok(fight_generator_repo.init_new_asset(payload).await?)
 }
@@ -707,5 +708,26 @@ end
 #[tauri::command]
 pub async fn test_read_xlsx() -> Result<(), Error> {
     sheets_connector::reader::read_xlsx_file().unwrap();
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn sync_asset(
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
+    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    app_manager: State<'_, LocalAppManager>,
+    asset_id: Uuid
+) -> Result<(), Error> {
+    let base_config_locked = app_manager.base_config.read().await;
+    let asset = fight_generator_repo.get_asset(asset_id).await?.ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+
+    let spreadsheet_id = &base_config_locked.maps.iter()
+        .find(|map| (map.id as i32) == asset.mission_id)
+        .ok_or(Error::UndefinedData(String::from("Current map")))?
+        .fights_spreadsheet_id;
+
+    let converter = SheetToArmyAssetsConverter::new(asset_id);
+    let values = sheets_connector_repo.read_from_sheet(spreadsheet_id, asset.sheet_id, "A2:H24", converter).await?;
+
     Ok(())
 }

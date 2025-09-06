@@ -18,6 +18,7 @@ pub struct InitFightAssetPayload {
     pub mission_id: i32,
     pub path_to_generate: String,
     pub lua_table_name: String,
+    pub sheet_id: i32
 }
 
 pub struct InitAssetArtifactsDataPayload {

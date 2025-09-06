@@ -9,5 +9,7 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from]std::io::Error),
     #[error(transparent)]
-    Sheets(#[from]google_sheets4::Error)
+    Sheets(#[from]google_sheets4::Error),
+    #[error("{0} is not defined")]
+    UndefinedValue(String)
 }

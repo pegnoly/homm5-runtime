@@ -6,7 +6,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::error::Error;
+use crate::{error::Error, utils::{SheetsValueRangeConverter}};
 
 pub struct SheetsConnectorService {
     sheets_hub: tokio::sync::Mutex<Sheets<HttpsConnector<HttpConnector>>>
@@ -17,6 +17,8 @@ pub(crate) struct RowTransferData {
     pub index: i32,
     pub row: Vec<RowData>
 }
+
+pub type SheetId = i32;
 
 impl SheetsConnectorService {
     pub async fn new(client_secret_path: &PathBuf) -> Result<Self, Error> {
@@ -57,17 +59,16 @@ impl SheetsConnectorService {
         Ok(data)
     }
 
-    pub async fn create_sheet(&self, spreadsheet_id: &str, sheet_name: &str) -> Result<(), Error> {
+    pub async fn create_sheet(&self, spreadsheet_id: &str, sheet_name: &str) -> Result<SheetId, Error> {
         let hub_locked = self.sheets_hub.lock().await;
 
         let example_sheet_data = hub_locked.spreadsheets()
             .get(spreadsheet_id)
             .add_ranges("Example!A1:H24")
-            .param("fields", "sheets(data(rowData(values(userEnteredFormat,effectiveFormat,userEnteredValue,dataValidation))))")
+            .param("fields", "sheets(data(rowData(values(userEnteredFormat,effectiveFormat,dataValidation,userEnteredValue,hyperlink,note,textFormatRuns))))")
             .doit()
             .await?.1;
 
-        // cells data from example sheet
         let mut rows_count = 0;
         let mut rows_data = vec![];
         if let Some(sheets) = example_sheet_data.sheets {
@@ -128,7 +129,7 @@ impl SheetsConnectorService {
             });
         }
         
-        let sheet_update_result = hub_locked.spreadsheets()
+        hub_locked.spreadsheets()
             .batch_update(BatchUpdateSpreadsheetRequest {
                 requests: Some(requests),
                 ..Default::default()
@@ -137,9 +138,7 @@ impl SheetsConnectorService {
             .doit()
             .await?;
 
-        println!("Update result: {:#?}", sheet_update_result.1);
-
-        Ok(())
+        Ok(created_sheet_id)
     }
 
     pub async fn upload_to_sheets(&self, data: Vec<Vec<String>>) -> Result<(), Error> {
@@ -191,5 +190,38 @@ impl SheetsConnectorService {
         println!("Result: {:#?}", update_result.1);
 
         Ok(())
+    }
+
+    pub async fn read_from_sheet<T, V>(&self, spreadsheet_id: &str, sheet_id: i32, range: &str, object: T) -> Result<V, Error>
+        where T: SheetsValueRangeConverter<Output = V>
+    {
+        let hub_locked = self.sheets_hub.lock().await;
+        let spreadsheet = hub_locked.spreadsheets()
+            .get(spreadsheet_id)
+            .doit()
+            .await?;
+        let sheet_name = spreadsheet.1.sheets
+            .as_ref()
+            .and_then(|sheets| {
+                    sheets.iter().find(|sheet| {
+                        sheet.properties
+                            .as_ref()
+                            .and_then(|props| props.sheet_id)
+                            .is_some_and(|id| id == sheet_id)
+                    })
+                }
+            )
+            .and_then(|sheet| sheet.properties.as_ref())
+            .and_then(|properties| properties.title.as_ref())
+            .ok_or(Error::UndefinedValue("read_from_sheet Sheet name".to_string()))?;
+
+        let data = hub_locked.spreadsheets()
+            .values_get(spreadsheet_id, &format!("{sheet_name}!{range}"))
+            .doit()
+            .await?;
+
+        let value = object.convert(data.1)?;
+        Ok(value)
+
     }
 }

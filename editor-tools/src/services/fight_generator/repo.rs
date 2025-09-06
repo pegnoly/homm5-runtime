@@ -61,7 +61,8 @@ impl FightGeneratorRepo {
             table_name: Set(payload.lua_table_name.clone()),
             path_to_generate: Set(payload.path_to_generate.clone()),
             name: Set(payload.name.clone()),
-            id: Set(Uuid::new_v4())
+            id: Set(Uuid::new_v4()),
+            sheet_id: Set(payload.sheet_id)
         };
         let res = asset::Entity::insert(model_to_insert).exec_with_returning(&self.db).await?;
         Ok(res.id)
