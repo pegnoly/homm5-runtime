@@ -2,7 +2,8 @@ import { UUID } from "crypto";
 
 export type FightAssetSimple = {
     id: UUID,
-    name: string
+    name: string,
+    sheet_id: number | null
 }
 
 export enum AssetGenerationType {

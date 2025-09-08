@@ -3,7 +3,6 @@ use sea_orm::{FromJsonQueryResult, FromQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::str;
 use strum::{Display, EnumString};
-
 use super::common::{AssetGenerationType, DifficultyMappedValue};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
@@ -11,6 +10,7 @@ use super::common::{AssetGenerationType, DifficultyMappedValue};
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
+    pub number: i32,
     pub asset_id: Uuid,
     pub type_generation_mode: ArmySlotStackUnitGenerationMode,
     pub count_generation_mode: ArmySlotStackCountGenerationMode,

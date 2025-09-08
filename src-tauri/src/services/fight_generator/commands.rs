@@ -706,12 +706,6 @@ end
 }
 
 #[tauri::command]
-pub async fn test_read_xlsx() -> Result<(), Error> {
-    sheets_connector::reader::read_xlsx_file().unwrap();
-    Ok(())
-}
-
-#[tauri::command]
 pub async fn sync_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     sheets_connector_repo: State<'_, SheetsConnectorService>,
@@ -727,7 +721,7 @@ pub async fn sync_asset(
         .fights_spreadsheet_id;
 
     let converter = SheetToArmyAssetsConverter::new(asset_id);
-    let values = sheets_connector_repo.read_from_sheet(spreadsheet_id, asset.sheet_id, "A2:H24", converter).await?;
+    let values = sheets_connector_repo.read_from_sheet(spreadsheet_id, asset.sheet_id.unwrap(), "A2:H24", converter).await?;
 
     Ok(())
 }

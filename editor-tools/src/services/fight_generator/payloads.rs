@@ -21,6 +21,44 @@ pub struct InitFightAssetPayload {
     pub sheet_id: i32
 }
 
+#[derive(Default)]
+pub struct UpdateFightAssetPayload {
+    pub id: Uuid,
+    pub name: Option<String>,
+    pub path_to_generate: Option<String>,
+    pub lua_table_name: Option<String>,
+    pub sheet_id: Option<i32>
+}
+
+impl UpdateFightAssetPayload {
+    pub fn new(id: Uuid) -> Self {
+        UpdateFightAssetPayload {
+            id,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn with_path_to_generate(mut self, path: String) -> Self {
+        self.path_to_generate = Some(path);
+        self
+    }
+
+    pub fn with_lua_table_name(mut self, name: String) -> Self {
+        self.lua_table_name = Some(name);
+        self
+    }
+
+    pub fn with_sheet_id(mut self, sheet_id: i32) -> Self {
+        self.sheet_id = Some(sheet_id);
+        self
+    }
+}
+
 pub struct InitAssetArtifactsDataPayload {
     pub asset_id: Uuid,
     pub generation_type: AssetGenerationType,

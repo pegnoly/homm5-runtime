@@ -192,7 +192,7 @@ impl SheetsConnectorService {
         Ok(())
     }
 
-    pub async fn read_from_sheet<T, V>(&self, spreadsheet_id: &str, sheet_id: i32, range: &str, object: T) -> Result<V, Error>
+    pub async fn read_from_sheet<T, V>(&self, spreadsheet_id: &str, sheet_id: i32, range: &str, converter: T) -> Result<V, Error>
         where T: SheetsValueRangeConverter<Output = V>
     {
         let hub_locked = self.sheets_hub.lock().await;
@@ -220,7 +220,7 @@ impl SheetsConnectorService {
             .doit()
             .await?;
 
-        let value = object.convert(data.1)?;
+        let value = converter.convert(data.1)?;
         Ok(value)
 
     }

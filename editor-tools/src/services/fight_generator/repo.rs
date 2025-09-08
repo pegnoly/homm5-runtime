@@ -17,7 +17,7 @@ use super::{
 use crate::{
     error::EditorToolsError,
     prelude::{
-        AssetArmySlotModel, InitFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
+        AssetArmySlotModel, InitFightAssetPayload, UpdateFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
     },
     services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns},
 };
@@ -62,10 +62,30 @@ impl FightGeneratorRepo {
             path_to_generate: Set(payload.path_to_generate.clone()),
             name: Set(payload.name.clone()),
             id: Set(Uuid::new_v4()),
-            sheet_id: Set(payload.sheet_id)
+            sheet_id: Set(Some(payload.sheet_id))
         };
         let res = asset::Entity::insert(model_to_insert).exec_with_returning(&self.db).await?;
         Ok(res.id)
+    }
+
+    pub async fn update_asset(&self, payload: UpdateFightAssetPayload) -> Result<(), EditorToolsError> {
+        if let Some(existing_asset) = asset::Entity::find_by_id(payload.id).one(&self.db).await? {
+            let mut model_to_update = existing_asset.into_active_model();
+            if let Some(name) = payload.name {
+                model_to_update.name = Set(name);
+            }
+            if let Some(path_to_generate) = payload.path_to_generate {
+                model_to_update.path_to_generate = Set(path_to_generate);
+            }
+            if let Some(lua_table_name) = payload.lua_table_name {
+                model_to_update.table_name = Set(lua_table_name);
+            }
+            if let Some(sheet_id) = payload.sheet_id {
+                model_to_update.sheet_id = Set(Some(sheet_id));
+            }
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
     }
 
     pub async fn delete_asset(
