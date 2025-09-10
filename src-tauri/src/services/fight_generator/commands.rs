@@ -1,13 +1,13 @@
 use crate::{error::Error, services::fight_generator::utils::SheetToArmyAssetsConverter, utils::LocalAppManager};
 use editor_tools::prelude::{
-    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
+    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
 };
 use homm5_scaner::prelude::{
     AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town
 };
 
 use itertools::Itertools;
-use sheets_connector::service::SheetsConnectorService;
+use sheets_connector::service::{SheetId, SheetsConnectorService};
 use uuid::Uuid;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tauri::{AppHandle, Emitter, State};
@@ -703,6 +703,26 @@ end
         output_file.write_all(script.as_bytes())?;
     }
     Ok(())
+}
+
+#[tauri::command]
+pub async fn create_sheet_for_existing_asset(
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
+    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    app_manager: State<'_, LocalAppManager>,
+    asset_id: Uuid
+) -> Result<SheetId, Error> {
+    let base_config_locked = app_manager.base_config.read().await;
+    let asset = fight_generator_repo.get_asset(asset_id).await?.ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+
+    let spreadsheet_id = &base_config_locked.maps.iter()
+        .find(|map| (map.id as i32) == asset.mission_id)
+        .ok_or(Error::UndefinedData(String::from("Current map")))?
+        .fights_spreadsheet_id;
+
+    let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &asset.name).await?;
+    fight_generator_repo.update_asset(UpdateFightAssetPayload::new(asset_id).with_sheet_id(created_sheet_id)).await?;
+    Ok(created_sheet_id)
 }
 
 #[tauri::command]

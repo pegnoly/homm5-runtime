@@ -21,6 +21,15 @@ function FightGeneratorLayout() {
         setAssets(assets.filter(a => a.id != value));
     }
 
+    async function assetSheetCreated(id: UUID, sheetId: number) {
+        setAssets(assets.map(a => {
+            if (a.id == id) {
+                a.sheet_id = sheetId
+            }
+            return a;
+        }))
+    }
+
     return (
     <>
         <Routes>
@@ -29,7 +38,7 @@ function FightGeneratorLayout() {
                 element={
                     <div className={styles.editor_layout}>
                         <FightAssetCreator onCreated={assetCreated}/>
-                        <FightAssetsList assets={assets} onDelete={assetDeleted}/>
+                        <FightAssetsList assets={assets} onAssetDeleted={assetDeleted} onAssetSheetCreated={assetSheetCreated}/>
                     </div>
                 }
             />

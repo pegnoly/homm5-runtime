@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use calamine::{open_workbook, Reader, Xlsx};
-use google_sheets4::{api::{AddSheetRequest, BatchUpdateSpreadsheetRequest, GridCoordinate, Request, RowData, Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, UpdateCellsRequest, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, FieldMask, Sheets};
+use google_sheets4::{api::{AddSheetRequest, BatchUpdateSpreadsheetRequest, DimensionProperties, DimensionRange, GridCoordinate, Request, RowData, Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, UpdateCellsRequest, UpdateDimensionPropertiesRequest, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, FieldMask, Sheets};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -16,6 +16,12 @@ pub struct SheetsConnectorService {
 pub(crate) struct RowTransferData {
     pub index: i32,
     pub row: Vec<RowData>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct ColumnTransferData {
+    pub index: i32,
+    pub dimensions: DimensionProperties
 }
 
 pub type SheetId = i32;
@@ -60,6 +66,7 @@ impl SheetsConnectorService {
     }
 
     pub async fn create_sheet(&self, spreadsheet_id: &str, sheet_name: &str) -> Result<SheetId, Error> {
+        // println!("create_sheet called for spreadsheet {spreadsheet_id} with sheet name {sheet_name}");
         let hub_locked = self.sheets_hub.lock().await;
 
         let example_sheet_data = hub_locked.spreadsheets()
@@ -87,6 +94,32 @@ impl SheetsConnectorService {
             }
         }
 
+        let example_sheet_dimensions_data = hub_locked.spreadsheets()
+            .get(spreadsheet_id)
+            .add_ranges("Example!1:1")
+            .param("fields", "sheets(data(columnMetadata))")
+            .doit()
+            .await?
+            .1;
+
+        let mut col_dimensions = vec![];
+        if let Some(sheets) = &example_sheet_dimensions_data.sheets {
+            if let Some(sheet) = sheets.first() {
+                if let Some(data) = &sheet.data {
+                    for grid_data in data {
+                        if let Some(columns) = &grid_data.column_metadata {
+                            for (i, col) in columns.iter().enumerate() {
+                                col_dimensions.push(ColumnTransferData {
+                                    index: i as i32,
+                                    dimensions: col.clone()
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let sheet_creation_response = hub_locked.spreadsheets()
             .batch_update(BatchUpdateSpreadsheetRequest {
                 requests: Some(vec![Request {
@@ -103,7 +136,7 @@ impl SheetsConnectorService {
             .doit()
             .await?
             .1;
-
+        
         let created_sheet_id = sheet_creation_response.replies
             .as_deref()
             .and_then(|replies| replies.first())
@@ -111,9 +144,12 @@ impl SheetsConnectorService {
             .and_then(|response| response.properties.as_ref())
             .and_then(|properties| properties.sheet_id)
             .unwrap();
-
+        
+        // println!("Sheet created with id {created_sheet_id}");
+        // println!("Rows copied from initial: {}", rows_data.len());
         let mut requests = vec![];
         for row in rows_data {
+            // println!("Creating request for data: {:#?}", &row);
             requests.push(Request {
                 update_cells: Some(UpdateCellsRequest {
                     rows: Some(row.row),
@@ -128,8 +164,28 @@ impl SheetsConnectorService {
                 ..Default::default()
             });
         }
+
+        for col in col_dimensions {
+            requests.push(Request {
+                update_dimension_properties: Some(UpdateDimensionPropertiesRequest {
+                    range: Some(DimensionRange {
+                        dimension: Some("COLUMNS".to_string()),
+                        sheet_id: Some(created_sheet_id),
+                        start_index: Some(col.index),
+                        end_index: Some(col.index + 1),
+                    }),
+                    properties: Some(col.dimensions),
+                    fields: Some(FieldMask::new(&[String::from("*")])),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            });
+        }
+
+        // println!("Requests for created sheet update ready: {} requests total", requests.len());
+        // println!("Request data: {:#?}", &requests);
         
-        hub_locked.spreadsheets()
+        let _result = hub_locked.spreadsheets()
             .batch_update(BatchUpdateSpreadsheetRequest {
                 requests: Some(requests),
                 ..Default::default()
@@ -137,6 +193,10 @@ impl SheetsConnectorService {
             .param("fields", "*")
             .doit()
             .await?;
+
+        // println!("Result: {result:#?}");
+
+        // println!("Sheet updated?");
 
         Ok(created_sheet_id)
     }

@@ -1,13 +1,14 @@
-import { ActionIcon, Card } from "@mantine/core";
+import { Card } from "@mantine/core";
 import { FightAssetSimple } from "../types";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { UUID } from "crypto";
-import { IconNewSection, IconTrash, IconX } from "@tabler/icons-react";
+import { IconNewSection, IconTrash } from "@tabler/icons-react";
 import { EditorState } from "@/stores/EditorStateStore";
 import { Link } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { FightGeneratorApi } from "../api";
 import { AssetContexMenu, AssetMenuItem } from "./assetMenu";
+import { invoke } from "@tauri-apps/api/core";
 
 enum FightAssetContextMenuItem {
     Delete,
@@ -23,10 +24,14 @@ function GenerateFightAssetContextMenu(asset: FightAssetSimple, onInteract: (id:
 }
 
 
-function FightAssetListItem({asset, onDelete} : { asset: FightAssetSimple, onDelete: (id: UUID) => void }) {
+function FightAssetListItem({asset, onDelete, onSheetCreated} : { 
+    asset: FightAssetSimple, 
+    onDelete: (id: UUID) => void,
+    onSheetCreated: (id: UUID, sheetId: number) => void 
+}) {
     const contextMenu = useContextMenu();
 
-    const mutation = useMutation({
+    const deleteMutation = useMutation({
         mutationFn: async(id: UUID) => {
             return FightGeneratorApi.deleteAsset(id);
         },
@@ -35,11 +40,21 @@ function FightAssetListItem({asset, onDelete} : { asset: FightAssetSimple, onDel
         },
     });
 
+    const createSheetMutation = useMutation({
+        mutationFn: async(id: UUID) => {
+            return invoke<number>("create_sheet_for_existing_asset", {assetId: id});
+        },
+        onSuccess(data, variables, _context) {
+            console.log("On success: ", data);
+            onSheetCreated(variables, data);
+        },
+    })
+
     const menuInteractionCallback = (id: UUID, type: FightAssetContextMenuItem) => {
         switch (type) {
-            case FightAssetContextMenuItem.Delete: mutation.mutate(id);
+            case FightAssetContextMenuItem.Delete: deleteMutation.mutate(id);
                 break;
-            case FightAssetContextMenuItem.CreateSheet: console.log("Sheet creation requested")
+            case FightAssetContextMenuItem.CreateSheet: createSheetMutation.mutate(id);
                 break;
             default:
                 break;
