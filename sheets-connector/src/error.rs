@@ -10,6 +10,8 @@ pub enum Error {
     IO(#[from]std::io::Error),
     #[error(transparent)]
     Sheets(#[from]google_sheets4::Error),
+    #[error(transparent)]
+    Reqwest(#[from]reqwest::Error),
     #[error("{0} is not defined")]
     UndefinedValue(String)
 }

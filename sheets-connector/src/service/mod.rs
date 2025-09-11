@@ -1,15 +1,18 @@
 use std::path::{Path, PathBuf};
 
 use calamine::{open_workbook, Reader, Xlsx};
-use google_sheets4::{api::{AddSheetRequest, BatchUpdateSpreadsheetRequest, DimensionProperties, DimensionRange, GridCoordinate, Request, RowData, Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, UpdateCellsRequest, UpdateDimensionPropertiesRequest, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, FieldMask, Sheets};
+use google_sheets4::{api::{AddSheetRequest, BatchUpdateSpreadsheetRequest, DimensionProperties, DimensionRange, ExtendedValue, GridCoordinate, Request, RowData, Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, UpdateCellsRequest, UpdateDimensionPropertiesRequest, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, FieldMask, Sheets};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::{error::Error, utils::{SheetsValueRangeConverter}};
+use crate::{error::Error, service::types::SheetCreationResponse, utils::SheetsValueRangeConverter};
+
+mod types;
 
 pub struct SheetsConnectorService {
-    sheets_hub: tokio::sync::Mutex<Sheets<HttpsConnector<HttpConnector>>>
+    sheets_hub: tokio::sync::Mutex<Sheets<HttpsConnector<HttpConnector>>>,
+    reqwest_client: reqwest::Client
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,6 +28,8 @@ pub(crate) struct ColumnTransferData {
 }
 
 pub type SheetId = i32;
+
+const APP_SCRIPT_URL: &str = "https://script.google.com/macros/s/AKfycbzZn1Un3oVkQKpkuasn_Zk8P16OzX3IN8BzjcDgH6-eb2cJREvJ21ePI7RHfws4WF2qmA/exec";
 
 impl SheetsConnectorService {
     pub async fn new(client_secret_path: &PathBuf) -> Result<Self, Error> {
@@ -48,8 +53,15 @@ impl SheetsConnectorService {
             );
 
         let hub = Sheets::new(client, auth);
+
+        // let response = client.post(format!("{APP_SCRIPT_URL}?action=createSheet"))
+        //     .json(&json!({"spreadsheetId": "kjfdskgj", "sheetId": 2}))
+        //     .send()
+        //     .await?;
+
         Ok(SheetsConnectorService {
-            sheets_hub: tokio::sync::Mutex::new(hub)
+            sheets_hub: tokio::sync::Mutex::new(hub),
+            reqwest_client: reqwest::Client::new()
         })
     }
 
@@ -66,139 +78,16 @@ impl SheetsConnectorService {
     }
 
     pub async fn create_sheet(&self, spreadsheet_id: &str, sheet_name: &str) -> Result<SheetId, Error> {
-        // println!("create_sheet called for spreadsheet {spreadsheet_id} with sheet name {sheet_name}");
-        let hub_locked = self.sheets_hub.lock().await;
-
-        let example_sheet_data = hub_locked.spreadsheets()
-            .get(spreadsheet_id)
-            .add_ranges("Example!A1:H24")
-            .param("fields", "sheets(data(rowData(values(userEnteredFormat,effectiveFormat,dataValidation,userEnteredValue,hyperlink,note,textFormatRuns))))")
-            .doit()
-            .await?.1;
-
-        let mut rows_count = 0;
-        let mut rows_data = vec![];
-        if let Some(sheets) = example_sheet_data.sheets {
-            if let Some(sheet) = sheets.first() {
-                if let Some(data) = &sheet.data {
-                    for grid_data in data {
-                        if let Some(row_data) = &grid_data.row_data {
-                            rows_data.push(RowTransferData {
-                                index: rows_count,
-                                row: row_data.clone()
-                            });
-                            rows_count+=1;
-                        }
-                    }
-                }
-            }
-        }
-
-        let example_sheet_dimensions_data = hub_locked.spreadsheets()
-            .get(spreadsheet_id)
-            .add_ranges("Example!1:1")
-            .param("fields", "sheets(data(columnMetadata))")
-            .doit()
+        let response = self.reqwest_client.post(format!("{APP_SCRIPT_URL}?action=createSheet"))
+            .json(&serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetName": sheet_name}))
+            .send()
             .await?
-            .1;
-
-        let mut col_dimensions = vec![];
-        if let Some(sheets) = &example_sheet_dimensions_data.sheets {
-            if let Some(sheet) = sheets.first() {
-                if let Some(data) = &sheet.data {
-                    for grid_data in data {
-                        if let Some(columns) = &grid_data.column_metadata {
-                            for (i, col) in columns.iter().enumerate() {
-                                col_dimensions.push(ColumnTransferData {
-                                    index: i as i32,
-                                    dimensions: col.clone()
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        let sheet_creation_response = hub_locked.spreadsheets()
-            .batch_update(BatchUpdateSpreadsheetRequest {
-                requests: Some(vec![Request {
-                    add_sheet: Some(AddSheetRequest {
-                        properties: Some(SheetProperties {
-                            title: Some(sheet_name.to_string()),
-                            ..Default::default()
-                        }),
-                    }),
-                    ..Default::default()
-                }]),
-                ..Default::default()
-            }, spreadsheet_id)
-            .doit()
-            .await?
-            .1;
-        
-        let created_sheet_id = sheet_creation_response.replies
-            .as_deref()
-            .and_then(|replies| replies.first())
-            .and_then(|reply| reply.add_sheet.as_ref())
-            .and_then(|response| response.properties.as_ref())
-            .and_then(|properties| properties.sheet_id)
-            .unwrap();
-        
-        // println!("Sheet created with id {created_sheet_id}");
-        // println!("Rows copied from initial: {}", rows_data.len());
-        let mut requests = vec![];
-        for row in rows_data {
-            // println!("Creating request for data: {:#?}", &row);
-            requests.push(Request {
-                update_cells: Some(UpdateCellsRequest {
-                    rows: Some(row.row),
-                    start: Some(GridCoordinate {
-                        column_index: Some(0),
-                        row_index: Some(row.index),
-                        sheet_id: Some(created_sheet_id)
-                    }),
-                    fields: Some(FieldMask::new(&[String::from("*")])),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            });
-        }
-
-        for col in col_dimensions {
-            requests.push(Request {
-                update_dimension_properties: Some(UpdateDimensionPropertiesRequest {
-                    range: Some(DimensionRange {
-                        dimension: Some("COLUMNS".to_string()),
-                        sheet_id: Some(created_sheet_id),
-                        start_index: Some(col.index),
-                        end_index: Some(col.index + 1),
-                    }),
-                    properties: Some(col.dimensions),
-                    fields: Some(FieldMask::new(&[String::from("*")])),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            });
-        }
-
-        // println!("Requests for created sheet update ready: {} requests total", requests.len());
-        // println!("Request data: {:#?}", &requests);
-        
-        let _result = hub_locked.spreadsheets()
-            .batch_update(BatchUpdateSpreadsheetRequest {
-                requests: Some(requests),
-                ..Default::default()
-            }, spreadsheet_id)
-            .param("fields", "*")
-            .doit()
+            .json::<SheetCreationResponse>()
             .await?;
 
-        // println!("Result: {result:#?}");
+        println!("Response: {response:#?}");
 
-        // println!("Sheet updated?");
-
-        Ok(created_sheet_id)
+        Ok(response.created_sheet_id)
     }
 
     pub async fn upload_to_sheets(&self, data: Vec<Vec<String>>) -> Result<(), Error> {
