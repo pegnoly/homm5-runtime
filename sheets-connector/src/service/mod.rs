@@ -1,12 +1,13 @@
-use std::path::{Path, PathBuf};
+use std::{path::{Path, PathBuf}, time::Duration};
 
 use calamine::{open_workbook, Reader, Xlsx};
-use google_sheets4::{api::{AddSheetRequest, BatchUpdateSpreadsheetRequest, DimensionProperties, DimensionRange, ExtendedValue, GridCoordinate, Request, RowData, Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, UpdateCellsRequest, UpdateDimensionPropertiesRequest, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, FieldMask, Sheets};
+use google_sheets4::{api::{BatchUpdateValuesRequest, DimensionProperties, RowData, Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, FieldMask, Sheets};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use tokio::time::timeout;
 
-use crate::{error::Error, service::types::SheetCreationResponse, utils::SheetsValueRangeConverter};
+use crate::{error::Error, service::types::SheetCreationResponse, utils::*};
 
 mod types;
 
@@ -51,16 +52,9 @@ impl SheetsConnectorService {
                     .enable_http1()
                     .build(),
             );
-
-        let hub = Sheets::new(client, auth);
-
-        // let response = client.post(format!("{APP_SCRIPT_URL}?action=createSheet"))
-        //     .json(&json!({"spreadsheetId": "kjfdskgj", "sheetId": 2}))
-        //     .send()
-        //     .await?;
-
+            
         Ok(SheetsConnectorService {
-            sheets_hub: tokio::sync::Mutex::new(hub),
+            sheets_hub: tokio::sync::Mutex::new(Sheets::new(client, auth)),
             reqwest_client: reqwest::Client::new()
         })
     }
@@ -85,9 +79,25 @@ impl SheetsConnectorService {
             .json::<SheetCreationResponse>()
             .await?;
 
-        println!("Response: {response:#?}");
-
         Ok(response.created_sheet_id)
+    }
+
+    pub async fn upload_to_sheet<C, I>(&self, spreadsheet_id: &str, sheet_id: i32, input: I, converter: C) -> Result<(), Error>
+        where C: IntoSheetsData<ValueRange, Input = I>
+    {
+        let values = converter.into_sheets_data(input)?;
+        println!("Values: {:#?}", &values);
+        let hub_locked = self.sheets_hub.lock().await;
+        println!("Ready to upload to range: {:?}", values.range);
+        let upload_result = hub_locked.spreadsheets()
+            .values_update(values.clone(), spreadsheet_id, &values.range.unwrap())
+            .value_input_option("USER_ENTERED")
+            .doit()
+            .await?;
+
+        println!("Upload result: {upload_result:#?}");
+
+        Ok(())
     }
 
     pub async fn upload_to_sheets(&self, data: Vec<Vec<String>>) -> Result<(), Error> {
@@ -142,7 +152,7 @@ impl SheetsConnectorService {
     }
 
     pub async fn read_from_sheet<T, V>(&self, spreadsheet_id: &str, sheet_id: i32, range: &str, converter: T) -> Result<V, Error>
-        where T: SheetsValueRangeConverter<Output = V>
+        where T: FromSheetValueRange<Output = V>
     {
         let hub_locked = self.sheets_hub.lock().await;
         let spreadsheet = hub_locked.spreadsheets()
@@ -169,7 +179,7 @@ impl SheetsConnectorService {
             .doit()
             .await?;
 
-        let value = converter.convert(data.1)?;
+        let value = converter.from_value_range(data.1)?;
         Ok(value)
 
     }

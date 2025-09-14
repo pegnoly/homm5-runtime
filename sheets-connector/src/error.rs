@@ -11,6 +11,8 @@ pub enum Error {
     #[error(transparent)]
     Sheets(#[from]google_sheets4::Error),
     #[error(transparent)]
+    TokioTime(#[from]tokio::time::error::Elapsed),
+    #[error(transparent)]
     Reqwest(#[from]reqwest::Error),
     #[error("{0} is not defined")]
     UndefinedValue(String)

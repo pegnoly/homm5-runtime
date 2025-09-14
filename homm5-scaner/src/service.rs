@@ -1,6 +1,7 @@
+use homm5_types::creature;
 use sea_orm::{
-    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect,
-    SqlxSqlitePoolConnection, prelude::Expr, sea_query::SimpleExpr, sqlx::SqlitePool,
+    entity::prelude::*,
+    prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect, SqlxSqlitePoolConnection
 };
 use std::{collections::HashMap, path::PathBuf};
 
@@ -14,7 +15,7 @@ use crate::{
             CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner,
             SpellDataOutput, SpellFileCollector, SpellScaner,
         },
-    }
+    }, utils::IntoSeaormCondition
 };
 
 pub struct ScanerService {
@@ -123,6 +124,22 @@ impl ScanerService {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn get_many<E, C, M>(&self, condition: C) -> Result<Vec<M>, ScanerError> 
+        where E: sea_orm::EntityTrait<Model = M>, C: IntoCondition
+    {
+        Ok(E::find().filter(condition).all(&self.db).await?)
+    }
+
+    pub async fn get_one<E, C, M>(&self, condition: C) -> Result<Option<M>, ScanerError> 
+        where E: sea_orm::EntityTrait<Model = M>, C: IntoCondition
+    {
+        Ok(E::find().filter(condition).one(&self.db).await?)
+    }
+
+    pub async fn get_heroes<C: IntoCondition>(&self, condition: C) -> Result<Vec<HeroDBModel>, ScanerError> {
+        self.get_many::<HeroDBEntity, _, HeroDBModel>(condition).await
     }
 
     pub async fn get_heroes_models(&self, town: Town) -> Result<Vec<HeroDBModel>, ScanerError> {

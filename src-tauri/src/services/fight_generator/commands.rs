@@ -1,4 +1,4 @@
-use crate::{error::Error, services::fight_generator::utils::SheetToArmyAssetsConverter, utils::LocalAppManager};
+use crate::{error::Error, services::fight_generator::utils::{ArmySlotsConverter, SheetToArmyAssetsConverter}, utils::LocalAppManager};
 use editor_tools::prelude::{
     AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
 };
@@ -707,6 +707,7 @@ end
 
 #[tauri::command]
 pub async fn create_sheet_for_existing_asset(
+    scaner_repo: State<'_, ScanerService>,
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     sheets_connector_repo: State<'_, SheetsConnectorService>,
     app_manager: State<'_, LocalAppManager>,
@@ -714,13 +715,17 @@ pub async fn create_sheet_for_existing_asset(
 ) -> Result<SheetId, Error> {
     let base_config_locked = app_manager.base_config.read().await;
     let asset = fight_generator_repo.get_asset(asset_id).await?.ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-
+    let creatures = scaner_repo.get_all_creature_models().await?;
     let spreadsheet_id = &base_config_locked.maps.iter()
         .find(|map| (map.id as i32) == asset.mission_id)
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
     let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &asset.name).await?;
+    let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
+    let converter = ArmySlotsConverter { sheet_name: &asset.name, creatures_data: &creatures };
+    sheets_connector_repo.upload_to_sheet(spreadsheet_id, created_sheet_id, army_slots, converter).await?;
+
     fight_generator_repo.update_asset(UpdateFightAssetPayload::new(asset_id).with_sheet_id(created_sheet_id)).await?;
     Ok(created_sheet_id)
 }

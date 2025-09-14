@@ -25,3 +25,7 @@ pub fn configure_path(
         None => String::new(),
     }
 }
+
+pub trait IntoSeaormCondition {
+    fn into_condition(&self) -> sea_orm::Condition;
+}

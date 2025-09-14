@@ -1,10 +1,17 @@
-use google_sheets4::api::ValueRange;
+use google_sheets4::api::{Request, ValueRange};
 
 use crate::error::Error;
 
-pub trait SheetsValueRangeConverter
+pub trait FromSheetValueRange
 {
     type Output;
 
-    fn convert(&self, values: ValueRange) -> Result<Self::Output, Error>;
+    fn from_value_range(&self, values: ValueRange) -> Result<Self::Output, Error>;
+}
+
+pub trait IntoSheetsData<T>
+{
+    type Input;
+
+    fn into_sheets_data(&self, source: Self::Input) -> Result<T, Error>;
 }

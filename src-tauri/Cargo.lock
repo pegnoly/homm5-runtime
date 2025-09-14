@@ -5059,6 +5059,7 @@ name = "sheets-connector"
 version = "0.1.0"
 dependencies = [
  "calamine",
+ "editor-tools",
  "google-sheets4",
  "itertools 0.14.0",
  "reqwest",
