@@ -1,4 +1,4 @@
-import { Card } from "@mantine/core";
+import { Card, LoadingOverlay } from "@mantine/core";
 import { FightAssetSimple } from "../types";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { UUID } from "crypto";
@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { FightGeneratorApi } from "../api";
 import { AssetContexMenu, AssetMenuItem } from "./assetMenu";
 import { invoke } from "@tauri-apps/api/core";
+import { useState } from "react";
 
 enum FightAssetContextMenuItem {
     Delete,
@@ -30,6 +31,7 @@ function FightAssetListItem({asset, onDelete, onSheetCreated} : {
     onSheetCreated: (id: UUID, sheetId: number) => void 
 }) {
     const contextMenu = useContextMenu();
+    const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
     const deleteMutation = useMutation({
         mutationFn: async(id: UUID) => {
@@ -45,7 +47,8 @@ function FightAssetListItem({asset, onDelete, onSheetCreated} : {
             return invoke<number>("create_sheet_for_existing_asset", {assetId: id});
         },
         onSuccess(data, variables, _context) {
-            console.log("On success: ", data);
+            // console.log("On success: ", data);
+            setIsUpdating(false);
             onSheetCreated(variables, data);
         },
     })
@@ -54,7 +57,10 @@ function FightAssetListItem({asset, onDelete, onSheetCreated} : {
         switch (type) {
             case FightAssetContextMenuItem.Delete: deleteMutation.mutate(id);
                 break;
-            case FightAssetContextMenuItem.CreateSheet: createSheetMutation.mutate(id);
+            case FightAssetContextMenuItem.CreateSheet: {
+                setIsUpdating(true);
+                createSheetMutation.mutate(id);
+            }
                 break;
             default:
                 break;
@@ -66,6 +72,7 @@ function FightAssetListItem({asset, onDelete, onSheetCreated} : {
     return (
     <>
         <Card radius={0} withBorder onContextMenu={(e) => contextMenu.handleContextMenu(e)}>
+            <LoadingOverlay visible={isUpdating}/>
             <Link to={`/editor/${EditorState.FightGenerator}/focused/${asset.id}`} state={{assetName: asset.name}} style={{textDecoration: 'none'}}>
                 {asset.name}
                 <>
