@@ -1,18 +1,27 @@
 import { Button, Stack, Text } from "@mantine/core";
 import { useFightAssetId, useFightAssetName } from "./store";
 import { invoke } from "@tauri-apps/api/core";
+import { useCurrentStackActions, useCurrentStackId } from "./elements/stacksGenerator/store";
+import { FightAssetStackModel } from "./elements/stacksGenerator/types";
 
 function FightGeneratorGlobals() {
-    //const _actions = useFightAssetActions();
+    const actions = useCurrentStackActions();
     const assetId = useFightAssetId();
     const assetName = useFightAssetName();
+    const stackId = useCurrentStackId();
 
     async function startGeneration() {
         await invoke("generate_current_hero_script", {assetId: assetId});
     }
 
     async function sync() {
-        await invoke("sync_asset", {assetId: assetId});
+        await invoke<FightAssetStackModel[]>("sync_asset", {assetId: assetId})
+            .then((data) => {
+                if (stackId != undefined) {
+                    const updatedCurrentStack = data.find(s => s.id == stackId)!;
+                    actions.loadAsset(updatedCurrentStack);
+                }
+            })
     }
 
     return (
@@ -26,7 +35,7 @@ function FightGeneratorGlobals() {
             </div>
         }
         <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>
-        <Button onClick={sync} radius={0} size="xs">Test sync</Button>
+        <Button onClick={sync} radius={0} size="xs" disabled={assetId == undefined}>Sync current asset</Button>
     </Stack>
     )
 }
