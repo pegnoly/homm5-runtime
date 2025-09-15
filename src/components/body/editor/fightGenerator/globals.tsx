@@ -1,8 +1,9 @@
-import { Button, Stack, Text } from "@mantine/core";
+import { Button, LoadingOverlay, Stack, Text } from "@mantine/core";
 import { useFightAssetId, useFightAssetName } from "./store";
 import { invoke } from "@tauri-apps/api/core";
 import { useCurrentStackActions, useCurrentStackId } from "./elements/stacksGenerator/store";
 import { FightAssetStackModel } from "./elements/stacksGenerator/types";
+import { useState } from "react";
 
 function FightGeneratorGlobals() {
     const actions = useCurrentStackActions();
@@ -10,13 +11,17 @@ function FightGeneratorGlobals() {
     const assetName = useFightAssetName();
     const stackId = useCurrentStackId();
 
+    const [onSync, setOnSync] = useState<boolean>(false);
+
     async function startGeneration() {
         await invoke("generate_current_hero_script", {assetId: assetId});
     }
 
     async function sync() {
+        setOnSync(true);
         await invoke<FightAssetStackModel[]>("sync_asset", {assetId: assetId})
             .then((data) => {
+                setOnSync(false);
                 if (stackId != undefined) {
                     const updatedCurrentStack = data.find(s => s.id == stackId)!;
                     actions.loadAsset(updatedCurrentStack);
@@ -35,7 +40,10 @@ function FightGeneratorGlobals() {
             </div>
         }
         <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>
-        <Button onClick={sync} radius={0} size="xs" disabled={assetId == undefined}>Sync current asset</Button>
+        <>
+            <LoadingOverlay visible={onSync}/>
+            <Button onClick={sync} radius={0} size="xs" disabled={assetId == undefined}>Sync current asset</Button>
+        </>
     </Stack>
     )
 }
