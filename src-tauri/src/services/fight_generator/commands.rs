@@ -723,8 +723,9 @@ pub async fn create_sheet_for_existing_asset(
 
     let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &asset.name).await?;
     let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
-    let converter = ArmySlotsConverter { sheet_name: &asset.name, creatures_data: &creatures };
-    sheets_connector_repo.upload_to_sheet(spreadsheet_id, created_sheet_id, army_slots, converter).await?;
+    let stat_elements = fight_generator_repo.get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec()).await?;
+    let converter = ArmySlotsConverter { sheet_name: &asset.name, creatures_data: &creatures, stats_elements_data: &stat_elements };
+    sheets_connector_repo.upload_to_sheet(spreadsheet_id, army_slots, converter).await?;
 
     fight_generator_repo.update_asset(UpdateFightAssetPayload::new(asset_id).with_sheet_id(created_sheet_id)).await?;
     Ok(created_sheet_id)

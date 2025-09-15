@@ -17,7 +17,7 @@ use super::{
 use crate::{
     error::EditorToolsError,
     prelude::{
-        AssetArmySlotModel, InitFightAssetPayload, UpdateFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
+        ArmyStatGenerationModel, AssetArmySlotModel, InitFightAssetPayload, UpdateFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
     },
     services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns},
 };
@@ -513,5 +513,9 @@ impl FightGeneratorRepo {
             model_to_update.update(&self.db).await?;
         }
         Ok(())
+    }
+
+    pub async fn get_all_stat_elements_for_stacks(&self, stacks_ids: Vec<i32>) -> Result<Vec<ArmyStatGenerationModel>, EditorToolsError> {
+        Ok(stat_generation::Entity::find().filter(stat_generation::Column::StackId.is_in(stacks_ids)).all(&self.db).await?)
     }
 }

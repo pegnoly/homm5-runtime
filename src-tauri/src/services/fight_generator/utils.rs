@@ -1,4 +1,4 @@
-use editor_tools::prelude::{ArmyGenerationRuleParam, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, AssetArmySlotModel, AssetGenerationType, DifficultyType};
+use editor_tools::prelude::{ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetGenerationType, DifficultyType};
 use homm5_scaner::prelude::{CreatureDBModel, Town};
 use itertools::Itertools;
 use serde_json::Number;
@@ -33,7 +33,8 @@ impl FromSheetValueRange for SheetToArmyAssetsConverter {
 
 pub struct ArmySlotsConverter<'a> {
     pub sheet_name: &'a String,
-    pub creatures_data: &'a Vec<CreatureDBModel>
+    pub creatures_data: &'a Vec<CreatureDBModel>,
+    pub stats_elements_data: &'a Vec<ArmyStatGenerationModel>
 }
 
 pub trait IntoSheetValidatedValue {
@@ -53,6 +54,44 @@ impl IntoSheetValidatedValue for Town {
             Town::TownFortress => String::from("Fortress [6]"),
             Town::TownStronghold => String::from("Stronghold [7]")
         }
+    }
+}
+
+impl IntoSheetValidatedValue for Vec<&ArmyStatGenerationModel> {
+    fn into_value(&self) -> String {
+        self.iter().map(|model| {
+            model.stats.values.iter().map(|value| {
+                match value {
+                    ArmyGenerationStatParam::Initiative => if model.rule == ArmyGenerationStatRule::MaxBy { 
+                        String::from("MaxBy initiative [3]") 
+                    } else {
+                        String::from("MinBy initiative [2]") 
+                    },
+                    ArmyGenerationStatParam::Speed => if model.rule == ArmyGenerationStatRule::MaxBy { 
+                        String::from("MaxBy speed [5]") 
+                    } else {
+                        String::from("MinBy speed [4]") 
+                    },
+                    ArmyGenerationStatParam::Hitpoints => if model.rule == ArmyGenerationStatRule::MaxBy { 
+                        String::from("MaxBy hp [1]") 
+                    } else {
+                        String::from("MinBy hp [0]") 
+                    },
+                    ArmyGenerationStatParam::Attack => if model.rule == ArmyGenerationStatRule::MaxBy { 
+                        String::from("MaxBy attack [7]") 
+                    } else {
+                        String::from("MinBy attack [6]") 
+                    },
+                    ArmyGenerationStatParam::Defence => if model.rule == ArmyGenerationStatRule::MaxBy { 
+                        String::from("MaxBy defence [9]") 
+                    } else {
+                        String::from("MinBy defence [8]") 
+                    }
+                }
+            })
+            .join(",")
+        })
+        .join(",")
     }
 }
 
@@ -165,9 +204,9 @@ impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
             } else {
                 values.push(serde_json::Value::String(String::with_capacity(0)));
             }
-
-            // stats generation rules still not implemented
-            values.push(serde_json::Value::String(String::with_capacity(0)));
+            
+            let stat_elements = self.stats_elements_data.iter().filter(|m| m.stack_id == army_slot.id).collect_vec();
+            values.push(serde_json::Value::String(stat_elements.into_value()));
 
             values.push(serde_json::Value::String(String::with_capacity(0)));
             values.push(serde_json::Value::String(String::with_capacity(0)));

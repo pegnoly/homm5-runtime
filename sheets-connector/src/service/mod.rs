@@ -82,72 +82,16 @@ impl SheetsConnectorService {
         Ok(response.created_sheet_id)
     }
 
-    pub async fn upload_to_sheet<C, I>(&self, spreadsheet_id: &str, sheet_id: i32, input: I, converter: C) -> Result<(), Error>
+    pub async fn upload_to_sheet<C, I>(&self, spreadsheet_id: &str, input: I, converter: C) -> Result<(), Error>
         where C: IntoSheetsData<ValueRange, Input = I>
     {
         let values = converter.into_sheets_data(input)?;
-        println!("Values: {:#?}", &values);
         let hub_locked = self.sheets_hub.lock().await;
-        println!("Ready to upload to range: {:?}", values.range);
-        let upload_result = hub_locked.spreadsheets()
+        hub_locked.spreadsheets()
             .values_update(values.clone(), spreadsheet_id, &values.range.unwrap())
             .value_input_option("USER_ENTERED")
             .doit()
             .await?;
-
-        println!("Upload result: {upload_result:#?}");
-
-        Ok(())
-    }
-
-    pub async fn upload_to_sheets(&self, data: Vec<Vec<String>>) -> Result<(), Error> {
-        let hub_locked = self.sheets_hub.lock().await;
-
-        let values = data.into_iter()
-            .map(|row| {
-                row.into_iter()
-                    .map(|cell| json!(cell))
-                    .collect_vec()
-            })
-            .collect_vec();
-
-        let create_result = hub_locked.spreadsheets()
-            .create(Spreadsheet {
-                properties: Some(SpreadsheetProperties {
-                    title: Some(String::from("Test spreadsheet")),
-                    ..Default::default()
-                }),
-                sheets: Some(
-                    vec![
-                        Sheet {
-                            properties: Some(SheetProperties {
-                                title: Some(String::from("Test sheet")),
-                                ..Default::default()
-                            }),
-                            ..Default::default()
-                        }
-                    ]
-                ),
-                ..Default::default()
-            })
-            .doit()
-            .await?;
-
-        let update_result = hub_locked.spreadsheets()
-            .values_update(
-        ValueRange {
-                    values: Some(values),
-                    ..Default::default()
-                }, 
-                &create_result.1.spreadsheet_id.unwrap(), 
-                create_result.1.sheets.unwrap().first().unwrap().properties.as_ref().unwrap().title.as_ref().unwrap()
-            )
-            .value_input_option("RAW")
-            .doit()
-            .await?;
-
-        println!("Result: {:#?}", update_result.1);
-
         Ok(())
     }
 

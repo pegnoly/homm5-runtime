@@ -47,7 +47,6 @@ function FightAssetListItem({asset, onDelete, onSheetCreated} : {
             return invoke<number>("create_sheet_for_existing_asset", {assetId: id});
         },
         onSuccess(data, variables, _context) {
-            // console.log("On success: ", data);
             setIsUpdating(false);
             onSheetCreated(variables, data);
         },
@@ -72,7 +71,7 @@ function FightAssetListItem({asset, onDelete, onSheetCreated} : {
     return (
     <>
         <Card radius={0} withBorder onContextMenu={(e) => contextMenu.handleContextMenu(e)}>
-            <LoadingOverlay visible={isUpdating}/>
+            <LoadingOverlay visible={isUpdating} loaderProps={{color: 'grape', type: "bars"}}/>
             <Link to={`/editor/${EditorState.FightGenerator}/focused/${asset.id}`} state={{assetName: asset.name}} style={{textDecoration: 'none'}}>
                 {asset.name}
                 <>
