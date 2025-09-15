@@ -120,10 +120,12 @@ impl SheetsConnectorService {
 
         let data = hub_locked.spreadsheets()
             .values_get(spreadsheet_id, &format!("{sheet_name}!{range}"))
+            .major_dimension("COLUMNS")
             .doit()
             .await?;
 
         let value = converter.from_value_range(data.1)?;
+        
         Ok(value)
 
     }

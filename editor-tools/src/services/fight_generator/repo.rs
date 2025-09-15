@@ -23,7 +23,7 @@ use crate::{
 };
 use itertools::Itertools;
 use sea_orm::{
-    sqlx::{types::uuid, SqlitePool}, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection
+    sqlx::{types::uuid, SqlitePool}, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, PaginatorTrait, QueryFilter, SqlxSqlitePoolConnection, TransactionTrait
 };
 use uuid::Uuid;
 
@@ -517,5 +517,40 @@ impl FightGeneratorRepo {
 
     pub async fn get_all_stat_elements_for_stacks(&self, stacks_ids: Vec<i32>) -> Result<Vec<ArmyStatGenerationModel>, EditorToolsError> {
         Ok(stat_generation::Entity::find().filter(stat_generation::Column::StackId.is_in(stacks_ids)).all(&self.db).await?)
+    }
+
+    pub async fn get_stacks_count_for_asset(&self, asset_id: Uuid) -> Result<u64, EditorToolsError> {
+        Ok(army_slot::Entity::find().filter(army_slot::Column::AssetId.eq(asset_id)).count(&self.db).await?)
+    }
+
+    pub async fn update_synced_army_slots(&self, stacks: Vec<AssetArmySlotModel>) -> Result<Vec<AssetArmySlotModel>, EditorToolsError> {
+        let mut updated_slots = vec![];
+        let transaction = self.db.begin().await?;
+
+        for stack in stacks {
+            if let Some(existing_stack) = army_slot::Entity::find()
+                .filter(army_slot::Column::AssetId.eq(stack.asset_id).and(army_slot::Column::Number.eq(stack.number)))
+                .one(&self.db)
+                .await?
+            {
+                let mut model_to_update = existing_stack.into_active_model();
+                model_to_update.base_powers = Set(stack.base_powers);
+                model_to_update.concrete_count = Set(stack.concrete_count);
+                model_to_update.concrete_creatures = Set(stack.concrete_creatures);
+                model_to_update.count_generation_mode = Set(stack.count_generation_mode);
+                model_to_update.generation_rule = Set(stack.generation_rule);
+                model_to_update.power_based_generation_type = Set(stack.power_based_generation_type);
+                model_to_update.powers_grow = Set(stack.powers_grow);
+                model_to_update.tiers = Set(stack.tiers);
+                model_to_update.towns = Set(stack.towns);
+                model_to_update.type_generation_mode = Set(stack.type_generation_mode);
+                let model = model_to_update.update(&self.db).await?;
+                updated_slots.push(model);
+            }
+        }
+
+        transaction.commit().await?;
+
+        Ok(updated_slots)
     }
 }

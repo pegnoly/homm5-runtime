@@ -735,19 +735,36 @@ pub async fn create_sheet_for_existing_asset(
 pub async fn sync_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     sheets_connector_repo: State<'_, SheetsConnectorService>,
+    scaner_repo: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid
-) -> Result<(), Error> {
+) -> Result<Vec<AssetArmySlotModel>, Error> {
     let base_config_locked = app_manager.base_config.read().await;
     let asset = fight_generator_repo.get_asset(asset_id).await?.ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+    let stacks_count = fight_generator_repo.get_stacks_count_for_asset(asset_id).await?;
 
     let spreadsheet_id = &base_config_locked.maps.iter()
         .find(|map| (map.id as i32) == asset.mission_id)
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
-    let converter = SheetToArmyAssetsConverter::new(asset_id);
-    let values = sheets_connector_repo.read_from_sheet(spreadsheet_id, asset.sheet_id.unwrap(), "A2:H24", converter).await?;
-
-    Ok(())
+    let creatures_data = scaner_repo.get_all_creature_models().await?;
+    let converter = SheetToArmyAssetsConverter::new(asset_id, &creatures_data);
+    let values = sheets_connector_repo.read_from_sheet(
+        spreadsheet_id, 
+        asset.sheet_id.unwrap(), 
+        &format!("B2:{}", match stacks_count {
+            1 => "B24",
+            2 => "C24",
+            3 => "D24",
+            4 => "E24",
+            5 => "F24",
+            6 => "G24",
+            7 => "H24",
+            _ => unreachable!()
+        }), converter).await?;
+    
+    println!("Got values from sheet: {:#?}", &values);
+    let updated_slots = fight_generator_repo.update_synced_army_slots(values).await?;
+    Ok(updated_slots)
 }

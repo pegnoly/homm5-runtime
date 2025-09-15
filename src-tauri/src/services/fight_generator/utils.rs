@@ -1,33 +1,263 @@
-use editor_tools::prelude::{ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetGenerationType, DifficultyType};
+use std::collections::HashMap;
+
+use editor_tools::prelude::{ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotGenerationRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetGenerationType, CreatureIds, CreatureTiers, CreatureTowns, DifficultyMappedValue, DifficultyType};
 use homm5_scaner::prelude::{CreatureDBModel, Town};
 use itertools::Itertools;
 use serde_json::Number;
 use sheets_connector::{error::Error, prelude::ValueRange, utils::*};
+use strum::IntoEnumIterator;
 use uuid::Uuid;
 
-pub struct SheetToArmyAssetsConverter {
-    asset_id: Uuid
+pub struct SheetToArmyAssetsConverter<'a> {
+    asset_id: Uuid,
+    creatures_data: &'a Vec<CreatureDBModel>
 }
 
-impl SheetToArmyAssetsConverter {
-    pub fn new(asset_id: Uuid) -> Self {
-        SheetToArmyAssetsConverter { asset_id }
+impl<'a> SheetToArmyAssetsConverter<'a> {
+    pub fn new(asset_id: Uuid, creatures_data: &'a Vec<CreatureDBModel>) -> Self {
+        SheetToArmyAssetsConverter { asset_id, creatures_data }
     }
 }
 
-impl FromSheetValueRange for SheetToArmyAssetsConverter {
+impl<'a> FromSheetValueRange for SheetToArmyAssetsConverter<'a> {
     type Output = Vec<AssetArmySlotModel>;
     
     fn from_value_range(&self, values: ValueRange) -> Result<Self::Output, sheets_connector::error::Error> {
-        let mut assets_count = 0;
-        
+        let mut stacks = vec![];
         if let Some(values) = values.values {
-            for data in values {
-                println!("Values: {:#?}", &data);
-            }
-        }
+            for (index, data) in values.iter().enumerate() {
+                // first element is a count generation rule
+                let count_rule = if let Some(count_rule_data) = data.first() {
+                    match count_rule_data {
+                        serde_json::Value::String(data) => {
+                            match data.as_str() {
+                                "Power based [0]" => Ok(ArmySlotStackCountGenerationMode::PowerBased),
+                                "Raw [1]" => Ok(ArmySlotStackCountGenerationMode::Raw),
+                                _=> Err(Error::UndefinedValue("Sheet data conversion: stack count rule".to_string()))
+                            }
+                        },
+                        _=> Err(Error::UndefinedValue("Sheet data conversion: stack count rule".to_string()))
+                    }
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: stack count rule".to_string()))
+                }?;
+                // second is grow rule
+                let grow_rule = if let Some(grow_rule_data) = data.get(1) {
+                    match grow_rule_data {
+                        serde_json::Value::String(data) => {
+                            match data.as_str() {
+                                "Static [0]" => Ok(AssetGenerationType::Static),
+                                "Dynamic [1]" => Ok(AssetGenerationType::Dynamic),
+                                _=> Err(Error::UndefinedValue("Sheet data conversion: stack count rule".to_string()))
+                            }
+                        },
+                        _=> Err(Error::UndefinedValue("Sheet data conversion: stack count rule".to_string()))
+                    }
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: stack count rule".to_string()))
+                }?;
 
-        Ok(vec![])
+                let base_counts_data = if let Some(base_counts) = data.get(2..6) {
+                    Ok(DifficultyMappedValue {
+                        data: HashMap::from([
+                            (DifficultyType::Easy, base_counts[0].as_str()
+                                .ok_or(Error::UndefinedValue("Sheet data conversion: base counts".to_string()))?
+                                .parse()?),
+                            (DifficultyType::Medium, base_counts[1].as_str()
+                                .ok_or(Error::UndefinedValue("Sheet data conversion: base counts".to_string()))?
+                                .parse()?),
+                            (DifficultyType::Hard, base_counts[2].as_str()
+                                .ok_or(Error::UndefinedValue("Sheet data conversion: base counts".to_string()))?
+                                .parse()?),
+                            (DifficultyType::Heroic, base_counts[3].as_str()
+                                .ok_or(Error::UndefinedValue("Sheet data conversion: base counts".to_string()))?
+                                .parse()?),
+                        ])
+                    })
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: base counts".to_string()))
+                }?;
+
+                let grow_data = if let Some(grow_data) = data.get(8..12) {
+                    Ok(DifficultyMappedValue {
+                        data: HashMap::from([
+                            (DifficultyType::Easy, grow_data[0].as_str()
+                                .ok_or(Error::UndefinedValue("Sheet data conversion: counts grow".to_string()))?
+                                .parse()?),
+                            (DifficultyType::Medium, grow_data[1].as_str()
+                                .ok_or(Error::UndefinedValue("Sheet data conversion: counts grow".to_string()))?
+                                .parse()?),
+                            (DifficultyType::Hard, grow_data[2].as_str()
+                                .ok_or(Error::UndefinedValue("Sheet data conversion: counts grow".to_string()))?
+                                .parse()?),
+                            (DifficultyType::Heroic, grow_data[3].as_str()
+                                .ok_or(Error::UndefinedValue("Sheet data conversion: counts grow".to_string()))?
+                                .parse()?),
+                        ])
+                    })
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: counts grow".to_string()))
+                }?;
+
+                let unit_generation_rule = if let Some(gen_rule_data) = data.get(13) {
+                    match gen_rule_data {
+                        serde_json::Value::String(data) => {
+                            match data.as_str() {
+                                "Tier-slot based [0]" => Ok(ArmySlotStackUnitGenerationMode::TierSlotBased),
+                                "Concrete unit [1]" => Ok(ArmySlotStackUnitGenerationMode::ConcreteUnit),
+                                _=> Err(Error::UndefinedValue("Sheet data conversion: stack count rule".to_string()))
+                            }
+                        },
+                        _=> Err(Error::UndefinedValue("Sheet data conversion: unit generation rule".to_string()))
+                    }
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: unit generation rule".to_string()))
+                }?;
+
+                println!("Unit generation rule: {}", unit_generation_rule);
+
+                let towns = if let Some(towns_data) = data.get(16) {
+                    match towns_data {
+                        serde_json::Value::String(data) => {
+                            if data.is_empty() {
+                                Ok(CreatureTowns { towns: vec![] })
+                            } else {
+                                let towns_strings_list = data.split(",").collect_vec();
+                                Ok(CreatureTowns {
+                                    towns: Vec::from_iter(towns_strings_list.iter().map(|t| {
+                                        match *t {
+                                            "Haven [0]" => Town::TownHeaven,
+                                            "Inferno [1]" => Town::TownInferno,
+                                            "Necropolis [2]" => Town::TownNecromancy,
+                                            "Preserve [3]" => Town::TownPreserve,
+                                            "Dungeon [4]" => Town::TownDungeon,
+                                            "Academy [5]" => Town::TownAcademy,
+                                            "Fortress [6]" => Town::TownFortress,
+                                            "Stronghold [7]" => Town::TownStronghold,
+                                            "Neutral [8]" => Town::TownNoType,
+                                            _=> unreachable!()    
+                                        }
+                                    }))
+                                })
+                            }
+                        },
+                        _=> Err(Error::UndefinedValue("Sheet data conversion: towns".to_string()))
+                    }
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: towns".to_string()))
+                }?;
+
+                let tiers = if let Some(tiers_data) = data.get(17) {
+                    match tiers_data {
+                        serde_json::Value::String(data) => {
+                            if data.is_empty() {
+                                Ok(CreatureTiers { tiers: vec![] })
+                            } else {
+                                let tiers_strings_list = data.split(",").collect_vec();
+                                Ok(CreatureTiers {
+                                    tiers: Vec::from_iter(tiers_strings_list.iter().map(|t| {
+                                        match *t {
+                                            "Tier 1 [0]" => 1,
+                                            "Tier 2 [1]" => 2,
+                                            "Tier 3 [2]" => 3,
+                                            "Tier 4 [3]" => 4,
+                                            "Tier 5 [4]" => 5,
+                                            "Tier 6 [5]" => 6,
+                                            "Tier 7 [6]" => 7,
+                                            _=> unreachable!()
+                                        }
+                                    }))
+                                })
+                            }
+                        },
+                        _=> Err(Error::UndefinedValue("Sheet data conversion: tiers".to_string()))
+                    }
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: tiers".to_string()))
+                }?;
+
+                let params_rules = if let Some(params_rules_data) = data.get(18) {
+                    match params_rules_data {
+                        serde_json::Value::String(data) => {
+                            if data.is_empty() {
+                                Ok(ArmySlotGenerationRule { params: vec![] })
+                            } else {
+                                let params_strings_list = data.split(",").collect_vec();
+                                Ok(ArmySlotGenerationRule {
+                                    params: Vec::from_iter(params_strings_list.iter().map(|t| {
+                                        match *t {
+                                            "Only generatable [0]" => ArmyGenerationRuleParam::Generatable,
+                                            "Only upgrade [1]" => ArmyGenerationRuleParam::UpgradeOnly,
+                                            "Only shooter [2]" => ArmyGenerationRuleParam::Shooter,
+                                            "Only caster [3]" => ArmyGenerationRuleParam::Caster,
+                                            _=> unreachable!()
+                                        }
+                                    }))
+                                })
+                            }
+                        },
+                        _=> Err(Error::UndefinedValue("Sheet data conversion: params rules".to_string()))
+                    }
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: params rules".to_string()))
+                }?;
+
+                let concrete_creatures = if let Some(creatures_data) = data.get(22) {
+                    match creatures_data {
+                        serde_json::Value::String(data) => {
+                            if data.is_empty() {
+                                Ok(CreatureIds { ids: vec![] })
+                            } else {
+                                let creatures_strings_list = data.split(",").collect_vec();
+                                Ok(CreatureIds {
+                                    ids: Vec::from_iter(creatures_strings_list.iter().filter_map(|c| {
+                                        let parts: Vec<&str> = c.split('[').collect();
+                                        if parts.len() > 1 {
+                                            parts[1].split(']').next()
+                                        } else {
+                                            None
+                                        }
+                                    }).collect_vec().iter().filter_map(|c| c.parse::<i32>().ok()))
+                                })
+                            }
+                        },
+                        _=> Err(Error::UndefinedValue("Sheet data conversion: concrete creatures".to_string()))
+                    }
+                } else {
+                    Err(Error::UndefinedValue("Sheet data conversion: concrete creatures".to_string()))
+                }?;
+
+                let stack = AssetArmySlotModel {
+                    asset_id: self.asset_id,
+                    id: 0,
+                    number: index as i32,
+                    type_generation_mode: unit_generation_rule,
+                    count_generation_mode: count_rule.clone(),
+                    power_based_generation_type: grow_rule,
+                    base_powers: if count_rule == ArmySlotStackCountGenerationMode::PowerBased {
+                        base_counts_data.clone()
+                    } else {
+                        DifficultyMappedValue {
+                            data: HashMap::from_iter(DifficultyType::iter().map(|d| (d, 0)))
+                        }
+                    },
+                    powers_grow: grow_data,
+                    towns,
+                    tiers,
+                    generation_rule: params_rules,
+                    concrete_creatures,
+                    concrete_count: if count_rule == ArmySlotStackCountGenerationMode::Raw {
+                        base_counts_data
+                    } else {
+                        DifficultyMappedValue {
+                            data: HashMap::from_iter(DifficultyType::iter().map(|d| (d, 0)))
+                        }
+                    }, 
+                };
+                stacks.push(stack);
+            }
+        };
+        Ok(stacks)
     }
 }
 
@@ -38,11 +268,11 @@ pub struct ArmySlotsConverter<'a> {
 }
 
 pub trait IntoSheetValidatedValue {
-    fn into_value(&self) -> String;
+    fn to_sheet_validated_value(&self) -> String;
 }
 
 impl IntoSheetValidatedValue for Town {
-    fn into_value(&self) -> String {
+    fn to_sheet_validated_value(&self) -> String {
         match self {
             Town::TownAcademy => String::from("Academy [5]"),
             Town::TownNoType => String::from("Neutral [8]"),
@@ -58,7 +288,7 @@ impl IntoSheetValidatedValue for Town {
 }
 
 impl IntoSheetValidatedValue for Vec<&ArmyStatGenerationModel> {
-    fn into_value(&self) -> String {
+    fn to_sheet_validated_value(&self) -> String {
         self.iter().map(|model| {
             model.stats.values.iter().map(|value| {
                 match value {
@@ -96,7 +326,7 @@ impl IntoSheetValidatedValue for Vec<&ArmyStatGenerationModel> {
 }
 
 impl IntoSheetValidatedValue for ArmyGenerationRuleParam {
-    fn into_value(&self) -> String {
+    fn to_sheet_validated_value(&self) -> String {
         match self {
             ArmyGenerationRuleParam::UpgradeOnly => String::from("Only upgrade [1]"),
             ArmyGenerationRuleParam::Generatable => String::from("Only generatable [0]"),
@@ -188,7 +418,7 @@ impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
             values.push(serde_json::Value::String(String::with_capacity(0)));
 
             if !army_slot.towns.towns.is_empty() {
-                values.push(serde_json::Value::String(army_slot.towns.towns.iter().map(|t| t.into_value()).join(",")));
+                values.push(serde_json::Value::String(army_slot.towns.towns.iter().map(|t| t.to_sheet_validated_value()).join(",")));
             } else {
                 values.push(serde_json::Value::String(String::with_capacity(0)));
             }
@@ -200,13 +430,13 @@ impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
             }
 
             if !army_slot.generation_rule.params.is_empty() {
-                values.push(serde_json::Value::String(army_slot.generation_rule.params.iter().map(|r| r.into_value()).join(",")));
+                values.push(serde_json::Value::String(army_slot.generation_rule.params.iter().map(|r| r.to_sheet_validated_value()).join(",")));
             } else {
                 values.push(serde_json::Value::String(String::with_capacity(0)));
             }
-            
+
             let stat_elements = self.stats_elements_data.iter().filter(|m| m.stack_id == army_slot.id).collect_vec();
-            values.push(serde_json::Value::String(stat_elements.into_value()));
+            values.push(serde_json::Value::String(stat_elements.to_sheet_validated_value()));
 
             values.push(serde_json::Value::String(String::with_capacity(0)));
             values.push(serde_json::Value::String(String::with_capacity(0)));

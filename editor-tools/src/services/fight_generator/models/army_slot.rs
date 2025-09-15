@@ -48,7 +48,7 @@ pub struct CreatureIds {
 }
 
 #[derive(
-    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize,
+    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum ArmySlotStackUnitGenerationMode {

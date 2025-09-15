@@ -2,7 +2,7 @@ import { Card, LoadingOverlay } from "@mantine/core";
 import { FightAssetSimple } from "../types";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { UUID } from "crypto";
-import { IconNewSection, IconTrash } from "@tabler/icons-react";
+import { IconNewSection, IconScanEye, IconTrash } from "@tabler/icons-react";
 import { EditorState } from "@/stores/EditorStateStore";
 import { Link } from "react-router";
 import { useMutation } from "@tanstack/react-query";
@@ -13,13 +13,18 @@ import { useState } from "react";
 
 enum FightAssetContextMenuItem {
     Delete,
-    CreateSheet
+    CreateSheet,
+    SyncAsset
 }
 
 function GenerateFightAssetContextMenu(asset: FightAssetSimple, onInteract: (id: UUID, type: FightAssetContextMenuItem) => void): AssetMenuItem[] {
-    var items: AssetMenuItem[] = [{label: 'Delete', icon: <IconTrash/>, onClick: () => onInteract(asset.id, FightAssetContextMenuItem.Delete)}];
+    var items: AssetMenuItem[] = [
+        {label: 'Delete', icon: <IconTrash/>, onClick: () => onInteract(asset.id, FightAssetContextMenuItem.Delete)}
+    ];
     if (asset.sheet_id == null) {
         items.push({label: 'Create sheet', icon: <IconNewSection/>, onClick: () => onInteract(asset.id, FightAssetContextMenuItem.CreateSheet)})
+    } else {
+        items.push({label: 'Sync asset', icon: <IconScanEye/>, onClick: () => onInteract(asset.id, FightAssetContextMenuItem.SyncAsset)})  
     }
     return items;
 }
@@ -61,6 +66,10 @@ function FightAssetListItem({asset, onDelete, onSheetCreated} : {
                 createSheetMutation.mutate(id);
             }
                 break;
+            case FightAssetContextMenuItem.SyncAsset: {
+                invoke("sync_asset", {assetId: id});
+                break;
+            }
             default:
                 break;
         }

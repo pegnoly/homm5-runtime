@@ -15,5 +15,7 @@ pub enum Error {
     #[error(transparent)]
     Reqwest(#[from]reqwest::Error),
     #[error("{0} is not defined")]
-    UndefinedValue(String)
+    UndefinedValue(String),
+    #[error(transparent)]
+    ParseInt(#[from]std::num::ParseIntError)
 }
