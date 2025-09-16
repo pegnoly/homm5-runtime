@@ -1,7 +1,5 @@
-use homm5_types::creature;
 use sea_orm::{
-    entity::prelude::*,
-    prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect, SqlxSqlitePoolConnection
+    prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, SqlxSqlitePoolConnection
 };
 use std::{collections::HashMap, path::PathBuf};
 
@@ -15,7 +13,7 @@ use crate::{
             CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner,
             SpellDataOutput, SpellFileCollector, SpellScaner,
         },
-    }, utils::IntoSeaormCondition
+    }
 };
 
 pub struct ScanerService {

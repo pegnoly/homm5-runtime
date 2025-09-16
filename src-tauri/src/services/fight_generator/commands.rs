@@ -68,7 +68,7 @@ pub async fn init_new_asset(
         .ok_or(Error::UndefinedData("Current map data".to_string()))?;
 
     let spreadsheet_id = &map_data.fights_spreadsheet_id;
-    let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &name).await?;
+    let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &name).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
 
     let payload = InitFightAssetPayload {
         name,
@@ -721,11 +721,11 @@ pub async fn create_sheet_for_existing_asset(
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
-    let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &asset.name).await?;
+    let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &asset.name).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
     let stat_elements = fight_generator_repo.get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec()).await?;
     let converter = ArmySlotsConverter { sheet_name: &asset.name, creatures_data: &creatures, stats_elements_data: &stat_elements };
-    sheets_connector_repo.upload_to_sheet(spreadsheet_id, army_slots, converter).await?;
+    sheets_connector_repo.upload_to_sheet(spreadsheet_id, army_slots, converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
 
     fight_generator_repo.update_asset(UpdateFightAssetPayload::new(asset_id).with_sheet_id(created_sheet_id)).await?;
     Ok(created_sheet_id)
@@ -735,7 +735,6 @@ pub async fn create_sheet_for_existing_asset(
 pub async fn pull_from_sheet(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     sheets_connector_repo: State<'_, SheetsConnectorService>,
-    scaner_repo: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid
 ) -> Result<Vec<AssetArmySlotModel>, Error> {
@@ -748,8 +747,7 @@ pub async fn pull_from_sheet(
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
-    let creatures_data = scaner_repo.get_all_creature_models().await?;
-    let converter = SheetToArmyAssetsConverter::new(asset_id, &creatures_data);
+    let converter = SheetToArmyAssetsConverter::new(asset_id);
     let values = sheets_connector_repo.read_from_sheet(
         spreadsheet_id, 
         asset.sheet_id.unwrap(), 
@@ -762,7 +760,7 @@ pub async fn pull_from_sheet(
             6 => "G24",
             7 => "H24",
             _ => unreachable!()
-        }), converter).await?;
+        }), converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     
     println!("Got values from sheet: {:#?}", &values);
     let updated_slots = fight_generator_repo.update_synced_army_slots(values).await?;
@@ -788,6 +786,6 @@ pub async fn push_to_sheet(
     let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
     let stat_elements = fight_generator_repo.get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec()).await?;
     let converter = ArmySlotsConverter { sheet_name: &asset.name, creatures_data: &creatures, stats_elements_data: &stat_elements };
-    sheets_connector_repo.upload_to_sheet(spreadsheet_id, army_slots, converter).await?;
+    sheets_connector_repo.upload_to_sheet(spreadsheet_id, army_slots, converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     Ok(())
 }

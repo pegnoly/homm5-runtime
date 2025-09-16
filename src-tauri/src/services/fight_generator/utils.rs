@@ -8,21 +8,21 @@ use sheets_connector::{error::Error, prelude::ValueRange, utils::*};
 use strum::IntoEnumIterator;
 use uuid::Uuid;
 
-pub struct SheetToArmyAssetsConverter<'a> {
-    asset_id: Uuid,
-    creatures_data: &'a Vec<CreatureDBModel>
+pub struct SheetToArmyAssetsConverter {
+    asset_id: Uuid
+    // creatures_data: &'a Vec<CreatureDBModel>
 }
 
-impl<'a> SheetToArmyAssetsConverter<'a> {
-    pub fn new(asset_id: Uuid, creatures_data: &'a Vec<CreatureDBModel>) -> Self {
-        SheetToArmyAssetsConverter { asset_id, creatures_data }
+impl SheetToArmyAssetsConverter {
+    pub fn new(asset_id: Uuid) -> Self {
+        SheetToArmyAssetsConverter { asset_id }
     }
 }
 
-impl<'a> FromSheetValueRange for SheetToArmyAssetsConverter<'a> {
+impl FromSheetValueRange for SheetToArmyAssetsConverter {
     type Output = Vec<AssetArmySlotModel>;
     
-    fn from_value_range(&self, values: ValueRange) -> Result<Self::Output, sheets_connector::error::Error> {
+    fn convert_from_value_range(&self, values: ValueRange) -> Result<Self::Output, sheets_connector::error::Error> {
         let mut stacks = vec![];
         if let Some(values) = values.values {
             for (index, data) in values.iter().enumerate() {
@@ -114,7 +114,7 @@ impl<'a> FromSheetValueRange for SheetToArmyAssetsConverter<'a> {
                     Err(Error::UndefinedValue("Sheet data conversion: unit generation rule".to_string()))
                 }?;
 
-                println!("Unit generation rule: {}", unit_generation_rule);
+                // println!("Unit generation rule: {}", unit_generation_rule);
 
                 let towns = if let Some(towns_data) = data.get(16) {
                     match towns_data {
@@ -339,7 +339,7 @@ impl IntoSheetValidatedValue for ArmyGenerationRuleParam {
 impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
     type Input = Vec<AssetArmySlotModel>;
 
-    fn into_sheets_data(&self, source: Vec<AssetArmySlotModel>) -> Result<ValueRange, sheets_connector::error::Error> {
+    fn convert_into_sheets_data(&self, source: Vec<AssetArmySlotModel>) -> Result<ValueRange, sheets_connector::error::Error> {
         let mut data: Vec<Vec<serde_json::Value>> = vec![];
         for army_slot in &source {
             let mut values = vec![];

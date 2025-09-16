@@ -1,12 +1,8 @@
-use std::{path::{Path, PathBuf}, time::Duration};
+use std::path::{Path, PathBuf};
 
 use calamine::{open_workbook, Reader, Xlsx};
-use google_sheets4::{api::{BatchUpdateValuesRequest, DimensionProperties, RowData, Sheet, SheetProperties, Spreadsheet, SpreadsheetProperties, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, FieldMask, Sheets};
-use itertools::Itertools;
+use google_sheets4::{api::{DimensionProperties, RowData, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, Sheets};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use tokio::time::timeout;
-
 use crate::{error::Error, service::types::SheetCreationResponse, utils::*};
 
 mod types;
@@ -85,13 +81,14 @@ impl SheetsConnectorService {
     pub async fn upload_to_sheet<C, I>(&self, spreadsheet_id: &str, input: I, converter: C) -> Result<(), Error>
         where C: IntoSheetsData<ValueRange, Input = I>
     {
-        let values = converter.into_sheets_data(input)?;
+        let values = converter.convert_into_sheets_data(input)?;
         let hub_locked = self.sheets_hub.lock().await;
         hub_locked.spreadsheets()
             .values_update(values.clone(), spreadsheet_id, &values.range.unwrap())
             .value_input_option("USER_ENTERED")
             .doit()
-            .await?;
+            .await
+            .map_err(|e| Error::Sheets(Box::new(e)))?;
         Ok(())
     }
 
@@ -102,7 +99,8 @@ impl SheetsConnectorService {
         let spreadsheet = hub_locked.spreadsheets()
             .get(spreadsheet_id)
             .doit()
-            .await?;
+            .await
+            .map_err(|e| Error::Sheets(Box::new(e)))?;
         let sheet_name = spreadsheet.1.sheets
             .as_ref()
             .and_then(|sheets| {
@@ -122,9 +120,10 @@ impl SheetsConnectorService {
             .values_get(spreadsheet_id, &format!("{sheet_name}!{range}"))
             .major_dimension("COLUMNS")
             .doit()
-            .await?;
+            .await
+            .map_err(|e| Error::Sheets(Box::new(e)))?;
 
-        let value = converter.from_value_range(data.1)?;
+        let value = converter.convert_from_value_range(data.1)?;
         
         Ok(value)
 
