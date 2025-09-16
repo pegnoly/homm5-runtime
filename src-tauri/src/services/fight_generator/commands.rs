@@ -58,7 +58,7 @@ pub async fn init_new_asset(
     name: String,
     path: String,
     table_name: String,
-) -> Result<Uuid, Error> {
+) -> Result<AssetModel, Error> {
     let base_config_locked = app_manager.base_config.read().await;
     let runtime_config_locked = app_manager.runtime_config.read().await;
     let current_map_id = runtime_config_locked.current_selected_map

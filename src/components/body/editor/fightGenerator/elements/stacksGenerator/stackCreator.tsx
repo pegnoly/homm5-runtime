@@ -26,9 +26,14 @@ function FightAssetStackCreator(params: {
 
     const mutation = useMutation({
         mutationFn: async(payload: CreateStackPayload) => {
+            console.log("Creating new stack with payload ", payload);
             return FightGeneratorApi.createStack(payload);
         },
+        onError(error, _variables, _context) {
+            console.log("Error: ", error);
+        },
         onSuccess(data, _variables, _context) {
+            console.log("What's up?")
             close();
             params.stackCreatedCallback(data);
         },

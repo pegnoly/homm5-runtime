@@ -4,7 +4,6 @@ import { useState } from "react";
 import { FightAssetSimple } from "../types";
 import { invoke } from "@tauri-apps/api/core";
 import { Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Stack, Text, TextInput, Tooltip } from "@mantine/core";
-import { UUID } from "crypto";
 
 function FightAssetCreator({onCreated}: {
     onCreated: (value: FightAssetSimple) => void
@@ -18,8 +17,8 @@ function FightAssetCreator({onCreated}: {
 
     async function create() {
         close();
-        await invoke<UUID>("init_new_asset", {name: name, path: directory, tableName: tableName})
-            .then((value) => onCreated({id: value, name: name!}));
+        await invoke<FightAssetSimple>("init_new_asset", {name: name, path: directory, tableName: tableName})
+            .then((value) => onCreated(value));
     }
 
     return <div style={{position: 'sticky'}}>

@@ -55,7 +55,7 @@ impl FightGeneratorRepo {
     pub async fn init_new_asset(
         &self,
         payload: InitFightAssetPayload,
-    ) -> Result<Uuid, EditorToolsError> {
+    ) -> Result<asset::Model, EditorToolsError> {
         let model_to_insert = asset::ActiveModel {
             mission_id: Set(payload.mission_id),
             table_name: Set(payload.lua_table_name.clone()),
@@ -65,7 +65,7 @@ impl FightGeneratorRepo {
             sheet_id: Set(Some(payload.sheet_id))
         };
         let res = asset::Entity::insert(model_to_insert).exec_with_returning(&self.db).await?;
-        Ok(res.id)
+        Ok(res)
     }
 
     pub async fn update_asset(&self, payload: UpdateFightAssetPayload) -> Result<(), EditorToolsError> {
@@ -279,6 +279,10 @@ impl FightGeneratorRepo {
     }
 
     pub async fn add_stack(&self, payload: AddStackPayload) -> Result<i32, EditorToolsError> {
+        let stacks_count = army_slot::Entity::find()
+            .filter(army_slot::Column::AssetId.eq(payload.asset_id))
+            .count(&self.db)
+            .await?;
         let model_to_insert = army_slot::ActiveModel {
             asset_id: Set(payload.asset_id),
             type_generation_mode: Set(payload.unit_generation_type),
@@ -293,6 +297,7 @@ impl FightGeneratorRepo {
             generation_rule: Set(ArmySlotGenerationRule { params: vec![] }),
             concrete_creatures: Set(CreatureIds { ids: vec![] }),
             concrete_count: Set(DifficultyMappedValue::default()),
+            number: Set(stacks_count as i32),
             ..Default::default()
         };
         let inserted_model = model_to_insert.insert(&self.db).await?;
