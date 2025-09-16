@@ -17,7 +17,7 @@
 
 .mode_selector {
     width: 100%;
-    height: 75%;
+    height: 60%;
     /* background-color: chartreuse; */
 }
 
@@ -32,7 +32,7 @@
 
 .editor_globals {
     width: 100%;
-    height: 25%;
+    height: 40%;
     /* background-color: cornflowerblue; */
 }
 

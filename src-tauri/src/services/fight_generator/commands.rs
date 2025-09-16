@@ -732,7 +732,7 @@ pub async fn create_sheet_for_existing_asset(
 }
 
 #[tauri::command]
-pub async fn sync_asset(
+pub async fn pull_from_sheet(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     sheets_connector_repo: State<'_, SheetsConnectorService>,
     scaner_repo: State<'_, ScanerService>,
@@ -767,4 +767,27 @@ pub async fn sync_asset(
     println!("Got values from sheet: {:#?}", &values);
     let updated_slots = fight_generator_repo.update_synced_army_slots(values).await?;
     Ok(updated_slots)
+}
+
+#[tauri::command]
+pub async fn push_to_sheet(
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
+    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    scaner_repo: State<'_, ScanerService>,
+    app_manager: State<'_, LocalAppManager>,
+    asset_id: Uuid
+) -> Result<(), Error> {
+    let base_config_locked = app_manager.base_config.read().await;
+    let asset = fight_generator_repo.get_asset(asset_id).await?.ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+    let creatures = scaner_repo.get_all_creature_models().await?;
+    let spreadsheet_id = &base_config_locked.maps.iter()
+        .find(|map| (map.id as i32) == asset.mission_id)
+        .ok_or(Error::UndefinedData(String::from("Current map")))?
+        .fights_spreadsheet_id;
+
+    let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
+    let stat_elements = fight_generator_repo.get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec()).await?;
+    let converter = ArmySlotsConverter { sheet_name: &asset.name, creatures_data: &creatures, stats_elements_data: &stat_elements };
+    sheets_connector_repo.upload_to_sheet(spreadsheet_id, army_slots, converter).await?;
+    Ok(())
 }

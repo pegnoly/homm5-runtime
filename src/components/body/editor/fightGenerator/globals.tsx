@@ -17,15 +17,23 @@ function FightGeneratorGlobals() {
         await invoke("generate_current_hero_script", {assetId: assetId});
     }
 
-    async function sync() {
+    async function pullFromSheet() {
         setOnSync(true);
-        await invoke<FightAssetStackModel[]>("sync_asset", {assetId: assetId})
+        await invoke<FightAssetStackModel[]>("pull_from_sheet", {assetId: assetId})
             .then((data) => {
                 setOnSync(false);
                 if (stackId != undefined) {
                     const updatedCurrentStack = data.find(s => s.id == stackId)!;
                     actions.loadAsset(updatedCurrentStack);
                 }
+            })
+    }
+
+    async function pushToSheet() {
+        setOnSync(true);
+        await invoke("push_to_sheet", {assetId: assetId})
+            .then(() => {
+                setOnSync(false);
             })
     }
 
@@ -42,7 +50,8 @@ function FightGeneratorGlobals() {
         <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>
         <>
             <LoadingOverlay visible={onSync}/>
-            <Button onClick={sync} radius={0} size="xs" disabled={assetId == undefined}>Sync current asset</Button>
+            <Button onClick={pullFromSheet} radius={0} size="xs" disabled={assetId == undefined}>Pull asset from sheet</Button>
+            <Button onClick={pushToSheet} radius={0} size="xs" disabled={assetId == undefined}>Push asset to sheet</Button>
         </>
     </Stack>
     )

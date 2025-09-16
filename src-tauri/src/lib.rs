@@ -157,7 +157,8 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::get_average_concrete_creatures_count,
             services::fight_generator::commands::get_average_artifacts_cost,
             services::fight_generator::commands::create_sheet_for_existing_asset,
-            services::fight_generator::commands::sync_asset,
+            services::fight_generator::commands::pull_from_sheet,
+            services::fight_generator::commands::push_to_sheet,
             //
             services::creature_generator::commands::save_generation_session,
             services::creature_generator::commands::generate_creatures,
