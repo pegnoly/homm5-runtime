@@ -16,6 +16,7 @@ pub struct Model {
     pub powers_grow: Option<DifficultyMappedValue>,
     pub required: RequiredArtifacts,
     pub optional: OptionalArtifacts,
+    pub sheet_id: Option<i32>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]

@@ -26,7 +26,7 @@ function GenerateFightAssetContextMenu(asset: FightAssetSimple, onInteract: (id:
         items.push({label: 'Create sheet', icon: <IconNewSection/>, onClick: () => onInteract(asset.id, FightAssetContextMenuItem.CreateSheet)})
     } else {
         items.push({label: 'Pull from sheet', icon: <IconGitPullRequest/>, onClick: () => onInteract(asset.id, FightAssetContextMenuItem.PullFromSheet)})
-        items.push({label: 'Push to sheet', icon: <IconStackPush/>, onClick: () => onInteract(asset.id, FightAssetContextMenuItem.PullFromSheet)})  
+        items.push({label: 'Push to sheet', icon: <IconStackPush/>, onClick: () => onInteract(asset.id, FightAssetContextMenuItem.PullFromSheet)})
     }
     return items;
 }

@@ -68,7 +68,7 @@ impl FightGeneratorRepo {
             path_to_generate: Set(payload.path_to_generate.clone()),
             name: Set(payload.name.clone()),
             id: Set(Uuid::new_v4()),
-            sheet_id: Set(Some(payload.sheet_id)),
+            sheet_id: Set(Some(payload.sheet_id))
         };
         let res = asset::Entity::insert(model_to_insert)
             .exec_with_returning(&self.db)
@@ -131,6 +131,7 @@ impl FightGeneratorRepo {
             },
             required: Set(RequiredArtifacts::default()),
             optional: Set(OptionalArtifacts::default()),
+            sheet_id: Set(None)
         };
         Ok(model_to_insert.insert(&self.db).await?)
     }
@@ -588,5 +589,14 @@ impl FightGeneratorRepo {
         transaction.commit().await?;
 
         Ok(updated_slots)
+    }
+
+    pub async fn update_artifacts_asset(&self, asset_id: i32, sheet_id: i32) -> Result<(), EditorToolsError> {
+        if let Some(existing_asset) = artifacts::Entity::find_by_id(asset_id).one(&self.db).await? {
+            let mut model_to_update = existing_asset.into_active_model();
+            model_to_update.sheet_id = Set(Some(sheet_id));
+            model_to_update.update(&self.db).await?;  
+        }
+        Ok(())
     }
 }

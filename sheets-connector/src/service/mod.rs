@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::{fmt::Debug, path::{Path, PathBuf}};
 
 use crate::{error::Error, service::types::SheetCreationResponse, utils::*};
 use calamine::{Reader, Xlsx, open_workbook};
@@ -91,6 +91,23 @@ impl SheetsConnectorService {
             .await?;
 
         Ok(response.created_sheet_id)
+    }
+
+    pub async fn update_sheet<T: Serialize + Debug>(
+        &self,
+        action: &str,
+        post_data: &T
+    ) -> Result<(), Error> {
+        println!("Updating sheet with action {action} and data {post_data:#?}");
+        let response = self.reqwest_client
+            .post(format!("{APP_SCRIPT_URL}?action={action}"))
+            .json(post_data)
+            .send()
+            .await?;
+
+        println!("Update response: {:#?}", response.text().await?);
+
+        Ok(())
     }
 
     pub async fn upload_to_sheet<C, I>(

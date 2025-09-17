@@ -872,3 +872,29 @@ pub async fn push_to_sheet(
     Ok(())
 }
 
+#[tauri::command]
+pub async fn add_artifacts_data_to_asset_sheet(
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
+    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    app_manager: State<'_, LocalAppManager>,
+    asset_id: Uuid,
+    art_asset_id: i32,
+) -> Result<i32, Error> {
+    let base_config_locked = app_manager.base_config.read().await;
+    let asset = fight_generator_repo
+        .get_asset(asset_id)
+        .await?
+        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+    let spreadsheet_id = &base_config_locked
+        .maps
+        .iter()
+        .find(|map| (map.id as i32) == asset.mission_id)
+        .ok_or(Error::UndefinedData(String::from("Current map")))?
+        .fights_spreadsheet_id;
+    sheets_connector_repo
+        .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetId": asset.sheet_id.unwrap()}))
+        .await
+        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    fight_generator_repo.update_artifacts_asset(art_asset_id, asset.sheet_id.unwrap()).await?;
+    Ok(asset.sheet_id.unwrap())
+}

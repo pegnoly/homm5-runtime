@@ -9,7 +9,8 @@ type Actions = {
     addRequiredArtifact: (value: number) => void,
     removeRequiredArtifact: (value: number) => void,
     addOptionalArtifact: (slot: ArtifactSlotType, value: number) => void,
-    removeOptionalArtifact: (slot: ArtifactSlotType, value: number) => void
+    removeOptionalArtifact: (slot: ArtifactSlotType, value: number) => void,
+    updateSheetId: (value: number) => void
 }
 
 type Store = {
@@ -19,6 +20,7 @@ type Store = {
     powersGrow: DifficultyMappedValue | undefined,
     required: RequiredArtifacts | undefined,
     optional: OptionalArtifacts | undefined, 
+    sheetId: number | null | undefined,
 
     actions: Actions
 }
@@ -30,6 +32,7 @@ const useCurrentArtifactsAssetStore = create<Store>((set, get) => ({
     powersGrow: undefined,
     required: undefined,
     optional: undefined,
+    sheetId: undefined,
 
     actions: {
         loadAsset(value) {
@@ -42,7 +45,8 @@ const useCurrentArtifactsAssetStore = create<Store>((set, get) => ({
                 basePowers: value.base_powers,
                 powersGrow: value.powers_grow,
                 required: value.required,
-                optional: value.optional
+                optional: value.optional,
+                sheetId: value.sheet_id
             })
         },
         setBasePowers(value) {
@@ -69,6 +73,9 @@ const useCurrentArtifactsAssetStore = create<Store>((set, get) => ({
             currentValues![slot] = currentValues![slot].filter(art => art != value);
             set({optional: {values: currentValues!}});
         },
+        updateSheetId(value) {
+            set({sheetId: value});
+        },
     }
 }));
 
@@ -79,3 +86,4 @@ export const useArtifactsBasePowers = () => useCurrentArtifactsAssetStore(state 
 export const useArtifactsPowerGrow = () => useCurrentArtifactsAssetStore(state => state.powersGrow);
 export const useRequiredArtifacts = () => useCurrentArtifactsAssetStore(state => state.required);
 export const useOptionalArtifacts = () => useCurrentArtifactsAssetStore(state => state.optional);
+export const useArtifactsSheetId = () => useCurrentArtifactsAssetStore(state => state.sheetId);
