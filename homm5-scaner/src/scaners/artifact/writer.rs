@@ -88,7 +88,7 @@ impl<'a> Output for ArtifactDataOutput<'a> {
         let json_models = self
             .entities
             .iter()
-            .map(|m| JsonCompatibleModel::from(m))
+            .map(JsonCompatibleModel::from)
             .collect_vec();
 
         let json_string = serde_json::to_string_pretty(&json_models)?;
