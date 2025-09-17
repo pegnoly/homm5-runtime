@@ -10,7 +10,8 @@ use zip::{ZipWriter, write::FileOptions};
 
 use crate::{
     core::{Output, ToJsonCompatibleString, ToLua},
-    error::ScanerError, scaners::spell::model::{MagicSchoolType, Model},
+    error::ScanerError,
+    scaners::spell::model::{MagicSchoolType, Model},
 };
 
 pub struct SpellDataOutput<'a> {
@@ -34,12 +35,16 @@ pub struct JsonCompatibleModel<'a> {
     #[serde(rename(serialize = "MagicSchool"))]
     pub school: &'a str,
     #[serde(rename(serialize = "Tier"))]
-    pub level: i32
+    pub level: i32,
 }
 
 impl<'a> From<&'a Model> for JsonCompatibleModel<'a> {
     fn from(value: &'a Model) -> Self {
-        JsonCompatibleModel { id: value.id, school: value.school.to_json_compatible_repr(), level: value.level }
+        JsonCompatibleModel {
+            id: value.id,
+            school: value.school.to_json_compatible_repr(),
+            level: value.level,
+        }
     }
 }
 
@@ -76,8 +81,10 @@ impl<'a> Output for SpellDataOutput<'a> {
         script_file.push('}');
         zip_writer.start_file("scripts/generated/spells.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
-        
-        let _json_models = self.entities.iter()
+
+        let _json_models = self
+            .entities
+            .iter()
             .filter_map(|m| {
                 if m.school != MagicSchoolType::None {
                     Some(JsonCompatibleModel::from(m))

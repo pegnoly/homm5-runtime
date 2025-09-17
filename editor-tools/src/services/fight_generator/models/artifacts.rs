@@ -23,7 +23,6 @@ pub struct RequiredArtifacts {
     pub ids: Vec<i32>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct OptionalArtifacts {
     pub values: HashMap<ArtifactSlotType, Vec<i32>>,

@@ -2,7 +2,7 @@ pub struct CreateQuestPayload {
     pub mission_id: i32,
     pub name: String,
     pub script_name: String,
-    pub directory: String
+    pub directory: String,
 }
 
 #[derive(Debug, Default)]
@@ -13,7 +13,7 @@ pub struct UpdateQuestPayload {
     pub desc: Option<String>,
     pub directory: Option<String>,
     pub is_secondary: Option<bool>,
-    pub is_active: Option<bool>
+    pub is_active: Option<bool>,
 }
 
 impl UpdateQuestPayload {
@@ -57,11 +57,11 @@ impl UpdateQuestPayload {
 
 pub struct GetProgressPayload {
     pub quest_id: i32,
-    pub number: i32
+    pub number: i32,
 }
 
 pub struct SaveProgressPayload {
     pub id: i32,
     pub text: String,
-    pub concatenate: bool
+    pub concatenate: bool,
 }

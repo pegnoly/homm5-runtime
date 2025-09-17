@@ -22,7 +22,7 @@ pub struct Model {
     pub level: i32,
     pub school: MagicSchoolType,
     pub is_aimed: bool,
-    pub is_area: bool
+    pub is_area: bool,
 }
 
 #[derive(

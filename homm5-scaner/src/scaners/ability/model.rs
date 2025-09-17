@@ -8,7 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub game_id: String,
-    pub name: String
+    pub name: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -18,10 +18,10 @@ impl ActiveModelBehavior for ActiveModel {}
 
 impl From<AbilityShared> for Model {
     fn from(value: AbilityShared) -> Self {
-        Model { 
-            id: Default::default(), 
-            game_id: value.ID, 
-            name: Default::default() 
+        Model {
+            id: Default::default(),
+            game_id: value.ID,
+            name: Default::default(),
         }
     }
 }

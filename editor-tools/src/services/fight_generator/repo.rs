@@ -17,13 +17,19 @@ use super::{
 use crate::{
     error::EditorToolsError,
     prelude::{
-        ArmyStatGenerationModel, AssetArmySlotModel, InitFightAssetPayload, UpdateFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
+        ArmyStatGenerationModel, AssetArmySlotModel, InitFightAssetPayload,
+        UpdateFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload,
+        UpdateStackTiersPayload, UpdateStackTownsPayload,
     },
     services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns},
 };
 use itertools::Itertools;
 use sea_orm::{
-    sqlx::{types::uuid, SqlitePool}, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, PaginatorTrait, QueryFilter, SqlxSqlitePoolConnection, TransactionTrait
+    ActiveModelTrait,
+    ActiveValue::Set,
+    ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, PaginatorTrait,
+    QueryFilter, SqlxSqlitePoolConnection, TransactionTrait,
+    sqlx::{SqlitePool, types::uuid},
 };
 use uuid::Uuid;
 
@@ -62,13 +68,18 @@ impl FightGeneratorRepo {
             path_to_generate: Set(payload.path_to_generate.clone()),
             name: Set(payload.name.clone()),
             id: Set(Uuid::new_v4()),
-            sheet_id: Set(Some(payload.sheet_id))
+            sheet_id: Set(Some(payload.sheet_id)),
         };
-        let res = asset::Entity::insert(model_to_insert).exec_with_returning(&self.db).await?;
+        let res = asset::Entity::insert(model_to_insert)
+            .exec_with_returning(&self.db)
+            .await?;
         Ok(res)
     }
 
-    pub async fn update_asset(&self, payload: UpdateFightAssetPayload) -> Result<(), EditorToolsError> {
+    pub async fn update_asset(
+        &self,
+        payload: UpdateFightAssetPayload,
+    ) -> Result<(), EditorToolsError> {
         if let Some(existing_asset) = asset::Entity::find_by_id(payload.id).one(&self.db).await? {
             let mut model_to_update = existing_asset.into_active_model();
             if let Some(name) = payload.name {
@@ -88,10 +99,7 @@ impl FightGeneratorRepo {
         Ok(())
     }
 
-    pub async fn delete_asset(
-        &self,
-        id: Uuid
-    ) -> Result<(), EditorToolsError> {
+    pub async fn delete_asset(&self, id: Uuid) -> Result<(), EditorToolsError> {
         if let Some(asset) = asset::Entity::find_by_id(id).one(&self.db).await? {
             asset.delete(&self.db).await?;
         }
@@ -313,11 +321,11 @@ impl FightGeneratorRepo {
             .await?)
     }
 
-    pub async fn delete_stack(
-        &self,
-        stack_id: i32
-    ) -> Result<(), EditorToolsError> {
-        if let Some(stack) = army_slot::Entity::find_by_id(stack_id).one(&self.db).await? {
+    pub async fn delete_stack(&self, stack_id: i32) -> Result<(), EditorToolsError> {
+        if let Some(stack) = army_slot::Entity::find_by_id(stack_id)
+            .one(&self.db)
+            .await?
+        {
             stack.delete(&self.db).await?;
         }
         Ok(())
@@ -325,9 +333,12 @@ impl FightGeneratorRepo {
 
     pub async fn update_stack_base_data(
         &self,
-        payload: UpdateStackBaseDataPayload
+        payload: UpdateStackBaseDataPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(stack) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+        if let Some(stack) = army_slot::Entity::find_by_id(payload.stack_id)
+            .one(&self.db)
+            .await?
+        {
             let mut model_to_update = stack.into_active_model();
             model_to_update.type_generation_mode = Set(payload.unit_generation_type);
             model_to_update.count_generation_mode = Set(payload.count_generation_type);
@@ -520,21 +531,40 @@ impl FightGeneratorRepo {
         Ok(())
     }
 
-    pub async fn get_all_stat_elements_for_stacks(&self, stacks_ids: Vec<i32>) -> Result<Vec<ArmyStatGenerationModel>, EditorToolsError> {
-        Ok(stat_generation::Entity::find().filter(stat_generation::Column::StackId.is_in(stacks_ids)).all(&self.db).await?)
+    pub async fn get_all_stat_elements_for_stacks(
+        &self,
+        stacks_ids: Vec<i32>,
+    ) -> Result<Vec<ArmyStatGenerationModel>, EditorToolsError> {
+        Ok(stat_generation::Entity::find()
+            .filter(stat_generation::Column::StackId.is_in(stacks_ids))
+            .all(&self.db)
+            .await?)
     }
 
-    pub async fn get_stacks_count_for_asset(&self, asset_id: Uuid) -> Result<u64, EditorToolsError> {
-        Ok(army_slot::Entity::find().filter(army_slot::Column::AssetId.eq(asset_id)).count(&self.db).await?)
+    pub async fn get_stacks_count_for_asset(
+        &self,
+        asset_id: Uuid,
+    ) -> Result<u64, EditorToolsError> {
+        Ok(army_slot::Entity::find()
+            .filter(army_slot::Column::AssetId.eq(asset_id))
+            .count(&self.db)
+            .await?)
     }
 
-    pub async fn update_synced_army_slots(&self, stacks: Vec<AssetArmySlotModel>) -> Result<Vec<AssetArmySlotModel>, EditorToolsError> {
+    pub async fn update_synced_army_slots(
+        &self,
+        stacks: Vec<AssetArmySlotModel>,
+    ) -> Result<Vec<AssetArmySlotModel>, EditorToolsError> {
         let mut updated_slots = vec![];
         let transaction = self.db.begin().await?;
 
         for stack in stacks {
             if let Some(existing_stack) = army_slot::Entity::find()
-                .filter(army_slot::Column::AssetId.eq(stack.asset_id).and(army_slot::Column::Number.eq(stack.number)))
+                .filter(
+                    army_slot::Column::AssetId
+                        .eq(stack.asset_id)
+                        .and(army_slot::Column::Number.eq(stack.number)),
+                )
                 .one(&self.db)
                 .await?
             {
@@ -544,7 +574,8 @@ impl FightGeneratorRepo {
                 model_to_update.concrete_creatures = Set(stack.concrete_creatures);
                 model_to_update.count_generation_mode = Set(stack.count_generation_mode);
                 model_to_update.generation_rule = Set(stack.generation_rule);
-                model_to_update.power_based_generation_type = Set(stack.power_based_generation_type);
+                model_to_update.power_based_generation_type =
+                    Set(stack.power_based_generation_type);
                 model_to_update.powers_grow = Set(stack.powers_grow);
                 model_to_update.tiers = Set(stack.tiers);
                 model_to_update.towns = Set(stack.towns);

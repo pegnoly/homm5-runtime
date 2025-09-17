@@ -1,19 +1,33 @@
 use sea_orm::{
-    prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect, SqlxSqlitePoolConnection
+    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect,
+    SqlxSqlitePoolConnection,
+    prelude::Expr,
+    sea_query::{IntoCondition, SimpleExpr},
+    sqlx::SqlitePool,
 };
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
-    core::ScanProcessor, error::ScanerError, pak::{self, FileStructure, EXTENSIONS}, prelude::{
-        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, Town, TypesXmlScaner, BASE_SKILLS
-    }, scaners::{
+    core::ScanProcessor,
+    error::ScanerError,
+    pak::{self, EXTENSIONS, FileStructure},
+    prelude::{
+        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector,
+        AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS,
+        CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner,
+        DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner,
+        HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity,
+        SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn,
+        SpellDBEntity, SpellDBModel, Town, TypesXmlScaner,
+    },
+    scaners::{
         self,
         prelude::{
             ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput,
             CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner,
             SpellDataOutput, SpellFileCollector, SpellScaner,
         },
-    }
+    },
 };
 
 pub struct ScanerService {
@@ -27,7 +41,11 @@ impl ScanerService {
         }
     }
 
-    pub async fn run(&self, paths_to_scan: Vec<PathBuf>, output_path: PathBuf) -> Result<(), ScanerError> {
+    pub async fn run(
+        &self,
+        paths_to_scan: Vec<PathBuf>,
+        output_path: PathBuf,
+    ) -> Result<(), ScanerError> {
         let mut files: HashMap<String, FileStructure> = HashMap::new();
         for dir in paths_to_scan {
             let entries = std::fs::read_dir(&dir)?;
@@ -42,18 +60,25 @@ impl ScanerService {
             }
         }
 
-        let mut types_xml_scaner = TypesXmlScaner { creature_items: vec![], skills_items: vec![], spells_items: vec![] };
+        let mut types_xml_scaner = TypesXmlScaner {
+            creature_items: vec![],
+            skills_items: vec![],
+            spells_items: vec![],
+        };
         types_xml_scaner.parse(&files)?;
 
         let mut hero_class_scan_processor = ScanProcessor::new(
-            HeroClassFileCollector, 
-            HeroClassScaner { id: -1 }, 
-            HeroClassDataOutput::new(&self.db)
+            HeroClassFileCollector,
+            HeroClassScaner { id: -1 },
+            HeroClassDataOutput::new(&self.db),
         );
 
         let mut creature_scan_processor = ScanProcessor::new(
             CreatureFilesCollector,
-            CreatureScaner { id: -1, types_data: types_xml_scaner.creature_items },
+            CreatureScaner {
+                id: -1,
+                types_data: types_xml_scaner.creature_items,
+            },
             CreatureDataOutput::new(&self.db),
         );
 
@@ -71,26 +96,32 @@ impl ScanerService {
 
         let mut spell_scan_processor = ScanProcessor::new(
             SpellFileCollector,
-            SpellScaner { id: 0, game_types: types_xml_scaner.spells_items },
+            SpellScaner {
+                id: 0,
+                game_types: types_xml_scaner.spells_items,
+            },
             SpellDataOutput::new(&self.db),
         );
 
         let mut ability_scan_processor = ScanProcessor::new(
-            AbilityFileCollector, 
-            AbilityScaner { id: -1 }, 
-            AbilityDataOutput::new(&self.db)
+            AbilityFileCollector,
+            AbilityScaner { id: -1 },
+            AbilityDataOutput::new(&self.db),
         );
 
         let mut skill_scan_processor = ScanProcessor::new(
-            SkillFileCollector, 
-            SkillScaner { id: -1, game_types: types_xml_scaner.skills_items }, 
-            SkillDataOutput::new(&self.db)
+            SkillFileCollector,
+            SkillScaner {
+                id: -1,
+                game_types: types_xml_scaner.skills_items,
+            },
+            SkillDataOutput::new(&self.db),
         );
 
         let mut dwelling_scan_processor = ScanProcessor::new(
-            DwellingsFileCollector, 
-            DwellingScaner, 
-            DwellingDataOutput::new()
+            DwellingsFileCollector,
+            DwellingScaner,
+            DwellingDataOutput::new(),
         );
 
         let zip_file = std::fs::File::create(output_path)?;
@@ -99,49 +130,46 @@ impl ScanerService {
         hero_class_scan_processor
             .run(&files, &mut zip_writer)
             .await?;
-        creature_scan_processor
-            .run(&files, &mut zip_writer)
-            .await?;
-        hero_scan_processor
-            .run(&files, &mut zip_writer)
-            .await?;
-        artifact_scan_processor
-            .run(&files, &mut zip_writer)
-            .await?;
-        spell_scan_processor
-            .run(&files, &mut zip_writer)
-            .await?;
-        ability_scan_processor
-            .run(&files, &mut zip_writer)
-            .await?;
-        skill_scan_processor
-            .run(&files, &mut zip_writer)
-            .await?;
-        dwelling_scan_processor
-            .run(&files, &mut zip_writer)
-            .await?;
+        creature_scan_processor.run(&files, &mut zip_writer).await?;
+        hero_scan_processor.run(&files, &mut zip_writer).await?;
+        artifact_scan_processor.run(&files, &mut zip_writer).await?;
+        spell_scan_processor.run(&files, &mut zip_writer).await?;
+        ability_scan_processor.run(&files, &mut zip_writer).await?;
+        skill_scan_processor.run(&files, &mut zip_writer).await?;
+        dwelling_scan_processor.run(&files, &mut zip_writer).await?;
 
         Ok(())
     }
 
-    pub async fn get_many<E, C, M>(&self, condition: C) -> Result<Vec<M>, ScanerError> 
-        where E: sea_orm::EntityTrait<Model = M>, C: IntoCondition
+    pub async fn get_many<E, C, M>(&self, condition: C) -> Result<Vec<M>, ScanerError>
+    where
+        E: sea_orm::EntityTrait<Model = M>,
+        C: IntoCondition,
     {
         Ok(E::find().filter(condition).all(&self.db).await?)
     }
 
-    pub async fn get_one<E, C, M>(&self, condition: C) -> Result<Option<M>, ScanerError> 
-        where E: sea_orm::EntityTrait<Model = M>, C: IntoCondition
+    pub async fn get_one<E, C, M>(&self, condition: C) -> Result<Option<M>, ScanerError>
+    where
+        E: sea_orm::EntityTrait<Model = M>,
+        C: IntoCondition,
     {
         Ok(E::find().filter(condition).one(&self.db).await?)
     }
 
-    pub async fn get_heroes<C: IntoCondition>(&self, condition: C) -> Result<Vec<HeroDBModel>, ScanerError> {
-        self.get_many::<HeroDBEntity, _, HeroDBModel>(condition).await
+    pub async fn get_heroes<C: IntoCondition>(
+        &self,
+        condition: C,
+    ) -> Result<Vec<HeroDBModel>, ScanerError> {
+        self.get_many::<HeroDBEntity, _, HeroDBModel>(condition)
+            .await
     }
 
     pub async fn get_heroes_models(&self, town: Town) -> Result<Vec<HeroDBModel>, ScanerError> {
-        let heroes = HeroDBEntity::find().filter(HeroDBColumn::Town.eq(town)).all(&self.db).await?;
+        let heroes = HeroDBEntity::find()
+            .filter(HeroDBColumn::Town.eq(town))
+            .all(&self.db)
+            .await?;
         Ok(heroes)
     }
 
@@ -204,14 +232,13 @@ impl ScanerService {
     pub async fn get_average_concrete_creatures_count_for_power(
         &self,
         power: i32,
-        creatures: Vec<i32>
+        creatures: Vec<i32>,
     ) -> Result<Option<i32>, ScanerError> {
-        let condition = Condition::all()
-            .add_option(if !creatures.is_empty() {
-                Some(Expr::col(CreatureDBColumn::Id).is_in(creatures))
-            } else {
-                None::<SimpleExpr>
-            });
+        let condition = Condition::all().add_option(if !creatures.is_empty() {
+            Some(Expr::col(CreatureDBColumn::Id).is_in(creatures))
+        } else {
+            None::<SimpleExpr>
+        });
         let data = CreatureDBEntity::find()
             .filter(condition)
             .select_only()
@@ -231,14 +258,13 @@ impl ScanerService {
 
     pub async fn get_average_artifacts_cost(
         &self,
-        artifacts: Vec<i32>
+        artifacts: Vec<i32>,
     ) -> Result<Option<i32>, ScanerError> {
-        let condition = Condition::all()
-            .add_option(if !artifacts.is_empty() {
-                Some(Expr::col(ArtifactDBColumn::Id).is_in(artifacts))
-            } else {
-                None::<SimpleExpr>
-            });
+        let condition = Condition::all().add_option(if !artifacts.is_empty() {
+            Some(Expr::col(ArtifactDBColumn::Id).is_in(artifacts))
+        } else {
+            None::<SimpleExpr>
+        });
         let data = ArtifactDBEntity::find()
             .filter(condition)
             .select_only()
@@ -247,7 +273,7 @@ impl ScanerService {
             .into_tuple::<(i32, i64)>()
             .one(&self.db)
             .await?;
-        
+
         if let Some(data) = data {
             let average_cost = (data.0 as f64 / data.1 as f64).ceil();
             Ok(Some(average_cost as i32))
@@ -256,36 +282,41 @@ impl ScanerService {
         }
     }
 
-    pub async fn get_abilities(
-        &self
-    ) -> Result<Vec<AbilityDBModel>, ScanerError> {
-        Ok(AbilityDBEntity::find().filter(AbilityDBColumn::Id.between(1, 200)).all(&self.db).await?)
+    pub async fn get_abilities(&self) -> Result<Vec<AbilityDBModel>, ScanerError> {
+        Ok(AbilityDBEntity::find()
+            .filter(AbilityDBColumn::Id.between(1, 200))
+            .all(&self.db)
+            .await?)
     }
 
-    pub async fn get_creature(
-        &self,
-        id: i32
-    ) -> Result<Option<CreatureDBModel>, ScanerError> {
+    pub async fn get_creature(&self, id: i32) -> Result<Option<CreatureDBModel>, ScanerError> {
         Ok(CreatureDBEntity::find_by_id(id).one(&self.db).await?)
     }
 
     pub async fn get_perks_for_skill(
         &self,
-        skill: String
+        skill: String,
     ) -> Result<Vec<SkillDBModel>, ScanerError> {
-        Ok(SkillDBEntity::find().filter(SkillDBColumn::BasicSkill.eq(skill)).all(&self.db).await?)
+        Ok(SkillDBEntity::find()
+            .filter(SkillDBColumn::BasicSkill.eq(skill))
+            .all(&self.db)
+            .await?)
     }
 
     pub async fn get_base_skills(&self) -> Result<Vec<SkillDBModel>, ScanerError> {
-        Ok(
-            SkillDBEntity::find()
-                .filter(SkillDBColumn::GameId.is_in(BASE_SKILLS.clone()))
-                .all(&self.db)
-                .await?
-        )
+        Ok(SkillDBEntity::find()
+            .filter(SkillDBColumn::GameId.is_in(BASE_SKILLS.clone()))
+            .all(&self.db)
+            .await?)
     }
 
-    pub async fn get_spells_for_school(&self, school: MagicSchoolType) -> Result<Vec<SpellDBModel>, ScanerError> {
-        Ok(SpellDBEntity::find().filter(SpellDBColumn::School.eq(school)).all(&self.db).await?)
+    pub async fn get_spells_for_school(
+        &self,
+        school: MagicSchoolType,
+    ) -> Result<Vec<SpellDBModel>, ScanerError> {
+        Ok(SpellDBEntity::find()
+            .filter(SpellDBColumn::School.eq(school))
+            .all(&self.db)
+            .await?)
     }
 }

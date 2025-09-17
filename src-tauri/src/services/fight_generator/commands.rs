@@ -1,22 +1,34 @@
-use crate::{error::Error, services::fight_generator::utils::{ArmySlotsConverter, SheetToArmyAssetsConverter}, utils::LocalAppManager};
+use crate::{
+    error::Error,
+    services::fight_generator::utils::{ArmySlotsConverter, SheetToArmyAssetsConverter},
+    utils::LocalAppManager,
+};
 use editor_tools::prelude::{
-    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
+    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload,
+    AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule,
+    ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel,
+    AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType,
+    FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload,
+    RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload,
+    UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload,
+    UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload,
+    UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload,
 };
 use homm5_scaner::prelude::{
-    AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town
+    AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town,
 };
 
 use itertools::Itertools;
 use sheets_connector::service::{SheetId, SheetsConnectorService};
-use uuid::Uuid;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
+use uuid::Uuid;
 
 #[tauri::command]
 pub async fn load_all_assets(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    map_id: i32
+    map_id: i32,
 ) -> Result<Vec<AssetModel>, Error> {
     Ok(fight_generator_repo.get_all_assets(map_id).await?)
 }
@@ -61,21 +73,27 @@ pub async fn init_new_asset(
 ) -> Result<AssetModel, Error> {
     let base_config_locked = app_manager.base_config.read().await;
     let runtime_config_locked = app_manager.runtime_config.read().await;
-    let current_map_id = runtime_config_locked.current_selected_map
+    let current_map_id = runtime_config_locked
+        .current_selected_map
         .ok_or(Error::UndefinedData("Current map id".to_string()))?;
-    let map_data = base_config_locked.maps.iter()
+    let map_data = base_config_locked
+        .maps
+        .iter()
         .find(|map| map.id == current_map_id)
         .ok_or(Error::UndefinedData("Current map data".to_string()))?;
 
     let spreadsheet_id = &map_data.fights_spreadsheet_id;
-    let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &name).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    let created_sheet_id = sheets_connector_repo
+        .create_sheet(spreadsheet_id, &name)
+        .await
+        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
 
     let payload = InitFightAssetPayload {
         name,
         path_to_generate: path,
         lua_table_name: table_name,
         mission_id: current_map_id as i32,
-        sheet_id: created_sheet_id
+        sheet_id: created_sheet_id,
     };
     Ok(fight_generator_repo.init_new_asset(payload).await?)
 }
@@ -91,7 +109,7 @@ pub async fn load_asset(
 #[tauri::command]
 pub async fn delete_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    id: Uuid
+    id: Uuid,
 ) -> Result<(), Error> {
     Ok(fight_generator_repo.delete_asset(id).await?)
 }
@@ -112,7 +130,7 @@ pub async fn load_creature_models(
 
 #[tauri::command]
 pub async fn load_abilities_models(
-    scaner_repo: State<'_, ScanerService>
+    scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<AbilityDBModel>, Error> {
     Ok(scaner_repo.get_abilities().await?)
 }
@@ -274,7 +292,7 @@ pub async fn load_stack(
 #[tauri::command]
 pub async fn delete_stack(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    stack_id: i32
+    stack_id: i32,
 ) -> Result<(), Error> {
     Ok(fight_generator_repo.delete_stack(stack_id).await?)
 }
@@ -285,14 +303,16 @@ pub async fn update_stack_data(
     stack_id: i32,
     unit_generation_type: ArmySlotStackUnitGenerationMode,
     count_generation_type: ArmySlotStackCountGenerationMode,
-    count_generation_mode: AssetGenerationType
+    count_generation_mode: AssetGenerationType,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo.update_stack_base_data(UpdateStackBaseDataPayload { 
-        stack_id, 
-        unit_generation_type,
-        count_generation_type,
-        power_based_generation_type: count_generation_mode
-    }).await?)
+    Ok(fight_generator_repo
+        .update_stack_base_data(UpdateStackBaseDataPayload {
+            stack_id,
+            unit_generation_type,
+            count_generation_type,
+            power_based_generation_type: count_generation_mode,
+        })
+        .await?)
 }
 
 #[tauri::command]
@@ -401,7 +421,9 @@ pub async fn load_stats_generation_elements(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
 ) -> Result<Vec<ArmyStatGenerationModel>, Error> {
-    Ok(fight_generator_repo.get_stat_generation_elements(stack_id).await?)
+    Ok(fight_generator_repo
+        .get_stat_generation_elements(stack_id)
+        .await?)
 }
 
 #[tauri::command]
@@ -469,28 +491,34 @@ pub async fn get_average_creatures_count(
     scaner_repo: State<'_, ScanerService>,
     power: i32,
     towns: Vec<Town>,
-    tiers: Vec<i32>
+    tiers: Vec<i32>,
 ) -> Result<Option<i32>, Error> {
-    Ok(scaner_repo.get_average_counts_for_power(power, towns, tiers).await?)
+    Ok(scaner_repo
+        .get_average_counts_for_power(power, towns, tiers)
+        .await?)
 }
 
 #[tauri::command]
 pub async fn get_average_concrete_creatures_count(
     scaner_repo: State<'_, ScanerService>,
     power: i32,
-    creatures: Vec<i32>
+    creatures: Vec<i32>,
 ) -> Result<Option<i32>, Error> {
-    Ok(scaner_repo.get_average_concrete_creatures_count_for_power(power, creatures).await?)
+    Ok(scaner_repo
+        .get_average_concrete_creatures_count_for_power(power, creatures)
+        .await?)
 }
 
 #[tauri::command]
 pub async fn get_average_artifacts_cost(
     scaner_repo: State<'_, ScanerService>,
-    artifacts: HashMap<ArtifactSlotType, Vec<i32>>
+    artifacts: HashMap<ArtifactSlotType, Vec<i32>>,
 ) -> Result<Option<i32>, Error> {
     let artifacts_list = artifacts.into_values().flatten().collect_vec();
     println!("Artifacts: {:?}", &artifacts_list);
-    Ok(scaner_repo.get_average_artifacts_cost(artifacts_list).await?)
+    Ok(scaner_repo
+        .get_average_artifacts_cost(artifacts_list)
+        .await?)
 }
 
 #[tauri::command]
@@ -499,16 +527,19 @@ pub async fn generate_current_hero_script(
     asset_id: Uuid,
 ) -> Result<(), Error> {
     if let Some(main_asset) = fight_generator_repo.get_asset(asset_id).await? {
-        let mut output_file =
-            std::fs::File::create(format!("{}\\{}.lua", &main_asset.path_to_generate, main_asset.table_name))?;
-        let mut script = 
-        format!(
+        let mut output_file = std::fs::File::create(format!(
+            "{}\\{}.lua",
+            &main_asset.path_to_generate, main_asset.table_name
+        ))?;
+        let mut script = format!(
             "
 while not UNIT_COUNT_GENERATION_MODE_POWER_BASED and not UNIT_COUNT_GENERATION_MODE_RAW do
     sleep()
 end
 
-{} = {{\n", &main_asset.table_name);
+{} = {{\n",
+            &main_asset.table_name
+        );
         // stacks script
         let stacks_assets = fight_generator_repo.get_stacks(main_asset.id).await?;
         let mut stack_gen_type_script = String::from("\tstack_count_generation_logic = {\n");
@@ -593,7 +624,9 @@ end
                     &generation_rules_script
                 );
 
-                let stats_elements = fight_generator_repo.get_stat_generation_elements(asset.id).await?;
+                let stats_elements = fight_generator_repo
+                    .get_stat_generation_elements(asset.id)
+                    .await?;
                 //println!("Stats elements: {:#?}", &stats_elements);
                 if stats_elements.is_empty() || stats_elements[0].stats.values.is_empty() {
                     if !asset.generation_rule.params.is_empty() {
@@ -604,8 +637,7 @@ end
                     } else {
                         inner_getter_function += "\t\t\tlocal id = Random.FromTable(possible_creatures)\n\t\t\treturn id";
                     }
-                    army_generation_rules_script +=
-                        &format!("{inner_getter_function}\n\t\tend,\n");
+                    army_generation_rules_script += &format!("{inner_getter_function}\n\t\tend,\n");
                 } else {
                     let stat_element = &stats_elements[0];
                     let mut sort_function = String::new();
@@ -711,23 +743,42 @@ pub async fn create_sheet_for_existing_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     sheets_connector_repo: State<'_, SheetsConnectorService>,
     app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid
+    asset_id: Uuid,
 ) -> Result<SheetId, Error> {
     let base_config_locked = app_manager.base_config.read().await;
-    let asset = fight_generator_repo.get_asset(asset_id).await?.ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+    let asset = fight_generator_repo
+        .get_asset(asset_id)
+        .await?
+        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
     let creatures = scaner_repo.get_all_creature_models().await?;
-    let spreadsheet_id = &base_config_locked.maps.iter()
+    let spreadsheet_id = &base_config_locked
+        .maps
+        .iter()
         .find(|map| (map.id as i32) == asset.mission_id)
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
-    let created_sheet_id = sheets_connector_repo.create_sheet(spreadsheet_id, &asset.name).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    let created_sheet_id = sheets_connector_repo
+        .create_sheet(spreadsheet_id, &asset.name)
+        .await
+        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
-    let stat_elements = fight_generator_repo.get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec()).await?;
-    let converter = ArmySlotsConverter { sheet_name: &asset.name, creatures_data: &creatures, stats_elements_data: &stat_elements };
-    sheets_connector_repo.upload_to_sheet(spreadsheet_id, army_slots, converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    let stat_elements = fight_generator_repo
+        .get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec())
+        .await?;
+    let converter = ArmySlotsConverter {
+        sheet_name: &asset.name,
+        creatures_data: &creatures,
+        stats_elements_data: &stat_elements,
+    };
+    sheets_connector_repo
+        .upload_to_sheet(spreadsheet_id, army_slots, converter)
+        .await
+        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
 
-    fight_generator_repo.update_asset(UpdateFightAssetPayload::new(asset_id).with_sheet_id(created_sheet_id)).await?;
+    fight_generator_repo
+        .update_asset(UpdateFightAssetPayload::new(asset_id).with_sheet_id(created_sheet_id))
+        .await?;
     Ok(created_sheet_id)
 }
 
@@ -736,34 +787,51 @@ pub async fn pull_from_sheet(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     sheets_connector_repo: State<'_, SheetsConnectorService>,
     app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid
+    asset_id: Uuid,
 ) -> Result<Vec<AssetArmySlotModel>, Error> {
     let base_config_locked = app_manager.base_config.read().await;
-    let asset = fight_generator_repo.get_asset(asset_id).await?.ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-    let stacks_count = fight_generator_repo.get_stacks_count_for_asset(asset_id).await?;
+    let asset = fight_generator_repo
+        .get_asset(asset_id)
+        .await?
+        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+    let stacks_count = fight_generator_repo
+        .get_stacks_count_for_asset(asset_id)
+        .await?;
 
-    let spreadsheet_id = &base_config_locked.maps.iter()
+    let spreadsheet_id = &base_config_locked
+        .maps
+        .iter()
         .find(|map| (map.id as i32) == asset.mission_id)
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
     let converter = SheetToArmyAssetsConverter::new(asset_id);
-    let values = sheets_connector_repo.read_from_sheet(
-        spreadsheet_id, 
-        asset.sheet_id.unwrap(), 
-        &format!("B2:{}", match stacks_count {
-            1 => "B24",
-            2 => "C24",
-            3 => "D24",
-            4 => "E24",
-            5 => "F24",
-            6 => "G24",
-            7 => "H24",
-            _ => unreachable!()
-        }), converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
-    
+    let values = sheets_connector_repo
+        .read_from_sheet(
+            spreadsheet_id,
+            asset.sheet_id.unwrap(),
+            &format!(
+                "B2:{}",
+                match stacks_count {
+                    1 => "B24",
+                    2 => "C24",
+                    3 => "D24",
+                    4 => "E24",
+                    5 => "F24",
+                    6 => "G24",
+                    7 => "H24",
+                    _ => unreachable!(),
+                }
+            ),
+            converter,
+        )
+        .await
+        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+
     println!("Got values from sheet: {:#?}", &values);
-    let updated_slots = fight_generator_repo.update_synced_army_slots(values).await?;
+    let updated_slots = fight_generator_repo
+        .update_synced_army_slots(values)
+        .await?;
     Ok(updated_slots)
 }
 
@@ -773,19 +841,33 @@ pub async fn push_to_sheet(
     sheets_connector_repo: State<'_, SheetsConnectorService>,
     scaner_repo: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid
+    asset_id: Uuid,
 ) -> Result<(), Error> {
     let base_config_locked = app_manager.base_config.read().await;
-    let asset = fight_generator_repo.get_asset(asset_id).await?.ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+    let asset = fight_generator_repo
+        .get_asset(asset_id)
+        .await?
+        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
     let creatures = scaner_repo.get_all_creature_models().await?;
-    let spreadsheet_id = &base_config_locked.maps.iter()
+    let spreadsheet_id = &base_config_locked
+        .maps
+        .iter()
         .find(|map| (map.id as i32) == asset.mission_id)
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
     let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
-    let stat_elements = fight_generator_repo.get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec()).await?;
-    let converter = ArmySlotsConverter { sheet_name: &asset.name, creatures_data: &creatures, stats_elements_data: &stat_elements };
-    sheets_connector_repo.upload_to_sheet(spreadsheet_id, army_slots, converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    let stat_elements = fight_generator_repo
+        .get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec())
+        .await?;
+    let converter = ArmySlotsConverter {
+        sheet_name: &asset.name,
+        creatures_data: &creatures,
+        stats_elements_data: &stat_elements,
+    };
+    sheets_connector_repo
+        .upload_to_sheet(spreadsheet_id, army_slots, converter)
+        .await
+        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     Ok(())
 }

@@ -10,9 +10,9 @@ use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
 use tauri::State;
 
+use crate::DataContainer;
 use crate::error::Error;
 use crate::utils::{LocalAppManager, MapFrontendModel, RepackerFrontendData, RuntimeData};
-use crate::DataContainer;
 
 #[tauri::command]
 pub async fn execute_scan(
@@ -35,7 +35,10 @@ pub async fn execute_scan(
 pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), ()> {
     let base_config_locked = app_manager.base_config.read().await;
     let bin_path = &base_config_locked.bin_path;
-    let mut runtime_runner = RuntimeRunner::new(PathBuf::from(format!("{}{}", bin_path, &base_config_locked.exe_name)));
+    let mut runtime_runner = RuntimeRunner::new(PathBuf::from(format!(
+        "{}{}",
+        bin_path, &base_config_locked.exe_name
+    )));
     runtime_runner.run();
     Ok(())
 }
@@ -138,7 +141,7 @@ pub async fn apply_modifications(
     app_manager: State<'_, LocalAppManager>,
     quests_repo: State<'_, QuestGeneratorRepo>,
     data_containter: State<'_, DataContainer>,
-    reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>
+    reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
 ) -> Result<(), super::error::Error> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     let base_config_locked = app_manager.base_config.read().await;
@@ -163,22 +166,25 @@ pub async fn apply_modifications(
     let this_mission_quests = quests_repo.load_quests(current_map_id as i32).await?;
     for model in &this_mission_quests {
         let progresses = quests_repo.load_progresses(model.id).await?;
-        let request = QuestCreationRequest::new(PathBuf::from(model.directory.clone()), model.script_name.clone())
-            .with_name(model.name.clone())
-            .with_desc(model.desc.clone())
-            .with_progresses(
-                progresses
-                    .into_iter()
-                    .map(|p| QuestProgress {
-                        number: p.number as u32,
-                        text: p.text,
-                        concatenate: p.concatenate,
-                    })
-                    .collect(),
-            )
-            .with_mission_data(map.campaign, map.mission)
-            .secondary(model.is_secondary)
-            .initialy_active(model.is_active);
+        let request = QuestCreationRequest::new(
+            PathBuf::from(model.directory.clone()),
+            model.script_name.clone(),
+        )
+        .with_name(model.name.clone())
+        .with_desc(model.desc.clone())
+        .with_progresses(
+            progresses
+                .into_iter()
+                .map(|p| QuestProgress {
+                    number: p.number as u32,
+                    text: p.text,
+                    concatenate: p.concatenate,
+                })
+                .collect(),
+        )
+        .with_mission_data(map.campaign, map.mission)
+        .secondary(model.is_secondary)
+        .initialy_active(model.is_active);
 
         let quest = request.generate(Some(&QuestBoilerplateHelper {
             mod_path: mod_path.clone(),
@@ -195,7 +201,13 @@ pub async fn apply_modifications(
     println!("Primary quests: {:?}", &modifiers_queue.primary_quests);
     println!("Secondary quests: {:?}", &modifiers_queue.secondary_quests);
 
-    modifiers_queue.apply_changes_to_map(map, &mut runtime_config_locked.current_map_data, &reserve_heroes_repo).await;
+    modifiers_queue
+        .apply_changes_to_map(
+            map,
+            &mut runtime_config_locked.current_map_data,
+            &reserve_heroes_repo,
+        )
+        .await;
 
     Ok(())
 }
@@ -205,17 +217,17 @@ pub async fn create_hero(
     app_manager: State<'_, LocalAppManager>,
     hero_name: String,
     hero_script_name: String,
-    town: Town
+    town: Town,
 ) -> Result<(), Error> {
     let global_config_locked = app_manager.base_config.read().await;
     editor_tools::prelude::process_files(
-        &PathBuf::from(global_config_locked.generic_hero_xdb.as_ref().unwrap()), 
+        &PathBuf::from(global_config_locked.generic_hero_xdb.as_ref().unwrap()),
         &PathBuf::from(global_config_locked.generic_icon_128.as_ref().unwrap()),
-        &PathBuf::from(global_config_locked.generic_icon_dds.as_ref().unwrap()), 
-        format!("{}GOG_Mod\\", &global_config_locked.data_path), 
-        town, 
-        hero_script_name, 
-        hero_name
+        &PathBuf::from(global_config_locked.generic_icon_dds.as_ref().unwrap()),
+        format!("{}GOG_Mod\\", &global_config_locked.data_path),
+        town,
+        hero_script_name,
+        hero_name,
     )?;
     Ok(())
 }

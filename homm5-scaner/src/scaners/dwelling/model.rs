@@ -42,25 +42,25 @@ pub enum DwellingType {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tile {
     pub x: i32,
-    pub y: i32
+    pub y: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BlockedTiles {
     #[serde(rename = "Item")]
-    pub items: Option<Vec<Tile>>
+    pub items: Option<Vec<Tile>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ActiveTiles {
     #[serde(rename = "Item")]
-    pub items: Option<Vec<Tile>>
+    pub items: Option<Vec<Tile>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MessagesFileRef {
     #[serde(rename = "Item")]
-    pub items: Option<Vec<FileRef>>
+    pub items: Option<Vec<FileRef>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -131,9 +131,11 @@ pub async fn update_dialog_labels(
 pub async fn add_dialog_speaker(
     dialog_generator_repo: State<'_, DialogGeneratorRepo>,
     id: i32,
-    speaker_id: i32
+    speaker_id: i32,
 ) -> Result<(), Error> {
-    Ok(dialog_generator_repo.update_dialog_speakers(id, speaker_id).await?)
+    Ok(dialog_generator_repo
+        .update_dialog_speakers(id, speaker_id)
+        .await?)
 }
 
 #[tauri::command]
@@ -144,7 +146,12 @@ pub async fn load_dialog_variant(
     label: String,
 ) -> Result<DialogVariantModel, Error> {
     if let Some(variant) = dialog_generator_repo
-        .get_variant(GetDialogVariantPayload { dialog_id, step, label: label.clone()}).await?
+        .get_variant(GetDialogVariantPayload {
+            dialog_id,
+            step,
+            label: label.clone(),
+        })
+        .await?
     {
         Ok(variant)
     } else {
@@ -192,8 +199,12 @@ pub async fn generate_dialog(
     let map_data_path = &map_data.data_path;
 
     if let Some(dialog) = dialog_generator_repo.get_dialog(dialog_id).await? {
-        let speakers = dialog_generator_repo.get_speakers_by_ids(dialog.speakers_ids.ids).await?;
-        let variants = dialog_generator_repo.get_all_variants_for_dialog(dialog_id).await?;
+        let speakers = dialog_generator_repo
+            .get_speakers_by_ids(dialog.speakers_ids.ids)
+            .await?;
+        let variants = dialog_generator_repo
+            .get_all_variants_for_dialog(dialog_id)
+            .await?;
         let dialog_local_path = dialog.directory.replace(&base_config_data.mod_path, "");
         let dialog_texts_path = format!("{}\\{}", &base_config_data.texts_path, &dialog_local_path);
 
@@ -203,11 +214,18 @@ pub async fn generate_dialog(
             std::fs::File::create(format!("{}\\script.lua", dialog.directory)).unwrap();
         let mut script = format!("MiniDialog.Sets[\"{}\"] = {{\n", dialog.script_name);
 
-        for variant in &variants.iter().filter(|v| {v.speaker_id.is_some()}).collect_vec() {
+        for variant in &variants
+            .iter()
+            .filter(|v| v.speaker_id.is_some())
+            .collect_vec()
+        {
             let file_name = format!("{}_{}.txt", &variant.step, &variant.label);
             let mut variant_file =
                 std::fs::File::create(format!("{dialog_texts_path}\\{file_name}")).unwrap();
-            if let Some(speaker) = speakers.iter().find(|s| s.id == variant.speaker_id.unwrap()) {
+            if let Some(speaker) = speakers
+                .iter()
+                .find(|s| s.id == variant.speaker_id.unwrap())
+            {
                 let text = format!(
                     "<color={}>{}<color=white>: {}",
                     &speaker.color, &speaker.name, &variant.text
@@ -225,10 +243,7 @@ pub async fn generate_dialog(
                 };
                 script += &format!(
                     "\t[\"{}_{}\"] = {{speaker = {}, speaker_type = {}}},\n",
-                    &variant.step,
-                    &variant.label,
-                    speaker_script,
-                    speaker.speaker_type
+                    &variant.step, &variant.label, speaker_script, speaker.speaker_type
                 );
             }
         }
@@ -237,7 +252,9 @@ pub async fn generate_dialog(
         script_file.write_all(script.as_bytes()).unwrap();
 
         if !dialog.was_generated {
-            dialog_generator_repo.set_dialog_was_generated(dialog_id).await?;
+            dialog_generator_repo
+                .set_dialog_was_generated(dialog_id)
+                .await?;
 
             let path_script = &format!(
                 "MiniDialog.Paths[\"{}\"] = \"{}\"\n",

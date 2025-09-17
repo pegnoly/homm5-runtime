@@ -1,27 +1,33 @@
 use std::path::{Path, PathBuf};
 
-use calamine::{open_workbook, Reader, Xlsx};
-use google_sheets4::{api::{DimensionProperties, RowData, ValueRange}, hyper_rustls::{self, HttpsConnector}, hyper_util::{self, client::legacy::connect::HttpConnector}, yup_oauth2, Sheets};
-use serde::{Deserialize, Serialize};
 use crate::{error::Error, service::types::SheetCreationResponse, utils::*};
+use calamine::{Reader, Xlsx, open_workbook};
+use google_sheets4::{
+    Sheets,
+    api::{DimensionProperties, RowData, ValueRange},
+    hyper_rustls::{self, HttpsConnector},
+    hyper_util::{self, client::legacy::connect::HttpConnector},
+    yup_oauth2,
+};
+use serde::{Deserialize, Serialize};
 
 mod types;
 
 pub struct SheetsConnectorService {
     sheets_hub: tokio::sync::Mutex<Sheets<HttpsConnector<HttpConnector>>>,
-    reqwest_client: reqwest::Client
+    reqwest_client: reqwest::Client,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct RowTransferData {
     pub index: i32,
-    pub row: Vec<RowData>
+    pub row: Vec<RowData>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct ColumnTransferData {
     pub index: i32,
-    pub dimensions: DimensionProperties
+    pub dimensions: DimensionProperties,
 }
 
 pub type SheetId = i32;
@@ -35,23 +41,26 @@ impl SheetsConnectorService {
             secret,
             yup_oauth2::InstalledFlowReturnMethod::HTTPRedirect,
         )
-            .persist_tokens_to_disk("D:\\projects\\homm5-runtime\\editor-tools\\target\\tokens\\token.json")
-            .build()
-            .await?;
+        .persist_tokens_to_disk(
+            "D:\\projects\\homm5-runtime\\editor-tools\\target\\tokens\\token.json",
+        )
+        .build()
+        .await?;
 
-        let client = hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
-            .build(
-                hyper_rustls::HttpsConnectorBuilder::new()
-                    .with_native_roots()
-                    .unwrap()
-                    .https_or_http()
-                    .enable_http1()
-                    .build(),
-            );
-            
+        let client =
+            hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
+                .build(
+                    hyper_rustls::HttpsConnectorBuilder::new()
+                        .with_native_roots()
+                        .unwrap()
+                        .https_or_http()
+                        .enable_http1()
+                        .build(),
+                );
+
         Ok(SheetsConnectorService {
             sheets_hub: tokio::sync::Mutex::new(Sheets::new(client, auth)),
-            reqwest_client: reqwest::Client::new()
+            reqwest_client: reqwest::Client::new(),
         })
     }
 
@@ -63,12 +72,18 @@ impl SheetsConnectorService {
                 let string_row: Vec<String> = row.iter().map(|s| s.to_string()).collect();
                 data.push(string_row);
             }
-        } 
+        }
         Ok(data)
     }
 
-    pub async fn create_sheet(&self, spreadsheet_id: &str, sheet_name: &str) -> Result<SheetId, Error> {
-        let response = self.reqwest_client.post(format!("{APP_SCRIPT_URL}?action=createSheet"))
+    pub async fn create_sheet(
+        &self,
+        spreadsheet_id: &str,
+        sheet_name: &str,
+    ) -> Result<SheetId, Error> {
+        let response = self
+            .reqwest_client
+            .post(format!("{APP_SCRIPT_URL}?action=createSheet"))
             .json(&serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetName": sheet_name}))
             .send()
             .await?
@@ -78,12 +93,19 @@ impl SheetsConnectorService {
         Ok(response.created_sheet_id)
     }
 
-    pub async fn upload_to_sheet<C, I>(&self, spreadsheet_id: &str, input: I, converter: C) -> Result<(), Error>
-        where C: IntoSheetsData<ValueRange, Input = I>
+    pub async fn upload_to_sheet<C, I>(
+        &self,
+        spreadsheet_id: &str,
+        input: I,
+        converter: C,
+    ) -> Result<(), Error>
+    where
+        C: IntoSheetsData<ValueRange, Input = I>,
     {
         let values = converter.convert_into_sheets_data(input)?;
         let hub_locked = self.sheets_hub.lock().await;
-        hub_locked.spreadsheets()
+        hub_locked
+            .spreadsheets()
             .values_update(values.clone(), spreadsheet_id, &values.range.unwrap())
             .value_input_option("USER_ENTERED")
             .doit()
@@ -92,31 +114,44 @@ impl SheetsConnectorService {
         Ok(())
     }
 
-    pub async fn read_from_sheet<T, V>(&self, spreadsheet_id: &str, sheet_id: i32, range: &str, converter: T) -> Result<V, Error>
-        where T: FromSheetValueRange<Output = V>
+    pub async fn read_from_sheet<T, V>(
+        &self,
+        spreadsheet_id: &str,
+        sheet_id: i32,
+        range: &str,
+        converter: T,
+    ) -> Result<V, Error>
+    where
+        T: FromSheetValueRange<Output = V>,
     {
         let hub_locked = self.sheets_hub.lock().await;
-        let spreadsheet = hub_locked.spreadsheets()
+        let spreadsheet = hub_locked
+            .spreadsheets()
             .get(spreadsheet_id)
             .doit()
             .await
             .map_err(|e| Error::Sheets(Box::new(e)))?;
-        let sheet_name = spreadsheet.1.sheets
+        let sheet_name = spreadsheet
+            .1
+            .sheets
             .as_ref()
             .and_then(|sheets| {
-                    sheets.iter().find(|sheet| {
-                        sheet.properties
-                            .as_ref()
-                            .and_then(|props| props.sheet_id)
-                            .is_some_and(|id| id == sheet_id)
-                    })
-                }
-            )
+                sheets.iter().find(|sheet| {
+                    sheet
+                        .properties
+                        .as_ref()
+                        .and_then(|props| props.sheet_id)
+                        .is_some_and(|id| id == sheet_id)
+                })
+            })
             .and_then(|sheet| sheet.properties.as_ref())
             .and_then(|properties| properties.title.as_ref())
-            .ok_or(Error::UndefinedValue("read_from_sheet Sheet name".to_string()))?;
+            .ok_or(Error::UndefinedValue(
+                "read_from_sheet Sheet name".to_string(),
+            ))?;
 
-        let data = hub_locked.spreadsheets()
+        let data = hub_locked
+            .spreadsheets()
             .values_get(spreadsheet_id, &format!("{sheet_name}!{range}"))
             .major_dimension("COLUMNS")
             .doit()
@@ -124,8 +159,7 @@ impl SheetsConnectorService {
             .map_err(|e| Error::Sheets(Box::new(e)))?;
 
         let value = converter.convert_from_value_range(data.1)?;
-        
-        Ok(value)
 
+        Ok(value)
     }
 }

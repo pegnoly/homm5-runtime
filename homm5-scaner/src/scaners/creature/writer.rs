@@ -1,7 +1,8 @@
 use std::{fs::File, io::Write};
 
 use sea_orm::{
-    sea_query::OnConflict, DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait
+    DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait,
+    sea_query::OnConflict,
 };
 use zip::{ZipWriter, write::FileOptions};
 

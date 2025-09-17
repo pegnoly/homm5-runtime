@@ -1,7 +1,18 @@
-use sea_orm::{sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, SqlxSqlitePoolConnection};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait,
+    IntoActiveModel, QueryFilter, SqlxSqlitePoolConnection, sqlx::SqlitePool,
+};
 
-use crate::{error::EditorToolsError, services::quest_generator::{models::{progress, quest}, payloads::{CreateQuestPayload, GetProgressPayload, SaveProgressPayload, UpdateQuestPayload}, prelude::{QuestModel, QuestProgressModel}}};
-
+use crate::{
+    error::EditorToolsError,
+    services::quest_generator::{
+        models::{progress, quest},
+        payloads::{
+            CreateQuestPayload, GetProgressPayload, SaveProgressPayload, UpdateQuestPayload,
+        },
+        prelude::{QuestModel, QuestProgressModel},
+    },
+};
 
 pub struct QuestGeneratorRepo {
     db: DatabaseConnection,
@@ -15,14 +26,20 @@ impl QuestGeneratorRepo {
     }
 
     pub async fn load_quests(&self, mission_id: i32) -> Result<Vec<QuestModel>, EditorToolsError> {
-        Ok(quest::Entity::find().filter(quest::Column::MissionId.eq(mission_id)).all(&self.db).await?)
+        Ok(quest::Entity::find()
+            .filter(quest::Column::MissionId.eq(mission_id))
+            .all(&self.db)
+            .await?)
     }
 
     pub async fn load_quest(&self, id: i32) -> Result<Option<QuestModel>, EditorToolsError> {
         Ok(quest::Entity::find_by_id(id).one(&self.db).await?)
     }
 
-    pub async fn create_quest(&self, payload: CreateQuestPayload) -> Result<QuestModel, EditorToolsError> {
+    pub async fn create_quest(
+        &self,
+        payload: CreateQuestPayload,
+    ) -> Result<QuestModel, EditorToolsError> {
         let model_to_insert = quest::ActiveModel {
             mission_id: Set(payload.mission_id),
             name: Set(payload.name),
@@ -59,16 +76,21 @@ impl QuestGeneratorRepo {
         Ok(())
     }
 
-    pub async fn get_progress(&self, payload: GetProgressPayload) -> Result<Option<QuestProgressModel>, EditorToolsError> {
+    pub async fn get_progress(
+        &self,
+        payload: GetProgressPayload,
+    ) -> Result<Option<QuestProgressModel>, EditorToolsError> {
         Ok(progress::Entity::find()
             .filter(progress::Column::QuestId.eq(payload.quest_id))
             .filter(progress::Column::Number.eq(payload.number))
             .one(&self.db)
-            .await?
-        )
+            .await?)
     }
 
-    pub async fn create_progress(&self, payload: GetProgressPayload) -> Result<QuestProgressModel, EditorToolsError> {
+    pub async fn create_progress(
+        &self,
+        payload: GetProgressPayload,
+    ) -> Result<QuestProgressModel, EditorToolsError> {
         let model_to_insert = progress::ActiveModel {
             number: Set(payload.number),
             quest_id: Set(payload.quest_id),
@@ -79,8 +101,14 @@ impl QuestGeneratorRepo {
         Ok(model_to_insert.insert(&self.db).await?)
     }
 
-    pub async fn save_progress(&self, payload: SaveProgressPayload) -> Result<(), EditorToolsError> {
-        if let Some(existing_progress) = progress::Entity::find_by_id(payload.id).one(&self.db).await? {
+    pub async fn save_progress(
+        &self,
+        payload: SaveProgressPayload,
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_progress) = progress::Entity::find_by_id(payload.id)
+            .one(&self.db)
+            .await?
+        {
             let mut progress_to_update = existing_progress.into_active_model();
             progress_to_update.concatenate = Set(payload.concatenate);
             progress_to_update.text = Set(payload.text);
@@ -89,7 +117,13 @@ impl QuestGeneratorRepo {
         Ok(())
     }
 
-    pub async fn load_progresses(&self, quest_id: i32) -> Result<Vec<QuestProgressModel>, EditorToolsError> {
-        Ok(progress::Entity::find().filter(progress::Column::QuestId.eq(quest_id)).all(&self.db).await?)
+    pub async fn load_progresses(
+        &self,
+        quest_id: i32,
+    ) -> Result<Vec<QuestProgressModel>, EditorToolsError> {
+        Ok(progress::Entity::find()
+            .filter(progress::Column::QuestId.eq(quest_id))
+            .all(&self.db)
+            .await?)
     }
 }

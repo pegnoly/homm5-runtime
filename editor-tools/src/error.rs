@@ -11,5 +11,5 @@ pub enum EditorToolsError {
     #[error(transparent)]
     Xml(#[from] quick_xml::Error),
     #[error("Default editor tools error")]
-    Default
+    Default,
 }

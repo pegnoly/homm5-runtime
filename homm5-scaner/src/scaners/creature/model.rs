@@ -1,4 +1,7 @@
-use homm5_types::{common::FileRef, creature::{Abilities, Upgrades}};
+use homm5_types::{
+    common::FileRef,
+    creature::{Abilities, Upgrades},
+};
 use itertools::Itertools;
 use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -47,7 +50,7 @@ pub struct Model {
     pub upgrades: UpgradesModel,
     pub inner_name: Option<String>,
     #[serde(skip)]
-    pub xdb: Option<String>
+    pub xdb: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -180,26 +183,30 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                 String::new()
             },
             abilities: AbilitiesModel {
-                abilities: value.Abilities.unwrap_or(Abilities { Abilities: None }).Abilities.unwrap_or_default(),
+                abilities: value
+                    .Abilities
+                    .unwrap_or(Abilities { Abilities: None })
+                    .Abilities
+                    .unwrap_or_default(),
             },
             upgrades: UpgradesModel {
-                upgrades: value.Upgrades.unwrap_or(Upgrades { upgrages: None}).upgrages.unwrap_or_default(),
+                upgrades: value
+                    .Upgrades
+                    .unwrap_or(Upgrades { upgrages: None })
+                    .upgrages
+                    .unwrap_or_default(),
             },
             base_creature: value.BaseCreature.unwrap_or("CREATURE_UNKNOWN".to_string()),
             pair_creature: value.PairCreature,
             inner_name: value.InnerName,
-            xdb: None
+            xdb: None,
         }
     }
 }
 
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
-        let is_generatable = if self.is_generatable {
-            "1"
-        } else {
-            "nil"
-        };
+        let is_generatable = if self.is_generatable { "1" } else { "nil" };
         let is_flying = if self.is_flying { "1" } else { "nil" };
         let is_upgrade =
             if self.base_creature == "CREATURE_UNKNOWN" && !self.upgrades.upgrades.is_empty() {

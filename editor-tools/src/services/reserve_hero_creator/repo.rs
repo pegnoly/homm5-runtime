@@ -1,6 +1,18 @@
-use sea_orm::{sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait,
+    IntoActiveModel, ModelTrait, QueryFilter, SqlxSqlitePoolConnection, sqlx::SqlitePool,
+};
 
-use crate::{error::EditorToolsError, services::reserve_hero_creator::{model::{self, BaseSkill, Model, ReserveHeroFavoriteEnemies, ReserveHeroSkills, ReserveHeroSpells}, payloads::InitReserveHeroPayload}};
+use crate::{
+    error::EditorToolsError,
+    services::reserve_hero_creator::{
+        model::{
+            self, BaseSkill, Model, ReserveHeroFavoriteEnemies, ReserveHeroSkills,
+            ReserveHeroSpells,
+        },
+        payloads::InitReserveHeroPayload,
+    },
+};
 
 pub struct ReserveHeroCreatorRepo {
     db: DatabaseConnection,
@@ -13,11 +25,16 @@ impl ReserveHeroCreatorRepo {
         }
     }
 
-    pub async fn load_heroes(&self, map_id: i32, player_id: i32) -> Result<Vec<Model>, EditorToolsError> {
+    pub async fn load_heroes(
+        &self,
+        map_id: i32,
+        player_id: i32,
+    ) -> Result<Vec<Model>, EditorToolsError> {
         let models = model::Entity::find()
-                .filter(model::Column::MapId.eq(map_id))
-                .filter(model::Column::PlayerId.eq(player_id))
-                .all(&self.db).await?;
+            .filter(model::Column::MapId.eq(map_id))
+            .filter(model::Column::PlayerId.eq(player_id))
+            .all(&self.db)
+            .await?;
         Ok(models)
     }
 
@@ -25,7 +42,9 @@ impl ReserveHeroCreatorRepo {
         if let Some(existing_model) = model::Entity::find_by_id(id).one(&self.db).await? {
             return Ok(existing_model);
         }
-        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string())))
+        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound(
+            "No reserved hero matches given id".to_string(),
+        )))
     }
 
     pub async fn delete_hero(&self, id: i32) -> Result<(), EditorToolsError> {
@@ -35,7 +54,10 @@ impl ReserveHeroCreatorRepo {
         Ok(())
     }
 
-    pub async fn init_hero(&self, payload: InitReserveHeroPayload) -> Result<Model, EditorToolsError> {
+    pub async fn init_hero(
+        &self,
+        payload: InitReserveHeroPayload,
+    ) -> Result<Model, EditorToolsError> {
         let model_to_insert = model::ActiveModel {
             id: Default::default(),
             town: Set(payload.town),
@@ -43,12 +65,14 @@ impl ReserveHeroCreatorRepo {
             player_id: Set(payload.player_id),
             xdb_path: Set(payload.xdb),
             name: Set(payload.name),
-            skills: Set(ReserveHeroSkills { skills: vec![BaseSkill { 
-                slot: 0, 
-                skill: String::from("HERO_SKILL_NONE"), 
-                mastery: homm5_scaner::prelude::Mastery::MasteryNone,
-                perks: vec![]
-            }] }),
+            skills: Set(ReserveHeroSkills {
+                skills: vec![BaseSkill {
+                    slot: 0,
+                    skill: String::from("HERO_SKILL_NONE"),
+                    mastery: homm5_scaner::prelude::Mastery::MasteryNone,
+                    perks: vec![],
+                }],
+            }),
             spells: Set(ReserveHeroSpells { spells: vec![] }),
             favorite_enemies: Set(ReserveHeroFavoriteEnemies { enemies: vec![] }),
         };
@@ -59,7 +83,12 @@ impl ReserveHeroCreatorRepo {
         if let Some(hero) = model::Entity::find_by_id(id).one(&self.db).await? {
             let mut model_to_update = hero.into_active_model();
             if let Some(mut skills) = model_to_update.skills.take() {
-                let new_skill = BaseSkill { slot, skill: String::from("HERO_SKILL_NONE"), mastery: homm5_scaner::prelude::Mastery::MasteryNone, perks: vec![] };
+                let new_skill = BaseSkill {
+                    slot,
+                    skill: String::from("HERO_SKILL_NONE"),
+                    mastery: homm5_scaner::prelude::Mastery::MasteryNone,
+                    perks: vec![],
+                };
                 skills.skills.push(new_skill.clone());
                 model_to_update.skills = Set(skills);
                 model_to_update.update(&self.db).await?;
@@ -67,7 +96,9 @@ impl ReserveHeroCreatorRepo {
             }
             return Err(EditorToolsError::Default);
         }
-        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string())))
+        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound(
+            "No reserved hero matches given id".to_string(),
+        )))
     }
 
     pub async fn remove_skill(&self, id: i32, slot: i32) -> Result<(), EditorToolsError> {
@@ -81,10 +112,17 @@ impl ReserveHeroCreatorRepo {
             }
             return Err(EditorToolsError::Default);
         }
-        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string())))
+        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound(
+            "No reserved hero matches given id".to_string(),
+        )))
     }
 
-    pub async fn update_skill(&self, id: i32, slot: i32, skill: BaseSkill) -> Result<(), EditorToolsError> {
+    pub async fn update_skill(
+        &self,
+        id: i32,
+        slot: i32,
+        skill: BaseSkill,
+    ) -> Result<(), EditorToolsError> {
         if let Some(hero) = model::Entity::find_by_id(id).one(&self.db).await? {
             let mut model_to_update = hero.into_active_model();
             if let Some(mut skills) = model_to_update.skills.take() {
@@ -103,13 +141,15 @@ impl ReserveHeroCreatorRepo {
             let mut model_to_update = hero.into_active_model();
             if let Some(mut spells) = model_to_update.spells.take() {
                 spells.spells.push(spell);
-                model_to_update.spells = Set( spells );
+                model_to_update.spells = Set(spells);
                 model_to_update.update(&self.db).await?;
-                return Ok(())
+                return Ok(());
             }
             return Err(EditorToolsError::Default);
         }
-        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string())))
+        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound(
+            "No reserved hero matches given id".to_string(),
+        )))
     }
 
     pub async fn remove_spell(&self, id: i32, spell: String) -> Result<(), EditorToolsError> {
@@ -117,16 +157,22 @@ impl ReserveHeroCreatorRepo {
             let mut model_to_update = hero.into_active_model();
             if let Some(mut spells) = model_to_update.spells.take() {
                 spells.spells.retain(|s| *s != spell);
-                model_to_update.spells = Set( spells );
+                model_to_update.spells = Set(spells);
                 model_to_update.update(&self.db).await?;
-                return Ok(())
+                return Ok(());
             }
             return Err(EditorToolsError::Default);
         }
-        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound("No reserved hero matches given id".to_string()))) 
+        Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound(
+            "No reserved hero matches given id".to_string(),
+        )))
     }
 
-    pub async fn update_favorite_enemies(&self, id: i32, enemies: Vec<String>) -> Result<(), EditorToolsError> {
+    pub async fn update_favorite_enemies(
+        &self,
+        id: i32,
+        enemies: Vec<String>,
+    ) -> Result<(), EditorToolsError> {
         if let Some(hero) = model::Entity::find_by_id(id).one(&self.db).await? {
             let mut model_to_update = hero.into_active_model();
             model_to_update.favorite_enemies = Set(ReserveHeroFavoriteEnemies { enemies });

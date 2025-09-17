@@ -15,5 +15,5 @@ pub enum ScanerError {
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
-    ROXmlTree(#[from] roxmltree::Error)
+    ROXmlTree(#[from] roxmltree::Error),
 }

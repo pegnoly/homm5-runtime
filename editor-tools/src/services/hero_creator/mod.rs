@@ -1,6 +1,9 @@
-use std::{io::Write, path::PathBuf};
 use homm5_scaner::prelude::Town;
-use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event}, Reader, Writer};
+use quick_xml::{
+    Reader, Writer,
+    events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event},
+};
+use std::{io::Write, path::PathBuf};
 use widestring::Utf16String;
 
 use crate::error::EditorToolsError;
@@ -10,7 +13,7 @@ pub fn process_files(
     generic_icon_path: &PathBuf,
     generic_icon_dds: &PathBuf,
     mod_path: String,
-    hero_town: Town, 
+    hero_town: Town,
     hero_script_name: String,
     hero_actual_name: String,
 ) -> Result<(), EditorToolsError> {
@@ -26,7 +29,6 @@ pub fn process_files(
 
     let mut buf: Vec<u8> = Vec::new();
 
-    
     let town_path = match hero_town {
         Town::TownAcademy => "Academy",
         Town::TownDungeon => "Dungeon",
@@ -36,11 +38,17 @@ pub fn process_files(
         Town::TownNecromancy => "Necropolis",
         Town::TownPreserve => "Preserve",
         Town::TownNoType => "Neutral",
-        Town::TownStronghold => "Orcs"
+        Town::TownStronghold => "Orcs",
     };
 
-    let name_file_dir = PathBuf::from(format!("{}Text\\Game\\Heroes\\Persons\\{}\\{}\\", &mod_path, town_path, &hero_script_name));
-    let icon_file_dir = PathBuf::from(format!("{}Textures\\Icons\\Heroes\\{}\\{}\\", &mod_path, town_path, &hero_script_name));
+    let name_file_dir = PathBuf::from(format!(
+        "{}Text\\Game\\Heroes\\Persons\\{}\\{}\\",
+        &mod_path, town_path, &hero_script_name
+    ));
+    let icon_file_dir = PathBuf::from(format!(
+        "{}Textures\\Icons\\Heroes\\{}\\{}\\",
+        &mod_path, town_path, &hero_script_name
+    ));
     if !name_file_dir.exists() {
         std::fs::create_dir_all(&name_file_dir)?;
     }
@@ -64,51 +72,71 @@ pub fn process_files(
                     "InternalName" => {
                         let end = e.to_end().into_owned();
                         reader.read_to_end(end.name())?;
-                        writer.create_element("InternalName").write_text_content(BytesText::new(&hero_script_name))?;
-                    },
+                        writer
+                            .create_element("InternalName")
+                            .write_text_content(BytesText::new(&hero_script_name))?;
+                    }
                     "NameFileRef" => {
                         let end = e.to_end().into_owned();
                         reader.read_to_end(end.name())?;
-                        writer.create_element("NameFileRef")
-                            .with_attribute(("href", 
-                                format!("/{}", name_file
-                                    .to_str()
-                                    .ok_or(EditorToolsError::Default)?
-                                    .replace(&mod_path, "")
-                                    .replace("\\", "/")
-                                    .as_str()
-                                ).as_str()))
+                        writer
+                            .create_element("NameFileRef")
+                            .with_attribute((
+                                "href",
+                                format!(
+                                    "/{}",
+                                    name_file
+                                        .to_str()
+                                        .ok_or(EditorToolsError::Default)?
+                                        .replace(&mod_path, "")
+                                        .replace("\\", "/")
+                                        .as_str()
+                                )
+                                .as_str(),
+                            ))
                             .write_empty()?;
-                    },
+                    }
                     "BiographyFileRef" => {
                         let end = e.to_end().into_owned();
                         reader.read_to_end(end.name())?;
-                        writer.create_element("BiographyFileRef")
-                            .with_attribute(("href", 
-                                format!("/{}", bio_file
-                                    .to_str()
-                                    .ok_or(EditorToolsError::Default)?
-                                    .replace(&mod_path, "")
-                                    .replace("\\", "/")
-                                    .as_str()
-                                ).as_str()))
+                        writer
+                            .create_element("BiographyFileRef")
+                            .with_attribute((
+                                "href",
+                                format!(
+                                    "/{}",
+                                    bio_file
+                                        .to_str()
+                                        .ok_or(EditorToolsError::Default)?
+                                        .replace(&mod_path, "")
+                                        .replace("\\", "/")
+                                        .as_str()
+                                )
+                                .as_str(),
+                            ))
                             .write_empty()?;
-                    },
+                    }
                     "Icon128" => {
                         let end = e.to_end().into_owned();
                         reader.read_to_end(end.name())?;
-                        writer.create_element("Icon128")
-                            .with_attribute(("href", 
-                                format!("/{}#xpointer(/Texture)", icon_file
-                                    .to_str()
-                                    .ok_or(EditorToolsError::Default)?
-                                    .replace(&mod_path, "")
-                                    .replace("\\", "/")
-                                    .as_str()
-                                ).as_str()))
+                        writer
+                            .create_element("Icon128")
+                            .with_attribute((
+                                "href",
+                                format!(
+                                    "/{}#xpointer(/Texture)",
+                                    icon_file
+                                        .to_str()
+                                        .ok_or(EditorToolsError::Default)?
+                                        .replace(&mod_path, "")
+                                        .replace("\\", "/")
+                                        .as_str()
+                                )
+                                .as_str(),
+                            ))
                             .write_empty()?;
-                    },
-                    _=> {
+                    }
+                    _ => {
                         let mut elem = BytesStart::new(str::from_utf8(e.name().0).unwrap());
                         elem.extend_attributes(e.attributes().map(|attr| attr.unwrap()));
                         writer.write_event(Event::Start(elem)).unwrap();
@@ -117,12 +145,12 @@ pub fn process_files(
             }
             Ok(Event::Text(e)) => {
                 writer.write_event(Event::Text(e)).unwrap();
-            },
+            }
             Ok(Event::End(e)) => {
                 let elem = BytesEnd::new(str::from_utf8(e.name().0).unwrap());
                 writer.write_event(Event::End(elem)).unwrap();
-            },
-            _ => ()
+            }
+            _ => (),
         }
         buf.clear();
     }
@@ -136,10 +164,13 @@ pub fn process_files(
         Town::TownNecromancy => "Necropolis",
         Town::TownPreserve => "Preserve",
         Town::TownNoType => "Neutral",
-        Town::TownStronghold => "Orcs"
+        Town::TownStronghold => "Orcs",
     };
 
-    let xdb_file_dir = PathBuf::from(format!("{}MapObjects\\{}\\Heroes\\{}\\", &mod_path, town_path, &hero_script_name));
+    let xdb_file_dir = PathBuf::from(format!(
+        "{}MapObjects\\{}\\Heroes\\{}\\",
+        &mod_path, town_path, &hero_script_name
+    ));
     if !xdb_file_dir.exists() {
         std::fs::create_dir_all(&xdb_file_dir)?;
     }
@@ -154,13 +185,10 @@ pub fn process_files(
     let utf16_data = Utf16String::from_str(&hero_actual_name);
 
     actual_name_file.write_all(&[0xFF, 0xFE])?;
-    
+
     // Write the UTF-16 LE bytes
     actual_name_file.write_all(unsafe {
-        std::slice::from_raw_parts(
-            utf16_data.as_ptr() as *const u8,
-            utf16_data.len() * 2
-        )
+        std::slice::from_raw_parts(utf16_data.as_ptr() as *const u8, utf16_data.len() * 2)
     })?;
 
     Ok(())

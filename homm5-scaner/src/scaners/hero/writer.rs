@@ -31,10 +31,17 @@ impl<'a> Output for HeroDataOutput<'a> {
     }
 
     async fn finish_output(&self, zip_writer: &mut ZipWriter<File>) -> Result<(), ScanerError> {
-        super::model::Entity::delete_many().filter(Condition::all()).exec(self.db).await?;
-        super::model::Entity::insert_many(self.entities.iter().map(|model| {
-            model.clone().into_active_model()
-        })).exec(self.db).await?;
+        super::model::Entity::delete_many()
+            .filter(Condition::all())
+            .exec(self.db)
+            .await?;
+        super::model::Entity::insert_many(
+            self.entities
+                .iter()
+                .map(|model| model.clone().into_active_model()),
+        )
+        .exec(self.db)
+        .await?;
         let mut script_file = String::from("MCCS_GENERATED_HEROES_TABLE = {\n");
         for model in &self.entities {
             script_file += &model.to_lua_string();

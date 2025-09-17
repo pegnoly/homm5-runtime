@@ -9,7 +9,7 @@ pub struct Model {
     pub quest_id: i32,
     pub number: i32,
     pub text: String,
-    pub concatenate: bool
+    pub concatenate: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

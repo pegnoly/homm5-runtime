@@ -1,12 +1,15 @@
-use editor_tools::prelude::{BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo, QuestGeneratorRepo, ReserveHeroCreatorRepo};
+use crate::error::Error;
+use editor_tools::prelude::{
+    BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo, QuestGeneratorRepo,
+    ReserveHeroCreatorRepo,
+};
 use homm5_scaner::prelude::ScanerService;
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
 use sheets_connector::service::SheetsConnectorService;
 use std::path::PathBuf;
 use tokio::sync::RwLock;
-use utils::{LocalAppManager, RuntimeConfig, DataContainer, GlobalConfig, ModifiersConfig};
-use crate::error::Error;
+use utils::{DataContainer, GlobalConfig, LocalAppManager, ModifiersConfig, RuntimeConfig};
 
 mod commands;
 pub mod error;
@@ -37,14 +40,16 @@ pub async fn run() -> Result<(), Error> {
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
     let fight_generator_repo = FightGeneratorRepo::new(pool.clone());
     let reserve_hero_creator_repo = ReserveHeroCreatorRepo::new(pool.clone());
-    let sheets_connector_repo = SheetsConnectorService::new(&global_config.auth_path).await.unwrap();
+    let sheets_connector_repo = SheetsConnectorService::new(&global_config.auth_path)
+        .await
+        .unwrap();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(LocalAppManager {
             base_config: RwLock::new(global_config),
             runtime_config: RwLock::new(runtime_config),
-            modifiers_config: RwLock::new(modifiers_config)
+            modifiers_config: RwLock::new(modifiers_config),
         })
         .manage(quest_generator_repo)
         .manage(dialog_generator_repo)

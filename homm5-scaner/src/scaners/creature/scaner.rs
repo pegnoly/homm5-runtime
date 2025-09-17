@@ -6,11 +6,14 @@ use homm5_types::{
 };
 use quick_xml::{Reader, events::Event};
 
-use crate::{core::Scan, error::ScanerError, pak::FileStructure, scaners::types_scaner::GameTypeItem, utils::configure_path};
+use crate::{
+    core::Scan, error::ScanerError, pak::FileStructure, scaners::types_scaner::GameTypeItem,
+    utils::configure_path,
+};
 
 pub struct CreatureScaner {
     pub id: i32,
-    pub types_data: Vec<GameTypeItem>
+    pub types_data: Vec<GameTypeItem>,
 }
 
 impl CreatureScaner {
@@ -28,62 +31,67 @@ impl CreatureScaner {
             match reader.read_event_into(&mut buf) {
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
                 Ok(Event::Eof) => break None,
-                Ok(Event::Start(e)) => if e.name().as_ref() == b"CreatureVisual" {
-                    let end = e.to_end().into_owned();
-                    let possible_text = reader.read_text(end.name());
-                    match possible_text {
-                        Ok(text) => {
-                            let text = text.to_string();
-                            let de_res: Result<CreatureVisual, quick_xml::DeError> = quick_xml::de::from_str(&format!("<CreatureVisual>{text}</CreatureVisual>"));
-                            match de_res {
-                                Ok(visual) => {
-                                    let name = configure_path(
-                                        visual
-                                            .CreatureNameFileRef
+                Ok(Event::Start(e)) => {
+                    if e.name().as_ref() == b"CreatureVisual" {
+                        let end = e.to_end().into_owned();
+                        let possible_text = reader.read_text(end.name());
+                        match possible_text {
+                            Ok(text) => {
+                                let text = text.to_string();
+                                let de_res: Result<CreatureVisual, quick_xml::DeError> =
+                                    quick_xml::de::from_str(&format!(
+                                        "<CreatureVisual>{text}</CreatureVisual>"
+                                    ));
+                                match de_res {
+                                    Ok(visual) => {
+                                        let name = configure_path(
+                                            visual
+                                                .CreatureNameFileRef
+                                                .as_ref()
+                                                .unwrap()
+                                                .href
+                                                .as_ref(),
+                                            file_key,
+                                            files,
+                                        );
+                                        let desc = configure_path(
+                                            visual
+                                                .DescriptionFileRef
+                                                .as_ref()
+                                                .unwrap()
+                                                .href
+                                                .as_ref(),
+                                            file_key,
+                                            files,
+                                        );
+                                        let icon_key = visual
+                                            .Icon128
                                             .as_ref()
                                             .unwrap()
                                             .href
-                                            .as_ref(),
-                                        file_key,
-                                        files,
-                                    );
-                                    let desc = configure_path(
-                                        visual
-                                            .DescriptionFileRef
                                             .as_ref()
-                                            .unwrap()
-                                            .href
-                                            .as_ref(),
-                                        file_key,
-                                        files,
-                                    );
-                                    let icon_key = visual
-                                        .Icon128
-                                        .as_ref()
-                                        .unwrap()
-                                        .href
-                                        .as_ref()
-                                        .unwrap_or(&String::new())
-                                        .replace("#xpointer(/Texture)", "");
-                                    let icon = configure_path(Some(&icon_key), file_key, files);
-                                    break Some(CreatureVisual {
-                                        CreatureNameFileRef: Some(FileRef { href: Some(name) }),
-                                        DescriptionFileRef: Some(FileRef { href: Some(desc) }),
-                                        Icon128: Some(FileRef { href: Some(icon) }),
-                                    });
-                                }
-                                Err(e) => {
-                                    println!(
-                                        "error while deserializing file key {}, {:?}",
-                                        file_key,
-                                        e.to_string()
-                                    );
+                                            .unwrap_or(&String::new())
+                                            .replace("#xpointer(/Texture)", "");
+                                        let icon = configure_path(Some(&icon_key), file_key, files);
+                                        break Some(CreatureVisual {
+                                            CreatureNameFileRef: Some(FileRef { href: Some(name) }),
+                                            DescriptionFileRef: Some(FileRef { href: Some(desc) }),
+                                            Icon128: Some(FileRef { href: Some(icon) }),
+                                        });
+                                    }
+                                    Err(e) => {
+                                        println!(
+                                            "error while deserializing file key {}, {:?}",
+                                            file_key,
+                                            e.to_string()
+                                        );
+                                    }
                                 }
                             }
+                            Err(_e) => println!("error reading file content: {file_key}"),
                         }
-                        Err(_e) => println!("error reading file content: {file_key}"),
                     }
-                },
+                }
                 _ => (),
             }
             buf.clear();
@@ -114,7 +122,10 @@ impl Scan for CreatureScaner {
                         match possible_text {
                             Ok(text) => {
                                 let text = text.to_string();
-                                let de_res: Result<AdvMapCreatureShared, quick_xml::DeError> = quick_xml::de::from_str(&format!("<Creature>{text}</Creature>"));
+                                let de_res: Result<AdvMapCreatureShared, quick_xml::DeError> =
+                                    quick_xml::de::from_str(&format!(
+                                        "<Creature>{text}</Creature>"
+                                    ));
                                 self.id += 1;
                                 match de_res {
                                     Ok(mut creature) => {
@@ -129,11 +140,8 @@ impl Scan for CreatureScaner {
                                                 .trim_start_matches("/")
                                                 .to_lowercase();
                                             //println!("visual key: {}", &visual_key);
-                                            let actual_visual_key = configure_path(
-                                                Some(&visual_key),
-                                                file_key,
-                                                files,
-                                            );
+                                            let actual_visual_key =
+                                                configure_path(Some(&visual_key), file_key, files);
                                             let visual_file = files.get(&actual_visual_key);
                                             match visual_file {
                                                 Some(actual_visual_file) => {
@@ -142,8 +150,7 @@ impl Scan for CreatureScaner {
                                                         &actual_visual_file.content,
                                                         files,
                                                     );
-                                                    creature.VisualExplained =
-                                                        visual_checked;
+                                                    creature.VisualExplained = visual_checked;
                                                 }
                                                 None => println!(
                                                     "Can't find visual of {}",
@@ -153,22 +160,20 @@ impl Scan for CreatureScaner {
                                         }
                                         let mut db_model = super::model::Model::from(creature);
                                         db_model.id = self.id;
-                                        db_model.game_id = self.types_data.iter()
+                                        db_model.game_id = self
+                                            .types_data
+                                            .iter()
                                             .find(|item| item.value == self.id)
                                             .unwrap()
                                             .name
                                             .clone();
                                         if !db_model.name_txt.is_empty() {
-                                            if let Some(name_data) =
-                                                files.get(&db_model.name_txt)
-                                            {
+                                            if let Some(name_data) = files.get(&db_model.name_txt) {
                                                 db_model.name = name_data.content.clone();
                                             }
                                         }
                                         if !db_model.desc_txt.is_empty() {
-                                            if let Some(desc_data) =
-                                                files.get(&db_model.desc_txt)
-                                            {
+                                            if let Some(desc_data) = files.get(&db_model.desc_txt) {
                                                 db_model.desc = desc_data.content.clone();
                                             }
                                         }

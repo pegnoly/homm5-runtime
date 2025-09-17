@@ -92,7 +92,7 @@ impl ToJsonCompatibleString for ArtifactSlotType {
             ArtifactSlotType::Neck => "Neck",
             ArtifactSlotType::Feet => "Feet",
             ArtifactSlotType::Shoulders => "Shoulders",
-            ArtifactSlotType::Inventory => "Inventory"
+            ArtifactSlotType::Inventory => "Inventory",
         }
     }
 }
@@ -176,11 +176,7 @@ impl From<AdvMapArtifactShared> for Model {
 
 impl ToLua for Model {
     fn to_lua_string(&self) -> String {
-        let is_sellable = if self.is_generatable {
-            "1"
-        } else {
-            "nil"
-        };
+        let is_sellable = if self.is_generatable { "1" } else { "nil" };
         format!(
             "\t[{}] = {{
         is_sellable = {},

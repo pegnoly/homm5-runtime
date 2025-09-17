@@ -5,5 +5,5 @@ pub struct InitReserveHeroPayload {
     pub player_id: i32,
     pub name: String,
     pub xdb: String,
-    pub town: Town
+    pub town: Town,
 }

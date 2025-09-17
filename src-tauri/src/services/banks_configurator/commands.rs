@@ -2,10 +2,10 @@ use crate::error::Error;
 use editor_tools::prelude::*;
 use homm5_scaner::prelude::*;
 use itertools::Itertools;
-use strum::IntoEnumIterator;
-use uuid::Uuid;
 use std::io::Write;
+use strum::IntoEnumIterator;
 use tauri::State;
+use uuid::Uuid;
 
 #[tauri::command]
 pub async fn get_all_banks(
@@ -74,10 +74,10 @@ pub async fn update_bank_luck_loss(
 pub async fn load_difficulty(
     bank_service: State<'_, BanksGeneratorRepo>,
     bank_id: i32,
-    difficulty: BankDifficultyType
+    difficulty: BankDifficultyType,
 ) -> Result<Option<BankDifficultyDBModel>, Error> {
     Ok(bank_service.load_difficulty(bank_id, difficulty).await?)
-}   
+}
 
 #[tauri::command]
 pub async fn update_bank_difficulty_chance(
@@ -94,7 +94,7 @@ pub async fn update_bank_difficulty_chance(
 pub async fn load_bank_variants(
     bank_service: State<'_, BanksGeneratorRepo>,
     bank_id: i32,
-    difficulty: BankDifficultyType
+    difficulty: BankDifficultyType,
 ) -> Result<Vec<BankVariantDBModel>, Error> {
     Ok(bank_service.get_variants(bank_id, difficulty).await?)
 }
@@ -245,7 +245,7 @@ pub async fn update_creature_slot_tier(
 #[tauri::command]
 pub async fn generate_banks_script(
     bank_service: State<'_, BanksGeneratorRepo>,
-    fight_generator_repo: State<'_, FightGeneratorRepo>
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
 ) -> Result<(), Error> {
     let banks = bank_service.get_banks().await?;
     for bank in banks {
@@ -259,9 +259,8 @@ pub async fn generate_banks_script(
         ));
         let mut bank_file = std::fs::File::create(bank_file_name)?;
         // loading data
-        let mut bank_data_string = format!(
-            "while not {bank_local_type} and BTD_BANKS_DATA do\n\tsleep()\nend\n\n"
-        );
+        let mut bank_data_string =
+            format!("while not {bank_local_type} and BTD_BANKS_DATA do\n\tsleep()\nend\n\n");
         // base bank info
         bank_data_string += &format!("BTD_BANKS_DATA[{bank_local_type}] = {{\n");
         bank_data_string += &format!(
@@ -272,8 +271,14 @@ pub async fn generate_banks_script(
         bank_data_string += "\tgeneration_data = {\n";
         let difficulties = BankDifficultyType::iter().collect_vec();
         for difficulty in difficulties {
-            if let Some(difficulty_data) = bank_service.load_difficulty(bank.id, difficulty.clone()).await? {
-                bank_data_string += &format!("\t\t[{}] = {{\n\t\t\tchance = {},\n", &difficulty, difficulty_data.chance)
+            if let Some(difficulty_data) = bank_service
+                .load_difficulty(bank.id, difficulty.clone())
+                .await?
+            {
+                bank_data_string += &format!(
+                    "\t\t[{}] = {{\n\t\t\tchance = {},\n",
+                    &difficulty, difficulty_data.chance
+                )
             }
             // this difficulty variants info
             let bank_variants = bank_service.get_variants(bank.id, difficulty).await?;
@@ -281,10 +286,13 @@ pub async fn generate_banks_script(
             for variant in bank_variants {
                 bank_data_string += "\t\t\t\t{\n\t\t\t\t\tstacks_data = {\n";
                 let stacks_assets = fight_generator_repo.get_stacks(variant.id).await?;
-                let mut stack_gen_type_script = String::from("\t\t\t\t\t\tstack_count_generation_logic = {\n");
-                let mut base_army_count_data_script = String::from("\t\t\t\t\t\tarmy_base_count_data = {\n");
+                let mut stack_gen_type_script =
+                    String::from("\t\t\t\t\t\tstack_count_generation_logic = {\n");
+                let mut base_army_count_data_script =
+                    String::from("\t\t\t\t\t\tarmy_base_count_data = {\n");
                 let mut army_count_grow_script = String::from("\t\t\t\t\t\tarmy_counts_grow = {\n");
-                let mut army_generation_rules_script = String::from("\t\t\t\t\t\tarmy_getters = {\n");
+                let mut army_generation_rules_script =
+                    String::from("\t\t\t\t\t\tarmy_getters = {\n");
 
                 let mut stack_count = 0;
                 for asset in stacks_assets {
@@ -304,7 +312,8 @@ pub async fn generate_banks_script(
                         base_army_count_data_script += "\t\t\t\t\t\t\t},\n";
 
                         if asset.power_based_generation_type == AssetGenerationType::Dynamic {
-                            army_count_grow_script += &format!("\t\t\t\t\t\t\t[{stack_count}] = {{\n");
+                            army_count_grow_script +=
+                                &format!("\t\t\t\t\t\t\t[{stack_count}] = {{\n");
                             for (difficulty, power) in asset.powers_grow.data {
                                 army_count_grow_script +=
                                     &format!("\t\t\t\t\t\t\t\t[{}] = {},\n", &difficulty, power);
@@ -329,7 +338,9 @@ pub async fn generate_banks_script(
                 end,\n"
                         );
                     } else {
-                        army_generation_rules_script += &format!(r#"                            [{stack_count}] = function ()"#);
+                        army_generation_rules_script += &format!(
+                            r#"                            [{stack_count}] = function ()"#
+                        );
 
                         let mut generation_rules_script = String::from("local result = ");
                         for rule in &asset.generation_rule.params {
@@ -339,10 +350,12 @@ pub async fn generate_banks_script(
                                         "Creature.Params.IsGeneratable(creature) and "
                                 }
                                 ArmyGenerationRuleParam::Caster => {
-                                    generation_rules_script += "Creature.Type.IsCaster(creature) and "
+                                    generation_rules_script +=
+                                        "Creature.Type.IsCaster(creature) and "
                                 }
                                 ArmyGenerationRuleParam::Shooter => {
-                                    generation_rules_script += "Creature.Type.IsShooter(creature) and "
+                                    generation_rules_script +=
+                                        "Creature.Type.IsShooter(creature) and "
                                 }
                                 _ => {}
                             }
@@ -369,24 +382,29 @@ pub async fn generate_banks_script(
                             &generation_rules_script
                         );
 
-                        let stats_elements = fight_generator_repo.get_stat_generation_elements(asset.id).await?;
+                        let stats_elements = fight_generator_repo
+                            .get_stat_generation_elements(asset.id)
+                            .await?;
                         //println!("Stats elements: {:#?}", &stats_elements);
                         if stats_elements.is_empty() || stats_elements[0].stats.values.is_empty() {
                             if !asset.generation_rule.params.is_empty() {
                                 inner_getter_function += &format!(
-                            r#"{}
+                                    r#"{}
                                 local id = Random.FromTable(filtered_creatures)
-                                return id"#, &filter_function);
+                                return id"#,
+                                    &filter_function
+                                );
                             } else {
                                 inner_getter_function += r#"
                                 local id = Random.FromTable(possible_creatures)
                                 return id"#;
                             }
-                            army_generation_rules_script +=
-                                &format!(r#"
+                            army_generation_rules_script += &format!(
+                                r#"
                                 {inner_getter_function}
                             end,
-                        "#);
+                        "#
+                            );
                         } else {
                             let stat_element = &stats_elements[0];
                             let mut sort_function = String::new();
@@ -439,7 +457,8 @@ pub async fn generate_banks_script(
                                 .trim_end_matches("+")
                                 .trim_end()
                                 .to_string();
-                            sort_function += "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
+                            sort_function +=
+                                "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
                             // }
                             army_generation_rules_script += &format!("{sort_function}\n\t\tend,\n");
                         }

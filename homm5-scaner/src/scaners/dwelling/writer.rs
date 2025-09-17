@@ -3,7 +3,8 @@ use zip::ZipWriter;
 
 use crate::{
     core::Output,
-    error::ScanerError, scaners::dwelling::scaner::{DwellingLobbyData, DwellingScanerOutput},
+    error::ScanerError,
+    scaners::dwelling::scaner::{DwellingLobbyData, DwellingScanerOutput},
 };
 
 pub struct DwellingDataOutput {
@@ -12,9 +13,7 @@ pub struct DwellingDataOutput {
 
 impl DwellingDataOutput {
     pub fn new() -> Self {
-        DwellingDataOutput {
-            entities: vec![],
-        }
+        DwellingDataOutput { entities: vec![] }
     }
 }
 
@@ -34,9 +33,9 @@ impl Output for DwellingDataOutput {
 
     async fn finish_output(&self, _zip_writer: &mut ZipWriter<File>) -> Result<(), ScanerError> {
         let lobby_data: HashMap<super::model::DwellingType, DwellingLobbyData> = HashMap::from_iter(
-            self.entities.iter().map(|dwell| {
-                (dwell.dwell_type.clone(), dwell.data.clone())
-            })
+            self.entities
+                .iter()
+                .map(|dwell| (dwell.dwell_type.clone(), dwell.data.clone())),
         );
         let mut json_file = std::fs::File::create("D:\\dwellings.json")?;
         let json_string = serde_json::to_string_pretty(&lobby_data)?;

@@ -6,10 +6,7 @@ use sea_orm::{
 };
 use zip::ZipWriter;
 
-use crate::{
-    core::Output,
-    error::ScanerError,
-};
+use crate::{core::Output, error::ScanerError};
 
 pub struct AbilityDataOutput<'a> {
     entities: Vec<super::model::Model>,

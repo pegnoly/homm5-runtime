@@ -10,7 +10,8 @@ use zip::{ZipWriter, write::FileOptions};
 
 use crate::{
     core::{Output, ToJsonCompatibleString, ToLua},
-    error::ScanerError, prelude::ArtifactDBModel,
+    error::ScanerError,
+    prelude::ArtifactDBModel,
 };
 
 pub struct ArtifactDataOutput<'a> {
@@ -36,16 +37,16 @@ pub struct JsonCompatibleModel<'a> {
     #[serde(rename(serialize = "ArtifactSlot"))]
     pub slot: &'a str,
     #[serde(rename(serialize = "Cost"))]
-    pub cost: i32
+    pub cost: i32,
 }
 
 impl<'a> From<&'a ArtifactDBModel> for JsonCompatibleModel<'a> {
     fn from(value: &'a ArtifactDBModel) -> Self {
-        JsonCompatibleModel { 
-            id: value.id, 
-            class: value.class.to_json_compatible_repr(), 
-            slot: value.slot.to_json_compatible_repr(), 
-            cost: value.cost 
+        JsonCompatibleModel {
+            id: value.id,
+            class: value.class.to_json_compatible_repr(),
+            slot: value.slot.to_json_compatible_repr(),
+            cost: value.cost,
         }
     }
 }
@@ -84,12 +85,11 @@ impl<'a> Output for ArtifactDataOutput<'a> {
         zip_writer.start_file("scripts/generated/artifacts.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 
-        let json_models = self.entities.iter()
-            .map(|m| {
-                JsonCompatibleModel::from(m)
-            })
+        let json_models = self
+            .entities
+            .iter()
+            .map(|m| JsonCompatibleModel::from(m))
             .collect_vec();
-
 
         let json_string = serde_json::to_string_pretty(&json_models)?;
         let mut file = std::fs::File::create("D:\\arts.json")?;

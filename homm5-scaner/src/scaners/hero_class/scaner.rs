@@ -5,7 +5,7 @@ use crate::{core::Scan, error::ScanerError, pak::FileStructure, utils::configure
 use std::collections::HashMap;
 
 pub struct HeroClassScaner {
-    pub id: i32
+    pub id: i32,
 }
 
 impl Scan for HeroClassScaner {
@@ -17,8 +17,7 @@ impl Scan for HeroClassScaner {
         entity: &str,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
-        let class_de: Result<HeroClass, quick_xml::DeError> =
-            quick_xml::de::from_str(entity);
+        let class_de: Result<HeroClass, quick_xml::DeError> = quick_xml::de::from_str(entity);
         match class_de {
             Ok(class) => {
                 let name = configure_path(

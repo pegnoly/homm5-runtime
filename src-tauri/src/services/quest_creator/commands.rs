@@ -1,16 +1,22 @@
 use std::path::PathBuf;
 
-use editor_tools::prelude::{CreateQuestPayload, GetProgressPayload, QuestGeneratorRepo, QuestModel, QuestProgressModel, SaveProgressPayload, UpdateQuestPayload};
+use editor_tools::prelude::{
+    CreateQuestPayload, GetProgressPayload, QuestGeneratorRepo, QuestModel, QuestProgressModel,
+    SaveProgressPayload, UpdateQuestPayload,
+};
 use map_modifier::quest::write_quest_text_file;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
-use crate::{error::Error, utils::{GlobalConfig, LocalAppManager}};
+use crate::{
+    error::Error,
+    utils::{GlobalConfig, LocalAppManager},
+};
 
 #[tauri::command]
 pub async fn load_quests(
     app_manager: State<'_, LocalAppManager>,
-    quests_repo: State<'_, QuestGeneratorRepo>
+    quests_repo: State<'_, QuestGeneratorRepo>,
 ) -> Result<Vec<QuestModel>, Error> {
     let current_map_id = app_manager
         .runtime_config
@@ -24,11 +30,10 @@ pub async fn load_quests(
 #[tauri::command]
 pub async fn load_quest(
     quests_repo: State<'_, QuestGeneratorRepo>,
-    id: i32
+    id: i32,
 ) -> Result<Option<QuestModel>, Error> {
     Ok(quests_repo.load_quest(id).await?)
 }
-
 
 #[tauri::command]
 pub async fn create_quest(
@@ -45,7 +50,14 @@ pub async fn create_quest(
         .current_selected_map
         .unwrap();
 
-    Ok(quests_repo.create_quest(CreateQuestPayload { mission_id: current_map_id as i32, name, script_name, directory }).await?)
+    Ok(quests_repo
+        .create_quest(CreateQuestPayload {
+            mission_id: current_map_id as i32,
+            name,
+            script_name,
+            directory,
+        })
+        .await?)
 }
 
 #[tauri::command]
@@ -91,7 +103,9 @@ pub async fn update_quest_directory(
     quest_id: i32,
     directory: String,
 ) -> Result<(), Error> {
-    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_directory(directory)).await?)
+    Ok(quests_repo
+        .update_quest(UpdateQuestPayload::new(quest_id).with_directory(directory))
+        .await?)
 }
 
 #[tauri::command]
@@ -100,7 +114,9 @@ pub async fn update_quest_script_name(
     quest_id: i32,
     script_name: String,
 ) -> Result<(), Error> {
-    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_script_name(script_name)).await?)
+    Ok(quests_repo
+        .update_quest(UpdateQuestPayload::new(quest_id).with_script_name(script_name))
+        .await?)
 }
 
 #[tauri::command]
@@ -109,7 +125,9 @@ pub async fn update_quest_name(
     quest_id: i32,
     name: String,
 ) -> Result<(), Error> {
-    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_name(name)).await?)
+    Ok(quests_repo
+        .update_quest(UpdateQuestPayload::new(quest_id).with_name(name))
+        .await?)
 }
 
 #[tauri::command]
@@ -118,7 +136,9 @@ pub async fn update_quest_desc(
     quest_id: i32,
     desc: String,
 ) -> Result<(), Error> {
-    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_desc(desc)).await?)
+    Ok(quests_repo
+        .update_quest(UpdateQuestPayload::new(quest_id).with_desc(desc))
+        .await?)
 }
 
 #[tauri::command]
@@ -127,7 +147,9 @@ pub async fn update_is_secondary(
     quest_id: i32,
     is_secondary: bool,
 ) -> Result<(), Error> {
-    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_secondary(is_secondary)).await?)
+    Ok(quests_repo
+        .update_quest(UpdateQuestPayload::new(quest_id).with_secondary(is_secondary))
+        .await?)
 }
 
 #[tauri::command]
@@ -136,7 +158,9 @@ pub async fn update_is_active(
     quest_id: i32,
     is_active: bool,
 ) -> Result<(), Error> {
-    Ok(quests_repo.update_quest(UpdateQuestPayload::new(quest_id).with_active(is_active)).await?)
+    Ok(quests_repo
+        .update_quest(UpdateQuestPayload::new(quest_id).with_active(is_active))
+        .await?)
 }
 
 #[tauri::command]
@@ -145,10 +169,15 @@ pub async fn load_quest_progress(
     quest_id: i32,
     number: i32,
 ) -> Result<QuestProgressModel, Error> {
-    if let Some(progress) = quests_repo.get_progress(GetProgressPayload { quest_id, number }).await? {
+    if let Some(progress) = quests_repo
+        .get_progress(GetProgressPayload { quest_id, number })
+        .await?
+    {
         Ok(progress)
     } else {
-        Ok(quests_repo.create_progress(GetProgressPayload { quest_id, number }).await?)
+        Ok(quests_repo
+            .create_progress(GetProgressPayload { quest_id, number })
+            .await?)
     }
 }
 
@@ -157,9 +186,15 @@ pub async fn save_progress(
     quests_repo: State<'_, QuestGeneratorRepo>,
     id: i32,
     text: String,
-    concatenate: bool
+    concatenate: bool,
 ) -> Result<(), Error> {
-    Ok(quests_repo.save_progress(SaveProgressPayload { id, text, concatenate }).await?)
+    Ok(quests_repo
+        .save_progress(SaveProgressPayload {
+            id,
+            text,
+            concatenate,
+        })
+        .await?)
 }
 
 #[tauri::command]
@@ -184,7 +219,11 @@ pub async fn add_quest_to_queue(
     quest_id: i32,
 ) -> Result<(), Error> {
     let mut modifiers_config = app_manager.modifiers_config.write().await;
-    if !modifiers_config.data.quests_generation_queue.contains(&quest_id) {
+    if !modifiers_config
+        .data
+        .quests_generation_queue
+        .contains(&quest_id)
+    {
         modifiers_config.data.quests_generation_queue.push(quest_id);
         modifiers_config.update()?;
     }

@@ -18,7 +18,7 @@ pub struct InitFightAssetPayload {
     pub mission_id: i32,
     pub path_to_generate: String,
     pub lua_table_name: String,
-    pub sheet_id: i32
+    pub sheet_id: i32,
 }
 
 #[derive(Default)]
@@ -27,7 +27,7 @@ pub struct UpdateFightAssetPayload {
     pub name: Option<String>,
     pub path_to_generate: Option<String>,
     pub lua_table_name: Option<String>,
-    pub sheet_id: Option<i32>
+    pub sheet_id: Option<i32>,
 }
 
 impl UpdateFightAssetPayload {
@@ -131,7 +131,7 @@ pub struct UpdateStackBaseDataPayload {
     pub stack_id: i32,
     pub unit_generation_type: ArmySlotStackUnitGenerationMode,
     pub count_generation_type: ArmySlotStackCountGenerationMode,
-    pub power_based_generation_type: AssetGenerationType
+    pub power_based_generation_type: AssetGenerationType,
 }
 
 pub struct UpdateStackConcreteCreaturesPayload {

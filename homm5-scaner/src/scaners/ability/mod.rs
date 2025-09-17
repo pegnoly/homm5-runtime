@@ -1,5 +1,5 @@
-mod model;
 mod collector;
+mod model;
+pub mod prelude;
 mod scaner;
 mod writer;
-pub mod prelude;

@@ -4,10 +4,15 @@ use super::models::{
     bank_difficulty, bank_variant,
 };
 use super::payloads::*;
-use crate::{error::EditorToolsError, prelude::{BankDifficultyDBModel, BankDifficultyType}};
+use crate::{
+    error::EditorToolsError,
+    prelude::{BankDifficultyDBModel, BankDifficultyType},
+};
 use itertools::Itertools;
 use sea_orm::{
-    prelude::Uuid, sqlx::SqlitePool, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, QueryTrait, SqlxSqlitePoolConnection
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait,
+    FromQueryResult, IntoActiveModel, ModelTrait, QueryFilter, QuerySelect, QueryTrait,
+    SqlxSqlitePoolConnection, prelude::Uuid, sqlx::SqlitePool,
 };
 use std::path::PathBuf;
 
@@ -57,7 +62,11 @@ impl BanksGeneratorRepo {
         Ok(())
     }
 
-    pub async fn load_difficulty(&self, bank_id: i32, difficulty: BankDifficultyType) -> Result<Option<BankDifficultyDBModel>, EditorToolsError> {
+    pub async fn load_difficulty(
+        &self,
+        bank_id: i32,
+        difficulty: BankDifficultyType,
+    ) -> Result<Option<BankDifficultyDBModel>, EditorToolsError> {
         Ok(bank_difficulty::Entity::find()
             .filter(bank_difficulty::Column::BankId.eq(bank_id))
             .filter(bank_difficulty::Column::DifficultyType.eq(difficulty))
@@ -87,7 +96,7 @@ impl BanksGeneratorRepo {
     pub async fn get_variants(
         &self,
         bank_id: i32,
-        difficulty: BankDifficultyType
+        difficulty: BankDifficultyType,
     ) -> Result<Vec<bank_variant::Model>, EditorToolsError> {
         Ok(bank_variant::Entity::find()
             .filter(bank_variant::Column::BankId.eq(bank_id))
@@ -104,7 +113,7 @@ impl BanksGeneratorRepo {
             bank_id: Set(payload.bank_id),
             label: Set(payload.label),
             difficulty: Set(payload.difficulty),
-            id: Set(Uuid::new_v4())
+            id: Set(Uuid::new_v4()),
         };
         Ok(model_to_insert.insert(&self.db).await?)
     }

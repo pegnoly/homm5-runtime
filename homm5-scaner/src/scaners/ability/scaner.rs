@@ -17,8 +17,7 @@ impl Scan for AbilityScaner {
         entity: &str,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
-        let ability_de: Result<AbilityShared, quick_xml::DeError> =
-            quick_xml::de::from_str(entity);
+        let ability_de: Result<AbilityShared, quick_xml::DeError> = quick_xml::de::from_str(entity);
         match ability_de {
             Ok(ability) => {
                 let name = configure_path(

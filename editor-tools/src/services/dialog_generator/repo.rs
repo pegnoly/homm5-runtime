@@ -110,12 +110,18 @@ impl DialogGeneratorRepo {
         Ok(())
     }
 
-    pub async fn update_dialog_speakers(&self, id: i32, speaker_id: i32) -> Result<(), EditorToolsError> {
+    pub async fn update_dialog_speakers(
+        &self,
+        id: i32,
+        speaker_id: i32,
+    ) -> Result<(), EditorToolsError> {
         if let Some(existing_dialog) = dialog::Entity::find_by_id(id).one(&self.db).await? {
             let mut model_to_update = existing_dialog.clone().into_active_model();
             let mut current_speakers = existing_dialog.speakers_ids.ids;
             current_speakers.push(speaker_id);
-            model_to_update.speakers_ids = Set(SpeakersIds { ids: current_speakers });
+            model_to_update.speakers_ids = Set(SpeakersIds {
+                ids: current_speakers,
+            });
             model_to_update.update(&self.db).await?;
         }
         Ok(())
@@ -148,12 +154,24 @@ impl DialogGeneratorRepo {
         Ok(())
     }
 
-    pub async fn get_speakers_by_ids(&self, ids: Vec<i32>) -> Result<Vec<SpeakerModel>, EditorToolsError> {
-        Ok(speaker::Entity::find().filter(speaker::Column::Id.is_in(ids)).all(&self.db).await?)
+    pub async fn get_speakers_by_ids(
+        &self,
+        ids: Vec<i32>,
+    ) -> Result<Vec<SpeakerModel>, EditorToolsError> {
+        Ok(speaker::Entity::find()
+            .filter(speaker::Column::Id.is_in(ids))
+            .all(&self.db)
+            .await?)
     }
 
-    pub async fn get_all_variants_for_dialog(&self, id: i32) -> Result<Vec<DialogVariantModel>, EditorToolsError> {
-        Ok(variant::Entity::find().filter(variant::Column::DialogId.eq(id)).all(&self.db).await?)
+    pub async fn get_all_variants_for_dialog(
+        &self,
+        id: i32,
+    ) -> Result<Vec<DialogVariantModel>, EditorToolsError> {
+        Ok(variant::Entity::find()
+            .filter(variant::Column::DialogId.eq(id))
+            .all(&self.db)
+            .await?)
     }
 
     pub async fn set_dialog_was_generated(&self, id: i32) -> Result<(), EditorToolsError> {
@@ -161,7 +179,7 @@ impl DialogGeneratorRepo {
             let mut model_to_update = existing_dialog.into_active_model();
             model_to_update.was_generated = Set(true);
             model_to_update.update(&self.db).await?;
-        } 
+        }
         Ok(())
     }
 }

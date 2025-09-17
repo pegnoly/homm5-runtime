@@ -12,7 +12,7 @@ pub struct Model {
     pub script_name: String,
     pub desc: String,
     pub is_active: bool,
-    pub is_secondary: bool
+    pub is_secondary: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

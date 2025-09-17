@@ -1,7 +1,7 @@
 use core::str;
+use rc_zip::prelude::ReadZip;
 use std::io::Read;
 use std::{collections::HashMap, path::PathBuf};
-use rc_zip::prelude::ReadZip;
 use utf16string::WStr;
 
 pub(crate) const EXTENSIONS: [&str; 4] = [".pak", ".h5m", ".h5c", ".h5u"];
@@ -57,8 +57,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
     let archive = file.read_zip().unwrap();
     for entry in archive.entries() {
         let name = entry.name().to_string().replace("\\", "/");
-        if (!IGNORED_PARTS.iter().any(|part| name.contains(part))) && (!name.ends_with("/"))
-        {
+        if (!IGNORED_PARTS.iter().any(|part| name.contains(part))) && (!name.ends_with("/")) {
             let name = name.to_lowercase();
             if files.contains_key(&name) {
                 //println!("Already written file {} found in {:?}", &name, &path);

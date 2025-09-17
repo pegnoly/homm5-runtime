@@ -1,9 +1,9 @@
+use super::common::{AssetGenerationType, DifficultyMappedValue};
 use homm5_scaner::prelude::Town;
 use sea_orm::{FromJsonQueryResult, FromQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::str;
 use strum::{Display, EnumString};
-use super::common::{AssetGenerationType, DifficultyMappedValue};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "generated_army_slots")]
@@ -48,7 +48,16 @@ pub struct CreatureIds {
 }
 
 #[derive(
-    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Display
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    Display,
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum ArmySlotStackUnitGenerationMode {

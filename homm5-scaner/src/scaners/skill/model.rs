@@ -30,7 +30,7 @@ pub static BASE_SKILLS: LazyLock<Vec<&str>> = LazyLock::new(|| {
         "HERO_SKILL_SHATTER_DARK_MAGIC",
         "HERO_SKILL_SHATTER_LIGHT_MAGIC",
         "HERO_SKILL_SHATTER_SUMMONING_MAGIC",
-        "HERO_SKILL_BARBARIAN_LEARNING"
+        "HERO_SKILL_BARBARIAN_LEARNING",
     ]
 });
 
@@ -43,17 +43,17 @@ pub struct Model {
     pub name_paths: NamePaths,
     pub names: Names,
     pub hero_class: String,
-    pub basic_skill: String
+    pub basic_skill: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct Names {
-    pub names: Vec<String>
+    pub names: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct NamePaths {
-    pub paths: Vec<String>
+    pub paths: Vec<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

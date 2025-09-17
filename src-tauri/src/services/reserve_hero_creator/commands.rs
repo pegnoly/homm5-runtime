@@ -1,19 +1,23 @@
 use crate::error::Error;
-use editor_tools::prelude::{BaseSkill, InitReserveHeroPayload, ReserveHeroCreatorRepo, ReserveHeroModel};
-use homm5_scaner::prelude::{HeroDBModel, MagicSchoolType, ScanerService, SkillDBModel, SpellDBModel, Town};
+use editor_tools::prelude::{
+    BaseSkill, InitReserveHeroPayload, ReserveHeroCreatorRepo, ReserveHeroModel,
+};
+use homm5_scaner::prelude::{
+    HeroDBModel, MagicSchoolType, ScanerService, SkillDBModel, SpellDBModel, Town,
+};
 use tauri::State;
 
 #[tauri::command]
 pub async fn load_heroes_data(
     scaner_repo: State<'_, ScanerService>,
-    town: Town
+    town: Town,
 ) -> Result<Vec<HeroDBModel>, Error> {
     Ok(scaner_repo.get_heroes_models(town).await?)
 }
 
 #[tauri::command]
 pub async fn load_base_skills(
-    scaner_repo: State<'_, ScanerService>
+    scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<SkillDBModel>, Error> {
     Ok(scaner_repo.get_base_skills().await?)
 }
@@ -22,7 +26,7 @@ pub async fn load_base_skills(
 pub async fn load_heroes(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     map_id: i32,
-    player: i32 
+    player: i32,
 ) -> Result<Vec<ReserveHeroModel>, Error> {
     let heroes = reserve_heroes_repo.load_heroes(map_id, player).await?;
     Ok(heroes)
@@ -31,7 +35,7 @@ pub async fn load_heroes(
 #[tauri::command]
 pub async fn load_existing_reserved_hero(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
-    id: i32
+    id: i32,
 ) -> Result<ReserveHeroModel, Error> {
     Ok(reserve_heroes_repo.load_existing_hero(id).await?)
 }
@@ -43,15 +47,23 @@ pub async fn init_new_hero(
     player_id: i32,
     name: String,
     xdb: String,
-    town: Town
+    town: Town,
 ) -> Result<ReserveHeroModel, Error> {
-    Ok(reserve_heroes_repo.init_hero(InitReserveHeroPayload { map_id, player_id, name, xdb, town }).await?)
+    Ok(reserve_heroes_repo
+        .init_hero(InitReserveHeroPayload {
+            map_id,
+            player_id,
+            name,
+            xdb,
+            town,
+        })
+        .await?)
 }
 
 #[tauri::command]
 pub async fn delete_reserved_hero(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
-    id: i32
+    id: i32,
 ) -> Result<(), Error> {
     Ok(reserve_heroes_repo.delete_hero(id).await?)
 }
@@ -60,7 +72,7 @@ pub async fn delete_reserved_hero(
 pub async fn add_skill(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     id: i32,
-    slot: i32
+    slot: i32,
 ) -> Result<BaseSkill, Error> {
     Ok(reserve_heroes_repo.add_skill(id, slot).await?)
 }
@@ -69,7 +81,7 @@ pub async fn add_skill(
 pub async fn remove_skill(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     id: i32,
-    slot: i32
+    slot: i32,
 ) -> Result<(), Error> {
     Ok(reserve_heroes_repo.remove_skill(id, slot).await?)
 }
@@ -79,7 +91,7 @@ pub async fn update_skill(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     id: i32,
     slot: i32,
-    skill: BaseSkill
+    skill: BaseSkill,
 ) -> Result<(), Error> {
     Ok(reserve_heroes_repo.update_skill(id, slot, skill).await?)
 }
@@ -87,7 +99,7 @@ pub async fn update_skill(
 #[tauri::command]
 pub async fn load_perks(
     scaner_repo: State<'_, ScanerService>,
-    skill: String
+    skill: String,
 ) -> Result<Vec<SkillDBModel>, Error> {
     Ok(scaner_repo.get_perks_for_skill(skill).await?)
 }
@@ -95,7 +107,7 @@ pub async fn load_perks(
 #[tauri::command]
 pub async fn load_spells(
     scaner_repo: State<'_, ScanerService>,
-    school: MagicSchoolType
+    school: MagicSchoolType,
 ) -> Result<Vec<SpellDBModel>, Error> {
     Ok(scaner_repo.get_spells_for_school(school).await?)
 }
@@ -104,7 +116,7 @@ pub async fn load_spells(
 pub async fn add_spell(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     id: i32,
-    spell: String
+    spell: String,
 ) -> Result<(), Error> {
     Ok(reserve_heroes_repo.add_spell(id, spell).await?)
 }
@@ -113,7 +125,7 @@ pub async fn add_spell(
 pub async fn remove_spell(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     id: i32,
-    spell: String
+    spell: String,
 ) -> Result<(), Error> {
     Ok(reserve_heroes_repo.remove_spell(id, spell).await?)
 }
@@ -122,7 +134,9 @@ pub async fn remove_spell(
 pub async fn update_favorite_enemies(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
     id: i32,
-    enemies: Vec<String>
+    enemies: Vec<String>,
 ) -> Result<(), Error> {
-    Ok(reserve_heroes_repo.update_favorite_enemies(id, enemies).await?)
+    Ok(reserve_heroes_repo
+        .update_favorite_enemies(id, enemies)
+        .await?)
 }
