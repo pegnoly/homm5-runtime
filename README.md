@@ -1,6 +1,7 @@
 Homm5Runtime is a set of tools for Homm5 map editor designed to expand its functionality.
 It includes:
 - A LOT of code generation possibilities. Runtime has modules to generate lua code for in-game heroes configuration, banks parameters, dialogs and more.
+- Google sheets documentation synchonization for some types of generatable objects, like fight assets.
 - Map objects detection and modification.
 - Powerful files parser with both database and lua scripts output.
 - In-game dialog generator.
