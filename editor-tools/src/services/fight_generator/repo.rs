@@ -17,7 +17,7 @@ use super::{
 use crate::{
     error::EditorToolsError,
     prelude::{
-        ArmyStatGenerationModel, AssetArmySlotModel, InitFightAssetPayload,
+        ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, InitFightAssetPayload,
         UpdateFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload,
         UpdateStackTiersPayload, UpdateStackTownsPayload,
     },
@@ -68,7 +68,7 @@ impl FightGeneratorRepo {
             path_to_generate: Set(payload.path_to_generate.clone()),
             name: Set(payload.name.clone()),
             id: Set(Uuid::new_v4()),
-            sheet_id: Set(Some(payload.sheet_id))
+            sheet_id: Set(Some(payload.sheet_id)),
         };
         let res = asset::Entity::insert(model_to_insert)
             .exec_with_returning(&self.db)
@@ -131,7 +131,7 @@ impl FightGeneratorRepo {
             },
             required: Set(RequiredArtifacts::default()),
             optional: Set(OptionalArtifacts::default()),
-            sheet_id: Set(None)
+            sheet_id: Set(Some(payload.sheet_id)),
         };
         Ok(model_to_insert.insert(&self.db).await?)
     }
@@ -591,12 +591,22 @@ impl FightGeneratorRepo {
         Ok(updated_slots)
     }
 
-    pub async fn update_artifacts_asset(&self, asset_id: i32, sheet_id: i32) -> Result<(), EditorToolsError> {
-        if let Some(existing_asset) = artifacts::Entity::find_by_id(asset_id).one(&self.db).await? {
+    pub async fn update_artifacts_asset_sheet(
+        &self,
+        asset_id: i32,
+        sheet_id: i32,
+    ) -> Result<AssetArtifactsModel, EditorToolsError> {
+        if let Some(existing_asset) = artifacts::Entity::find_by_id(asset_id)
+            .one(&self.db)
+            .await?
+        {
             let mut model_to_update = existing_asset.into_active_model();
             model_to_update.sheet_id = Set(Some(sheet_id));
-            model_to_update.update(&self.db).await?;  
+            Ok(model_to_update.update(&self.db).await?)
+        } else {
+            Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound(
+                "Artifacts asset".to_string(),
+            )))
         }
-        Ok(())
     }
 }

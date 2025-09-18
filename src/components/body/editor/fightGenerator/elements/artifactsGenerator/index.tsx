@@ -9,8 +9,8 @@ import RequiredArtifactsList from "./required"
 import OptionalArtifactsList from "./optional"
 import { UUID } from "crypto"
 import { Button } from "@mantine/core"
-import { useFightAssetId } from "../../store"
 import { invoke } from "@tauri-apps/api/core"
+import { useEffect } from "react"
 
 function useArtifactsAsset(assetId: UUID) {
     return useQuery({
@@ -23,15 +23,8 @@ function useArtifactsAsset(assetId: UUID) {
 
 function FightAssetArtifactsGenerator({assetId}: {assetId: UUID}) {
     const actions = useCurrentArtifactsActions();
-    const mainAssetId = useFightAssetId();
     const artifactsAssetId = useCurrentArtifactsAssetId();
     const sheetId = useArtifactsSheetId();
-
-    const { data } = useArtifactsAsset(assetId);
-    console.log("Data: ", data);
-    if (data != undefined) {
-        actions.loadAsset(data);
-    }
 
     async function assetCreated(value: FightAssetArtifactsModel) {
         actions.loadAsset(value);
@@ -39,10 +32,10 @@ function FightAssetArtifactsGenerator({assetId}: {assetId: UUID}) {
 
     const associateSheetMutation = useMutation({
         mutationFn: async() => {
-            return invoke<number>("add_artifacts_data_to_asset_sheet", {assetId: mainAssetId, artAssetId: artifactsAssetId});
+            return invoke<FightAssetArtifactsModel>("add_artifacts_data_to_asset_sheet", {assetId: assetId, artAssetId: artifactsAssetId});
         },
         onSuccess(data, _variables, _context) {
-            actions.updateSheetId(data);
+            actions.loadAsset(data);
         },
     })
 
@@ -70,8 +63,22 @@ function FightAssetArtifactsGenerator({assetId}: {assetId: UUID}) {
                 </div>
             </div>
         }
+        <ArtifactAssetLoader id={assetId}/>
     </div>
     )
+}
+
+function ArtifactAssetLoader({id}: {id: UUID}) {
+    const actions = useCurrentArtifactsActions();
+    const { data } = useArtifactsAsset(id);
+
+    useEffect(() => {
+        if (data != undefined) {
+            actions.loadAsset(data);
+        }
+    }, [data]);
+
+    return null;
 }
 
 export default FightAssetArtifactsGenerator;

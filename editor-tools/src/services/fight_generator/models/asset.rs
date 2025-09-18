@@ -10,7 +10,7 @@ pub struct Model {
     pub name: String,
     pub path_to_generate: String,
     pub table_name: String,
-    pub sheet_id: Option<i32>
+    pub sheet_id: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

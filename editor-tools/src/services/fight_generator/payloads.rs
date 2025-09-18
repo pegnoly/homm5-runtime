@@ -62,6 +62,7 @@ impl UpdateFightAssetPayload {
 pub struct InitAssetArtifactsDataPayload {
     pub asset_id: Uuid,
     pub generation_type: AssetGenerationType,
+    pub sheet_id: i32
 }
 
 pub struct UpdateArtifactsGenerationTypePayload {
