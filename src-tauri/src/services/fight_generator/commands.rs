@@ -1,6 +1,6 @@
 use crate::{
     error::Error,
-    services::fight_generator::utils::{ArmySlotsConverter, SheetToArmyAssetsConverter},
+    services::fight_generator::utils::{ArmySlotsConverter, ArtifactsAssetConverter, SheetToArmyAssetsConverter},
     utils::LocalAppManager,
 };
 use editor_tools::prelude::{
@@ -894,6 +894,7 @@ pub async fn push_to_sheet(
 pub async fn add_artifacts_data_to_asset_sheet(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     sheets_connector_repo: State<'_, SheetsConnectorService>,
+    scaner_repo: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
     art_asset_id: i32,
@@ -914,5 +915,8 @@ pub async fn add_artifacts_data_to_asset_sheet(
         .await
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     let updated_asset = fight_generator_repo.update_artifacts_asset_sheet(art_asset_id, asset.sheet_id.unwrap()).await?;
+    let artifacts = scaner_repo.get_artifact_models().await?;
+    let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
+    sheets_connector_repo.upload_to_sheet(spreadsheet_id, updated_asset.clone(), converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     Ok(updated_asset)
 }

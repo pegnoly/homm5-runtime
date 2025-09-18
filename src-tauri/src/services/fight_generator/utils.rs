@@ -1,12 +1,9 @@
 use std::collections::HashMap;
 
 use editor_tools::prelude::{
-    ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule,
-    ArmySlotGenerationRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode,
-    ArmyStatGenerationModel, AssetArmySlotModel, AssetGenerationType, CreatureIds, CreatureTiers,
-    CreatureTowns, DifficultyMappedValue, DifficultyType,
+    ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotGenerationRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, CreatureIds, CreatureTiers, CreatureTowns, DifficultyMappedValue, DifficultyType
 };
-use homm5_scaner::prelude::{CreatureDBModel, Town};
+use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, Town};
 use itertools::Itertools;
 use serde_json::Number;
 use sheets_connector::{error::Error, prelude::ValueRange, utils::*};
@@ -692,5 +689,48 @@ impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
             )),
             values: Some(data),
         })
+    }
+}
+
+pub struct ArtifactsAssetConverter<'a> {
+    pub sheet_name: &'a String,
+    pub artifacts_data: &'a Vec<ArtifactDBModel>,
+}
+
+impl IntoSheetsData<ValueRange> for ArtifactsAssetConverter<'_> {
+    type Input = AssetArtifactsModel; 
+
+    fn convert_into_sheets_data(&self, source: AssetArtifactsModel) -> Result<ValueRange, Error> {
+        let mut data: Vec<Vec<serde_json::Value>> = vec![];
+        data.push(vec![serde_json::Value::String(source.required.ids.iter()
+            .map(|id| {
+                format!("{} [{}]", &self.artifacts_data.iter().find(|art| art.id == *id).unwrap().name, id)
+            })
+            .join(","))]);
+
+        data.push(vec![serde_json::Value::String(String::with_capacity(0))]);
+
+        ArtifactSlotType::iter()
+            .filter(|slot| *slot != ArtifactSlotType::Inventory)
+            .for_each(|slot| {
+                data.push(vec![serde_json::Value::String(self.artifacts_data.iter()
+                    .filter(|art| source.optional.values.get(&slot).unwrap_or(&vec![]).contains(&art.id))
+                    .map(|art| {
+                        let mut updated_name = art.name.clone();
+                        let updated_name = updated_name.drain(3..).collect::<String>();
+                        format!("{} [{}]", updated_name, art.id)
+                    })
+                    .join(",")
+                )]);
+            });
+        
+        let values = ValueRange {
+            major_dimension: Some("ROWS".to_string()),
+            range: Some(format!("{}!B27:B37", self.sheet_name)),
+            values: Some(data)
+        };
+
+        // println!("Values generated: {:#?}", &values);
+        Ok(values)
     }
 }
