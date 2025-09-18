@@ -3,7 +3,7 @@ pub use super::army_slot::{
     ArmySlotStackUnitGenerationMode, CreatureIds, CreatureTiers, CreatureTowns,
     Model as AssetArmySlotModel,
 };
-pub use super::artifacts::Model as AssetArtifactsModel;
+pub use super::artifacts::{Model as AssetArtifactsModel, RequiredArtifacts, OptionalArtifacts};
 pub use super::asset::Model as AssetModel;
 pub use super::common::DifficultyMappedValue;
 pub use super::stat_generation::{

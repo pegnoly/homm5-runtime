@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use editor_tools::prelude::{
-    ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotGenerationRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, CreatureIds, CreatureTiers, CreatureTowns, DifficultyMappedValue, DifficultyType
+    ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotGenerationRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, CreatureIds, CreatureTiers, CreatureTowns, DifficultyMappedValue, DifficultyType, OptionalArtifacts, RequiredArtifacts
 };
 use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, Town};
 use itertools::Itertools;
@@ -734,3 +734,107 @@ impl IntoSheetsData<ValueRange> for ArtifactsAssetConverter<'_> {
         Ok(values)
     }
 }
+
+pub struct SheetToArtifactAssetConverter {
+
+}
+
+impl FromSheetValueRange for SheetToArtifactAssetConverter {
+    type Output = AssetArtifactsModel;
+
+    fn convert_from_value_range(&self, values: ValueRange) -> Result<AssetArtifactsModel, Error> {
+        if let Some(values) = values.values {
+            if let Some(data) = values.first() {
+                let required_artifacts = if let Some(required_artifacts_data) = data.first() {
+                    match required_artifacts_data {
+                        serde_json::Value::String(data) => {
+                            if data.is_empty() {
+                                Ok(RequiredArtifacts { ids: vec![] })
+                            } else {
+                                let artifacts_strings_list = data.split(",").collect_vec();
+                                Ok(RequiredArtifacts {
+                                    ids: Vec::from_iter(
+                                        artifacts_strings_list
+                                            .iter()
+                                            .filter_map(|c| {
+                                                let parts: Vec<&str> = c.split('[').collect();
+                                                if parts.len() > 1 {
+                                                    parts[1].split(']').next()
+                                                } else {
+                                                    None
+                                                }
+                                            })
+                                            .collect_vec()
+                                            .iter()
+                                            .filter_map(|c| c.parse::<i32>().ok()),
+                                    ),
+                                })
+                            }
+                        },
+                        _ => Err(Error::UndefinedValue(
+                            "Sheet data conversion: required artifacts".to_string(),
+                        )),
+                    }
+                } else {
+                    Err(Error::UndefinedValue(
+                        "Sheet data conversion: required artifacts".to_string(),
+                    ))
+                }?;
+
+                let optional_artifacts = if let Some(optional_artifacts_data) = data.get(2..11) {
+                    Ok(OptionalArtifacts {
+                        values: HashMap::from_iter(
+                            optional_artifacts_data.iter().enumerate()
+                                .filter_map(|(index, value)| {
+                                    let data = match value {
+                                        serde_json::Value::String(s) => s,
+                                        _ => return None,
+                                    };
+                                    let numbers = data
+                                        .split(',')
+                                        .filter_map(|c| {
+                                            let parts: Vec<&str> = c.split('[').collect();
+                                            if parts.len() > 1 {
+                                                parts[1].split(']').next()
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .collect_vec()
+                                        .iter()
+                                        .filter_map(|c| c.parse::<i32>().ok())
+                                        .collect_vec();
+                                    Some((ArtifactSlotType::from_repr(index).unwrap(), numbers))
+                                })
+                        )
+                    })
+                } else {
+                    Err(Error::UndefinedValue(
+                        "Sheet data conversion: optional artifacts".to_string(),
+                    ))
+                }?;
+
+                let model = AssetArtifactsModel {
+                    asset_id: Uuid::new_v4(),
+                    id: 1,
+                    generation_type: AssetGenerationType::Dynamic,
+                    base_powers: DifficultyMappedValue::default(),
+                    powers_grow: None,
+                    required: required_artifacts,
+                    optional: optional_artifacts,
+                    sheet_id: None
+                };
+                Ok(model)
+            } else {
+                Err(Error::UndefinedValue(
+                    "Sheet data conversion: artifacts".to_string(),
+                ))
+            }
+        } else {
+            Err(Error::UndefinedValue(
+                "Sheet data conversion: artifacts".to_string(),
+            ))
+        }
+    }
+}
+

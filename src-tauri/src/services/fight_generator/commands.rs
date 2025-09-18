@@ -1,6 +1,6 @@
 use crate::{
     error::Error,
-    services::fight_generator::utils::{ArmySlotsConverter, ArtifactsAssetConverter, SheetToArmyAssetsConverter},
+    services::fight_generator::utils::{ArmySlotsConverter, ArtifactsAssetConverter, SheetToArmyAssetsConverter, SheetToArtifactAssetConverter},
     utils::LocalAppManager,
 };
 use editor_tools::prelude::{
@@ -846,12 +846,20 @@ pub async fn pull_from_sheet(
         .await
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
 
-    println!("Got values from sheet: {:#?}", &values);
+    let artifacts_values = sheets_connector_repo
+        .read_from_sheet(
+            spreadsheet_id, 
+            asset.sheet_id.unwrap(), "B27:B37", SheetToArtifactAssetConverter {} ).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;;
+
+    // println!("Got values from sheet: {:#?}", &values);
+    println!("Got artifacts data from sheet: {:#?}", &artifacts_values);
+    panic!("Temp");
     let updated_slots = fight_generator_repo
         .update_synced_army_slots(values)
         .await?;
     Ok(updated_slots)
 }
+
 
 #[tauri::command]
 pub async fn push_to_sheet(

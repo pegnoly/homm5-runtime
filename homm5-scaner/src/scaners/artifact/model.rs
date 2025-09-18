@@ -3,7 +3,7 @@ use std::str::FromStr;
 use homm5_types::art::AdvMapArtifactShared;
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumString};
+use strum_macros::{Display, EnumString, FromRepr};
 
 use crate::core::{ToJsonCompatibleString, ToLua};
 
@@ -28,6 +28,7 @@ pub struct Model {
     DeriveActiveEnum,
     EnumIter,
     EnumString,
+    FromRepr,
     PartialEq,
     Eq,
     Clone,
