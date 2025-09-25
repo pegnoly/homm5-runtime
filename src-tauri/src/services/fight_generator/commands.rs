@@ -4,15 +4,7 @@ use crate::{
     utils::LocalAppManager,
 };
 use editor_tools::prelude::{
-    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload,
-    AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule,
-    ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel,
-    AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType,
-    FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload,
-    RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload,
-    UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload,
-    UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload,
-    UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload,
+    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateArtifactsAssetPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
 };
 use homm5_scaner::prelude::{
     AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town,
@@ -38,14 +30,14 @@ pub async fn pick_hero_lua_generation_directory(
     app: AppHandle,
     app_manager: State<'_, LocalAppManager>,
 ) -> Result<(), ()> {
-    let base_config_locked = app_manager.base_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let current_map_id = app_manager
         .runtime_config
         .read()
         .await
         .current_selected_map
         .unwrap();
-    let map = base_config_locked
+    let map = profile
         .maps
         .iter()
         .find(|m| m.id == current_map_id)
@@ -71,12 +63,12 @@ pub async fn init_new_asset(
     path: String,
     table_name: String,
 ) -> Result<AssetModel, Error> {
-    let base_config_locked = app_manager.base_config.read().await;
     let runtime_config_locked = app_manager.runtime_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let current_map_id = runtime_config_locked
         .current_selected_map
         .ok_or(Error::UndefinedData("Current map id".to_string()))?;
-    let map_data = base_config_locked
+    let map_data = profile
         .maps
         .iter()
         .find(|map| map.id == current_map_id)
@@ -151,12 +143,12 @@ pub async fn create_artifacts_data_for_asset(
     asset_id: Uuid,
     generation_type: AssetGenerationType,
 ) -> Result<AssetArtifactsModel, Error> {
-    let base_config_locked = app_manager.base_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let asset = fight_generator_repo
         .get_asset(asset_id)
         .await?
         .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-    let spreadsheet_id = &base_config_locked
+    let spreadsheet_id = &profile
         .maps
         .iter()
         .find(|map| (map.id as i32) == asset.mission_id)
@@ -742,7 +734,7 @@ end
 
             if artifacts_asset.generation_type == AssetGenerationType::Dynamic {
                 script += "\tartifacts_costs_grow = {\n";
-                for (difficulty, cost) in artifacts_asset.powers_grow.unwrap().data {
+                for (difficulty, cost) in artifacts_asset.powers_grow.data {
                     script += &format!("\t\t[{difficulty}] = {cost},\n");
                 }
                 script.push_str("\t},\n\n");
@@ -763,13 +755,13 @@ pub async fn create_sheet_for_existing_asset(
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
 ) -> Result<SheetId, Error> {
-    let base_config_locked = app_manager.base_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let asset = fight_generator_repo
         .get_asset(asset_id)
         .await?
         .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
     let creatures = scaner_repo.get_all_creature_models().await?;
-    let spreadsheet_id = &base_config_locked
+    let spreadsheet_id = &profile
         .maps
         .iter()
         .find(|map| (map.id as i32) == asset.mission_id)
@@ -807,7 +799,7 @@ pub async fn pull_from_sheet(
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
 ) -> Result<Vec<AssetArmySlotModel>, Error> {
-    let base_config_locked = app_manager.base_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let asset = fight_generator_repo
         .get_asset(asset_id)
         .await?
@@ -816,7 +808,7 @@ pub async fn pull_from_sheet(
         .get_stacks_count_for_asset(asset_id)
         .await?;
 
-    let spreadsheet_id = &base_config_locked
+    let spreadsheet_id = &profile
         .maps
         .iter()
         .find(|map| (map.id as i32) == asset.mission_id)
@@ -846,20 +838,47 @@ pub async fn pull_from_sheet(
         .await
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
 
-    let artifacts_values = sheets_connector_repo
-        .read_from_sheet(
-            spreadsheet_id, 
-            asset.sheet_id.unwrap(), "B27:B37", SheetToArtifactAssetConverter {} ).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;;
-
-    // println!("Got values from sheet: {:#?}", &values);
-    println!("Got artifacts data from sheet: {:#?}", &artifacts_values);
-    panic!("Temp");
     let updated_slots = fight_generator_repo
         .update_synced_army_slots(values)
         .await?;
+
     Ok(updated_slots)
 }
 
+#[tauri::command]
+pub async fn pull_artifacts_data_from_sheet(
+    fight_generator_repo: State<'_, FightGeneratorRepo>,
+    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    app_manager: State<'_, LocalAppManager>,
+    asset_id: Uuid,
+) -> Result<AssetArtifactsModel, Error> {
+    let profile = app_manager.current_profile_data.read().await;
+    let asset = fight_generator_repo
+        .get_asset(asset_id)
+        .await?
+        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
+
+    let spreadsheet_id = &profile
+        .maps
+        .iter()
+        .find(|map| (map.id as i32) == asset.mission_id)
+        .ok_or(Error::UndefinedData(String::from("Current map")))?
+        .fights_spreadsheet_id;
+
+    let converted_model = sheets_connector_repo
+        .read_from_sheet(
+            spreadsheet_id, 
+            asset.sheet_id.unwrap(), "B27:D37", SheetToArtifactAssetConverter {} ).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    let updated_model = fight_generator_repo
+        .update_artifacts_asset(
+            UpdateArtifactsAssetPayload::new(asset_id)
+                .with_base_values(converted_model.values)
+                .with_values_grow(converted_model.grow)
+                .with_optional(converted_model.optional)
+                .with_required(converted_model.required)
+        ).await?;
+    Ok(updated_model)
+}
 
 #[tauri::command]
 pub async fn push_to_sheet(
@@ -869,13 +888,13 @@ pub async fn push_to_sheet(
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
 ) -> Result<(), Error> {
-    let base_config_locked = app_manager.base_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let asset = fight_generator_repo
         .get_asset(asset_id)
         .await?
         .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
     let creatures = scaner_repo.get_all_creature_models().await?;
-    let spreadsheet_id = &base_config_locked
+    let spreadsheet_id = &profile
         .maps
         .iter()
         .find(|map| (map.id as i32) == asset.mission_id)
@@ -905,14 +924,13 @@ pub async fn add_artifacts_data_to_asset_sheet(
     scaner_repo: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
-    art_asset_id: i32,
 ) -> Result<AssetArtifactsModel, Error> {
-    let base_config_locked = app_manager.base_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let asset = fight_generator_repo
         .get_asset(asset_id)
         .await?
         .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-    let spreadsheet_id = &base_config_locked
+    let spreadsheet_id = &profile
         .maps
         .iter()
         .find(|map| (map.id as i32) == asset.mission_id)
@@ -922,7 +940,7 @@ pub async fn add_artifacts_data_to_asset_sheet(
         .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetId": asset.sheet_id.unwrap()}))
         .await
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
-    let updated_asset = fight_generator_repo.update_artifacts_asset_sheet(art_asset_id, asset.sheet_id.unwrap()).await?;
+    let updated_asset = fight_generator_repo.update_artifacts_asset(UpdateArtifactsAssetPayload::new(asset_id).with_sheet(asset.sheet_id.unwrap())).await?;
     let artifacts = scaner_repo.get_artifact_models().await?;
     let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
     sheets_connector_repo.upload_to_sheet(spreadsheet_id, updated_asset.clone(), converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;

@@ -13,7 +13,7 @@ pub struct Model {
     pub asset_id: Uuid,
     pub generation_type: AssetGenerationType,
     pub base_powers: DifficultyMappedValue,
-    pub powers_grow: Option<DifficultyMappedValue>,
+    pub powers_grow: DifficultyMappedValue,
     pub required: RequiredArtifacts,
     pub optional: OptionalArtifacts,
     pub sheet_id: Option<i32>,

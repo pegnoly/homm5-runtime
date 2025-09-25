@@ -1,6 +1,8 @@
 use homm5_scaner::prelude::{ArtifactSlotType, Town};
 use sea_orm::prelude::Uuid;
 
+use crate::prelude::{DifficultyMappedValue, OptionalArtifacts, RequiredArtifacts};
+
 use super::{
     models::{
         army_slot::{
@@ -193,6 +195,50 @@ impl UpdateGenerationStatElementPayload {
 
     pub fn with_stats(mut self, stats: Vec<ArmyGenerationStatParam>) -> Self {
         self.stats = Some(stats);
+        self
+    }
+}
+
+#[derive(Default)]
+pub struct UpdateArtifactsAssetPayload {
+    pub asset_id: Uuid,
+    pub required: Option<RequiredArtifacts>,
+    pub optional: Option<OptionalArtifacts>,
+    pub base_values: Option<DifficultyMappedValue>,
+    pub values_grow: Option<DifficultyMappedValue>,
+    pub sheet_id: Option<i32>
+}
+
+impl UpdateArtifactsAssetPayload {
+    pub fn new(asset_id: Uuid) -> Self {
+        UpdateArtifactsAssetPayload {
+            asset_id,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_base_values(mut self, base: DifficultyMappedValue) -> Self {
+        self.base_values = Some(base);
+        self
+    }
+
+    pub fn with_values_grow(mut self, grow: DifficultyMappedValue) -> Self {
+        self.values_grow = Some(grow);
+        self
+    }
+
+    pub fn with_optional(mut self, optional: OptionalArtifacts) -> Self {
+        self.optional = Some(optional);
+        self
+    }
+
+    pub fn with_required(mut self, required: RequiredArtifacts) -> Self {
+        self.required = Some(required);
+        self
+    }
+
+    pub fn with_sheet(mut self, sheet_id: i32) -> Self {
+        self.sheet_id = Some(sheet_id);
         self
     }
 }

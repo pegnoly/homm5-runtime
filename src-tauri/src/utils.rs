@@ -1,12 +1,11 @@
-use crate::error::Error;
+use crate::{error::Error, profiles::{ProfileConfig, ProfileType}};
 use map_modifier::{
-    Map, MapData,
+    MapData,
     artifacts::ArtifactConfigEntity,
     buildings::{BankConfigEntity, BuildingConfigEntity},
 };
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
     io::Write,
     path::{Path, PathBuf},
 };
@@ -14,18 +13,12 @@ use tokio::sync::RwLock;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalConfig {
+    pub current_profile: ProfileType,
     pub generic_hero_xdb: Option<String>,
     pub generic_icon_128: Option<String>,
     pub generic_icon_dds: Option<String>,
     pub session_configs_path: Option<String>,
-    pub exe_name: String,
-    pub bin_path: String,
-    pub data_path: String,
-    pub mod_path: String,
-    pub texts_path: String,
-    pub repackers: HashMap<String, RepackerPathsData>,
-    pub maps: Vec<Map>,
-    pub auth_path: PathBuf,
+    pub auth_path: PathBuf
 }
 
 impl GlobalConfig {
@@ -125,6 +118,7 @@ pub struct LocalAppManager {
     pub base_config: RwLock<GlobalConfig>,
     pub runtime_config: RwLock<RuntimeConfig>,
     pub modifiers_config: RwLock<ModifiersConfig>,
+    pub current_profile_data: RwLock<ProfileConfig>
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]

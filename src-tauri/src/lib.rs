@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::{error::Error, profiles::ProfileConfig};
 use editor_tools::prelude::{
     BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo, QuestGeneratorRepo,
     ReserveHeroCreatorRepo,
@@ -15,6 +15,7 @@ mod commands;
 pub mod error;
 mod services;
 mod utils;
+mod profiles;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() -> Result<(), Error> {
@@ -22,11 +23,12 @@ pub async fn run() -> Result<(), Error> {
     let cfg_path = exe_path.parent().unwrap().join("cfg\\");
 
     let global_config = GlobalConfig::new(&cfg_path)?;
+    let current_profile = global_config.current_profile;
     let runtime_config = RuntimeConfig::new(&cfg_path)?;
     let modifiers_config = ModifiersConfig::new(&cfg_path)?;
     let data_container = DataContainer::new(&cfg_path)?;
 
-    let db_path = cfg_path.join("runtime_database.db");
+    let db_path = cfg_path.join(format!("{}\\runtime_database.db", &current_profile));
     if !db_path.exists() {
         std::fs::File::create(&db_path).unwrap();
     }
@@ -34,6 +36,8 @@ pub async fn run() -> Result<(), Error> {
     let pool = sqlx::SqlitePool::connect(db_path.to_str().unwrap())
         .await
         .unwrap();
+
+    let current_profile = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(cfg_path.join(format!("{}\\profile.json", &current_profile)))?)?;
     //sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
     let quest_generator_repo = QuestGeneratorRepo::new(pool.clone());
@@ -50,6 +54,7 @@ pub async fn run() -> Result<(), Error> {
             base_config: RwLock::new(global_config),
             runtime_config: RwLock::new(runtime_config),
             modifiers_config: RwLock::new(modifiers_config),
+            current_profile_data: RwLock::new(current_profile)
         })
         .manage(quest_generator_repo)
         .manage(dialog_generator_repo)
@@ -73,6 +78,7 @@ pub async fn run() -> Result<(), Error> {
             commands::select_map,
             commands::apply_modifications,
             commands::create_hero,
+            commands::switch_profile,
             // quest commands
             load_quests,
             load_quest,

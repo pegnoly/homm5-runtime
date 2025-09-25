@@ -10,7 +10,7 @@ use tauri_plugin_dialog::DialogExt;
 
 use crate::{
     error::Error,
-    utils::{GlobalConfig, LocalAppManager},
+    utils::LocalAppManager,
 };
 
 #[tauri::command]
@@ -73,8 +73,8 @@ pub async fn pick_quest_directory(
         .current_selected_map
         .unwrap();
 
-    let base_config_locked = app_manager.base_config.read().await;
-    let map = base_config_locked
+    let profile = app_manager.current_profile_data.read().await;
+    let map = profile
         .maps
         .iter()
         .find(|m| m.id == current_map_id)
@@ -199,14 +199,14 @@ pub async fn save_progress(
 
 #[tauri::command]
 pub async fn save_quest_text(
-    config: State<'_, GlobalConfig>,
+    app_manager: State<'_, LocalAppManager>,
     quest_directory: String,
     text_name: String,
     text: String,
 ) -> Result<(), ()> {
-    let dir_relative_path = quest_directory.replace(&config.mod_path, "");
-    println!("Directory relative path: {}", &dir_relative_path);
-    let text_directory = format!("{}{}\\Texts\\", &config.texts_path, &dir_relative_path);
+    let profile = app_manager.current_profile_data.read().await;
+    let dir_relative_path = quest_directory.replace(&profile.mod_path, "");
+    let text_directory = format!("{}{}\\Texts\\", &profile.texts_path, &dir_relative_path);
     std::fs::create_dir_all(&text_directory).unwrap();
     let mut file = std::fs::File::create(format!("{}{}.txt", &text_directory, &text_name)).unwrap();
     write_quest_text_file(&mut file, text);

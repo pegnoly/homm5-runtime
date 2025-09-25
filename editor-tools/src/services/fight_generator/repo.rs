@@ -17,9 +17,7 @@ use super::{
 use crate::{
     error::EditorToolsError,
     prelude::{
-        ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, InitFightAssetPayload,
-        UpdateFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload,
-        UpdateStackTiersPayload, UpdateStackTownsPayload,
+        ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, InitFightAssetPayload, UpdateArtifactsAssetPayload, UpdateFightAssetPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
     },
     services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns},
 };
@@ -125,10 +123,7 @@ impl FightGeneratorRepo {
             asset_id: Set(payload.asset_id),
             generation_type: Set(payload.generation_type.clone()),
             base_powers: Set(DifficultyMappedValue::default()),
-            powers_grow: match payload.generation_type {
-                AssetGenerationType::Static => Set(None),
-                AssetGenerationType::Dynamic => Set(Some(DifficultyMappedValue::default())),
-            },
+            powers_grow: Set(DifficultyMappedValue::default()),
             required: Set(RequiredArtifacts::default()),
             optional: Set(OptionalArtifacts::default()),
             sheet_id: Set(Some(payload.sheet_id)),
@@ -179,11 +174,11 @@ impl FightGeneratorRepo {
             .await?
         {
             let mut model_to_update = existing_model.clone().into_active_model();
-            let mut powers_grow_to_update = existing_model.powers_grow.unwrap().clone();
+            let mut powers_grow_to_update = existing_model.powers_grow.clone();
             if let Some(power) = powers_grow_to_update.data.get_mut(&payload.difficulty) {
                 *power = payload.value;
             }
-            model_to_update.powers_grow = Set(Some(powers_grow_to_update));
+            model_to_update.powers_grow = Set(powers_grow_to_update);
             model_to_update.update(&self.db).await?;
         }
         Ok(())
@@ -591,17 +586,31 @@ impl FightGeneratorRepo {
         Ok(updated_slots)
     }
 
-    pub async fn update_artifacts_asset_sheet(
+    pub async fn update_artifacts_asset(
         &self,
-        asset_id: i32,
-        sheet_id: i32,
+        payload: UpdateArtifactsAssetPayload
     ) -> Result<AssetArtifactsModel, EditorToolsError> {
-        if let Some(existing_asset) = artifacts::Entity::find_by_id(asset_id)
+        if let Some(existing_asset) = artifacts::Entity::find()
+            .filter(artifacts::Column::AssetId.eq(payload.asset_id))
             .one(&self.db)
             .await?
         {
             let mut model_to_update = existing_asset.into_active_model();
-            model_to_update.sheet_id = Set(Some(sheet_id));
+            if let Some(sheet_id) = payload.sheet_id {
+                model_to_update.sheet_id = Set(Some(sheet_id));
+            }
+            if let Some(base_values) = payload.base_values {
+                model_to_update.base_powers = Set(base_values);
+            }
+            if let Some(values_grow) = payload.values_grow {
+                model_to_update.powers_grow = Set(values_grow);
+            }
+            if let Some(required) = payload.required {
+                model_to_update.required = Set(required);
+            }
+            if let Some(optional) = payload.optional {
+                model_to_update.optional = Set(optional);
+            }
             Ok(model_to_update.update(&self.db).await?)
         } else {
             Err(EditorToolsError::SeaOrm(sea_orm::DbErr::RecordNotFound(

@@ -46,12 +46,12 @@ pub async fn generate_creatures(
     models: Vec<CreatableCreatureModel>,
     selected_abilities: Vec<i32>,
 ) -> Result<(), Error> {
+    let profile = app_manager.current_profile_data.read().await;
     let creatures_data = scaner_repo.get_all_creature_models().await?;
     let abilities_data = scaner_repo.get_abilities().await?;
-    let base_config_locked = app_manager.base_config.read().await;
     let generation_path = format!(
         "{}GOG_Mod\\GameMechanics\\Creature\\Creatures\\Neutrals\\",
-        &base_config_locked.data_path
+        &profile.data_path
     );
 
     for model in &models {

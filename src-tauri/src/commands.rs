@@ -10,6 +10,7 @@ use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
 use tauri::State;
 
+use crate::profiles::{ProfileConfig, ProfileType};
 use crate::DataContainer;
 use crate::error::Error;
 use crate::utils::{LocalAppManager, MapFrontendModel, RepackerFrontendData, RuntimeData};
@@ -19,8 +20,8 @@ pub async fn execute_scan(
     app_manager: State<'_, LocalAppManager>,
     scaner_service: State<'_, ScanerService>,
 ) -> Result<(), Error> {
-    let base_config_locked = app_manager.base_config.read().await;
-    let data_path = PathBuf::from(&base_config_locked.data_path);
+    let profile = app_manager.current_profile_data.read().await;
+    let data_path = PathBuf::from(&profile.data_path);
     let root_folder = data_path.parent().unwrap();
     let maps_path = root_folder.join("Maps\\");
     let mods_path = root_folder.join("UserMODs\\");
@@ -32,12 +33,13 @@ pub async fn execute_scan(
 }
 
 #[tauri::command]
-pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), ()> {
-    let base_config_locked = app_manager.base_config.read().await;
-    let bin_path = &base_config_locked.bin_path;
+pub async fn run_game(
+    app_manager: State<'_, LocalAppManager>,
+) -> Result<(), Error> {
+    let profile = app_manager.current_profile_data.read().await;
     let mut runtime_runner = RuntimeRunner::new(PathBuf::from(format!(
         "{}{}",
-        bin_path, &base_config_locked.exe_name
+        &profile.bin_path, &profile.exe_name
     )));
     runtime_runner.run();
     Ok(())
@@ -45,10 +47,10 @@ pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), ()>
 
 #[tauri::command]
 pub async fn load_repackers(
-    app_manager: State<'_, LocalAppManager>,
-) -> Result<Vec<RepackerFrontendData>, ()> {
-    let base_config_locked = app_manager.base_config.read().await;
-    let repackers_data = base_config_locked
+    app_manager: State<'_, LocalAppManager>
+) -> Result<Vec<RepackerFrontendData>, Error> {
+    let profile = app_manager.current_profile_data.read().await;
+    let repackers_data = profile
         .repackers
         .iter()
         .map(|(key, value)| RepackerFrontendData {
@@ -61,10 +63,10 @@ pub async fn load_repackers(
 
 #[tauri::command]
 pub async fn load_maps(
-    app_manager: State<'_, LocalAppManager>,
-) -> Result<Vec<MapFrontendModel>, ()> {
-    let base_config_locked = app_manager.base_config.read().await;
-    Ok(base_config_locked
+    app_manager: State<'_, LocalAppManager>
+) -> Result<Vec<MapFrontendModel>, Error> {
+    let profile = app_manager.current_profile_data.read().await;
+    Ok(profile
         .maps
         .iter()
         .map(|m| MapFrontendModel {
@@ -80,7 +82,10 @@ pub async fn load_current_map(app_manager: State<'_, LocalAppManager>) -> Result
 }
 
 #[tauri::command]
-pub async fn select_map(app_manager: State<'_, LocalAppManager>, id: u16) -> Result<(), ()> {
+pub async fn select_map(
+    app_manager: State<'_, LocalAppManager>, 
+    id: u16
+) -> Result<(), ()> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     runtime_config_locked.current_selected_map = Some(id);
     let exe_path = std::env::current_exe().unwrap();
@@ -92,8 +97,8 @@ pub async fn select_map(app_manager: State<'_, LocalAppManager>, id: u16) -> Res
     let mut file = std::fs::File::create(&runtime_cfg_path).unwrap();
     file.write_all(new_runtime_data.as_bytes()).unwrap();
 
-    let base_config_locked = app_manager.base_config.read().await;
-    let map = base_config_locked
+    let profile: tokio::sync::RwLockReadGuard<'_, ProfileConfig> = app_manager.current_profile_data.read().await;
+    let map = profile
         .maps
         .iter()
         .find(|m| m.id == runtime_config_locked.current_selected_map.unwrap())
@@ -114,9 +119,10 @@ pub async fn select_map(app_manager: State<'_, LocalAppManager>, id: u16) -> Res
 pub async fn repack(
     app_manager: State<'_, LocalAppManager>,
     repacker_label: String,
-) -> Result<String, ()> {
-    let mut base_config_locked = app_manager.base_config.write().await;
-    if let Some(repacker_data) = base_config_locked.repackers.get_mut(&repacker_label) {
+) -> Result<String, Error> {
+    let mut profile = app_manager.current_profile_data.write().await;
+    let base_config_locked = app_manager.base_config.read().await;
+    if let Some(repacker_data) = profile.repackers.get_mut(&repacker_label) {
         let from = PathBuf::from(&repacker_data.from);
         let to = PathBuf::from(&repacker_data.to);
         let repacker = Repacker::new(from, to);
@@ -125,14 +131,14 @@ pub async fn repack(
             .to_rfc3339_opts(chrono::SecondsFormat::Secs, false)
             .to_string();
         repacker_data.last_update = date.clone();
-        let new_base_config_data = serde_json::to_string_pretty(&*base_config_locked).unwrap();
-        let exe_path = std::env::current_exe().unwrap();
-        let base_cfg_path = exe_path.parent().unwrap().join("cfg\\main.json");
-        let mut file = std::fs::File::create(&base_cfg_path).unwrap();
-        file.write_all(new_base_config_data.as_bytes()).unwrap();
+        let updated_profile_data = serde_json::to_string_pretty(&*profile).unwrap();
+        let exe_path = std::env::current_exe()?;
+        let profile_cfg_path = exe_path.parent().unwrap().join(format!("cfg\\{}\\main.json", base_config_locked.current_profile));
+        let mut file = std::fs::File::create(&profile_cfg_path)?;
+        file.write_all(updated_profile_data.as_bytes())?;
         Ok(date)
     } else {
-        Err(())
+        Err(Error::UndefinedData("Repacker to update".to_string()))
     }
 }
 
@@ -144,14 +150,14 @@ pub async fn apply_modifications(
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
 ) -> Result<(), super::error::Error> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
-    let base_config_locked = app_manager.base_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let current_map_id = runtime_config_locked.current_selected_map.unwrap();
-    let map = base_config_locked
+    let map = profile
         .maps
         .iter()
         .find(|m| m.id == current_map_id)
         .unwrap();
-    let mod_path = &base_config_locked.mod_path;
+    let mod_path = &profile.mod_path;
 
     let mut modifiers_queue = ModifiersQueue::new(
         &data_containter.banks,
@@ -189,7 +195,7 @@ pub async fn apply_modifications(
         let quest = request.generate(Some(&QuestBoilerplateHelper {
             mod_path: mod_path.clone(),
             map_data_path: map.data_path.clone(),
-            texts_path: base_config_locked.texts_path.clone(),
+            texts_path: profile.texts_path.clone(),
         }))?;
         if model.is_secondary {
             modifiers_queue.secondary_quests.push(quest);
@@ -215,6 +221,7 @@ pub async fn apply_modifications(
 #[tauri::command]
 pub async fn create_hero(
     app_manager: State<'_, LocalAppManager>,
+    profile_data: State<'_, ProfileConfig>,
     hero_name: String,
     hero_script_name: String,
     town: Town,
@@ -224,10 +231,25 @@ pub async fn create_hero(
         &PathBuf::from(global_config_locked.generic_hero_xdb.as_ref().unwrap()),
         &PathBuf::from(global_config_locked.generic_icon_128.as_ref().unwrap()),
         &PathBuf::from(global_config_locked.generic_icon_dds.as_ref().unwrap()),
-        format!("{}GOG_Mod\\", &global_config_locked.data_path),
+        format!("{}GOG_Mod\\", &profile_data.data_path),
         town,
         hero_script_name,
         hero_name,
     )?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn switch_profile(
+    app_manager: State<'_, LocalAppManager>,
+    new_profile: ProfileType
+) -> Result<(), Error> {
+    let mut base_config_locked = app_manager.base_config.write().await;
+    let mut profile = app_manager.current_profile_data.write().await; 
+    let exe_path = std::env::current_exe()?;
+    let new_profile_path = exe_path.parent().unwrap().join(format!("cfg\\{new_profile}\\profile.json"));
+    let new_profile_data = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(new_profile_path)?)?;
+    *profile = new_profile_data;
+    base_config_locked.current_profile = new_profile;
     Ok(())
 }

@@ -40,14 +40,14 @@ pub async fn pick_dialog_directory(
     app: AppHandle,
     app_manager: State<'_, LocalAppManager>,
 ) -> Result<(), Error> {
-    let base_config_locked = app_manager.base_config.read().await;
+    let profile = app_manager.current_profile_data.read().await;
     let current_map_id = app_manager
         .runtime_config
         .read()
         .await
         .current_selected_map
         .unwrap();
-    let map = base_config_locked
+    let map = profile
         .maps
         .iter()
         .find(|m| m.id == current_map_id)
@@ -183,6 +183,7 @@ pub async fn generate_dialog(
     dialog_generator_repo: State<'_, DialogGeneratorRepo>,
     dialog_id: i32,
 ) -> Result<(), Error> {
+    let profile = app_manager.current_profile_data.read().await;
     let current_map = app_manager
         .runtime_config
         .read()
@@ -190,8 +191,7 @@ pub async fn generate_dialog(
         .current_selected_map
         .unwrap();
 
-    let base_config_data = app_manager.base_config.read().await;
-    let map_data = base_config_data
+    let map_data = profile
         .maps
         .iter()
         .find(|m| m.id == current_map)
@@ -205,8 +205,8 @@ pub async fn generate_dialog(
         let variants = dialog_generator_repo
             .get_all_variants_for_dialog(dialog_id)
             .await?;
-        let dialog_local_path = dialog.directory.replace(&base_config_data.mod_path, "");
-        let dialog_texts_path = format!("{}\\{}", &base_config_data.texts_path, &dialog_local_path);
+        let dialog_local_path = dialog.directory.replace(&profile.mod_path, "");
+        let dialog_texts_path = format!("{}\\{}", &profile.texts_path, &dialog_local_path);
 
         std::fs::create_dir_all(&dialog_texts_path).unwrap();
 

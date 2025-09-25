@@ -735,14 +735,21 @@ impl IntoSheetsData<ValueRange> for ArtifactsAssetConverter<'_> {
     }
 }
 
-pub struct SheetToArtifactAssetConverter {
+pub struct SheetToArtifactAssetConverter;
 
+#[derive(Default)]
+pub struct ArtifactsFromSheetConvertedModel {
+    pub required: RequiredArtifacts,
+    pub optional: OptionalArtifacts,
+    pub values: DifficultyMappedValue,
+    pub grow: DifficultyMappedValue
 }
 
 impl FromSheetValueRange for SheetToArtifactAssetConverter {
-    type Output = AssetArtifactsModel;
+    type Output = ArtifactsFromSheetConvertedModel;
 
-    fn convert_from_value_range(&self, values: ValueRange) -> Result<AssetArtifactsModel, Error> {
+    fn convert_from_value_range(&self, values: ValueRange) -> Result<ArtifactsFromSheetConvertedModel, Error> {
+        let mut model = ArtifactsFromSheetConvertedModel::default();
         if let Some(values) = values.values {
             if let Some(data) = values.first() {
                 let required_artifacts = if let Some(required_artifacts_data) = data.first() {
@@ -781,6 +788,8 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
                     ))
                 }?;
 
+                model.required = required_artifacts;
+
                 let optional_artifacts = if let Some(optional_artifacts_data) = data.get(2..11) {
                     Ok(OptionalArtifacts {
                         values: HashMap::from_iter(
@@ -814,27 +823,108 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
                     ))
                 }?;
 
-                let model = AssetArtifactsModel {
-                    asset_id: Uuid::new_v4(),
-                    id: 1,
-                    generation_type: AssetGenerationType::Dynamic,
-                    base_powers: DifficultyMappedValue::default(),
-                    powers_grow: None,
-                    required: required_artifacts,
-                    optional: optional_artifacts,
-                    sheet_id: None
-                };
-                Ok(model)
-            } else {
-                Err(Error::UndefinedValue(
-                    "Sheet data conversion: artifacts".to_string(),
-                ))
+                model.optional = optional_artifacts;
             }
-        } else {
-            Err(Error::UndefinedValue(
-                "Sheet data conversion: artifacts".to_string(),
-            ))
+            if let Some(powers_data) = values.last() {
+                let base_powers = if let Some(base_data) = powers_data.get(2..6) {
+                    Ok(DifficultyMappedValue {
+                        data: HashMap::from([
+                            (
+                                DifficultyType::Easy,
+                                base_data[0]
+                                    .as_str()
+                                    .ok_or(Error::UndefinedValue(
+                                        "Sheet data conversion: counts grow".to_string(),
+                                    ))?
+                                    .parse()?,
+                            ),
+                            (
+                                DifficultyType::Medium,
+                                base_data[1]
+                                    .as_str()
+                                    .ok_or(Error::UndefinedValue(
+                                        "Sheet data conversion: counts grow".to_string(),
+                                    ))?
+                                    .parse()?,
+                            ),
+                            (
+                                DifficultyType::Hard,
+                                base_data[2]
+                                    .as_str()
+                                    .ok_or(Error::UndefinedValue(
+                                        "Sheet data conversion: counts grow".to_string(),
+                                    ))?
+                                    .parse()?,
+                            ),
+                            (
+                                DifficultyType::Heroic,
+                                base_data[3]
+                                    .as_str()
+                                    .ok_or(Error::UndefinedValue(
+                                        "Sheet data conversion: counts grow".to_string(),
+                                    ))?
+                                    .parse()?,
+                            ),
+                        ]),
+                    })
+                } else {
+                    Err(Error::UndefinedValue(
+                        "Sheet data conversion: counts grow".to_string(),
+                    ))
+                }?;
+
+                let powers_grow = if let Some(grow_data) = powers_data.get(2..6) {
+                    Ok(DifficultyMappedValue {
+                        data: HashMap::from([
+                            (
+                                DifficultyType::Easy,
+                                grow_data[0]
+                                    .as_str()
+                                    .ok_or(Error::UndefinedValue(
+                                        "Sheet data conversion: counts grow".to_string(),
+                                    ))?
+                                    .parse()?,
+                            ),
+                            (
+                                DifficultyType::Medium,
+                                grow_data[1]
+                                    .as_str()
+                                    .ok_or(Error::UndefinedValue(
+                                        "Sheet data conversion: counts grow".to_string(),
+                                    ))?
+                                    .parse()?,
+                            ),
+                            (
+                                DifficultyType::Hard,
+                                grow_data[2]
+                                    .as_str()
+                                    .ok_or(Error::UndefinedValue(
+                                        "Sheet data conversion: counts grow".to_string(),
+                                    ))?
+                                    .parse()?,
+                            ),
+                            (
+                                DifficultyType::Heroic,
+                                grow_data[3]
+                                    .as_str()
+                                    .ok_or(Error::UndefinedValue(
+                                        "Sheet data conversion: counts grow".to_string(),
+                                    ))?
+                                    .parse()?,
+                            ),
+                        ]),
+                    })
+                } else {
+                    Err(Error::UndefinedValue(
+                        "Sheet data conversion: counts grow".to_string(),
+                    ))
+                }?;
+
+                model.values = base_powers;
+                model.grow = powers_grow;
+            }
         }
+        Ok(model)
     }
 }
 
