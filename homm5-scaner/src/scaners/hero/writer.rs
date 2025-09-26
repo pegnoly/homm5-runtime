@@ -1,5 +1,6 @@
 use std::{fs::File, io::Write};
 
+use itertools::Itertools;
 use sea_orm::{Condition, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter};
 use zip::{ZipWriter, write::FileOptions};
 
@@ -31,19 +32,21 @@ impl<'a> Output for HeroDataOutput<'a> {
     }
 
     async fn finish_output(&self, zip_writer: &mut ZipWriter<File>) -> Result<(), ScanerError> {
+        let models = self.entities.iter()
+            .unique_by(|model| model.script_name.clone())
+            .cloned()
+            .collect_vec();
         super::model::Entity::delete_many()
             .filter(Condition::all())
             .exec(self.db)
             .await?;
-        super::model::Entity::insert_many(
-            self.entities
-                .iter()
+        super::model::Entity::insert_many(models.iter()
                 .map(|model| model.clone().into_active_model()),
-        )
-        .exec(self.db)
-        .await?;
+            )
+            .exec(self.db)
+            .await?;
         let mut script_file = String::from("MCCS_GENERATED_HEROES_TABLE = {\n");
-        for model in &self.entities {
+        for model in models {
             script_file += &model.to_lua_string();
         }
         script_file.push('}');

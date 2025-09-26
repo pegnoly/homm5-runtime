@@ -90,13 +90,13 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
         Model {
             id: Default::default(),
             game_id: Default::default(),
-            attack: value.AttackSkill as i32,
-            defence: value.DefenceSkill as i32,
-            min_damage: value.MinDamage as i32,
-            max_damage: value.MaxDamage as i32,
-            speed: value.Speed as i32,
-            health: value.Health as i32,
-            initiative: value.Initiative as i32,
+            attack: value.AttackSkill,
+            defence: value.DefenceSkill,
+            min_damage: value.MinDamage,
+            max_damage: value.MaxDamage,
+            speed: value.Speed,
+            health: value.Health,
+            initiative: value.Initiative,
             is_flying: value.Flying,
             known_spells: if let Some(spells) = value.KnownSpells.spells {
                 KnownSpellsModel {
@@ -112,10 +112,10 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             } else {
                 KnownSpellsModel { spells: vec![] }
             },
-            spell_points: value.SpellPoints as i32,
-            exp: value.Exp as i32,
-            power: value.Power as i32,
-            tier: value.CreatureTier as i32,
+            spell_points: value.SpellPoints,
+            exp: value.Exp,
+            power: value.Power,
+            tier: value.CreatureTier,
             magic_element: MagicElementModel {
                 first: MagicElement::from_str(&value.MagicElement.First)
                     .unwrap_or(MagicElement::ElementNone),
@@ -123,7 +123,7 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                     .unwrap_or(MagicElement::ElementNone),
             },
             town: Town::from_str(&value.CreatureTown).unwrap_or(Town::TownNoType),
-            grow: value.WeeklyGrowth as i32,
+            grow: value.WeeklyGrowth,
             is_generatable: value.SubjectOfRandomGeneration,
             cost: ResourcesModel {
                 wood: value.Cost.Wood as i32,
@@ -139,8 +139,8 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             } else {
                 String::new()
             },
-            size: value.CombatSize as i32,
-            range: value.Range as i32,
+            size: value.CombatSize,
+            range: value.Range,
             name_txt: if let Some(ref visual) = value.VisualExplained {
                 visual
                     .CreatureNameFileRef

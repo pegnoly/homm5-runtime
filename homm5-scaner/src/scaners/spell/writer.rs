@@ -2,8 +2,7 @@ use std::{fs::File, io::Write};
 
 use itertools::Itertools;
 use sea_orm::{
-    DatabaseConnection, EntityTrait, IntoActiveModel, Iterable, TransactionTrait,
-    sea_query::OnConflict,
+    Condition, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter
 };
 use serde::{Deserialize, Serialize};
 use zip::{ZipWriter, write::FileOptions};
@@ -57,22 +56,17 @@ impl<'a> Output for SpellDataOutput<'a> {
     }
 
     async fn finish_output(&self, zip_writer: &mut ZipWriter<File>) -> Result<(), ScanerError> {
-        let transaction = self.db.begin().await?;
-        let on_conflict = OnConflict::new()
-            .update_columns(
-                super::model::Column::iter()
-                    .filter(|column| !matches!(column, super::model::Column::Id))
-                    .collect::<Vec<super::model::Column>>(),
-            )
-            .to_owned();
-        for entity in &self.entities {
-            let active_model = entity.clone().into_active_model();
-            super::model::Entity::insert(active_model)
-                .on_conflict(on_conflict.clone())
-                .exec(&transaction)
-                .await?;
-        }
-        transaction.commit().await?;
+        super::model::Entity::delete_many()
+            .filter(Condition::all())
+            .exec(self.db)
+            .await?;
+        super::model::Entity::insert_many(
+            self.entities
+                .iter()
+                .map(|model| model.clone().into_active_model()),
+        )
+        .exec(self.db)
+        .await?;
 
         let mut script_file = String::from("MCCS_SPELL_GENERATED_TABLE = {\n");
         for model in &self.entities {
