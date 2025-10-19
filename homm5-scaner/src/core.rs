@@ -31,7 +31,7 @@ pub trait Scan {
     fn scan(
         &mut self,
         file_key: &str,
-        entity: &str,
+        entity: &FileStructure,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError>;
 }
@@ -74,7 +74,7 @@ impl<T, C: CollectFiles, S: Scan<Output = T>, W: Output<Input = T>> ScanProcesso
         let mut actual_files = vec![];
         self.collector.collect(files, &mut actual_files)?;
         for file in actual_files {
-            if let Some(scanned_file) = self.scaner.scan(&file.0, &file.1.content, files)? {
+            if let Some(scanned_file) = self.scaner.scan(&file.0, &file.1, files)? {
                 self.writer.output_single(scanned_file)?;
             }
         }

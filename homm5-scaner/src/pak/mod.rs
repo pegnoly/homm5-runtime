@@ -43,12 +43,13 @@ const IGNORED_PARTS: [&str; 32] = [
     ".git",
 ];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct FileStructure {
     //pub key: String,
     pub pak: String,
     pub modified: i64,
     pub content: String,
+    pub id: Option<String>
 }
 
 pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
@@ -75,6 +76,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                             pak: path.to_str().unwrap().to_string(),
                                             modified: entry.modified().timestamp(),
                                             content: utf16string.to_string(),
+                                            ..Default::default()
                                         },
                                     );
                                 } else {
@@ -84,6 +86,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                             pak: path.to_str().unwrap().to_string(),
                                             modified: entry.modified().timestamp(),
                                             content: String::new(),
+                                            ..Default::default()
                                         },
                                     );
                                 }
@@ -95,6 +98,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                         pak: path.to_str().unwrap().to_string(),
                                         modified: entry.modified().timestamp(),
                                         content: String::new(),
+                                        ..Default::default()
                                     },
                                 );
                             }
@@ -109,6 +113,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                         pak: path.to_str().unwrap().to_string(),
                                         modified: entry.modified().timestamp(),
                                         content,
+                                        ..Default::default()
                                     },
                                 );
                             }
@@ -119,6 +124,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                         pak: path.to_str().unwrap().to_string(),
                                         modified: entry.modified().timestamp(),
                                         content,
+                                        ..Default::default()
                                     },
                                 );
                             }
@@ -136,6 +142,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                     pak: path.to_str().unwrap().to_string(),
                                     modified: entry.modified().timestamp(),
                                     content: utf16string.to_string(),
+                                    ..Default::default()
                                 },
                             );
                         } else {
@@ -145,6 +152,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                     pak: path.to_str().unwrap().to_string(),
                                     modified: entry.modified().timestamp(),
                                     content: String::new(),
+                                    ..Default::default()
                                 },
                             );
                         }
@@ -156,6 +164,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                 pak: path.to_str().unwrap().to_string(),
                                 modified: entry.modified().timestamp(),
                                 content: String::new(),
+                                ..Default::default()
                             },
                         );
                     }
@@ -170,6 +179,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                 pak: path.to_str().unwrap().to_string(),
                                 modified: entry.modified().timestamp(),
                                 content,
+                                ..Default::default()
                             },
                         );
                     }
@@ -180,6 +190,7 @@ pub fn check_pak(path: PathBuf, files: &mut HashMap<String, FileStructure>) {
                                 pak: path.to_str().unwrap().to_string(),
                                 modified: entry.modified().timestamp(),
                                 content,
+                                ..Default::default()
                             },
                         );
                     }

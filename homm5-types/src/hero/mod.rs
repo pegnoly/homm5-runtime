@@ -111,7 +111,7 @@ pub struct AdvMapHeroShared {
     pub SpecializationDescFileRef: Option<FileRef>,
     pub SpecializationIcon: Option<FileRef>,
     pub FaceTexture: Option<FileRef>,
-    // pub FaceTextureSmall: Option<FileRef>,
+    pub FaceTextureSmall: Option<FileRef>,
     // pub HeroCharacterArena: Option<FileRef>,
     // pub HeroCharacterArenaMelee: Option<String>,
     // pub HeroCharacterAdventure: Option<FileRef>,

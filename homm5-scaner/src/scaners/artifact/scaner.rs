@@ -13,11 +13,11 @@ impl Scan for ArtScaner {
     fn scan(
         &mut self,
         file_key: &str,
-        entity: &str,
+        entity: &FileStructure,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
         let art_de: Result<AdvMapArtifactShared, quick_xml::DeError> =
-            quick_xml::de::from_str(entity);
+            quick_xml::de::from_str(&entity.content);
         match art_de {
             Ok(mut art) => {
                 let name = configure_path(

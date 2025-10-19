@@ -35,6 +35,7 @@ impl CollectFiles for SkillFileCollector {
                                 pak: skills_xdb.1.pak.clone(),
                                 modified: skills_xdb.1.modified,
                                 content: text,
+                                ..Default::default()
                             },
                         ));
                     }

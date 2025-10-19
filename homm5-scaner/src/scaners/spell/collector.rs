@@ -49,8 +49,10 @@ impl CollectFiles for SpellFileCollector {
                                             let spell_entity = files.get(&spell_key);
                                             match spell_entity {
                                                 Some(entity) => {
+                                                    let mut entity_cloned = entity.clone();
+                                                    entity_cloned.id = Some(spell.ID);
                                                     collected_files
-                                                        .push((spell_key.clone(), entity.clone()));
+                                                        .push((spell_key.clone(), entity_cloned));
                                                 }
                                                 None => {
                                                     println!("Key {} is not in files", &spell_key)

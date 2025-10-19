@@ -24,10 +24,10 @@ impl Scan for SkillScaner {
     fn scan(
         &mut self,
         file_key: &str,
-        entity: &str,
+        entity: &FileStructure,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
-        let skill_de: Result<Skill, quick_xml::DeError> = quick_xml::de::from_str(entity);
+        let skill_de: Result<Skill, quick_xml::DeError> = quick_xml::de::from_str(&entity.content);
         match skill_de {
             Ok(skill) => {
                 let actual_name_paths = if let Some(paths) = skill.obj.NameFileRef.names {

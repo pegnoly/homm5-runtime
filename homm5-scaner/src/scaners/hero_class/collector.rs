@@ -38,6 +38,7 @@ impl CollectFiles for HeroClassFileCollector {
                                 pak: hero_class_xdb.1.pak.clone(),
                                 modified: hero_class_xdb.1.modified,
                                 content: text,
+                                ..Default::default()
                             },
                         ));
                     }

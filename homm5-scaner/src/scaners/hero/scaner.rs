@@ -29,11 +29,11 @@ impl Scan for HeroScaner {
     fn scan(
         &mut self,
         file_key: &str,
-        entity: &str,
+        entity: &FileStructure,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
         let mut buf = Vec::new();
-        let mut reader = Reader::from_str(entity);
+        let mut reader = Reader::from_str(&entity.content);
         reader.trim_text(true);
         reader.expand_empty_elements(true);
         loop {

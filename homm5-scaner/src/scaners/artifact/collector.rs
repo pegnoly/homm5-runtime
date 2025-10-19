@@ -40,6 +40,7 @@ impl CollectFiles for ArtFileCollector {
                                 pak: arts_xdb.1.pak.clone(),
                                 modified: arts_xdb.1.modified,
                                 content: text,
+                                ..Default::default()
                             },
                         ));
                     }

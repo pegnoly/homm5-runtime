@@ -14,10 +14,10 @@ impl Scan for HeroClassScaner {
     fn scan(
         &mut self,
         file_key: &str,
-        entity: &str,
+        entity: &FileStructure,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
-        let class_de: Result<HeroClass, quick_xml::DeError> = quick_xml::de::from_str(entity);
+        let class_de: Result<HeroClass, quick_xml::DeError> = quick_xml::de::from_str(&entity.content);
         match class_de {
             Ok(class) => {
                 let name = configure_path(

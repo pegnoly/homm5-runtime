@@ -16,6 +16,7 @@ pub struct Model {
     pub script_name: String,
     pub class: HeroClass,
     pub icon_xdb: String,
+    pub icon_small: String,
     pub specialization: String,
     pub primary_skill: SkillWithMasteryModel,
     pub spec_name_txt: String,
@@ -52,6 +53,11 @@ impl From<AdvMapHeroShared> for Model {
         Model {
             id: Default::default(),
             icon_xdb: if let Some(ref file) = value.FaceTexture {
+                file.href.clone().unwrap_or(String::new())
+            } else {
+                String::new()
+            },
+            icon_small: if let Some(ref file) = value.FaceTextureSmall {
                 file.href.clone().unwrap_or(String::new())
             } else {
                 String::new()

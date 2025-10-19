@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use homm5_types::{common::FileRef, spell::SpellShared};
-use itertools::Itertools;
 use quick_xml::{Reader, events::Event};
 
 use crate::{
@@ -22,11 +21,11 @@ impl Scan for SpellScaner {
     fn scan(
         &mut self,
         file_key: &str,
-        entity: &str,
+        entity: &FileStructure,
         files: &HashMap<String, FileStructure>,
     ) -> Result<Option<Self::Output>, ScanerError> {
         let mut buf = Vec::new();
-        let mut reader = Reader::from_str(entity);
+        let mut reader = Reader::from_str(&entity.content);
         reader.trim_text(true);
         reader.expand_empty_elements(true);
         loop {
@@ -73,26 +72,14 @@ impl Scan for SpellScaner {
                                         spell.LongDescriptionFileRef =
                                             Some(FileRef { href: Some(desc) });
                                         spell.Texture = Some(FileRef { href: Some(icon) });
-                                        self.id = if self.game_types.iter()
-                                            .any(|t| t.value == self.id + 1) {
-                                            self.id + 1
-                                        } else { 
-                                            self.game_types.iter()
-                                                .find(|t| t.value > self.id)
-                                                .unwrap_or(&GameTypeItem { name: "SPELL_NOT_DEFINED_YET".to_string(), value: self.id + 1 })
-                                                .value
-                                        };
-                                        let game_id = self
-                                            .game_types
+                                        let game_type_item = self.game_types
                                             .iter()
-                                            .find(|t| t.value == self.id)
-                                            .unwrap_or(&GameTypeItem { name: "SPELL_NOT_DEFINED_YET".to_string(), value: self.id })
-                                            .name
-                                            .clone();
-                                        println!("{} = {}", self.id, &game_id);
+                                            .find(|t| t.name == *entity.id.as_ref().unwrap())
+                                            .unwrap();
+                                        println!("{} = {}", &game_type_item.value, &game_type_item.name);
                                         let mut db_model = model::Model::from(spell);
-                                        db_model.id = self.id;
-                                        db_model.game_id = game_id;
+                                        db_model.id = game_type_item.value;
+                                        db_model.game_id = game_type_item.name.clone();
                                         if !db_model.name_txt.is_empty() {
                                             if let Some(data) = files.get(&db_model.name_txt) {
                                                 db_model.name = data.content.clone();
