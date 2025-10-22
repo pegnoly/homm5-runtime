@@ -128,7 +128,11 @@ impl FightGeneratorRepo {
             optional: Set(OptionalArtifacts::default()),
             sheet_id: Set(Some(payload.sheet_id)),
         };
-        Ok(model_to_insert.insert(&self.db).await?)
+
+        println!("Model to insert: {:#?}", &model_to_insert);
+        let model = model_to_insert.insert(&self.db).await?;
+        println!("Model: {:#?}", &model);
+        Ok(model)
     }
 
     pub async fn update_artifacts_generation_type(

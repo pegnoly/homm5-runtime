@@ -158,11 +158,13 @@ pub async fn create_artifacts_data_for_asset(
         .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetId": asset.sheet_id.unwrap()}))
         .await
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    println!("Added");
     let payload = InitAssetArtifactsDataPayload {
         asset_id,
         generation_type,
         sheet_id: asset.sheet_id.unwrap()
     };
+    println!("Payload: {:#?}", &payload);
     Ok(fight_generator_repo.add_artifacts_model(payload).await?)
 }
 
@@ -851,7 +853,10 @@ pub async fn pull_artifacts_data_from_sheet(
     sheets_connector_repo: State<'_, SheetsConnectorService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
-) -> Result<AssetArtifactsModel, Error> {
+) -> Result<Option<AssetArtifactsModel>, Error> {
+    if fight_generator_repo.get_artifacts_model(asset_id).await?.is_none() {
+        return Ok(None);
+    }
     let profile = app_manager.current_profile_data.read().await;
     let asset = fight_generator_repo
         .get_asset(asset_id)
@@ -877,7 +882,7 @@ pub async fn pull_artifacts_data_from_sheet(
                 .with_optional(converted_model.optional)
                 .with_required(converted_model.required)
         ).await?;
-    Ok(updated_model)
+    Ok(Some(updated_model))
 }
 
 #[tauri::command]
@@ -914,6 +919,12 @@ pub async fn push_to_sheet(
         .upload_to_sheet(spreadsheet_id, army_slots, converter)
         .await
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+
+    if let Some(artifacts_model) = fight_generator_repo.get_artifacts_model(asset_id).await? {
+        let artifacts = scaner_repo.get_artifact_models().await?;
+        let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
+        sheets_connector_repo.upload_to_sheet(spreadsheet_id, artifacts_model, converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    }
     Ok(())
 }
 

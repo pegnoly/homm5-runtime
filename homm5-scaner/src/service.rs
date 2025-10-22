@@ -319,4 +319,16 @@ impl ScanerService {
             .all(&self.db)
             .await?)
     }
+
+    pub async fn get_all_spells(
+        &self,
+    ) -> Result<Vec<SpellDBModel>, ScanerError> {
+        Ok(SpellDBEntity::find().all(&self.db).await?)
+    }
+
+    pub async fn get_all_skills(
+        &self
+    ) -> Result<Vec<SkillDBModel>, ScanerError> {
+        Ok(SkillDBEntity::find().all(&self.db).await?)
+    }
 }

@@ -21,6 +21,7 @@ pub struct Model {
     pub icon_xdb: String,
     pub cost: i32,
     pub is_generatable: bool,
+    pub game_id: String
 }
 
 #[derive(
@@ -171,6 +172,7 @@ impl From<AdvMapArtifactShared> for Model {
             },
             cost: value.CostOfGold as i32,
             is_generatable: value.CanBeGeneratedToSell,
+            game_id: Default::default()
         }
     }
 }

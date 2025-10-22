@@ -701,19 +701,22 @@ impl IntoSheetsData<ValueRange> for ArtifactsAssetConverter<'_> {
     type Input = AssetArtifactsModel; 
 
     fn convert_into_sheets_data(&self, source: AssetArtifactsModel) -> Result<ValueRange, Error> {
-        let mut data: Vec<Vec<serde_json::Value>> = vec![];
-        data.push(vec![serde_json::Value::String(source.required.ids.iter()
+        let mut ids_data: Vec<serde_json::Value> = vec![];
+        ids_data.push(serde_json::Value::String(source.required.ids.iter()
             .map(|id| {
-                format!("{} [{}]", &self.artifacts_data.iter().find(|art| art.id == *id).unwrap().name, id)
+                let art = self.artifacts_data.iter().find(|art| art.id == *id).unwrap();
+                let mut updated_name = art.name.clone();
+                let updated_name = updated_name.drain(3..).collect::<String>();
+                format!("{updated_name} [{id}]")
             })
-            .join(","))]);
+            .join(",")));
 
-        data.push(vec![serde_json::Value::String(String::with_capacity(0))]);
+        ids_data.push(serde_json::Value::String(String::with_capacity(0)));
 
         ArtifactSlotType::iter()
             .filter(|slot| *slot != ArtifactSlotType::Inventory)
             .for_each(|slot| {
-                data.push(vec![serde_json::Value::String(self.artifacts_data.iter()
+                ids_data.push(serde_json::Value::String(self.artifacts_data.iter()
                     .filter(|art| source.optional.values.get(&slot).unwrap_or(&vec![]).contains(&art.id))
                     .map(|art| {
                         let mut updated_name = art.name.clone();
@@ -721,13 +724,98 @@ impl IntoSheetsData<ValueRange> for ArtifactsAssetConverter<'_> {
                         format!("{} [{}]", updated_name, art.id)
                     })
                     .join(",")
-                )]);
+                ));
             });
         
+        let mut costs_data: Vec<serde_json::Value> = vec![];
+
+        costs_data.push(serde_json::Value::String(String::with_capacity(0)));
+        costs_data.push(serde_json::Value::String(String::with_capacity(0)));
+        
+        if let Some(data) = source.base_powers.data.get(&DifficultyType::Easy) {
+            costs_data.push(serde_json::Value::Number(
+                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
+                    "Powers grow of easy difficulty".to_string(),
+                ))?,
+            ));
+        }
+
+        if let Some(data) = source.base_powers.data.get(&DifficultyType::Medium) {
+            costs_data.push(serde_json::Value::Number(
+                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
+                    "Powers grow of medium difficulty".to_string(),
+                ))?,
+            ));
+        }
+
+        if let Some(data) = source.base_powers.data.get(&DifficultyType::Hard) {
+            costs_data.push(serde_json::Value::Number(
+                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
+                    "Powers grow of hard difficulty".to_string(),
+                ))?,
+            ));
+        }
+
+        if let Some(data) = source.base_powers.data.get(&DifficultyType::Heroic) {
+            costs_data.push(serde_json::Value::Number(
+                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
+                    "Powers grow of heroic difficulty".to_string(),
+                ))?,
+            ));
+        }
+
+        costs_data.push(serde_json::Value::String(String::with_capacity(0)));
+
+        if let Some(data) = source.powers_grow.data.get(&DifficultyType::Easy) {
+            costs_data.push(serde_json::Value::Number(
+                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
+                    "Powers grow of easy difficulty".to_string(),
+                ))?,
+            ));
+        }
+
+        if let Some(data) = source.powers_grow.data.get(&DifficultyType::Medium) {
+            costs_data.push(serde_json::Value::Number(
+                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
+                    "Powers grow of medium difficulty".to_string(),
+                ))?,
+            ));
+        }
+
+        if let Some(data) = source.powers_grow.data.get(&DifficultyType::Hard) {
+            costs_data.push(serde_json::Value::Number(
+                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
+                    "Powers grow of hard difficulty".to_string(),
+                ))?,
+            ));
+        }
+
+        if let Some(data) = source.powers_grow.data.get(&DifficultyType::Heroic) {
+            costs_data.push(serde_json::Value::Number(
+                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
+                    "Powers grow of heroic difficulty".to_string(),
+                ))?,
+            ));
+        }
+
         let values = ValueRange {
-            major_dimension: Some("ROWS".to_string()),
-            range: Some(format!("{}!B27:B37", self.sheet_name)),
-            values: Some(data)
+            major_dimension: Some("COLUMNS".to_string()),
+            range: Some(format!("{}!B27:D37", self.sheet_name)),
+            values: Some(vec![ids_data, vec![
+                serde_json::Value::String(String::with_capacity(0)),
+                serde_json::Value::String(String::with_capacity(0)),
+                serde_json::Value::String(String::from("Easy level base value")),
+                serde_json::Value::String(String::from("Medium level base value")),
+                serde_json::Value::String(String::from("Hard level base value")),
+                serde_json::Value::String(String::from("Heroic level base value")),
+                serde_json::Value::String(String::with_capacity(0)),
+                serde_json::Value::String(String::from("Easy level value grow")),
+                serde_json::Value::String(String::from("Medium level value grow")),
+                serde_json::Value::String(String::from("Hard level value grow")),
+                serde_json::Value::String(String::from("Heroic level value grow")),
+            ],
+            costs_data
+            ])
         };
 
         // println!("Values generated: {:#?}", &values);
@@ -749,6 +837,7 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
     type Output = ArtifactsFromSheetConvertedModel;
 
     fn convert_from_value_range(&self, values: ValueRange) -> Result<ArtifactsFromSheetConvertedModel, Error> {
+        println!("Converting form values: {:#?}", &values);
         let mut model = ArtifactsFromSheetConvertedModel::default();
         if let Some(values) = values.values {
             if let Some(data) = values.first() {
@@ -778,9 +867,7 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
                                 })
                             }
                         },
-                        _ => Err(Error::UndefinedValue(
-                            "Sheet data conversion: required artifacts".to_string(),
-                        )),
+                        _ => Ok(RequiredArtifacts { ids: vec![] })
                     }
                 } else {
                     Err(Error::UndefinedValue(
@@ -791,7 +878,7 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
                 model.required = required_artifacts;
 
                 let optional_artifacts = if let Some(optional_artifacts_data) = data.get(2..11) {
-                    Ok(OptionalArtifacts {
+                    OptionalArtifacts {
                         values: HashMap::from_iter(
                             optional_artifacts_data.iter().enumerate()
                                 .filter_map(|(index, value)| {
@@ -816,12 +903,10 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
                                     Some((ArtifactSlotType::from_repr(index).unwrap(), numbers))
                                 })
                         )
-                    })
+                    }
                 } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: optional artifacts".to_string(),
-                    ))
-                }?;
+                    OptionalArtifacts { values: HashMap::from_iter(ArtifactSlotType::iter().map(|a| (a, vec![]))) }
+                };
 
                 model.optional = optional_artifacts;
             }
@@ -873,7 +958,7 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
                     ))
                 }?;
 
-                let powers_grow = if let Some(grow_data) = powers_data.get(2..6) {
+                let powers_grow = if let Some(grow_data) = powers_data.get(7..11) {
                     Ok(DifficultyMappedValue {
                         data: HashMap::from([
                             (

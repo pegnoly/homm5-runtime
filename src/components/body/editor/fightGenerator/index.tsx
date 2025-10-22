@@ -61,7 +61,6 @@ function useFightAssets(mapId: number) {
 function FightAssetsLoader({onLoad}: {onLoad: (values: FightAssetSimple[]) => void}) {
     const currentMapId = useCurrentMapId();
     const { data } = useFightAssets(currentMapId!);
-    console.log("Fight assets data: ", data);
     useEffect(() => {
         if (data != undefined) {
             onLoad(data);

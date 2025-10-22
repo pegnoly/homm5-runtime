@@ -253,3 +253,89 @@ pub async fn switch_profile(
     base_config_locked.current_profile = new_profile;
     Ok(())
 }
+
+#[tauri::command]
+pub async fn generate_images(
+    scaner_service: State<'_, ScanerService>
+) -> Result<(), Error> {
+    let creatures = scaner_service.get_all_creature_models().await?;
+    let artifacts = scaner_service.get_artifact_models().await?;
+    let spells = scaner_service.get_all_spells().await?;
+    let skills = scaner_service.get_all_skills().await?;
+    let exe_path = std::env::current_exe()?;
+    let creatures_data =  std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\creatures.txt"))?;
+    let artifacts_data =  std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\artifacts.txt"))?;
+    let spells_data =  std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\spells.txt"))?;
+    let skills_data =  std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\skills.txt"))?;
+
+
+    let mut creature_gen_string = String::new();
+    for line in creatures_data.lines() {
+        let splitted = line.split('=').collect::<Vec<&str>>();
+        let name = splitted.first().unwrap().trim();
+        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = id.parse::<i32>().unwrap();
+        let creature_game_id = creatures.iter().find(|c| c.id == id).unwrap().game_id.clone();
+        creature_gen_string += &format!("{{CreatureType.{name}, PathHelper.AssetsDirectory + \"\\\\CreaturesImages\\\\{creature_game_id}.png\"}},\n");
+    }
+
+    let mut file = std::fs::File::create("D:\\CreatureImages.txt")?;
+    file.write_all(creature_gen_string.as_bytes())?;
+
+    let mut spells_gen = String::new();
+    for line in spells_data.lines() {
+        let splitted = line.split('=').collect::<Vec<&str>>();
+        let name = splitted.first().unwrap().trim();
+        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = id.parse::<i32>().unwrap();
+        println!("Id: {id}");
+        if let Some(spell) = spells.iter().find(|c| c.id == id) {
+            let spell_game_id = spell.game_id.clone();
+            spells_gen += &format!("{{SpellType.{name}, PathHelper.AssetsDirectory + \"\\\\Spells\\\\{spell_game_id}.png\"}},\n");
+        }
+    }
+
+    let mut file = std::fs::File::create("D:\\SpellImages.txt")?;
+    file.write_all(spells_gen.as_bytes())?;
+
+    let mut arts_gen: String = String::new();
+    for line in artifacts_data.lines() {
+        let splitted = line.split('=').collect::<Vec<&str>>();
+        let name = splitted.first().unwrap().trim();
+        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = id.parse::<i32>().unwrap();
+        if let Some(artifact) =  artifacts.iter().find(|c| c.id == id) {
+            let art_game_id = artifact.game_id.clone();
+            arts_gen += &format!("{{ArtifactType.{name}, PathHelper.AssetsDirectory + \"\\\\Artifacts\\\\{art_game_id}.png\"}},\n");
+        } 
+    }
+
+    let mut file = std::fs::File::create("D:\\ArtImages.txt")?;
+    file.write_all(arts_gen.as_bytes())?;
+
+
+    let mut skills_gen = String::new();
+    let mut perks_gen = String::new();
+
+    for line in skills_data.lines() {
+        let splitted = line.split('=').collect::<Vec<&str>>();
+        let game_id = splitted.first().unwrap().trim();
+        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = id.parse::<i32>().unwrap();
+        if let Some(skill) = skills.iter().find(|s| s.id == id) {
+            if skill.names.names.len() > 1 {
+                skills_gen += &format!("{{SkillType.{game_id}, PathHelper.AssetsDirectory + \"\\\\Skills\\\\{}_\"}},\n", skill.game_id);
+            } else {
+                perks_gen += &format!("{{PerkType.{game_id}, PathHelper.AssetsDirectory + \"\\\\Skills\\\\{}.png\"}},\n", skill.game_id);
+            }
+        }
+    }
+
+    let mut file = std::fs::File::create("D:\\SkillImages.txt")?;
+    file.write_all(skills_gen.as_bytes())?;
+
+    let mut file = std::fs::File::create("D:\\PerkImages.txt")?;
+    file.write_all(perks_gen.as_bytes())?;
+
+    Ok(())
+}

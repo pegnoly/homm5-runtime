@@ -79,6 +79,7 @@ pub async fn run() -> Result<(), Error> {
             commands::apply_modifications,
             commands::create_hero,
             commands::switch_profile,
+            commands::generate_images,
             // quest commands
             load_quests,
             load_quest,
@@ -171,6 +172,7 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::pull_from_sheet,
             services::fight_generator::commands::push_to_sheet,
             services::fight_generator::commands::add_artifacts_data_to_asset_sheet,
+            services::fight_generator::commands::pull_artifacts_data_from_sheet,
             //
             services::creature_generator::commands::save_generation_session,
             services::creature_generator::commands::generate_creatures,

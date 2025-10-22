@@ -25,6 +25,7 @@ impl CollectFiles for ArtFileCollector {
         let mut reader = Reader::from_str(arts_xdb.1.content.as_str());
         reader.trim_text(true);
         reader.expand_empty_elements(true);
+        let mut current_id = String::new();
         loop {
             match reader.read_event_into(&mut buf) {
                 Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
@@ -40,9 +41,12 @@ impl CollectFiles for ArtFileCollector {
                                 pak: arts_xdb.1.pak.clone(),
                                 modified: arts_xdb.1.modified,
                                 content: text,
-                                ..Default::default()
+                                id: Some(current_id.clone())
                             },
                         ));
+                    } else if e.name().as_ref() == b"ID" {
+                        let end = e.to_end().into_owned();
+                        current_id = reader.read_text(end.name()).unwrap().to_string();
                     }
                 }
                 _ => (),

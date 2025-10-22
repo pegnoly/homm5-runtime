@@ -4,12 +4,15 @@ import { invoke } from "@tauri-apps/api/core";
 import { useCurrentStackActions, useCurrentStackId } from "./elements/stacksGenerator/store";
 import { FightAssetStackModel } from "./elements/stacksGenerator/types";
 import { useState } from "react";
+import { FightAssetArtifactsModel } from "./elements/artifactsGenerator/types";
+import { useCurrentArtifactsActions } from "./elements/artifactsGenerator/store";
 
 function FightGeneratorGlobals() {
     const actions = useCurrentStackActions();
     const assetId = useFightAssetId();
     const assetName = useFightAssetName();
     const stackId = useCurrentStackId();
+    const artifactsActions = useCurrentArtifactsActions();
 
     const [onSync, setOnSync] = useState<boolean>(false);
 
@@ -19,14 +22,16 @@ function FightGeneratorGlobals() {
 
     async function pullFromSheet() {
         setOnSync(true);
-        await invoke<FightAssetStackModel[]>("pull_from_sheet", {assetId: assetId})
-            .then((data) => {
-                setOnSync(false);
-                if (stackId != undefined) {
-                    const updatedCurrentStack = data.find(s => s.id == stackId)!;
-                    actions.loadAsset(updatedCurrentStack);
-                }
-            })
+        const stackData = await invoke<FightAssetStackModel[]>("pull_from_sheet", {assetId: assetId})
+        const artifactsData = await invoke<FightAssetArtifactsModel | null>("pull_artifacts_data_from_sheet", {assetId: assetId});
+        setOnSync(false);
+        if (stackId != undefined) {
+            const updatedCurrentStack = stackData.find(s => s.id == stackId)!;
+            actions.loadAsset(updatedCurrentStack);
+        }
+        if (artifactsData != null) {
+            artifactsActions.loadAsset(artifactsData);
+        }
     }
 
     async function pushToSheet() {
