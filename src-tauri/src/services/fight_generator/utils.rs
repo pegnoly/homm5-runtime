@@ -877,7 +877,9 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
 
                 model.required = required_artifacts;
 
-                let optional_artifacts = if let Some(optional_artifacts_data) = data.get(2..11) {
+                let optional_artifacts_data = &data[2..];
+
+                let optional_artifacts = if !optional_artifacts_data.is_empty() {
                     OptionalArtifacts {
                         values: HashMap::from_iter(
                             optional_artifacts_data.iter().enumerate()
@@ -905,6 +907,7 @@ impl FromSheetValueRange for SheetToArtifactAssetConverter {
                         )
                     }
                 } else {
+                    println!("No optional arts");
                     OptionalArtifacts { values: HashMap::from_iter(ArtifactSlotType::iter().map(|a| (a, vec![]))) }
                 };
 

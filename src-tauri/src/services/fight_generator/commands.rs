@@ -158,13 +158,11 @@ pub async fn create_artifacts_data_for_asset(
         .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetId": asset.sheet_id.unwrap()}))
         .await
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
-    println!("Added");
     let payload = InitAssetArtifactsDataPayload {
         asset_id,
         generation_type,
         sheet_id: asset.sheet_id.unwrap()
     };
-    println!("Payload: {:#?}", &payload);
     Ok(fight_generator_repo.add_artifacts_model(payload).await?)
 }
 
@@ -527,7 +525,6 @@ pub async fn get_average_artifacts_cost(
     artifacts: HashMap<ArtifactSlotType, Vec<i32>>,
 ) -> Result<Option<i32>, Error> {
     let artifacts_list = artifacts.into_values().flatten().collect_vec();
-    println!("Artifacts: {:?}", &artifacts_list);
     Ok(scaner_repo
         .get_average_artifacts_cost(artifacts_list)
         .await?)
