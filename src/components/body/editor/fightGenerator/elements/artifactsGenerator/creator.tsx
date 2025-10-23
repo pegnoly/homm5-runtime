@@ -24,7 +24,6 @@ function ArtifactsAssetCreator({assetId, onCreated}: {
             return FightGeneratorApi.createArtifactsAsset(payload)
         },
         onSuccess(data, _variables, _context) {
-            console.log("Here: ", data);
             close();
             onCreated(data);
         },

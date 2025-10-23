@@ -4,7 +4,7 @@ import { IconCheck, IconPencilCheck } from '@tabler/icons-react';
 
 export type EditablePropertyWrapperProps = {
   children: ReactNode,
-  value: string
+  value?: string
 }
 
 export type EditablePropertyWrapper = {

@@ -6,10 +6,10 @@ import { EditablePropertyWrapperProps } from "@/components/common/editableProper
 import { useOptionalArtifacts } from "../store";
 import { ArtifactSlotType } from "../types";
 
-function AverageArtifactsCostTooltip({children, value} : EditablePropertyWrapperProps) {
+function AverageArtifactsCostTooltip({children} : EditablePropertyWrapperProps) {
     return (
     <>
-        <AverageArtifactsCostTooltipRenderer power={value}>
+        <AverageArtifactsCostTooltipRenderer>
             {children}
         </AverageArtifactsCostTooltipRenderer>
     </>
@@ -25,8 +25,7 @@ function useAverageArtifactsCost(artifacts: Record<ArtifactSlotType, number[]>) 
     })
 }
 
-function AverageArtifactsCostTooltipRenderer({children, power} : {children: ReactNode, power: string}) {
-    console.log("Power: ", power);
+function AverageArtifactsCostTooltipRenderer({children} : {children: ReactNode}) {
     const artifacts = useOptionalArtifacts();
     
     const { data } = useAverageArtifactsCost(artifacts?.values!);

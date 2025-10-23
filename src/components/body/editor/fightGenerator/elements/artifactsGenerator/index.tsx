@@ -29,7 +29,7 @@ function FightAssetArtifactsGenerator({assetId}: {assetId: UUID}) {
     async function assetCreated(value: FightAssetArtifactsModel) {
         actions.loadAsset(value);
     }
-
+    
     const associateSheetMutation = useMutation({
         mutationFn: async() => {
             return invoke<FightAssetArtifactsModel>("add_artifacts_data_to_asset_sheet", {assetId: assetId, artAssetId: artifactsAssetId});
@@ -40,31 +40,33 @@ function FightAssetArtifactsGenerator({assetId}: {assetId: UUID}) {
     })
 
     return (
-    <div className={styles.artifacts_panel}>
-        {
-            artifactsAssetId == undefined ?
-            <ArtifactsAssetCreator assetId={assetId} onCreated={assetCreated}/> :
-            <div style={{width: '100%', display: 'flex', flexDirection: 'row'}}>
-                <div style={{width: '40%', paddingLeft: '10%', display: 'flex', flexDirection: 'column', gap: '15%'}}>
-                    {
-                        sheetId != null ? null : <Button radius={0} bg="red" onClick={() => associateSheetMutation.mutate()}>No art sheet, click to add</Button>
-                    }
-                    <ArtifactsAssetCostsData/>
-                </div>
-                <div style={{width: "25%"}}>
-                    <div style={{width: '100%'}}>
-                        <RequiredArtifactsList/>
+        <>
+            <div className={styles.artifacts_panel}>
+                {
+                    artifactsAssetId == undefined ?
+                    <ArtifactsAssetCreator assetId={assetId} onCreated={assetCreated}/> :
+                    <div style={{width: '100%', display: 'flex', flexDirection: 'row'}}>
+                        <div style={{width: '40%', paddingLeft: '10%', display: 'flex', flexDirection: 'column', gap: '15%'}}>
+                            {
+                                sheetId != null ? null : <Button radius={0} bg="red" onClick={() => associateSheetMutation.mutate()}>No art sheet, click to add</Button>
+                            }
+                            <ArtifactsAssetCostsData/>
+                        </div>
+                        <div style={{width: "25%"}}>
+                            <div style={{width: '100%'}}>
+                                <RequiredArtifactsList/>
+                            </div>
+                        </div>
+                        <div style={{width: "35%"}}>
+                            <div style={{width: '100%'}}>
+                                <OptionalArtifactsList/>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div style={{width: "35%"}}>
-                    <div style={{width: '100%'}}>
-                        <OptionalArtifactsList/>
-                    </div>
-                </div>
+                }
             </div>
-        }
-        <ArtifactAssetLoader id={assetId}/>
-    </div>
+            <ArtifactAssetLoader id={assetId}/>
+        </>
     )
 }
 
@@ -73,7 +75,7 @@ function ArtifactAssetLoader({id}: {id: UUID}) {
     const { data } = useArtifactsAsset(id);
 
     useEffect(() => {
-        if (data != undefined) {
+        if (data !== undefined) {
             actions.loadAsset(data);
         }
     }, [data]);

@@ -37,17 +37,26 @@ const useCurrentArtifactsAssetStore = create<Store>((set, get) => ({
     actions: {
         loadAsset(value) {
             if (!value) {
-                return;
+                set({
+                    id: undefined,
+                    generationType: undefined,
+                    basePowers: undefined,
+                    powersGrow: undefined,
+                    required: undefined,
+                    optional: undefined,
+                    sheetId: undefined
+                });
+            } else {
+                set({
+                    id: value.id,
+                    generationType: value.generation_type,
+                    basePowers: value.base_powers,
+                    powersGrow: value.powers_grow,
+                    required: value.required,
+                    optional: value.optional,
+                    sheetId: value.sheet_id
+                });
             }
-            set({
-                id: value.id,
-                generationType: value.generation_type,
-                basePowers: value.base_powers,
-                powersGrow: value.powers_grow,
-                required: value.required,
-                optional: value.optional,
-                sheetId: value.sheet_id
-            })
         },
         setBasePowers(value) {
             set({basePowers: value});
