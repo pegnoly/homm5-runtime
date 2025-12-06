@@ -625,83 +625,58 @@ end
                 // construct getter function
                 let towns = asset.towns.towns.iter().join(", ");
                 let tiers = asset.tiers.tiers.iter().join(", ");
-                let mut inner_getter_function = format!(
-                    "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})\n"
-                );
-                let filter_function = format!(
-                    "\t\t\tlocal filtered_creatures = list_iterator.Filter(\n\t\t\t\tpossible_creatures,\n\t\t\t\tfunction(creature)\n\t\t\t\t\t{}\n\t\t\t\t\treturn result\n\t\t\t\tend)",
-                    &generation_rules_script
-                );
-
                 let stats_elements = fight_generator_repo
                     .get_stat_generation_elements(asset.id)
                     .await?;
-                //println!("Stats elements: {:#?}", &stats_elements);
+                let mut getter_function = format!(
+        r#"            local id = Iterator(Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}}))
+                .Filter(function(creature)
+                    {generation_rules_script}
+                    return result
+                end)"#);
                 if stats_elements.is_empty() || stats_elements[0].stats.values.is_empty() {
-                    if !asset.generation_rule.params.is_empty() {
-                        inner_getter_function += &format!(
-                            "{}\n\t\t\tlocal id = Random.FromTable(filtered_creatures)\n\t\t\treturn id",
-                            &filter_function
-                        );
-                    } else {
-                        inner_getter_function += "\t\t\tlocal id = Random.FromTable(possible_creatures)\n\t\t\treturn id";
-                    }
-                    army_generation_rules_script += &format!("{inner_getter_function}\n\t\tend,\n");
+                    getter_function += 
+        r#"     
+                .TakeRandom(1)
+            return id"#;
+                    army_generation_rules_script += &format!("{getter_function}\n\t\tend,\n");
                 } else {
                     let stat_element = &stats_elements[0];
-                    let mut sort_function = String::new();
-                    // if stat_element.stats.values.len() > 0 {
-                    let towns = asset.towns.towns.iter().join(", ");
-                    let tiers = asset.tiers.tiers.iter().join(", ");
-                    sort_function += &format!(
-                        "{}\n\t\t\tlocal id = list_iterator.{}(\n\t\t\t\t{},\n\t\t\t\tfunction(creature)\n\t\t\t\t\tlocal result = ",
-                        if !asset.generation_rule.params.is_empty() {
-                            format!(
-                                "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})\n{filter_function}"
-                            )
-                        } else {
-                            format!(
-                                "\t\t\tlocal possible_creatures = Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}})"
-                            )
-                        },
-                        if stat_element.rule == ArmyGenerationStatRule::MaxBy {
-                            "MaxBy"
-                        } else {
-                            "MinBy"
-                        },
-                        if !asset.generation_rule.params.is_empty() {
-                            "filtered_creatures"
-                        } else {
-                            "possible_creatures"
-                        }
-                    );
+                    let mut sort_expression = String::from("local result = ");
                     for param in &stat_element.stats.values {
                         match param {
                             ArmyGenerationStatParam::Attack => {
-                                sort_function += "Creature.Params.Attack(creature) + ";
+                                sort_expression += "Creature.Params.Attack(creature) + ";
                             }
                             ArmyGenerationStatParam::Defence => {
-                                sort_function += "Creature.Params.Defence(creature) + ";
+                                sort_expression += "Creature.Params.Defence(creature) + ";
                             }
                             ArmyGenerationStatParam::Initiative => {
-                                sort_function += "Creature.Params.Initiative(creature) + ";
+                                sort_expression += "Creature.Params.Initiative(creature) + ";
                             }
                             ArmyGenerationStatParam::Speed => {
-                                sort_function += "Creature.Params.Speed(creature) + ";
+                                sort_expression += "Creature.Params.Speed(creature) + ";
                             }
                             ArmyGenerationStatParam::Hitpoints => {
-                                sort_function += "Creature.Params.Health(creature) + ";
+                                sort_expression += "Creature.Params.Health(creature) + ";
                             }
                         }
                     }
-                    sort_function = sort_function
+                    sort_expression = sort_expression
                         .trim_end()
                         .trim_end_matches("+")
                         .trim_end()
                         .to_string();
-                    sort_function += "\n\t\t\t\t\treturn result\n\t\t\t\tend)\n\t\t\treturn id";
-                    // }
-                    army_generation_rules_script += &format!("{sort_function}\n\t\tend,\n");
+
+                    getter_function += &format!(
+            r#"
+                .{}(function(creature)
+                    {}
+                    return result
+                end)
+            return id"#,
+                    if stat_element.rule == ArmyGenerationStatRule::MaxBy { "MaxBy" } else { "MinBy "}, sort_expression);
+                    army_generation_rules_script += &format!("{getter_function}\n\t\tend,\n");
                 }
             }
         }

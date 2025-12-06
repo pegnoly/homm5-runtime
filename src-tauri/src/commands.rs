@@ -263,10 +263,11 @@ pub async fn generate_images(
     let spells = scaner_service.get_all_spells().await?;
     let skills = scaner_service.get_all_skills().await?;
     let exe_path = std::env::current_exe()?;
-    let creatures_data =  std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\creatures.txt"))?;
-    let artifacts_data =  std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\artifacts.txt"))?;
-    let spells_data =  std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\spells.txt"))?;
-    let skills_data =  std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\skills.txt"))?;
+    let creatures_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\creatures.txt"))?;
+    let artifacts_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\artifacts.txt"))?;
+    let spells_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\spells.txt"))?;
+    let skills_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\skills.txt"))?;
+    let perks_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\perks.txt"))?;
 
 
     let mut creature_gen_string = String::new();
@@ -336,6 +337,21 @@ pub async fn generate_images(
 
     let mut file = std::fs::File::create("D:\\PerkImages.txt")?;
     file.write_all(perks_gen.as_bytes())?;
+
+    let mut perks_data_gen = String::new();
+
+    for line in perks_data.lines() {
+        let splitted = line.split('=').collect::<Vec<&str>>();
+        let game_id = splitted.first().unwrap().trim();
+        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = id.parse::<i32>().unwrap();
+        if let Some(skill) = skills.iter().find(|s| s.id == id) {
+            perks_data_gen += &format!("{{PerkType.{game_id}, \"{}\"}},\n", skill.game_id)
+        }
+    }
+
+    let mut file = std::fs::File::create("D:\\PerksData.txt")?;
+    file.write_all(perks_data_gen.as_bytes())?;
 
     Ok(())
 }

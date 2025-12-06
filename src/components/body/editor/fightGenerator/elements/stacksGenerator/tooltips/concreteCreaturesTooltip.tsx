@@ -14,7 +14,7 @@ function ConcreteCreaturesTooltip({children, value} : EditablePropertyWrapperPro
     {
         generationMode == StackCountGenerationType.Raw ?
         children :
-        <ConcreteCreaturesTooltipRenderer power={value}>
+        <ConcreteCreaturesTooltipRenderer power={value!}>
             {children}
         </ConcreteCreaturesTooltipRenderer>
     }

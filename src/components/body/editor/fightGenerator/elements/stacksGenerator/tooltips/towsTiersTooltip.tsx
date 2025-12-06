@@ -15,7 +15,7 @@ function AverageTownsTiersTooltip({children, value} : EditablePropertyWrapperPro
     {
         generationMode == StackCountGenerationType.Raw ?
         children :
-        <AverageTownsTiersTooltipRenderer power={value}>
+        <AverageTownsTiersTooltipRenderer power={value!}>
             {children}
         </AverageTownsTiersTooltipRenderer>
     }
