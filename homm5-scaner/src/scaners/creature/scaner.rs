@@ -180,6 +180,7 @@ impl Scan for CreatureScaner {
                                         if self.id < 180 {
                                             db_model.xdb = Some(entity.content.to_string());
                                         }
+                                        db_model.xdb_path = file_key.to_string();
                                         break Ok(Some(db_model));
                                     }
                                     Err(e) => {

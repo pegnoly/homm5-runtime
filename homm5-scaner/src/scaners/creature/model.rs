@@ -51,6 +51,7 @@ pub struct Model {
     pub inner_name: Option<String>,
     #[serde(skip)]
     pub xdb: Option<String>,
+    pub xdb_path: String
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -200,6 +201,7 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             pair_creature: value.PairCreature,
             inner_name: value.InnerName,
             xdb: None,
+            xdb_path: String::new()
         }
     }
 }
