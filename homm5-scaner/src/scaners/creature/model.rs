@@ -221,8 +221,8 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                 spell_points_1: value.SpellPoints1, 
                 spell_points_2: value.SpellPoints2, 
                 time_to_command: value.TimeToCommand, 
-                pattern_attack: value.PatternAttack, 
-                flyby_sequence: value.flybySequence, 
+                pattern_attack: Some(serde_json::to_string_pretty(&value.PatternAttack).unwrap()),
+                flyby_sequence: Some(serde_json::to_string_pretty(&value.flybySequence).unwrap()),
                 visual_path: if let Some(visual) = value.Visual {
                     visual.href
                 } else {
@@ -298,9 +298,9 @@ impl From<Model> for AdvMapCreatureShared  {
             Shots: value.shots,
             SpellPoints1: value.unused_data.spell_points_1,
             SpellPoints2: value.unused_data.spell_points_2,
-            PatternAttack: value.unused_data.pattern_attack,
+            PatternAttack: value.unused_data.pattern_attack.map(|data| serde_json::from_str(&data).unwrap()),
             TimeToCommand: value.unused_data.time_to_command,
-            flybySequence: value.unused_data.flyby_sequence
+            flybySequence: value.unused_data.flyby_sequence.map(|data| serde_json::from_str(&data).unwrap())
         }
     }
 }

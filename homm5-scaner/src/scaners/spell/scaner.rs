@@ -76,7 +76,7 @@ impl Scan for SpellScaner {
                                             .iter()
                                             .find(|t| t.name == *entity.id.as_ref().unwrap())
                                             .unwrap();
-                                        println!("{} = {}", &game_type_item.value, &game_type_item.name);
+                                        // println!("{} = {}", &game_type_item.value, &game_type_item.name);
                                         let mut db_model = model::Model::from(spell);
                                         db_model.id = game_type_item.value;
                                         db_model.game_id = game_type_item.name.clone();

@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[serde(rename = "cell")]
 pub struct Cell {
-    pub x: u8,
-    pub y: u8,
+    pub x: i32,
+    pub y: i32,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]

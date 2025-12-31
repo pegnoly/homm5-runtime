@@ -1,5 +1,5 @@
 use crate::{
-    common::{FileRef, PointLights, Pos}, Homm5Type
+    Homm5Type, common::{FileRef, PointLights, Pos}, quest::Cell
 };
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
@@ -58,6 +58,71 @@ pub struct Upgrades {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct PatternAttackCells {
+    #[serde(rename = "Item")]
+    pub cells: Vec<Cell>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct PatternAttackCellsData {
+    pub cells: PatternAttackCells,
+    pub AngleRotateTo: i32
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PatternAttackPatterns {
+    #[serde(rename = "Item")]
+    pub patterns: Vec<PatternAttackCellsData>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct PatternAttackInternal {
+    pub Patterns: PatternAttackPatterns,
+    pub RotateToMainTarget: bool,
+    pub DamageToMainTargetCoefficient: i32,
+    pub DamageToOtherTargetsCoefficient: i32,
+    pub DamageAll: bool
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct PatternAttack {
+    #[serde(rename = "@href")]
+    pub href: Option<String>,
+    #[serde(rename = "@id")]
+    pub id: Option<String>,
+    pub PatternAttack: Option<PatternAttackInternal> 
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct FlybySequenceScriptInternal {
+    pub FileName: FileRef,
+    pub ScriptText: Option<String>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct FlybySequenceScript {
+    pub Script: FlybySequenceScriptInternal
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct FlybySequenceInternal {
+    pub Name: String,
+    pub Script: FlybySequenceScript
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct FlybySequence {
+    pub Item: Option<FlybySequenceInternal>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct AdvMapCreatureShared {
     pub AttackSkill: i32,
@@ -86,8 +151,9 @@ pub struct AdvMapCreatureShared {
     pub SubjectOfRandomGeneration: bool,
     pub MonsterShared: Option<FileRef>,
     pub CombatSize: i32,
-    pub PatternAttack: Option<String>,
-    pub flybySequence: Option<String>,
+    pub PatternAttack: Option<PatternAttack>,
+    #[serde(rename = "flybySequence")]
+    pub flybySequence: Option<FlybySequence>,
     pub Visual: Option<FileRef>,
     pub Range: i32,
     pub BaseCreature: Option<String>,
