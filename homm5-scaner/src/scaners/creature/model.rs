@@ -51,7 +51,10 @@ pub struct Model {
     pub inner_name: Option<String>,
     #[serde(skip)]
     pub xdb: Option<String>,
-    pub xdb_path: String
+    pub xdb_path: String,
+    pub is_upgrade: bool,
+    pub shots: i32,
+    pub unused_data: UnusedCreatureDataModel
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -79,6 +82,16 @@ pub struct AbilitiesModel {
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct UpgradesModel {
     pub upgrades: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+pub struct UnusedCreatureDataModel {
+    pub spell_points_1: i32,
+    pub spell_points_2: i32,
+    pub time_to_command: i32,
+    pub pattern_attack: Option<String>,
+    pub flyby_sequence: Option<String>,
+    pub visual_path: Option<String>
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -201,7 +214,21 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             pair_creature: value.PairCreature,
             inner_name: value.InnerName,
             xdb: None,
-            xdb_path: String::new()
+            xdb_path: String::new(),
+            is_upgrade: value.Upgrade,
+            shots: value.Shots,
+            unused_data: UnusedCreatureDataModel { 
+                spell_points_1: value.SpellPoints1, 
+                spell_points_2: value.SpellPoints2, 
+                time_to_command: value.TimeToCommand, 
+                pattern_attack: value.PatternAttack, 
+                flyby_sequence: value.flybySequence, 
+                visual_path: if let Some(visual) = value.Visual {
+                    visual.href
+                } else {
+                    None
+                }
+            }
         }
     }
 }
@@ -233,7 +260,7 @@ impl From<Model> for AdvMapCreatureShared  {
             Exp: value.exp, 
             Power: value.power, 
             CreatureTier: value.tier, 
-            Upgrade: false, 
+            Upgrade: value.is_upgrade, 
             PairCreature: value.pair_creature, 
             CreatureTown: value.town.to_string(), 
             MagicElement: MagicElement {
@@ -253,7 +280,7 @@ impl From<Model> for AdvMapCreatureShared  {
             SubjectOfRandomGeneration: value.is_generatable, 
             MonsterShared: Some(FileRef { href: Some(value.shared)}), 
             CombatSize: value.size, 
-            Visual: None, 
+            Visual: Some(FileRef { href: value.unused_data.visual_path }), 
             Range: value.range, 
             BaseCreature: Some(value.base_creature), 
             Upgrades: if value.upgrades.upgrades.is_empty() {
@@ -267,7 +294,13 @@ impl From<Model> for AdvMapCreatureShared  {
                 Some(Abilities { Abilities: Some(value.abilities.abilities) })
             }, 
             VisualExplained: None, 
-            InnerName: value.inner_name 
+            InnerName: value.inner_name,
+            Shots: value.shots,
+            SpellPoints1: value.unused_data.spell_points_1,
+            SpellPoints2: value.unused_data.spell_points_2,
+            PatternAttack: value.unused_data.pattern_attack,
+            TimeToCommand: value.unused_data.time_to_command,
+            flybySequence: value.unused_data.flyby_sequence
         }
     }
 }
