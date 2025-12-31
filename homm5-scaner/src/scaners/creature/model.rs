@@ -1,6 +1,6 @@
 use homm5_types::{
     common::FileRef,
-    creature::{Abilities, Upgrades},
+    creature::{Abilities, AdvMapCreatureShared, KnownSpells, MagicElement, Resources, Spell, Upgrades},
 };
 use itertools::Itertools;
 use sea_orm::{FromJsonQueryResult, prelude::*};
@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use crate::{
     core::ToLua,
-    scaners::common::{MagicElement, Mastery, ResourcesModel, Town},
+    scaners::common::{MagicElement as DBMagicElement, Mastery, ResourcesModel, Town},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
@@ -67,8 +67,8 @@ pub struct KnownSpellsModel {
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct MagicElementModel {
-    pub first: MagicElement,
-    pub second: MagicElement,
+    pub first: DBMagicElement,
+    pub second: DBMagicElement
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -118,10 +118,10 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             power: value.Power,
             tier: value.CreatureTier,
             magic_element: MagicElementModel {
-                first: MagicElement::from_str(&value.MagicElement.First)
-                    .unwrap_or(MagicElement::ElementNone),
-                second: MagicElement::from_str(&value.MagicElement.Second)
-                    .unwrap_or(MagicElement::ElementNone),
+                first: DBMagicElement::from_str(&value.MagicElement.First)
+                    .unwrap_or(DBMagicElement::ElementNone),
+                second: DBMagicElement::from_str(&value.MagicElement.Second)
+                    .unwrap_or(DBMagicElement::ElementNone),
             },
             town: Town::from_str(&value.CreatureTown).unwrap_or(Town::TownNoType),
             grow: value.WeeklyGrowth,
@@ -202,6 +202,72 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             inner_name: value.InnerName,
             xdb: None,
             xdb_path: String::new()
+        }
+    }
+}
+
+impl From<Model> for AdvMapCreatureShared  {
+    fn from(value: Model) -> Self {
+        AdvMapCreatureShared { 
+            AttackSkill: value.attack, 
+            DefenceSkill: value.defence, 
+            MinDamage: value.min_damage, 
+            MaxDamage: value.max_damage, 
+            Speed: value.speed, 
+            Initiative: value.initiative, 
+            Flying: value.is_flying, 
+            Health: value.health, 
+            KnownSpells: if value.known_spells.spells.is_empty() {
+                KnownSpells { spells: None }
+            } else {
+                KnownSpells { spells: Some(
+                    Vec::from_iter(value.known_spells.spells.iter().map(|sp| {
+                        Spell {
+                            Spell: sp.spell.clone(),
+                            Mastery: sp.mastery.to_string()
+                        }
+                    }))
+                )}
+            },
+            SpellPoints: value.spell_points, 
+            Exp: value.exp, 
+            Power: value.power, 
+            CreatureTier: value.tier, 
+            Upgrade: false, 
+            PairCreature: value.pair_creature, 
+            CreatureTown: value.town.to_string(), 
+            MagicElement: MagicElement {
+                First: value.magic_element.first.to_string(),
+                Second: value.magic_element.second.to_string()
+            }, 
+            WeeklyGrowth: value.grow, 
+            Cost: Resources {
+                Gold: value.cost.gold as u32,
+                Wood: value.cost.wood as u16,
+                Ore: value.cost.ore as u16,
+                Mercury: value.cost.mercury as u16,
+                Crystal: value.cost.crystal as u16,
+                Sulfur: value.cost.sulfur as u16,
+                Gem: value.cost.gem as u16,
+            }, 
+            SubjectOfRandomGeneration: value.is_generatable, 
+            MonsterShared: Some(FileRef { href: Some(value.shared)}), 
+            CombatSize: value.size, 
+            Visual: None, 
+            Range: value.range, 
+            BaseCreature: Some(value.base_creature), 
+            Upgrades: if value.upgrades.upgrades.is_empty() {
+                Some(Upgrades { upgrages: None })
+            } else {
+                Some(Upgrades { upgrages: Some(value.upgrades.upgrades) })
+            },  
+            Abilities: if value.abilities.abilities.is_empty() {
+                Some(Abilities { Abilities: None })
+            } else {
+                Some(Abilities { Abilities: Some(value.abilities.abilities) })
+            }, 
+            VisualExplained: None, 
+            InnerName: value.inner_name 
         }
     }
 }
