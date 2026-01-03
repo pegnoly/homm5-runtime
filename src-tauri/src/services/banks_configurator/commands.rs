@@ -26,48 +26,44 @@ pub async fn load_bank(
 pub async fn update_bank_recharges_count(
     bank_service: State<'_, BanksGeneratorRepo>,
     id: i32,
-    count: String,
+    count: i32,
 ) -> Result<i32, Error> {
-    let actual_count = count.parse::<i32>()?;
-    let payload = UpdateBankPayload::new(id).with_recharge_count(actual_count);
+    let payload = UpdateBankPayload::new(id).with_recharge_count(count);
     bank_service.update_bank(payload).await?;
-    Ok(actual_count)
+    Ok(count)
 }
 
 #[tauri::command]
 pub async fn update_bank_recharge_timer(
     bank_service: State<'_, BanksGeneratorRepo>,
     id: i32,
-    timer: String,
+    timer: i32
 ) -> Result<i32, Error> {
-    let actual_timer = timer.parse::<i32>()?;
-    let payload = UpdateBankPayload::new(id).with_recharge_timer(actual_timer);
+    let payload = UpdateBankPayload::new(id).with_recharge_timer(timer);
     bank_service.update_bank(payload).await?;
-    Ok(actual_timer)
+    Ok(timer)
 }
 
 #[tauri::command]
 pub async fn update_bank_morale_loss(
     bank_service: State<'_, BanksGeneratorRepo>,
     id: i32,
-    loss: String,
+    loss: i32,
 ) -> Result<i32, Error> {
-    let actual_loss = loss.parse::<i32>()?;
-    let payload = UpdateBankPayload::new(id).with_morale_loss(actual_loss);
+    let payload = UpdateBankPayload::new(id).with_morale_loss(loss);
     bank_service.update_bank(payload).await?;
-    Ok(actual_loss)
+    Ok(loss)
 }
 
 #[tauri::command]
 pub async fn update_bank_luck_loss(
     bank_service: State<'_, BanksGeneratorRepo>,
     id: i32,
-    loss: String,
+    loss: i32,
 ) -> Result<i32, Error> {
-    let actual_loss = loss.parse::<i32>()?;
-    let payload = UpdateBankPayload::new(id).with_luck_loss(actual_loss);
+    let payload = UpdateBankPayload::new(id).with_luck_loss(loss);
     bank_service.update_bank(payload).await?;
-    Ok(actual_loss)
+    Ok(loss)
 }
 
 #[tauri::command]
@@ -83,11 +79,10 @@ pub async fn load_difficulty(
 pub async fn update_bank_difficulty_chance(
     bank_service: State<'_, BanksGeneratorRepo>,
     id: i32,
-    chance: String,
+    chance: i32,
 ) -> Result<i32, Error> {
-    let actual_chance = chance.parse::<i32>()?;
-    bank_service.update_difficulty(id, actual_chance).await?;
-    Ok(actual_chance)
+    bank_service.update_difficulty(id, chance).await?;
+    Ok(chance)
 }
 
 #[tauri::command]
@@ -200,24 +195,22 @@ pub async fn load_creature_slot(
 pub async fn update_creature_slot_base_power(
     bank_service: State<'_, BanksGeneratorRepo>,
     slot_id: i32,
-    power: String,
+    power: i32,
 ) -> Result<i32, Error> {
-    let actual_power = power.parse::<i32>()?;
-    let payload = UpdateCreatureEntryPayload::new(slot_id).with_base_power(actual_power);
+    let payload = UpdateCreatureEntryPayload::new(slot_id).with_base_power(power);
     bank_service.update_creature_entry(payload).await?;
-    Ok(actual_power)
+    Ok(power)
 }
 
 #[tauri::command]
 pub async fn update_creature_slot_power_grow(
     bank_service: State<'_, BanksGeneratorRepo>,
     slot_id: i32,
-    grow: String,
+    grow: i32,
 ) -> Result<i32, Error> {
-    let actual_grow = grow.parse::<i32>()?;
-    let payload = UpdateCreatureEntryPayload::new(slot_id).with_power_grow(actual_grow);
+    let payload = UpdateCreatureEntryPayload::new(slot_id).with_power_grow(grow);
     bank_service.update_creature_entry(payload).await?;
-    Ok(actual_grow)
+    Ok(grow)
 }
 
 #[tauri::command]
