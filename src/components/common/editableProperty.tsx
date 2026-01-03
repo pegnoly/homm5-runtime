@@ -1,10 +1,10 @@
 import { ComponentType, ReactNode, useEffect, useState } from 'react';
-import { Text, TextInput, Button, Group, Box, MantineFontSize } from '@mantine/core';
+import { Text, TextInput, Button, Group, Box, MantineFontSize, NumberInput } from '@mantine/core';
 import { IconCheck, IconPencilCheck } from '@tabler/icons-react';
 
 export type EditablePropertyWrapperProps = {
   children: ReactNode,
-  value?: string
+  value?: string | number
 }
 
 export type EditablePropertyWrapper = {
@@ -13,21 +13,21 @@ export type EditablePropertyWrapper = {
 
 function EditableProperty({
   size = "sm", 
-  // type = "input", 
+  type = "number", 
   label, 
   initialValue, 
   onSave, 
   tooltip
 }: {
   size? : MantineFontSize,
-  // type?: "input" | "textarea",
+  type?: "number" | "text",
   label: string,
-  initialValue: string,
-  onSave: (value: string) => void,
+  initialValue: string | number,
+  onSave: (value: string | number) => void,
   tooltip?: EditablePropertyWrapper
 }) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [value, setValue] = useState<string>(initialValue);
+  const [value, setValue] = useState<string | number>(initialValue);
 
   useEffect(() => {
     setValue(initialValue);
@@ -44,14 +44,25 @@ function EditableProperty({
       {isEditing ? (
         <Group align="flex-end" gap="xs">
           {/* <Text>{params.label}</Text> */}
-          <TextInput
-            value={value}
-            onChange={(e) => setValue(e.currentTarget.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            // placeholder={params.placeholder}
-            autoFocus
-            w="50%"
-          />
+          {
+            type == "number" ? 
+            <NumberInput
+              value={value}
+              onChange={(e) => setValue(e)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+              // placeholder={params.placeholder}
+              autoFocus
+              w="50%"
+            /> :
+            <TextInput
+              value={value}
+              onChange={(e) => setValue(e.currentTarget.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+              // placeholder={params.placeholder}
+              autoFocus
+              w="50%"
+            />
+          }
           <Button
             variant="subtle"
             onClick={handleSave}
