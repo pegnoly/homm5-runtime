@@ -10,19 +10,19 @@ export class BankGeneratorApi {
         return invoke<BankFullModel | null>("load_bank", {id: id});
     }
 
-    static async updateRechargesCount(id: number, count: string): Promise<number> {
+    static async updateRechargesCount(id: number, count: string | number): Promise<number> {
         return invoke("update_bank_recharges_count", {id: id, count: count});
     }
 
-    static async updateRechargeTimer(id: number, timer: string): Promise<number> {
+    static async updateRechargeTimer(id: number, timer: string | number): Promise<number> {
         return invoke("update_bank_recharge_timer", {id: id, timer: timer});
     }
 
-    static async updateLuckLoss(id: number, loss: string): Promise<number> {
+    static async updateLuckLoss(id: number, loss: string | number): Promise<number> {
         return invoke("update_bank_morale_loss", {id: id, loss: loss});
     }
 
-    static async updateMoraleLoss(id: number, loss: string): Promise<number> {
+    static async updateMoraleLoss(id: number, loss: string | number): Promise<number> {
         return invoke("update_bank_luck_loss", {id: id, loss: loss});
     }
 
@@ -30,7 +30,7 @@ export class BankGeneratorApi {
         return invoke<BankDifficulty | null>("load_difficulty", {bankId: id, difficulty: type});
     }
 
-    static async updateChance(id: number, chance: string): Promise<number> {
+    static async updateChance(id: number, chance: string | number): Promise<number> {
         return invoke<number>("update_bank_difficulty_chance", {id: id, chance: chance});
     }
 

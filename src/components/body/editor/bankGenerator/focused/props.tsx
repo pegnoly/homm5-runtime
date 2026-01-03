@@ -37,7 +37,7 @@ function BankRechargeCount() {
     const actions = BankMainStore.useActions();
 
     const mutation = useMutation({
-        mutationFn: async(data: {id: number, value: string}) => {
+        mutationFn: async(data: {id: number, value: string | number}) => {
             return BankGeneratorApi.updateRechargesCount(data.id, data.value)
         },
         onSuccess(data, _variables, _context) {
@@ -66,7 +66,7 @@ function BankRechargeTimer() {
     const actions = BankMainStore.useActions();
 
     const mutation = useMutation({
-        mutationFn: async(data: {id: number, value: string}) => {
+        mutationFn: async(data: {id: number, value: string | number}) => {
             return BankGeneratorApi.updateRechargeTimer(data.id, data.value)
         },
         onSuccess(data, _variables, _context) {
@@ -95,7 +95,7 @@ function BankLuckLoss() {
     const actions = BankMainStore.useActions();
 
     const mutation = useMutation({
-        mutationFn: async(data: {id: number, value: string}) => {
+        mutationFn: async(data: {id: number, value: string | number}) => {
             return BankGeneratorApi.updateLuckLoss(data.id, data.value)
         },
         onSuccess(data, _variables, _context) {
@@ -124,7 +124,7 @@ function BankMoraleLoss() {
     const actions = BankMainStore.useActions();
 
     const mutation = useMutation({
-        mutationFn: async(data: {id: number, value: string}) => {
+        mutationFn: async(data: {id: number, value: string | number}) => {
             return BankGeneratorApi.updateMoraleLoss(data.id, data.value)
         },
         onSuccess(data, _variables, _context) {

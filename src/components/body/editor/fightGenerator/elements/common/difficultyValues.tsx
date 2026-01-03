@@ -12,7 +12,7 @@ function DifficultyValues(params: {
     tooltipComponent?: EditablePropertyWrapper
 }) {
 
-    async function updateEasyValue(newValue: string) {
+    async function updateEasyValue(newValue: number | string) {
         await invoke<number>(params.tauriFunction, {containerId: params.containerId, difficulty: DifficultyType.Easy, value: newValue})
             .then((value) => {
                 params.values.data[DifficultyType.Easy] = value;
@@ -20,7 +20,7 @@ function DifficultyValues(params: {
             });
     }
 
-    async function updateMediumValue(newValue: string) {
+    async function updateMediumValue(newValue: number | string) {
         await invoke<number>(params.tauriFunction, {containerId: params.containerId, difficulty: DifficultyType.Medium, value: newValue})
             .then((value) => {
                 params.values.data[DifficultyType.Medium] = value;
@@ -28,7 +28,7 @@ function DifficultyValues(params: {
             });
     }
 
-    async function updateHardValue(newValue: string) {
+    async function updateHardValue(newValue: number | string) {
         await invoke<number>(params.tauriFunction, {containerId: params.containerId, difficulty: DifficultyType.Hard, value: newValue})
             .then((value) => {
                 params.values.data[DifficultyType.Hard] = value;
@@ -36,7 +36,7 @@ function DifficultyValues(params: {
             });
     }
 
-    async function updateHeroicValue(newValue: string) {
+    async function updateHeroicValue(newValue: number | string) {
         await invoke<number>(params.tauriFunction, {containerId: params.containerId, difficulty: DifficultyType.Heroic, value: newValue})
             .then((value) => {
                 params.values.data[DifficultyType.Heroic] = value;

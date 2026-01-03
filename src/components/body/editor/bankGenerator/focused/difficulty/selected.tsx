@@ -13,7 +13,7 @@ function BankDifficultySelected() {
     const actions = BankDifficultyStore.useActions();
 
     const mutation = useMutation({
-        mutationFn: async(data: {id: number, value: string}) => {
+        mutationFn: async(data: {id: number, value: string | number}) => {
             return BankGeneratorApi.updateChance(data.id, data.value);
         },
         onSuccess(data, _variables, _context) {
