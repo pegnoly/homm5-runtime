@@ -1,6 +1,6 @@
 use std::{io::Write, path::PathBuf};
 
-use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, ResourcesModel, ScanerService, UpdateCreaturePayload};
+use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use tauri::State;
 
@@ -195,6 +195,34 @@ pub async fn update_creature_cost(
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_cost(value)).await?)
 }
 
+#[tauri::command]
+pub async fn remove_creature_spell(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: String
+) -> Result<(), Error> {
+    Ok(scaner_service.remove_creature_spell(id, value).await?)
+}
+
+#[tauri::command]
+pub async fn add_creature_spell(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    spell: String,
+    mastery: Mastery
+) -> Result<(), Error> {
+    Ok(scaner_service.add_creature_spell(id, spell, mastery).await?)
+}
+
+#[tauri::command]
+pub async fn update_creature_spell(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    curr_spell: String,
+    new_spell: SpellWithMasteryModel
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature_spell(id, curr_spell, new_spell).await?)
+}
 
 #[tauri::command]
 pub async fn generate_creature_file(

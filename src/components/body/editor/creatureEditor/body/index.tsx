@@ -1,6 +1,7 @@
 import CreatureNumberPropsEditor from "./numberProps";
 import CreaturesInteractionEditor from "./creaturesInteraction";
 import CreatureCostEditor from "./cost";
+import CreatureSpellsEditor from "./spells";
 
 function CreatureEditorBody() {
     return (
@@ -9,6 +10,7 @@ function CreatureEditorBody() {
             <CreaturesInteractionEditor/>
             <div style={{width: '40%', display: 'flex', flexDirection: 'column', paddingTop: '2%'}}>
                 <CreatureCostEditor/>
+                <CreatureSpellsEditor/>
             </div>
         </div>
     )

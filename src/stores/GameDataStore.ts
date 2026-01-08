@@ -40,10 +40,16 @@ export type HeroModel = {
     editable: Editable
 }
 
+export type SpellModel = {
+    game_id: string,
+    name: string
+}
+
 type Data = {
     artifacts: ArtifactModel[],
     creatures: CreatureModel[],
     abilities: AbilityModel[],
+    spells: SpellModel[],
     heroes: HeroModel[]
 }
 
@@ -51,6 +57,7 @@ type Action = {
     load_artifacts: (values: ArtifactModel[]) => void,
     load_creatures: (values: CreatureModel[]) => void,
     load_abilities: (values: AbilityModel[]) => void,
+    load_spells: (values: SpellModel[]) => void,
     load_heroes: (values: HeroModel[]) => void
 }
 
@@ -59,6 +66,7 @@ const useGameDataStore = create<Data & Action>((set) => ({
     creatures: [],
     abilities: [],
     heroes: [],
+    spells: [],
 
     load_artifacts(values) {
         set({artifacts: values});
@@ -71,6 +79,9 @@ const useGameDataStore = create<Data & Action>((set) => ({
     },
     load_heroes(values) {
         set({heroes: values});
+    },
+    load_spells(values) {
+        set({spells: values})
     },
 }))
 

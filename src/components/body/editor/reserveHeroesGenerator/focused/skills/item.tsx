@@ -5,7 +5,6 @@ import { Select } from "@mantine/core";
 import PerksSelector from "./perks";
 
 function ReservedHeroSkillItem({skill}: {skill: ConcreteSkill}) {
-
     const currentId = ReserveHeroesGenerator.useCurrentId();
     const actions = ReserveHeroesGenerator.useActions();
     const skills = ReserveHeroesGenerator.useSkills();

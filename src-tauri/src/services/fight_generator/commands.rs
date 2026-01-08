@@ -7,7 +7,7 @@ use editor_tools::prelude::{
     AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateArtifactsAssetPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
 };
 use homm5_scaner::prelude::{
-    AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town,
+    AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, SpellDBModel, Town
 };
 
 use itertools::Itertools;
@@ -125,6 +125,13 @@ pub async fn load_abilities_models(
     scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<AbilityDBModel>, Error> {
     Ok(scaner_repo.get_abilities().await?)
+}
+
+#[tauri::command]
+pub async fn load_spells_models(
+    scaner_repo: State<'_, ScanerService>,
+) -> Result<Vec<SpellDBModel>, Error> {
+    Ok(scaner_repo.get_all_spells().await?)
 }
 
 #[tauri::command]

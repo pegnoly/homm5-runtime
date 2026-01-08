@@ -5,7 +5,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, EXTENSIONS, FileStructure}, payloads::UpdateCreaturePayload, prelude::{
-        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, Town, TypesXmlScaner, UpgradesModel
+        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpgradesModel
     }, scaners::{
         self,
         prelude::{
@@ -392,6 +392,42 @@ impl ScanerService {
             }
             model_to_update.update(&self.db).await?;
         }
+        Ok(())
+    }
+
+    pub async fn add_creature_spell(&self, creature_id: i32, spell: String, mastery: Mastery) -> Result<(), ScanerError> {
+        if let Some(existing_creature) = CreatureDBEntity::find_by_id(creature_id).one(&self.db).await? {
+            let mut model_to_update = existing_creature.clone().into_active_model();
+            let mut spells = existing_creature.known_spells.spells;
+            spells.push(SpellWithMasteryModel { spell, mastery});
+            model_to_update.known_spells = Set(KnownSpellsModel { spells });
+            model_to_update.update(&self.db).await?;
+        } 
+        Ok(())
+    }
+
+    pub async fn remove_creature_spell(&self, creature_id: i32, spell: String) -> Result<(), ScanerError> {
+        if let Some(existing_creature) = CreatureDBEntity::find_by_id(creature_id).one(&self.db).await? {
+            let mut model_to_update = existing_creature.clone().into_active_model();
+            let mut spells = existing_creature.known_spells.spells;
+            spells.retain(|s| s.spell != spell);
+            model_to_update.known_spells = Set(KnownSpellsModel { spells });
+            model_to_update.update(&self.db).await?;
+        } 
+        Ok(())
+    }
+
+    pub async fn update_creature_spell(&self, creature_id: i32, curr_spell: String, new_spell: SpellWithMasteryModel) -> Result<(), ScanerError> {
+        if let Some(existing_creature) = CreatureDBEntity::find_by_id(creature_id).one(&self.db).await? {
+            let mut model_to_update = existing_creature.clone().into_active_model();
+            let mut spells = existing_creature.known_spells.spells;
+            if let Some(spell_to_update) = spells.iter_mut().find(|sp| sp.spell == curr_spell) {
+                spell_to_update.mastery = new_spell.mastery;
+                spell_to_update.spell = new_spell.spell;
+            }
+            model_to_update.known_spells = Set(KnownSpellsModel { spells });
+            model_to_update.update(&self.db).await?;
+        } 
         Ok(())
     }
 }

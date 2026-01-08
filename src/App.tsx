@@ -6,14 +6,15 @@ import Header from "./components/header";
 import Body from "./components/body";
 
 function App() {
-    const [setArtifacts, setCreatures, setAbilities] = useGameDataStore(useShallow((state) => [
-        state.load_artifacts, state.load_creatures, state.load_abilities
+    const [setArtifacts, setCreatures, setAbilities, setSpells] = useGameDataStore(useShallow((state) => [
+        state.load_artifacts, state.load_creatures, state.load_abilities, state.load_spells
     ]));
 
     useEffect(() => {
         loadArtifactModels();
         loadCreatureModels();
         loadAbilityModels();
+        loadSpellModels();
     }, [])
 
     const loadArtifactModels = async () => {
@@ -29,6 +30,11 @@ function App() {
     const loadAbilityModels = async () => {
         await invoke<AbilityModel[]>("load_abilities_models")
             .then((values) => setAbilities(values));
+    }
+
+    const loadSpellModels = async () => {
+        await invoke<AbilityModel[]>("load_spells_models")
+            .then((values) => setSpells(values));
     }
 
     return (
