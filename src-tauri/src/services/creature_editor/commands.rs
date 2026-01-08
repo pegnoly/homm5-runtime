@@ -197,6 +197,33 @@ pub async fn update_creature_cost(
 }
 
 #[tauri::command]
+pub async fn update_creature_is_generatable(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: bool
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_generatable(value)).await?)
+}
+
+#[tauri::command]
+pub async fn update_creature_is_upgrade(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: bool
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_upgrade(value)).await?)
+}
+
+#[tauri::command]
+pub async fn update_creature_is_flying(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: bool
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_flying(value)).await?)
+}
+
+#[tauri::command]
 pub async fn remove_creature_spell(
     scaner_service: State<'_, ScanerService>,
     id: i32,

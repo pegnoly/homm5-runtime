@@ -24,7 +24,10 @@ pub struct UpdateCreaturePayload {
     pub upgrades: Option<Vec<String>>,
     pub abilities: Option<Vec<String>>,
     pub magic_element: Option<MagicElementModel>,
-    pub cost: Option<ResourcesModel>
+    pub cost: Option<ResourcesModel>,
+    pub is_generatable: Option<bool>,
+    pub is_flying: Option<bool>,
+    pub is_upgrade: Option<bool>
 }
 
 impl UpdateCreaturePayload {
@@ -142,6 +145,21 @@ impl UpdateCreaturePayload {
 
     pub fn with_cost(mut self, cost: ResourcesModel) -> Self {
         self.cost = Some(cost);
+        self
+    }
+
+    pub fn with_generatable(mut self, is_generatable: bool) -> Self {
+        self.is_generatable = Some(is_generatable);
+        self
+    }
+
+    pub fn with_flying(mut self, is_flying: bool) -> Self {
+        self.is_flying = Some(is_flying);
+        self
+    }
+
+    pub fn with_upgrade(mut self, is_upgrade: bool) -> Self {
+        self.is_upgrade = Some(is_upgrade);
         self
     }
 }

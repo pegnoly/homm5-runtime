@@ -390,6 +390,15 @@ impl ScanerService {
             if let Some(cost) = payload.cost {
                 model_to_update.cost = Set(cost);
             }
+            if let Some(is_generatable) = payload.is_generatable {
+                model_to_update.is_generatable = Set(is_generatable);
+            }
+            if let Some(is_flying) = payload.is_flying {
+                model_to_update.is_flying = Set(is_flying);
+            }
+            if let Some(is_upgrade) = payload.is_upgrade {
+                model_to_update.is_upgrade = Set(is_upgrade);
+            }
             model_to_update.update(&self.db).await?;
         }
         Ok(())

@@ -1,6 +1,6 @@
 import EditableProperty from "@/components/common/editableProperty";
 import { CreatureEditorStore } from "../store"
-import { Text } from "@mantine/core";
+import { Checkbox, Stack, Text } from "@mantine/core";
 import { CreatureEditableModel } from "../types";
 import { ObjectUtils } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/core";
@@ -35,13 +35,36 @@ function CreatureNumberPropsEditor() {
             })
     }
 
+    async function updateIsGeneratable(value: boolean) {
+        await invoke(`update_creature_is_generatable`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = ObjectUtils.updateObjectDynamically(currentCreature!, "is_generatable", value)
+                actions.updateCreature(newModel);
+            })      
+    }
+
+    async function updateIsFlying(value: boolean) {
+        await invoke(`update_creature_is_flying`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = ObjectUtils.updateObjectDynamically(currentCreature!, "is_flying", value)
+                actions.updateCreature(newModel);
+            })      
+    }
+
+    async function updateIsUpgrade(value: boolean) {
+        await invoke(`update_creature_is_upgrade`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = ObjectUtils.updateObjectDynamically(currentCreature!, "is_upgrade", value)
+                actions.updateCreature(newModel);
+            })      
+    }
 
     return (
     <>
     {
         currentCreature == undefined ? null :
         <>
-            <div style={{width: '25%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5%', paddingTop: '2%'}}>
+            <div style={{width: '25%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75%', paddingTop: '1%'}}>
             <Text style={{textAlign: 'center', fontSize: 20}}>Numeric params</Text>
             {
                 Object.entries(currentCreature).filter(v => creatureNumberProperties.includes(v[0])).map(v => (
@@ -52,7 +75,28 @@ function CreatureNumberPropsEditor() {
                         label={v[0]}
                     />
                 ))
-            }</div>
+            }
+                <Stack gap="xs">
+                    <Checkbox
+                        radius={0}
+                        label="Is generatable"
+                        checked={currentCreature.is_generatable}
+                        onChange={(e) => updateIsGeneratable(e.currentTarget.checked)}
+                    />
+                    <Checkbox
+                        radius={0}
+                        label="Is flying"
+                        checked={currentCreature.is_flying}
+                        onChange={(e) => updateIsFlying(e.currentTarget.checked)}
+                    />
+                    <Checkbox
+                        radius={0}
+                        label="Is upgrade"
+                        checked={currentCreature.is_upgrade}
+                        onChange={(e) => updateIsUpgrade(e.currentTarget.checked)}
+                    />
+                </Stack>
+            </div>
         </>
     }
     </>
