@@ -387,6 +387,9 @@ impl ScanerService {
             if let Some(magic_element) = payload.magic_element {
                 model_to_update.magic_element = Set(magic_element);
             }
+            if let Some(cost) = payload.cost {
+                model_to_update.cost = Set(cost);
+            }
             model_to_update.update(&self.db).await?;
         }
         Ok(())
