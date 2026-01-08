@@ -10,8 +10,12 @@ function EditorModeLink(params: {
     const editorState = useEditorState();
 
     return (
-    <Card style={{backgroundColor: editorState == params.state ? 'lightgreen' : 'white'}} key={params.state} withBorder radius={0}>
-        <Link className={styles.mode_link} to={`/editor/${params.state}`}>{params.label}</Link>
+    <Card 
+        mah={45}
+        style={{backgroundColor: editorState == params.state ? 'lightgreen' : 'white'}} 
+        key={params.state} withBorder radius={0}>
+        <Link className={styles.mode_link} 
+        to={`/editor/${params.state}`}>{params.label}</Link>
     </Card>   
     )
 }

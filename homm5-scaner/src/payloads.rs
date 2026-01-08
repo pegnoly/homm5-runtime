@@ -1,0 +1,111 @@
+use crate::prelude::Town;
+
+#[derive(Default)]
+pub struct UpdateCreaturePayload {
+    pub id: i32,
+    pub attack: Option<i32>,
+    pub defence: Option<i32>,
+    pub min_damage: Option<i32>,
+    pub max_damage: Option<i32>,
+    pub speed: Option<i32>,
+    pub initiative: Option<i32>,
+    pub health: Option<i32>,
+    pub spell_points: Option<i32>,
+    pub exp: Option<i32>,
+    pub power: Option<i32>,
+    pub tier: Option<i32>,
+    pub grow: Option<i32>,
+    pub town: Option<Town>,
+    pub size: Option<i32>,
+    pub range: Option<i32>,
+    pub shots: Option<i32>
+}
+
+impl UpdateCreaturePayload {
+    pub fn new(id: i32) -> Self {
+        UpdateCreaturePayload {
+            id,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_attack(mut self, attack: i32) -> Self {
+        self.attack = Some(attack);
+        self
+    }
+
+    pub fn with_defence(mut self, defence: i32) -> Self {
+        self.defence = Some(defence);
+        self
+    }
+
+    pub fn with_min_damage(mut self, min_damage: i32) -> Self {
+        self.min_damage = Some(min_damage);
+        self
+    }
+
+    pub fn with_max_damage(mut self, max_damage: i32) -> Self {
+        self.max_damage = Some(max_damage);
+        self
+    }
+
+    pub fn with_speed(mut self, speed: i32) -> Self {
+        self.speed = Some(speed);
+        self
+    }
+
+    pub fn with_initiative(mut self, initiative: i32) -> Self {
+        self.initiative = Some(initiative);
+        self
+    }
+
+    pub fn with_health(mut self, health: i32) -> Self {
+        self.health = Some(health);
+        self
+    }
+
+    pub fn with_spell_points(mut self, spell_points: i32) -> Self {
+        self.spell_points = Some(spell_points);
+        self
+    }
+
+    pub fn with_exp(mut self, exp: i32) -> Self {
+        self.exp = Some(exp);
+        self
+    }
+
+    pub fn with_power(mut self, power: i32) -> Self {
+        self.power = Some(power);
+        self
+    }
+
+    pub fn with_tier(mut self, tier: i32) -> Self {
+        self.tier = Some(tier);
+        self
+    }
+
+    pub fn with_grow(mut self, grow: i32) -> Self {
+        self.grow = Some(grow);
+        self
+    }
+
+    pub fn with_town(mut self, town: Town) -> Self {
+        self.town = Some(town);
+        self
+    }
+
+    pub fn with_size(mut self, size: i32) -> Self {
+        self.size = Some(size);
+        self
+    }
+
+    pub fn with_range(mut self, range: i32) -> Self {
+        self.range = Some(range);
+        self
+    }
+
+    pub fn with_shots(mut self, shots: i32) -> Self {
+        self.shots = Some(shots);
+        self
+    }
+}

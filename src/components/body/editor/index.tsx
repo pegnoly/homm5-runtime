@@ -9,6 +9,7 @@ import FightGeneratorLayout from "./fightGenerator";
 import HeroCreatorLayout from "./heroCreator";
 import CreatureCopyCreatorLayout from "./creatureCopyCreator";
 import { useEffect } from "react";
+import CreatureEditorLayout from "./creatureEditor";
 
 function EditorMain() {
     const { state } = useParams();
@@ -43,6 +44,8 @@ function RenderEditorMode(params: {
             return <HeroCreatorLayout/>
         case EditorState.CreatureCopyCreator:
             return <CreatureCopyCreatorLayout/>
+        case EditorState.CreatureEditor:
+            return <CreatureEditorLayout/>
         default:
             break;
     }

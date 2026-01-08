@@ -194,7 +194,23 @@ pub async fn run() -> Result<(), Error> {
             services::reserve_hero_creator::commands::remove_spell,
             services::reserve_hero_creator::commands::update_favorite_enemies,
             //
-            services::sheets_connector::commands::upload_to_sheets
+            services::sheets_connector::commands::upload_to_sheets,
+            //
+            services::creature_editor::commands::load_creature,
+            services::creature_editor::commands::update_creature_attack,
+            services::creature_editor::commands::update_creature_defence,
+            services::creature_editor::commands::update_creature_exp,
+            services::creature_editor::commands::update_creature_grow,
+            services::creature_editor::commands::update_creature_health,
+            services::creature_editor::commands::update_creature_initiative,
+            services::creature_editor::commands::update_creature_max_damage,
+            services::creature_editor::commands::update_creature_min_damage,
+            services::creature_editor::commands::update_creature_power,
+            services::creature_editor::commands::update_creature_range,
+            services::creature_editor::commands::update_creature_shots,
+            services::creature_editor::commands::update_creature_size,
+            services::creature_editor::commands::update_creature_speed,
+            services::creature_editor::commands::update_creature_tier
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,17 +1,10 @@
 use sea_orm::{
-    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect,
-    SqlxSqlitePoolConnection,
-    prelude::Expr,
-    sea_query::{IntoCondition, SimpleExpr},
-    sqlx::SqlitePool,
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, SqlxSqlitePoolConnection, prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool
 };
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
-    core::ScanProcessor,
-    error::ScanerError,
-    pak::{self, EXTENSIONS, FileStructure},
-    prelude::{
+    core::ScanProcessor, error::ScanerError, pak::{self, EXTENSIONS, FileStructure}, payloads::UpdateCreaturePayload, prelude::{
         AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector,
         AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS,
         CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner,
@@ -19,15 +12,14 @@ use crate::{
         HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity,
         SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn,
         SpellDBEntity, SpellDBModel, Town, TypesXmlScaner,
-    },
-    scaners::{
+    }, scaners::{
         self,
         prelude::{
             ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput,
             CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner,
             SpellDataOutput, SpellFileCollector, SpellScaner,
         },
-    },
+    }
 };
 
 pub struct ScanerService {
@@ -330,5 +322,22 @@ impl ScanerService {
         &self
     ) -> Result<Vec<SkillDBModel>, ScanerError> {
         Ok(SkillDBEntity::find().all(&self.db).await?)
+    }
+
+    pub async fn update_creature(
+        &self,
+        payload: UpdateCreaturePayload
+    ) -> Result<(), ScanerError> {
+        if let Some(existing_creature) = CreatureDBEntity::find_by_id(payload.id).one(&self.db).await? {
+            let mut model_to_update = existing_creature.into_active_model();
+            if let Some(attack) = payload.attack {
+                model_to_update.attack = Set(attack)
+            }
+            if let Some(defence) = payload.defence {
+                model_to_update.defence = Set(defence)
+            }
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
     }
 }
