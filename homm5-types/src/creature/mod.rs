@@ -134,7 +134,7 @@ pub struct AdvMapCreatureShared {
     pub Initiative: i32,
     pub Flying: bool,
     pub Health: i32,
-    pub KnownSpells: KnownSpells,
+    pub KnownSpells: Option<KnownSpells>,
     pub SpellPoints: i32,
     pub SpellPoints1: i32,
     pub SpellPoints2: i32,

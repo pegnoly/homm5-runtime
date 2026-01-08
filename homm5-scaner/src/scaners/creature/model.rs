@@ -112,16 +112,20 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
             health: value.Health,
             initiative: value.Initiative,
             is_flying: value.Flying,
-            known_spells: if let Some(spells) = value.KnownSpells.spells {
-                KnownSpellsModel {
-                    spells: spells
-                        .iter()
-                        .map(|spell| SpellWithMasteryModel {
-                            spell: spell.Spell.clone(),
-                            mastery: Mastery::from_str(&spell.Mastery)
-                                .unwrap_or(Mastery::MasteryNone),
-                        })
-                        .collect::<Vec<SpellWithMasteryModel>>(),
+            known_spells: if let Some(known_spells) = value.KnownSpells {
+                if let Some(spells) = known_spells.spells {
+                    KnownSpellsModel {
+                        spells: spells
+                            .iter()
+                            .map(|spell| SpellWithMasteryModel {
+                                spell: spell.Spell.clone(),
+                                mastery: Mastery::from_str(&spell.Mastery)
+                                    .unwrap_or(Mastery::MasteryNone),
+                            })
+                            .collect::<Vec<SpellWithMasteryModel>>(),
+                    }
+                } else {
+                    KnownSpellsModel { spells: vec![] }
                 }
             } else {
                 KnownSpellsModel { spells: vec![] }
@@ -245,16 +249,16 @@ impl From<Model> for AdvMapCreatureShared  {
             Flying: value.is_flying, 
             Health: value.health, 
             KnownSpells: if value.known_spells.spells.is_empty() {
-                KnownSpells { spells: None }
+                None
             } else {
-                KnownSpells { spells: Some(
+                Some(KnownSpells { spells: Some(
                     Vec::from_iter(value.known_spells.spells.iter().map(|sp| {
                         Spell {
                             Spell: sp.spell.clone(),
                             Mastery: sp.mastery.to_string()
                         }
                     }))
-                )}
+                )})
             },
             SpellPoints: value.spell_points, 
             Exp: value.exp, 

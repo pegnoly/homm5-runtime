@@ -220,7 +220,8 @@ pub async fn run() -> Result<(), Error> {
             services::creature_editor::commands::update_creature_cost,
             services::creature_editor::commands::add_creature_spell,
             services::creature_editor::commands::remove_creature_spell,
-            services::creature_editor::commands::update_creature_spell
+            services::creature_editor::commands::update_creature_spell,
+            services::creature_editor::commands::generate_creature_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

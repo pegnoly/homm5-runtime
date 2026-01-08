@@ -2,6 +2,7 @@ use std::{io::Write, path::PathBuf};
 
 use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
+use quick_xml::{Writer, events::{BytesDecl, Event}};
 use tauri::State;
 
 use crate::{error::Error, utils::LocalAppManager};
@@ -234,9 +235,21 @@ pub async fn generate_creature_file(
         let profile_locked = app_manager.current_profile_data.read().await;
         let path = PathBuf::from(format!("{}GOG_Mod/{}", &profile_locked.data_path, &creature_data.xdb_path));
         let mut file = std::fs::File::create(path)?;
-        let shared: AdvMapCreatureShared = creature_data.into();
-        let shared_xml = quick_xml::se::to_string(&shared)?;
-        file.write_all(shared_xml.as_bytes())?;
+        let mut output: Vec<u8> = Vec::new();
+        let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
+        writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
+        let mut shared: AdvMapCreatureShared = creature_data.into();
+        if shared.KnownSpells.is_some() && shared.KnownSpells.as_ref().unwrap().spells.is_none() {
+            shared.KnownSpells = None;
+        }
+        if shared.PatternAttack.is_some() && shared.PatternAttack.as_ref().unwrap().PatternAttack.is_none() {
+            shared.PatternAttack = None;
+        }
+        if shared.flybySequence.is_some() && shared.flybySequence.as_ref().unwrap().Item.is_none() {
+            shared.flybySequence = None;
+        }
+        writer.write_serializable("Creature", &shared)?;
+        file.write_all(&output)?;
     } 
     Ok(())
 }
