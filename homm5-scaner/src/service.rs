@@ -384,6 +384,9 @@ impl ScanerService {
             if let Some(abilities) = payload.abilities {
                 model_to_update.abilities = Set(AbilitiesModel { abilities })
             }
+            if let Some(magic_element) = payload.magic_element {
+                model_to_update.magic_element = Set(magic_element);
+            }
             model_to_update.update(&self.db).await?;
         }
         Ok(())

@@ -28,6 +28,19 @@ type Abilities = {
     abilities: string[]
 }
 
+export enum MagicElement {
+    None = "ELEMENT_NONE",
+    Fire = "ELEMENT_FIRE",
+    Air = "ELEMENT_AIR",
+    Water = "ELEMENT_WATER",
+    Earth = "ELEMENT_EARTH"
+}
+
+type MagicElementModel = {
+    first: MagicElement,
+    second: MagicElement
+}
+
 export type CreatureEditableModel = {
     id: number,
     attack: number,
@@ -56,5 +69,6 @@ export type CreatureEditableModel = {
     upgrades: Upgrades,
     base_creature: string,
     pair_creature: string,
-    abilities: Abilities
+    abilities: Abilities,
+    magic_element: MagicElementModel
 }

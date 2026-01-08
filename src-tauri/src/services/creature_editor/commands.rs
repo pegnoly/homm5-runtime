@@ -1,6 +1,6 @@
 use std::{io::Write, path::PathBuf};
 
-use homm5_scaner::prelude::{CreatureDBModel, ScanerService, UpdateCreaturePayload};
+use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, ScanerService, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use tauri::State;
 
@@ -175,6 +175,15 @@ pub async fn update_creature_abilities(
     value: Vec<String>
 ) -> Result<(), Error> {
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_abilities(value)).await?)
+}
+
+#[tauri::command]
+pub async fn update_creature_magic_element(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: MagicElementModel
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_magic_element(value)).await?)
 }
 
 #[tauri::command]

@@ -1,4 +1,4 @@
-use crate::prelude::Town;
+use crate::prelude::{MagicElementModel, Town};
 
 #[derive(Default)]
 pub struct UpdateCreaturePayload {
@@ -22,7 +22,8 @@ pub struct UpdateCreaturePayload {
     pub pair_creature: Option<String>,
     pub base_creature: Option<String>,
     pub upgrades: Option<Vec<String>>,
-    pub abilities: Option<Vec<String>>
+    pub abilities: Option<Vec<String>>,
+    pub magic_element: Option<MagicElementModel>
 }
 
 impl UpdateCreaturePayload {
@@ -130,6 +131,11 @@ impl UpdateCreaturePayload {
 
     pub fn with_abilities(mut self, abilities: Vec<String>) -> Self {
         self.abilities = Some(abilities);
+        self
+    }
+
+    pub fn with_magic_element(mut self, element: MagicElementModel) -> Self {
+        self.magic_element = Some(element);
         self
     }
 }
