@@ -11,7 +11,7 @@ use crate::{
         DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner,
         HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity,
         SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn,
-        SpellDBEntity, SpellDBModel, Town, TypesXmlScaner,
+        SpellDBEntity, SpellDBModel, Town, TypesXmlScaner, UpgradesModel,
     }, scaners::{
         self,
         prelude::{
@@ -335,6 +335,57 @@ impl ScanerService {
             }
             if let Some(defence) = payload.defence {
                 model_to_update.defence = Set(defence)
+            }
+            if let Some(defence) = payload.defence {
+                model_to_update.defence = Set(defence)
+            }
+            if let Some(exp) = payload.exp {
+                model_to_update.exp = Set(exp)
+            }
+            if let Some(grow) = payload.grow {
+                model_to_update.grow = Set(grow)
+            }
+            if let Some(health) = payload.health {
+                model_to_update.health = Set(health)
+            }
+            if let Some(initiative) = payload.initiative {
+                model_to_update.initiative = Set(initiative)
+            }
+            if let Some(max_damage) = payload.max_damage {
+                model_to_update.max_damage = Set(max_damage)
+            }
+            if let Some(min_damage) = payload.min_damage {
+                model_to_update.min_damage = Set(min_damage)
+            }
+            if let Some(power) = payload.power {
+                model_to_update.power = Set(power)
+            }
+            if let Some(range) = payload.range {
+                model_to_update.range = Set(range)
+            }
+            if let Some(shots) = payload.shots {
+                model_to_update.shots = Set(shots)
+            }
+            if let Some(size) = payload.size {
+                model_to_update.size = Set(size)
+            }
+            if let Some(speed) = payload.speed {
+                model_to_update.speed = Set(speed)
+            }
+            if let Some(spell_points) = payload.spell_points {
+                model_to_update.spell_points = Set(spell_points)
+            }
+            if let Some(tier) = payload.tier {
+                model_to_update.tier = Set(tier)
+            }
+            if let Some(base_creature) = payload.base_creature {
+                model_to_update.base_creature = Set(base_creature)
+            }
+            if let Some(pair_creature) = payload.pair_creature {
+                model_to_update.pair_creature = Set(pair_creature)
+            }
+            if let Some(upgrades) = payload.upgrades {
+                model_to_update.upgrades = Set(UpgradesModel { upgrades })
             }
             model_to_update.update(&self.db).await?;
         }

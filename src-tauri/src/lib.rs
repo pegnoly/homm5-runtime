@@ -210,7 +210,10 @@ pub async fn run() -> Result<(), Error> {
             services::creature_editor::commands::update_creature_shots,
             services::creature_editor::commands::update_creature_size,
             services::creature_editor::commands::update_creature_speed,
-            services::creature_editor::commands::update_creature_tier
+            services::creature_editor::commands::update_creature_tier,
+            services::creature_editor::commands::update_creature_base_creature,
+            services::creature_editor::commands::update_creature_pair_creature,
+            services::creature_editor::commands::update_creature_upgrades
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

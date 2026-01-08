@@ -18,7 +18,10 @@ pub struct UpdateCreaturePayload {
     pub town: Option<Town>,
     pub size: Option<i32>,
     pub range: Option<i32>,
-    pub shots: Option<i32>
+    pub shots: Option<i32>,
+    pub pair_creature: Option<String>,
+    pub base_creature: Option<String>,
+    pub upgrades: Option<Vec<String>>
 }
 
 impl UpdateCreaturePayload {
@@ -106,6 +109,21 @@ impl UpdateCreaturePayload {
 
     pub fn with_shots(mut self, shots: i32) -> Self {
         self.shots = Some(shots);
+        self
+    }
+
+    pub fn with_base_creature(mut self, base_creature: String) -> Self {
+        self.base_creature = Some(base_creature);
+        self
+    }
+
+    pub fn with_pair_creature(mut self, pair_creature: String) -> Self {
+        self.pair_creature = Some(pair_creature);
+        self
+    }
+
+    pub fn with_upgrades(mut self, upgrades: Vec<String>) -> Self {
+        self.upgrades = Some(upgrades);
         self
     }
 }

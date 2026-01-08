@@ -20,6 +20,10 @@ export type ResourcesModel = {
     gold: number
 }
 
+type Upgrades = {
+    upgrades: string[]
+}
+
 export type CreatureEditableModel = {
     id: number,
     attack: number,
@@ -44,5 +48,8 @@ export type CreatureEditableModel = {
     range: number,
     is_upgrade: boolean,
     shots: number,
-    name: string
+    name: string,
+    upgrades: Upgrades,
+    base_creature: string,
+    pair_creature: string
 }

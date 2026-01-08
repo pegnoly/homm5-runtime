@@ -142,6 +142,33 @@ pub async fn update_creature_shots(
 }
 
 #[tauri::command]
+pub async fn update_creature_base_creature(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: String
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_base_creature(value)).await?)
+}
+
+#[tauri::command]
+pub async fn update_creature_pair_creature(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: String
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_pair_creature(value)).await?)
+}
+
+#[tauri::command]
+pub async fn update_creature_upgrades(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: Vec<String>
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_upgrades(value)).await?)
+}
+
+#[tauri::command]
 pub async fn generate_creature_file(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,

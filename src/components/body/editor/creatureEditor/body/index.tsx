@@ -1,8 +1,9 @@
-import { Text } from "@mantine/core";
+import { MultiSelect, Select, Text } from "@mantine/core";
 import { CreatureEditorStore } from "../store";
 import EditableProperty from "@/components/common/editableProperty";
 import { CreatureEditableModel } from "../types";
 import { invoke } from "@tauri-apps/api/core";
+import useGameDataStore from "@/stores/GameDataStore";
 
 const creatureNumberProperties = [
     'attack', 
@@ -47,14 +48,40 @@ function getFieldValue<T, K extends keyof T>(obj: T, key: K): T[K] {
 
 
 function CreatureEditorBody() {
-    
-    const currentCreature = CreatureEditorStore.useCurrent();
+    const creatures = useGameDataStore(state => state.creatures);
+    const currentCreature = CreatureEditorStore.useCurrent(); 
     const actions = CreatureEditorStore.useActions();
+
+    console.log("Current: ", currentCreature);
 
     async function updateCreatureNumberParam(paramName: string, value: number) {
         await invoke(`update_creature_${paramName}`, {id: currentCreature?.id, value: value})
             .then(() => {
                 const newModel = updateObjectDynamically(currentCreature!, paramName, value)
+                actions.updateCreature(newModel);
+            })
+    }
+
+    async function updateCreatureBaseCreature(value: string) {
+        await invoke(`update_creature_base_creature`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = updateObjectDynamically(currentCreature!, "base_creature", value)
+                actions.updateCreature(newModel);
+            })
+    }
+
+    async function updateCreaturePairCreature(value: string) {
+        await invoke(`update_creature_pair_creature`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = updateObjectDynamically(currentCreature!, "pair_creature", value)
+                actions.updateCreature(newModel);
+            })
+    }
+    
+    async function updateCreatureUpgrades(value: string[]) {
+        await invoke(`update_creature_upgrades`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = updateObjectDynamically(currentCreature!, "upgrades", { upgrades: value })
                 actions.updateCreature(newModel);
             })
     }
@@ -76,6 +103,34 @@ function CreatureEditorBody() {
                         />
                     ))
                 }</div>
+                <div style={{width: '30%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5%', paddingTop: '2%'}}>
+                    <Text style={{textAlign: 'center', fontSize: 20}}>Other creatures interactions</Text>
+                    <Select
+                        style={{width: '100%'}}
+                        radius={0}
+                        label="Base creature"
+                        value={currentCreature.base_creature == "CREATURE_UNKNOWN" ? null : currentCreature.base_creature}
+                        data={creatures.map(c => ({label: `${c.inner_name != null ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
+                        onChange={(value) => updateCreatureBaseCreature(value!)}   
+                    />
+                    <Select
+                        style={{width: '100%'}}
+                        radius={0}
+                        label="Pair creature"
+                        value={currentCreature.pair_creature == "CREATURE_UNKNOWN" ? null : currentCreature.pair_creature}
+                        data={creatures.map(c => ({label: `${c.inner_name != null ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}   
+                        onChange={(value) => updateCreaturePairCreature(value!)}    
+                    />
+                    <MultiSelect
+                        searchable
+                        style={{width: '100%'}}
+                        radius={0}
+                        label="Upgrades"
+                        value={currentCreature.upgrades.upgrades}
+                        data={creatures.map(c => ({label: `${c.inner_name != null ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
+                        onChange={(value) => updateCreatureUpgrades(value!)}   
+                    />
+                </div>
             </div>
         }
     </>
