@@ -5,13 +5,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, EXTENSIONS, FileStructure}, payloads::UpdateCreaturePayload, prelude::{
-        AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector,
-        AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS,
-        CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner,
-        DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner,
-        HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity,
-        SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn,
-        SpellDBEntity, SpellDBModel, Town, TypesXmlScaner, UpgradesModel,
+        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, MagicSchoolType, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, Town, TypesXmlScaner, UpgradesModel
     }, scaners::{
         self,
         prelude::{
@@ -386,6 +380,9 @@ impl ScanerService {
             }
             if let Some(upgrades) = payload.upgrades {
                 model_to_update.upgrades = Set(UpgradesModel { upgrades })
+            }
+            if let Some(abilities) = payload.abilities {
+                model_to_update.abilities = Set(AbilitiesModel { abilities })
             }
             model_to_update.update(&self.db).await?;
         }

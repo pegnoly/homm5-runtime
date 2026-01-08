@@ -24,6 +24,10 @@ type Upgrades = {
     upgrades: string[]
 }
 
+type Abilities = {
+    abilities: string[]
+}
+
 export type CreatureEditableModel = {
     id: number,
     attack: number,
@@ -51,5 +55,6 @@ export type CreatureEditableModel = {
     name: string,
     upgrades: Upgrades,
     base_creature: string,
-    pair_creature: string
+    pair_creature: string,
+    abilities: Abilities
 }

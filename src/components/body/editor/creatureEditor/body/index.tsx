@@ -49,6 +49,7 @@ function getFieldValue<T, K extends keyof T>(obj: T, key: K): T[K] {
 
 function CreatureEditorBody() {
     const creatures = useGameDataStore(state => state.creatures);
+    const abilities = useGameDataStore(state => state.abilities);
     const currentCreature = CreatureEditorStore.useCurrent(); 
     const actions = CreatureEditorStore.useActions();
 
@@ -86,6 +87,14 @@ function CreatureEditorBody() {
             })
     }
 
+    async function updateCreatureAbilities(value: string[]) {
+        await invoke(`update_creature_abilities`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = updateObjectDynamically(currentCreature!, "abilities", { abilities: value })
+                actions.updateCreature(newModel);
+            })
+    }
+
     return (
     <>
         {
@@ -106,6 +115,7 @@ function CreatureEditorBody() {
                 <div style={{width: '30%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5%', paddingTop: '2%'}}>
                     <Text style={{textAlign: 'center', fontSize: 20}}>Other creatures interactions</Text>
                     <Select
+                        searchable
                         style={{width: '100%'}}
                         radius={0}
                         label="Base creature"
@@ -114,6 +124,7 @@ function CreatureEditorBody() {
                         onChange={(value) => updateCreatureBaseCreature(value!)}   
                     />
                     <Select
+                        searchable
                         style={{width: '100%'}}
                         radius={0}
                         label="Pair creature"
@@ -130,6 +141,18 @@ function CreatureEditorBody() {
                         data={creatures.map(c => ({label: `${c.inner_name != null ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
                         onChange={(value) => updateCreatureUpgrades(value!)}   
                     />
+                    <div style={{width: '100%'}}>
+                        <Text style={{textAlign: 'center', fontSize: 20}}>Abilities</Text>
+                        <MultiSelect
+                            searchable
+                            style={{width: '100%'}}
+                            radius={0}
+                            label="Abilities"
+                            value={currentCreature.abilities.abilities}
+                            data={abilities.map(a => ({label: a.name, value: a.game_id}))}   
+                            onChange={(value) => updateCreatureAbilities(value!)}    
+                        />
+                    </div>
                 </div>
             </div>
         }

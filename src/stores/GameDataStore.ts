@@ -27,7 +27,8 @@ export type CreatureModel = {
 
 export type AbilityModel = {
     id: number,
-    name: string
+    name: string,
+    game_id: string
 }
 
 export type Editable = {

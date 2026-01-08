@@ -21,7 +21,8 @@ pub struct UpdateCreaturePayload {
     pub shots: Option<i32>,
     pub pair_creature: Option<String>,
     pub base_creature: Option<String>,
-    pub upgrades: Option<Vec<String>>
+    pub upgrades: Option<Vec<String>>,
+    pub abilities: Option<Vec<String>>
 }
 
 impl UpdateCreaturePayload {
@@ -124,6 +125,11 @@ impl UpdateCreaturePayload {
 
     pub fn with_upgrades(mut self, upgrades: Vec<String>) -> Self {
         self.upgrades = Some(upgrades);
+        self
+    }
+
+    pub fn with_abilities(mut self, abilities: Vec<String>) -> Self {
+        self.abilities = Some(abilities);
         self
     }
 }
