@@ -1,6 +1,6 @@
 use std::{io::{Read, Write}, path::PathBuf};
 
-use zip::write::SimpleFileOptions;
+use zip::{DateTime, write::SimpleFileOptions};
 
 pub struct Repacker {
     pub from: PathBuf,
@@ -18,7 +18,8 @@ impl Repacker {
     pub fn run(&self) {
         let file = std::fs::File::create(&self.to).unwrap();
         let mut zipped_file = zip::ZipWriter::new(file);
-        let file_options = SimpleFileOptions::default();
+        let file_options = SimpleFileOptions::default()
+            .last_modified_time(DateTime::from_date_and_time(2107, 12, 31, 23, 59, 59).unwrap());
         for entry in walkdir::WalkDir::new(&self.from) {
             match entry {
                 Ok(entry) => {

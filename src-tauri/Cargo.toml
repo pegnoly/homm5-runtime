@@ -42,6 +42,7 @@ chrono = {version = "0.4.41", features = ["serde"] }
 quick-xml = {version = "0.38.0", features = ["serde", "serde-types", "serialize"] }
 roxmltree = "0.20.0"
 sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio"] }
+filetime = "0.2.26"
 
 [profile.dev.package."*"]
 opt-level = 2

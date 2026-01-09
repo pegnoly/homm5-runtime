@@ -218,6 +218,7 @@ pub async fn run() -> Result<(), Error> {
             services::creature_editor::commands::update_creature_abilities,
             services::creature_editor::commands::update_creature_magic_element,
             services::creature_editor::commands::update_creature_cost,
+            services::creature_editor::commands::update_creature_town,
             services::creature_editor::commands::update_creature_is_generatable,
             services::creature_editor::commands::update_creature_is_flying,
             services::creature_editor::commands::update_creature_is_upgrade,

@@ -1,6 +1,7 @@
 use std::{io::Write, path::PathBuf};
 
-use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, UpdateCreaturePayload};
+use filetime::{FileTime, set_file_mtime};
+use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use quick_xml::{Writer, events::{BytesDecl, Event}};
 use tauri::State;
@@ -253,6 +254,15 @@ pub async fn update_creature_spell(
 }
 
 #[tauri::command]
+pub async fn update_creature_town(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: Town,
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_town(value)).await?)
+}
+
+#[tauri::command]
 pub async fn generate_creature_file(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
@@ -261,7 +271,8 @@ pub async fn generate_creature_file(
     if let Some(creature_data) = scaner_service.get_creature(id).await? {
         let profile_locked = app_manager.current_profile_data.read().await;
         let path = PathBuf::from(format!("{}GOG_Mod/{}", &profile_locked.data_path, &creature_data.xdb_path));
-        let mut file = std::fs::File::create(path)?;
+        let mut file = std::fs::File::create(&path)?;
+        let time = FileTime::from_unix_time(4573920000i64, 0);
         let mut output: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
         writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
@@ -277,6 +288,7 @@ pub async fn generate_creature_file(
         }
         writer.write_serializable("Creature", &shared)?;
         file.write_all(&output)?;
+        set_file_mtime(path, time).unwrap();
     } 
     Ok(())
 }

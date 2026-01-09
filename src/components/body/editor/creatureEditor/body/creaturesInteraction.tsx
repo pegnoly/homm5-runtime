@@ -4,6 +4,7 @@ import { MultiSelect, Select, Text } from "@mantine/core";
 import MagicElementUpdater from "./magicElement";
 import { invoke } from "@tauri-apps/api/core";
 import { ObjectUtils } from "@/lib/utils";
+import { TownType } from "../../fightGenerator/types";
 
 function CreaturesInteractionEditor() {
     const currentCreature = CreatureEditorStore.useCurrent();
@@ -44,6 +45,14 @@ function CreaturesInteractionEditor() {
             })
     }
 
+    async function updateCreatureTown(value: TownType) {
+        await invoke(`update_creature_town`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = ObjectUtils.updateObjectDynamically(currentCreature!, "town", value)
+                actions.updateCreature(newModel);
+            })
+    }
+
     return (
     <>
     {
@@ -51,6 +60,7 @@ function CreaturesInteractionEditor() {
         <div style={{width: '30%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5%', paddingTop: '2%'}}>
             <Text style={{textAlign: 'center', fontSize: 20}}>Other creatures interactions</Text>
             <Select
+                size="xs"
                 searchable
                 style={{width: '100%'}}
                 radius={0}
@@ -60,6 +70,7 @@ function CreaturesInteractionEditor() {
                 onChange={(value) => updateCreatureBaseCreature(value!)}   
             />
             <Select
+                size="xs"
                 searchable
                 style={{width: '100%'}}
                 radius={0}
@@ -69,6 +80,7 @@ function CreaturesInteractionEditor() {
                 onChange={(value) => updateCreaturePairCreature(value!)}    
             />
             <MultiSelect
+                size="xs"
                 searchable
                 style={{width: '100%'}}
                 radius={0}
@@ -80,6 +92,7 @@ function CreaturesInteractionEditor() {
             <div style={{width: '100%'}}>
                 <Text style={{textAlign: 'center', fontSize: 20}}>Abilities</Text>
                 <MultiSelect
+                    size="xs"
                     searchable
                     style={{width: '100%'}}
                     radius={0}
@@ -90,6 +103,26 @@ function CreaturesInteractionEditor() {
                 />
             </div>
             <div style={{width: '100%'}}>
+                <Text style={{textAlign: 'center', fontSize: 20}}>Town</Text>
+                <Select
+                    radius={0}
+                    miw={100}
+                    size="xs"
+                    label="Town"
+                    value={currentCreature.town}
+                    onChange={(value) => updateCreatureTown(value as TownType)}
+                    data={[
+                        {value: TownType.TownAcademy, label: "Academy"}, 
+                        {value: TownType.TownDungeon, label: "Dungeon"},
+                        {value: TownType.TownHeaven, label: "Heaven"},
+                        {value: TownType.TownInferno, label: "Inferno"},
+                        {value: TownType.TownFortress, label: "Fortress"},
+                        {value: TownType.TownPreserve, label: "Preserve"},
+                        {value: TownType.TownNecromancy, label: "Necromancy"},
+                        {value: TownType.TownStronghold, label: "Stronghold"},
+                        {value: TownType.TownNoType, label: "Neutral"},
+                    ]}
+                />
                 <MagicElementUpdater/>
             </div>
         </div>
