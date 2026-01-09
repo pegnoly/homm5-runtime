@@ -1,6 +1,5 @@
 use std::{io::Write, path::PathBuf};
 
-use filetime::{FileTime, set_file_mtime};
 use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use quick_xml::{Writer, events::{BytesDecl, Event}};
@@ -288,9 +287,24 @@ pub async fn generate_creature_file(
 ) -> Result<(), Error> {
     if let Some(creature_data) = scaner_service.get_creature(id).await? {
         let profile_locked = app_manager.current_profile_data.read().await;
+
+        let name_path = PathBuf::from(format!("{}GOG_Texts/{}", &profile_locked.data_path, &creature_data.name_txt));
+        let desc_path = PathBuf::from(format!("{}GOG_Texts/{}", &profile_locked.data_path, &creature_data.desc_txt));
+
+        let mut name_file = std::fs::File::create(&name_path)?;
+        name_file.write_all(&[255, 254])?;
+        for utf16 in creature_data.name.encode_utf16() {
+            name_file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
+        }
+
+        let mut desc_file = std::fs::File::create(&desc_path)?;
+        desc_file.write_all(&[255, 254])?;
+        for utf16 in creature_data.desc.encode_utf16() {
+            desc_file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
+        }
+
         let path = PathBuf::from(format!("{}GOG_Mod/{}", &profile_locked.data_path, &creature_data.xdb_path));
         let mut file = std::fs::File::create(&path)?;
-        let time = FileTime::from_unix_time(4573920000i64, 0);
         let mut output: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
         writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
@@ -304,9 +318,14 @@ pub async fn generate_creature_file(
         if shared.flybySequence.is_some() && shared.flybySequence.as_ref().unwrap().Item.is_none() {
             shared.flybySequence = None;
         }
+        if shared.Upgrades.is_some() && shared.Upgrades.as_ref().unwrap().upgrages.is_none() {
+            shared.Upgrades = None;
+        }
+        if shared.Abilities.is_some() && shared.Abilities.as_ref().unwrap().Abilities.is_none() {
+            shared.Abilities = None;
+        }
         writer.write_serializable("Creature", &shared)?;
         file.write_all(&output)?;
-        set_file_mtime(path, time).unwrap();
     } 
     Ok(())
 }
