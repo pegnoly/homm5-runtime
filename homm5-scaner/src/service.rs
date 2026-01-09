@@ -399,6 +399,12 @@ impl ScanerService {
             if let Some(is_upgrade) = payload.is_upgrade {
                 model_to_update.is_upgrade = Set(is_upgrade);
             }
+            if let Some(desc) = payload.desc {
+                model_to_update.desc = Set(desc);
+            }
+            if let Some(name) = payload.name {
+                model_to_update.name = Set(name);
+            }
             model_to_update.update(&self.db).await?;
         }
         Ok(())

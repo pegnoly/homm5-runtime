@@ -70,5 +70,6 @@ export type CreatureEditableModel = {
     base_creature: string,
     pair_creature: string,
     abilities: Abilities,
-    magic_element: MagicElementModel
+    magic_element: MagicElementModel,
+    desc: string
 }
