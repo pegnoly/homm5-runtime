@@ -84,12 +84,12 @@ function QuestGeneratorDataBlock() {
             <EditableProperty 
                 label="Quest name" 
                 initialValue={currentName!} 
-                onSave={(value) => updateNameMutation.mutate({questId: currentId!, name: value})}
+                onSave={(value) => updateNameMutation.mutate({questId: currentId!, name: value as string})}
             />
             <EditableProperty 
                 label="Quest script name" 
                 initialValue={currentScriptName!} 
-                onSave={(value) => updateScriptNameMutation.mutate({questId: currentId!, scriptName: value})}
+                onSave={(value) => updateScriptNameMutation.mutate({questId: currentId!, scriptName: value as string})}
             />
             <div style={{display: 'flex', flexDirection: 'row', maxWidth: 500}}>
                 <Tooltip label={currentDirectory}>
