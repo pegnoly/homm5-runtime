@@ -1,4 +1,4 @@
-use crate::prelude::{MagicElementModel, ResourcesModel, Town};
+use crate::prelude::{ArtifactClassType, ArtifactSlotType, MagicElementModel, ResourcesModel, Town};
 
 #[derive(Default)]
 pub struct UpdateCreaturePayload {
@@ -172,6 +172,110 @@ impl UpdateCreaturePayload {
 
     pub fn with_name(mut self, name: String) -> Self {
         self.name = Some(name);
+        self
+    }
+}
+
+#[derive(Default)]
+pub struct GetArtifactsPayload {
+    pub is_generatable: Option<bool>
+}
+
+impl GetArtifactsPayload {
+    pub fn with_generatable(mut self, is_generatable: bool) -> Self {
+        self.is_generatable = Some(is_generatable);
+        self
+    } 
+}
+
+#[derive(Debug, Default)]
+pub struct UpdateArtifactPayload {
+    pub id: i32,
+    pub name_txt: Option<String>,
+    pub name: Option<String>,
+    pub desc_txt: Option<String>,
+    pub desc: Option<String>,
+    pub cost: Option<i32>,
+    pub attack: Option<i32>,
+    pub defence: Option<i32>,
+    pub spell_power: Option<i32>,
+    pub knowledge: Option<i32>,
+    pub morale: Option<i32>,
+    pub luck: Option<i32>,
+    pub class: Option<ArtifactClassType>,
+    pub slot: Option<ArtifactSlotType>
+}
+
+impl UpdateArtifactPayload {
+    pub fn new(id: i32) -> Self {
+        UpdateArtifactPayload {
+            id,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_name_txt(mut self, name_txt: String) -> Self {
+        self.name_txt = Some(name_txt);
+        self
+    }
+
+    pub fn with_name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn with_desc_txt(mut self, desc_txt: String) -> Self {
+        self.desc_txt = Some(desc_txt);
+        self
+    }
+
+    pub fn with_desc(mut self, desc: String) -> Self {
+        self.desc = Some(desc);
+        self
+    }
+
+    pub fn with_cost(mut self, cost: i32) -> Self {
+        self.cost = Some(cost);
+        self
+    }
+
+    pub fn with_attack(mut self, attack: i32) -> Self {
+        self.attack = Some(attack);
+        self
+    }
+
+    pub fn with_defence(mut self, defence: i32) -> Self {
+        self.defence = Some(defence);
+        self
+    }
+
+    pub fn with_spell_power(mut self, spell_power: i32) -> Self {
+        self.spell_power = Some(spell_power);
+        self
+    }
+
+    pub fn with_knowledge(mut self, knowledge: i32) -> Self {
+        self.knowledge = Some(knowledge);
+        self
+    }
+
+    pub fn with_morale(mut self, morale: i32) -> Self {
+        self.morale = Some(morale);
+        self
+    }
+
+    pub fn with_luck(mut self, luck: i32) -> Self {
+        self.luck = Some(luck);
+        self
+    }
+
+    pub fn with_slot(mut self, slot: ArtifactSlotType) -> Self {
+        self.slot = Some(slot);
+        self
+    }
+
+    pub fn with_class(mut self, class: ArtifactClassType) -> Self {
+        self.class = Some(class);
         self
     }
 }

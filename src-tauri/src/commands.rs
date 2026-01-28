@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use editor_tools::prelude::{QuestGeneratorRepo, ReserveHeroCreatorRepo};
 use homm5_repacker::Repacker;
-use homm5_scaner::prelude::{ScanerService, Town};
+use homm5_scaner::prelude::{GetArtifactsPayload, ScanerService, Town};
 use itertools::Itertools;
 use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
@@ -259,7 +259,7 @@ pub async fn generate_images(
     scaner_service: State<'_, ScanerService>
 ) -> Result<(), Error> {
     let creatures = scaner_service.get_all_creature_models().await?;
-    let artifacts = scaner_service.get_artifact_models().await?;
+    let artifacts = scaner_service.get_artifact_models(GetArtifactsPayload::default()).await?;
     let spells = scaner_service.get_all_spells().await?;
     let skills = scaner_service.get_all_skills().await?;
     let exe_path = std::env::current_exe()?;

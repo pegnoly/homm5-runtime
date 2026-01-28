@@ -227,7 +227,24 @@ pub async fn run() -> Result<(), Error> {
             services::creature_editor::commands::add_creature_spell,
             services::creature_editor::commands::remove_creature_spell,
             services::creature_editor::commands::update_creature_spell,
-            services::creature_editor::commands::generate_creature_file
+            services::creature_editor::commands::generate_creature_file,
+            //
+            services::artifact_editor::commands::rebuild_artifacts_file,
+            services::artifact_editor::commands::update_artefact_attack,
+            services::artifact_editor::commands::update_artefact_class,
+            services::artifact_editor::commands::update_artefact_cost,
+            services::artifact_editor::commands::update_artefact_defence,
+            services::artifact_editor::commands::update_artefact_desc,
+            services::artifact_editor::commands::update_artefact_desc_path,
+            services::artifact_editor::commands::update_artefact_knowledge,
+            services::artifact_editor::commands::update_artefact_luck,
+            services::artifact_editor::commands::update_artefact_morale,
+            services::artifact_editor::commands::update_artefact_name,
+            services::artifact_editor::commands::update_artefact_name_path,
+            services::artifact_editor::commands::update_artefact_slot,
+            services::artifact_editor::commands::update_artefact_spell_power,
+            services::artifact_editor::commands::select_artefact_desc_path,
+            services::artifact_editor::commands::select_artefact_name_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

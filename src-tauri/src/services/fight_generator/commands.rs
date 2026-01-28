@@ -7,7 +7,7 @@ use editor_tools::prelude::{
     AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateArtifactsAssetPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
 };
 use homm5_scaner::prelude::{
-    AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, SpellDBModel, Town
+    AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, GetArtifactsPayload, ScanerService, SpellDBModel, Town
 };
 
 use itertools::Itertools;
@@ -110,7 +110,7 @@ pub async fn delete_asset(
 pub async fn load_artifact_models(
     scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<ArtifactDBModel>, Error> {
-    Ok(scaner_repo.get_artifact_models().await?)
+    Ok(scaner_repo.get_artifact_models(GetArtifactsPayload::default()).await?)
 }
 
 #[tauri::command]
@@ -896,7 +896,7 @@ pub async fn push_to_sheet(
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
 
     if let Some(artifacts_model) = fight_generator_repo.get_artifacts_model(asset_id).await? {
-        let artifacts = scaner_repo.get_artifact_models().await?;
+        let artifacts = scaner_repo.get_artifact_models(GetArtifactsPayload::default()).await?;
         let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
         sheets_connector_repo.upload_to_sheet(spreadsheet_id, artifacts_model, converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     }
@@ -927,7 +927,7 @@ pub async fn add_artifacts_data_to_asset_sheet(
         .await
         .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     let updated_asset = fight_generator_repo.update_artifacts_asset(UpdateArtifactsAssetPayload::new(asset_id).with_sheet(asset.sheet_id.unwrap())).await?;
-    let artifacts = scaner_repo.get_artifact_models().await?;
+    let artifacts = scaner_repo.get_artifact_models(GetArtifactsPayload::default()).await?;
     let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
     sheets_connector_repo.upload_to_sheet(spreadsheet_id, updated_asset.clone(), converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     Ok(updated_asset)

@@ -5,7 +5,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, EXTENSIONS, FileStructure}, payloads::UpdateCreaturePayload, prelude::{
-        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpgradesModel
+        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, GetArtifactsPayload, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpdateArtifactPayload, UpgradesModel
     }, scaners::{
         self,
         prelude::{
@@ -159,9 +159,11 @@ impl ScanerService {
         Ok(heroes)
     }
 
-    pub async fn get_artifact_models(&self) -> Result<Vec<ArtifactDBModel>, ScanerError> {
+    pub async fn get_artifact_models(&self, payload: GetArtifactsPayload) -> Result<Vec<ArtifactDBModel>, ScanerError> {
+        let condition = Condition::all()
+            .add_option(payload.is_generatable.map(|is_generatable| Expr::col(ArtifactDBColumn::IsGeneratable).eq(is_generatable)));
         Ok(scaners::prelude::ArtifactDBEntity::find()
-            .filter(ArtifactDBColumn::IsGeneratable.eq(true))
+            .filter(condition)
             .all(&self.db)
             .await?)
     }
@@ -443,6 +445,53 @@ impl ScanerService {
             model_to_update.known_spells = Set(KnownSpellsModel { spells });
             model_to_update.update(&self.db).await?;
         } 
+        Ok(())
+    }
+
+    pub async fn update_artefact(&self, payload: UpdateArtifactPayload) -> Result<(), ScanerError> {
+        if let Some(existing_artefact) = ArtifactDBEntity::find_by_id(payload.id).one(&self.db).await? {
+            let mut model_to_update = existing_artefact.into_active_model();
+            if let Some(name_txt) = payload.name_txt {
+                model_to_update.name_txt = Set(name_txt);
+            }
+            if let Some(name) = payload.name {
+                model_to_update.name = Set(name);
+            } 
+            if let Some(desc) = payload.desc {
+                model_to_update.desc = Set(desc);
+            } 
+            if let Some(desc_txt) = payload.desc_txt {
+                model_to_update.desc_txt = Set(desc_txt);
+            } 
+            if let Some(attack) = payload.attack {
+                model_to_update.attack = Set(attack);
+            }
+            if let Some(defence) = payload.defence {
+                model_to_update.defence = Set(defence);
+            }
+            if let Some(spell_power) = payload.spell_power {
+                model_to_update.spellpower = Set(spell_power);
+            } 
+            if let Some(knowledge) = payload.knowledge {
+                model_to_update.knowledge = Set(knowledge);
+            } 
+            if let Some(morale) = payload.morale {
+                model_to_update.morale = Set(morale);
+            } 
+            if let Some(luck) = payload.luck {
+                model_to_update.luck = Set(luck);
+            }
+            if let Some(cost) = payload.cost {
+                model_to_update.cost = Set(cost);
+            } 
+            if let Some(class) = payload.class {
+                model_to_update.class = Set(class);
+            } 
+            if let Some(slot) = payload.slot {
+                model_to_update.slot = Set(slot);
+            } 
+            model_to_update.update(&self.db).await?;
+        }
         Ok(())
     }
 }

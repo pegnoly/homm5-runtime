@@ -1,11 +1,23 @@
 import { create } from "zustand"
-import { ArtifactSlotType } from "../components/body/editor/fightGenerator/elements/artifactsGenerator/types"
+import { ArtifactClassType, ArtifactSlotType } from "../components/body/editor/fightGenerator/elements/artifactsGenerator/types"
 import { TownType } from "../components/body/editor/fightGenerator/types"
 
 export type ArtifactModel = {
     id: number,
     name: string,
-    slot: ArtifactSlotType
+    slot: ArtifactSlotType,
+    class: ArtifactClassType,
+    desc: string,
+    cost: number,
+    is_generatable: boolean,
+    attack: number,
+    defence: number,
+    spell_power: number,
+    knowledge: number,
+    luck: number,
+    morale: number,
+    name_txt: string,
+    desc_txt: string
 }
 
 export type CreatureModel = {

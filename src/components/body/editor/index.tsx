@@ -10,6 +10,7 @@ import HeroCreatorLayout from "./heroCreator";
 import CreatureCopyCreatorLayout from "./creatureCopyCreator";
 import { useEffect } from "react";
 import CreatureEditorLayout from "./creatureEditor";
+import ArtifactEditorLayout from "./artifactEditor";
 
 function EditorMain() {
     const { state } = useParams();
@@ -46,6 +47,8 @@ function RenderEditorMode(params: {
             return <CreatureCopyCreatorLayout/>
         case EditorState.CreatureEditor:
             return <CreatureEditorLayout/>
+        case EditorState.ArtifactEditor:
+            return <ArtifactEditorLayout/>
         default:
             break;
     }

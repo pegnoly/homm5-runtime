@@ -43,6 +43,7 @@ quick-xml = {version = "0.38.0", features = ["serde", "serde-types", "serialize"
 roxmltree = "0.20.0"
 sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio"] }
 filetime = "0.2.26"
+zip = "0.6.6"
 
 [profile.dev.package."*"]
 opt-level = 2

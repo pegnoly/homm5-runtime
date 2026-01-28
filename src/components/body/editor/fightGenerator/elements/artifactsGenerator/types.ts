@@ -13,6 +13,13 @@ export enum ArtifactSlotType {
     Inventory = "INVENTORY"
 }
 
+export enum ArtifactClassType {
+    Minor = "ARTF_CLASS_MINOR",
+    Major = "ARTF_CLASS_MAJOR",
+    Relic = "ARTF_CLASS_RELIC",
+    Grail = "ARTF_CLASS_GRAIL"
+}
+
 export type RequiredArtifacts = {
     ids: number[]
 }

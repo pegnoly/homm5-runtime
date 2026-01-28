@@ -47,16 +47,14 @@ impl Scan for ArtScaner {
                 let mut db_model = model::Model::from(art);
                 db_model.id = self.id;
                 db_model.game_id = entity.id.as_ref().unwrap().clone();
-                if !db_model.name_txt.is_empty() {
-                    if let Some(data) = files.get(&db_model.name_txt) {
+                if !db_model.name_txt.is_empty()
+                    && let Some(data) = files.get(&db_model.name_txt) {
                         db_model.name = data.content.clone();
                     }
-                }
-                if !db_model.desc_txt.is_empty() {
-                    if let Some(data) = files.get(&db_model.desc_txt) {
+                if !db_model.desc_txt.is_empty()
+                    && let Some(data) = files.get(&db_model.desc_txt) {
                         db_model.desc = data.content.clone();
                     }
-                }
                 Ok(Some(db_model))
             }
             Err(e) => {
