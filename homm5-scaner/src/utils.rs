@@ -14,7 +14,12 @@ pub fn configure_path(
             if !files.contains_key(&actual_path) {
                 //println!("and it not in files");
                 if let Some(actual_name) = file_key.rsplit_once("/") {
-                    actual_name.0.to_string() + &format!("/{}", &actual_path)
+                    let new_path = actual_name.0.to_string() + &format!("/{}", &actual_path);
+                    if files.contains_key(&new_path) {
+                        new_path
+                    } else {
+                        String::new()
+                    }
                 } else {
                     String::new()
                 }
