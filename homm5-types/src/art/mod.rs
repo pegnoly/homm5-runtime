@@ -57,3 +57,17 @@ pub struct AdvMapArtifact {
     #[serde(rename = "untransferable")]
     pub untransferable: bool
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct ArtifactObject {
+    pub ID: String,
+    pub obj: AdvMapArtifactShared
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case, non_camel_case_types)]
+pub struct Table_DBArtifact_ArtifactEffect {
+    #[serde(rename = "Item")]
+    pub objects: Vec<ArtifactObject>
+}
