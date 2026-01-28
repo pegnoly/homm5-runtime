@@ -72,6 +72,7 @@ impl Scan for SpellScaner {
                                         spell.LongDescriptionFileRef =
                                             Some(FileRef { href: Some(desc) });
                                         spell.Texture = Some(FileRef { href: Some(icon) });
+                                        // print!("Entity id: {}", entity.id.as_ref().unwrap());
                                         let game_type_item = self.game_types
                                             .iter()
                                             .find(|t| t.name == *entity.id.as_ref().unwrap())
@@ -80,16 +81,14 @@ impl Scan for SpellScaner {
                                         let mut db_model = model::Model::from(spell);
                                         db_model.id = game_type_item.value;
                                         db_model.game_id = game_type_item.name.clone();
-                                        if !db_model.name_txt.is_empty() {
-                                            if let Some(data) = files.get(&db_model.name_txt) {
+                                        if !db_model.name_txt.is_empty()
+                                            && let Some(data) = files.get(&db_model.name_txt) {
                                                 db_model.name = data.content.clone();
                                             }
-                                        }
-                                        if !db_model.desc_txt.is_empty() {
-                                            if let Some(data) = files.get(&db_model.desc_txt) {
+                                        if !db_model.desc_txt.is_empty()
+                                            && let Some(data) = files.get(&db_model.desc_txt) {
                                                 db_model.desc = data.content.clone();
                                             }
-                                        }
                                         break Ok(Some(db_model));
                                     }
                                     Err(e) => {

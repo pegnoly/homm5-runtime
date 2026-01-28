@@ -3,14 +3,31 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
+pub struct HeroStatsModif {
+    pub Attack: i32,
+    pub Defence: i32,
+    pub Knowledge: i32,
+    pub SpellPower: i32,
+    pub Morale: i32,
+    pub Luck: i32
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
 pub struct AdvMapArtifactShared {
     pub NameFileRef: Option<FileRef>,
     pub DescriptionFileRef: Option<FileRef>,
+    pub Model: Option<FileRef>,
     pub Type: String,
     pub Slot: String,
     pub Icon: Option<FileRef>,
     pub CostOfGold: u32,
     pub CanBeGeneratedToSell: bool,
+    pub AIValue: i32,
+    pub HeroStatsModif: HeroStatsModif,
+    pub ArtifactShared: Option<FileRef>,
+    pub AvailableForPresets: bool,
+    pub PresetPrice: i32
 }
 
 #[derive(Debug, Serialize, Deserialize)]

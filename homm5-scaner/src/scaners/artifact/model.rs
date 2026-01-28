@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use homm5_types::art::AdvMapArtifactShared;
-use sea_orm::prelude::*;
+use homm5_types::{art::{AdvMapArtifactShared, HeroStatsModif}, common::FileRef};
+use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString, FromRepr};
 
@@ -21,7 +21,23 @@ pub struct Model {
     pub icon_xdb: String,
     pub cost: i32,
     pub is_generatable: bool,
-    pub game_id: String
+    pub game_id: String,
+    pub attack: i32,
+    pub defence: i32,
+    pub spellpower: i32,
+    pub knowledge: i32,
+    pub luck: i32,
+    pub morale: i32,
+    pub unused_data: UnusedArtifactDataModel
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+pub struct UnusedArtifactDataModel {
+    pub ai_value: i32,
+    pub shared: Option<String>,
+    pub model: Option<String>,
+    pub available_for_presets: bool,
+    pub preset_price: i32
 }
 
 #[derive(
@@ -172,7 +188,55 @@ impl From<AdvMapArtifactShared> for Model {
             },
             cost: value.CostOfGold as i32,
             is_generatable: value.CanBeGeneratedToSell,
-            game_id: Default::default()
+            game_id: Default::default(),
+            attack: value.HeroStatsModif.Attack,
+            defence: value.HeroStatsModif.Defence,
+            spellpower: value.HeroStatsModif.SpellPower,
+            knowledge: value.HeroStatsModif.Knowledge,
+            luck: value.HeroStatsModif.Luck,
+            morale: value.HeroStatsModif.Morale,
+            unused_data: UnusedArtifactDataModel { 
+                ai_value: value.AIValue, 
+                shared: if let Some(shared) = value.ArtifactShared {
+                    shared.href
+                } else {
+                    None
+                }, 
+                model: if let Some(model) = value.Model {
+                    model.href
+                } else {
+                    None
+                }, 
+                available_for_presets: value.AvailableForPresets, 
+                preset_price: value.PresetPrice 
+            }
+        }
+    }
+}
+
+impl From<Model> for AdvMapArtifactShared {
+    fn from(value: Model) -> Self {
+        AdvMapArtifactShared {
+            AIValue: value.unused_data.ai_value,
+            NameFileRef: Some(FileRef { href: Some(value.name_txt)}),
+            DescriptionFileRef: Some(FileRef { href: Some(value.desc_txt) }),
+            Model: value.unused_data.model.map(|model| FileRef { href: Some(model) }),
+            Type: value.class.to_string(),
+            Slot: value.slot.to_string(),
+            Icon: Some(FileRef { href: Some(value.icon_xdb) }),
+            CostOfGold: value.cost as u32,
+            CanBeGeneratedToSell: value.is_generatable,
+            HeroStatsModif: HeroStatsModif {
+                Attack: value.attack,
+                Defence: value.defence,
+                Knowledge: value.knowledge,
+                SpellPower: value.spellpower,
+                Morale: value.morale,
+                Luck: value.luck
+            },
+            ArtifactShared: value.unused_data.shared.map(|shared| FileRef { href: Some(shared) }),
+            AvailableForPresets: value.unused_data.available_for_presets,
+            PresetPrice: value.unused_data.preset_price
         }
     }
 }
