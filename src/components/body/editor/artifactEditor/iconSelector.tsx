@@ -9,8 +9,6 @@ function ArtifactIconSelector() {
     const action = ArtifactEditorStore.useActions();
 
     listen<string | null>("artifact_icon_path_selected", e => {
-        console.log("Icon selected: ", e.payload);
-        console.log("Current", current?.id);
         invoke("update_artefact_icon_path", {id: current?.id, value: `${e.payload?.toLowerCase().replace("\\", "/")}/icon.xdb`, path: `${e.payload}/icon.xdb`})
             .then(() => {
                 var updated = ObjectUtils.updateObjectDynamically(current!, "icon_xdb", `${e.payload?.toLowerCase().replace("\\", "/")}/icon.xdb`);

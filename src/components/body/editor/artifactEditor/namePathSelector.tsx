@@ -28,7 +28,7 @@ function ArtifactNamePathSelector() {
                 onClick={() => {
                     invoke("select_artefact_name_path")
                 }}
-            >Select icon path</Button>
+            >Select name path</Button>
         </Group>
     }
     </>
