@@ -490,6 +490,9 @@ impl ScanerService {
             if let Some(slot) = payload.slot {
                 model_to_update.slot = Set(slot);
             } 
+            if let Some(icon) = payload.icon_xdb {
+                model_to_update.icon_xdb = Set(icon);
+            }
             model_to_update.update(&self.db).await?;
         }
         Ok(())

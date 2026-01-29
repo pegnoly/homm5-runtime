@@ -98,7 +98,7 @@ pub async fn select_artefact_name_path(
     let path = profile.texts_path.clone();
     app.dialog()
         .file()
-        .set_directory(PathBuf::from(&path))
+        .set_directory(PathBuf::from(&format!("{}Text\\Game\\Artifacts\\NAF\\", path)))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
             app.emit("artifact_name_path_selected", f.unwrap().to_string().replace(&path, "")).unwrap();
@@ -124,7 +124,7 @@ pub async fn select_artefact_desc_path(
     let path = profile.texts_path.clone();
     app.dialog()
         .file()
-        .set_directory(PathBuf::from(&path))
+        .set_directory(PathBuf::from(&format!("{}Text\\Game\\Artifacts\\NAF\\", path)))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
             app.emit("artifact_desc_path_selected", f.unwrap().to_string().replace(&path, "")).unwrap();
@@ -140,6 +140,44 @@ pub async fn update_artefact_desc_path(
 ) -> Result<(), Error> {
     Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(value)).await?)
 }
+
+#[tauri::command]
+pub async fn select_artefact_icon_path(
+    app: AppHandle,
+    app_manager: State<'_, LocalAppManager>,
+) -> Result<(), Error> {
+    let profile = app_manager.current_profile_data.read().await;
+    let path = profile.data_path.clone();
+    app.dialog()
+        .file()
+        .set_directory(PathBuf::from(&format!("{}GOG_Mod\\Textures\\Icons\\Artifacts\\", &path)))
+        .set_can_create_directories(true)
+        .pick_folder(move |f| {
+            app.emit("artifact_icon_path_selected", f.unwrap().to_string().replace(&format!("{}GOG_Mod\\", &path), "")).unwrap();
+        });
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_artefact_icon_path(
+    scaner_service: State<'_, ScanerService>,
+    app_manager: State<'_, LocalAppManager>,
+    id: i32,
+    value: String,
+    path: String
+) -> Result<(), Error> {
+    let profile = app_manager.current_profile_data.read().await;
+    let base_cfg = app_manager.base_config.read().await;
+    let icon_xdb_path = PathBuf::from(format!("{}GOG_Mod\\{}", profile.data_path, path));
+    if !icon_xdb_path.exists() {
+        let icon_xdb = base_cfg.generic_icon_128.as_ref().unwrap();
+        let icon_dds = base_cfg.generic_icon_dds.as_ref().unwrap();
+        std::fs::copy(icon_xdb, &icon_xdb_path)?;
+        std::fs::copy(icon_dds, icon_xdb_path.to_str().unwrap().replace(".xdb", ".dds"))?;
+    }
+    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_icon_xdb(value)).await?)
+}
+
 
 #[tauri::command]
 pub async fn update_artefact_name(

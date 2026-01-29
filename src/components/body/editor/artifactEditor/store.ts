@@ -15,6 +15,7 @@ const store = create<Store>((set) => ({
     current: undefined,
     actions: {
         loadCurrent(model) {
+            console.log("Loading: ", model)
             set({current: model});
         },
         updateCurrent(model) {

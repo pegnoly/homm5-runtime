@@ -218,12 +218,16 @@ impl From<Model> for AdvMapArtifactShared {
     fn from(value: Model) -> Self {
         AdvMapArtifactShared {
             AIValue: value.unused_data.ai_value,
-            NameFileRef: Some(FileRef { href: Some(value.name_txt)}),
-            DescriptionFileRef: Some(FileRef { href: Some(value.desc_txt) }),
+            NameFileRef: Some(FileRef { href: Some(value.name_txt.replace("\\", "/"))}),
+            DescriptionFileRef: Some(FileRef { href: Some(value.desc_txt.replace("\\", "/")) }),
             Model: value.unused_data.model.map(|model| FileRef { href: Some(model) }),
             Type: value.class.to_string(),
             Slot: value.slot.to_string(),
-            Icon: Some(FileRef { href: Some(value.icon_xdb) }),
+            Icon: Some(FileRef { href: Some( if value.icon_xdb.is_empty() {
+                value.icon_xdb
+            } else {
+                format!("{}#xpointer(/Texture)", value.icon_xdb.replace("\\", "/"))
+            }) }),
             CostOfGold: value.cost as u32,
             CanBeGeneratedToSell: value.is_generatable,
             HeroStatsModif: HeroStatsModif {

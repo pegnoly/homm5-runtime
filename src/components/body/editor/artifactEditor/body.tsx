@@ -1,11 +1,13 @@
 import EditableProperty from "@/components/common/editableProperty";
 import { ArtifactEditorStore } from "./store";
-import { Button, Group, Select, Stack, Text, Textarea, TextInput } from "@mantine/core";
+import { Button, Group, Select, Stack, Textarea, TextInput } from "@mantine/core";
 import { ArtifactClassType, ArtifactSlotType } from "../fightGenerator/elements/artifactsGenerator/types";
 import { invoke } from "@tauri-apps/api/core";
 import { ObjectUtils } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { listen } from "@tauri-apps/api/event";
+import ArtifactIconSelector from "./iconSelector";
+import ArtifactNamePathSelector from "./namePathSelector";
+import ArtifactDescPathSelector from "./descPathSelector";
 
 function ArtifactEditorBody() {
     const current = ArtifactEditorStore.useCurrent();
@@ -23,26 +25,6 @@ function ArtifactEditorBody() {
             setLocalDesc(current.desc)
         }
     }, [current])
-
-    listen<string | null>("artifact_name_path_selected", e => {
-        invoke("update_artefact_name_path", {id: current?.id, value: `${e.payload?.toLowerCase().replace("\\", "/")}/name.txt`});
-        invoke("update_artefact_desc_path", {id: current?.id, value: `${e.payload?.toLowerCase().replace("\\", "/")}/desc.txt`})
-            .then(() => {
-                var updated = ObjectUtils.updateObjectDynamically(current!, "name_txt", `${e.payload?.toLowerCase().replace("\\", "/")}/name.txt`);
-                updated = ObjectUtils.updateObjectDynamically(updated, "desc_txt", `${e.payload?.toLowerCase().replace("\\", "/")}/desc.txt`)
-                action.updateCurrent(updated);
-            });
-    });
-
-    listen<string | null>("artifact_desc_path_selected", e => {
-        invoke("update_artefact_name_path", {id: current?.id, value: `${e.payload?.toLowerCase().replace("\\", "/")}/name.txt`});
-        invoke("update_artefact_desc_path", {id: current?.id, value: `${e.payload?.toLowerCase().replace("\\", "/")}/desc.txt`})
-            .then(() => {
-                var updated = ObjectUtils.updateObjectDynamically(current!, "name_txt", `${e.payload?.toLowerCase().replace("\\", "/")}/name.txt`);
-                updated = ObjectUtils.updateObjectDynamically(updated, "desc_txt", `${e.payload?.toLowerCase().replace("\\", "/")}/desc.txt`)
-                action.updateCurrent(updated);
-            });
-    })
     
     async function updateStat(stat: string, value: number) {
         await invoke(`update_artefact_${stat}`, {id: current?.id, value: value})
@@ -158,15 +140,7 @@ function ArtifactEditorBody() {
                     </Stack>
                 </div>
                 <div style={{width: '72%', alignContent: 'center', paddingTop: '3%', display: 'flex', flexDirection: 'column', gap: '2%'}}>
-                    <Group maw={550}>
-                        <Text>{current.name_txt}</Text>
-                        <Button 
-                            radius={0}
-                            onClick={() => {
-                                invoke("select_artefact_name_path")
-                            }}
-                        >Select name path</Button>
-                    </Group>
+                    <ArtifactNamePathSelector/>
                     <Group maw={550}>
                         <TextInput 
                             disabled={!nameEditable} 
@@ -185,15 +159,7 @@ function ArtifactEditorBody() {
                             }}
                         >{nameEditable ? "Save name" : "Edit name"}</Button>
                     </Group>
-                    <Group maw={550}>
-                        <Text>{current.desc_txt}</Text>
-                        <Button 
-                            radius={0}
-                            onClick={() => {
-                                invoke("select_artefact_desc_path")
-                            }}
-                        >Select desc path</Button>
-                    </Group>
+                    <ArtifactDescPathSelector/>
                     <Stack>
                         <Textarea
                             disabled={!descEditable}
@@ -215,6 +181,7 @@ function ArtifactEditorBody() {
                             >{descEditable ? "Save desc" : "Edit desc"}</Button>
                         </Group>
                     </Stack>
+                    <ArtifactIconSelector/>
                 </div>
             </div>
         }

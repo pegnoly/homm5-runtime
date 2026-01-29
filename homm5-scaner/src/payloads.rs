@@ -203,7 +203,8 @@ pub struct UpdateArtifactPayload {
     pub morale: Option<i32>,
     pub luck: Option<i32>,
     pub class: Option<ArtifactClassType>,
-    pub slot: Option<ArtifactSlotType>
+    pub slot: Option<ArtifactSlotType>,
+    pub icon_xdb: Option<String>
 }
 
 impl UpdateArtifactPayload {
@@ -276,6 +277,11 @@ impl UpdateArtifactPayload {
 
     pub fn with_class(mut self, class: ArtifactClassType) -> Self {
         self.class = Some(class);
+        self
+    }
+
+    pub fn with_icon_xdb(mut self, icon: String) -> Self {
+        self.icon_xdb = Some(icon);
         self
     }
 }
