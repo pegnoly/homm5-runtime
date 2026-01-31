@@ -216,6 +216,19 @@ pub async fn update_artefact_desc(
 }
 
 #[tauri::command]
+pub async fn update_artefact_texts_paths(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: String
+) -> Result<(), Error> {
+    let name_txt = format!("{}/name.txt", &value.to_lowercase().replace("\\", "/"));
+    let desc_txt = format!("{}/name.txt", &value.to_lowercase().replace("\\", "/"));
+    scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_name_txt(name_txt)).await?;
+    scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(desc_txt)).await?;
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn rebuild_artifacts_file(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>

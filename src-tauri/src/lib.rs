@@ -246,7 +246,8 @@ pub async fn run() -> Result<(), Error> {
             services::artifact_editor::commands::select_artefact_desc_path,
             services::artifact_editor::commands::select_artefact_name_path,
             services::artifact_editor::commands::select_artefact_icon_path,
-            services::artifact_editor::commands::update_artefact_icon_path
+            services::artifact_editor::commands::update_artefact_icon_path,
+            services::artifact_editor::commands::update_artefact_texts_paths
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
