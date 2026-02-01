@@ -71,10 +71,11 @@ type Action = {
     load_creatures: (values: CreatureModel[]) => void,
     load_abilities: (values: AbilityModel[]) => void,
     load_spells: (values: SpellModel[]) => void,
-    load_heroes: (values: HeroModel[]) => void
+    load_heroes: (values: HeroModel[]) => void,
+    update_artifacts: (value: ArtifactModel) => void
 }
 
-const useGameDataStore = create<Data & Action>((set) => ({
+const useGameDataStore = create<Data & Action>((set, get) => ({
     artifacts: [],
     creatures: [],
     abilities: [],
@@ -96,6 +97,15 @@ const useGameDataStore = create<Data & Action>((set) => ({
     load_spells(values) {
         set({spells: values})
     },
+    update_artifacts(value) {
+        set({artifacts: get().artifacts.map(a => {
+            if (a.id == value.id) {
+                return value;
+            } else {
+                return a
+            }
+        })})
+    }
 }))
 
 export default useGameDataStore;

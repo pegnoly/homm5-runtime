@@ -6,17 +6,19 @@ import { invoke } from "@tauri-apps/api/core";
 import { ObjectUtils } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import ArtifactIconSelector from "./iconSelector";
-import ArtifactNamePathSelector from "./namePathSelector";
-import ArtifactDescPathSelector from "./descPathSelector";
+import useGameDataStore from "@/stores/GameDataStore";
+import ArtifactPathsSelector from "./pathsSelector";
 
 function ArtifactEditorBody() {
     const current = ArtifactEditorStore.useCurrent();
     const action = ArtifactEditorStore.useActions();
 
-    const [localName, setLocalName] = useState<string | undefined>(undefined);
+    const updateArtifacts = useGameDataStore(state => state.update_artifacts);
+
+    const [localName, setLocalName] = useState<string | undefined>("");
     const [nameEditable, setNameEditable] = useState<boolean>(false);
 
-    const [localDesc, setLocalDesc] = useState<string | undefined>(undefined);
+    const [localDesc, setLocalDesc] = useState<string | undefined>("");
     const [descEditable, setDescEditable] = useState<boolean>(false);
 
     useEffect(() => {
@@ -31,6 +33,7 @@ function ArtifactEditorBody() {
             .then(() => {
                 const updated = ObjectUtils.updateObjectDynamically(current!, stat, value);
                 action.updateCurrent(updated);
+                updateArtifacts(updated);
             })
     }
 
@@ -39,6 +42,7 @@ function ArtifactEditorBody() {
             .then(() => {
                 const updated = ObjectUtils.updateObjectDynamically(current!, "slot", value);
                 action.updateCurrent(updated);
+                updateArtifacts(updated);
             })
     }
 
@@ -47,6 +51,7 @@ function ArtifactEditorBody() {
             .then(() => {
                 const updated = ObjectUtils.updateObjectDynamically(current!, "class", value);
                 action.updateCurrent(updated);
+                updateArtifacts(updated);
             })
     }
 
@@ -55,6 +60,7 @@ function ArtifactEditorBody() {
             .then(() => {
                 const updated = ObjectUtils.updateObjectDynamically(current!, "name", localName);
                 action.updateCurrent(updated);
+                updateArtifacts(updated);
             }) 
     }
 
@@ -63,6 +69,7 @@ function ArtifactEditorBody() {
             .then(() => {
                 const updated = ObjectUtils.updateObjectDynamically(current!, "desc", localDesc);
                 action.updateCurrent(updated);
+                updateArtifacts(updated);
             })
     }
 
@@ -140,7 +147,7 @@ function ArtifactEditorBody() {
                     </Stack>
                 </div>
                 <div style={{width: '72%', alignContent: 'center', paddingTop: '3%', display: 'flex', flexDirection: 'column', gap: '2%'}}>
-                    <ArtifactNamePathSelector/>
+                    <ArtifactPathsSelector/>
                     <Group maw={550}>
                         <TextInput 
                             disabled={!nameEditable} 
@@ -159,7 +166,6 @@ function ArtifactEditorBody() {
                             }}
                         >{nameEditable ? "Save name" : "Edit name"}</Button>
                     </Group>
-                    <ArtifactDescPathSelector/>
                     <Stack>
                         <Textarea
                             disabled={!descEditable}

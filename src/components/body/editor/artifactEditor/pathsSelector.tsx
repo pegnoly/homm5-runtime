@@ -6,52 +6,55 @@ import { Button, Group, Text } from "@mantine/core";
 import useGameDataStore from "@/stores/GameDataStore";
 import { useEffect, useState } from "react";
 
-function ArtifactIconSelector() {
+function ArtifactPathsSelector() {
     const current = ArtifactEditorStore.useCurrent();
     const action = ArtifactEditorStore.useActions();
-
     const updateArtifacts = useGameDataStore(state => state.update_artifacts);
-    
-    const [iconPath, setIconPath] = useState<string | undefined>(undefined);
+
+    const [namePath, setNamePath] = useState<string | undefined>(undefined);
     const [wasUpdatedFromEvent, setWasUpdatedFromEvent] = useState<boolean>(false);
 
-    listen<string | null>("artifact_icon_path_selected", e => {
-        setIconPath(`${e.payload!.toLowerCase().replace("\\", "/")}/icon.xdb`);
+    listen<string | null>("artifact_name_path_selected", e => {
+        setNamePath(`${e.payload!.toLowerCase().replace("\\", "/")}/name.txt`);
         setWasUpdatedFromEvent(true);
     });
 
     useEffect(() => {
         if (current != undefined) {
-            setIconPath(current.icon_xdb);
+            setNamePath(current.name_txt);
         }
     }, [current?.id]);
 
     useEffect(() => {
-        if (iconPath != undefined && wasUpdatedFromEvent == true) {
+        if (namePath != undefined && wasUpdatedFromEvent == true) {
             setWasUpdatedFromEvent(false);
-            invoke("update_artefact_icon_path", {id: current?.id, value: iconPath, path: iconPath})
+            invoke("update_artefact_texts_paths", {id: current?.id, value: namePath.replace("/name.txt", "")})
                 .then(() => {
-                    var updated = ObjectUtils.updateObjectDynamically(current!, "icon_xdb", iconPath);
+                    var updated = ObjectUtils.updateObjectDynamically(current!, "name_txt", namePath);
+                    updated = ObjectUtils.updateObjectDynamically(updated, "desc_txt", namePath.replace("name.txt", "desc.txt"))
                     action.updateCurrent(updated);
                     updateArtifacts(updated);
                 });
         }
-    }, [iconPath]);
+    }, [namePath]);
 
     return <>
     {
         current == undefined ? null :
+        <>
+
         <Group maw={550}>
-            <Text>{iconPath}</Text>
+            <Text>{namePath}</Text>
             <Button 
                 radius={0}
                 onClick={() => {
-                    invoke("select_artefact_icon_path")
+                    invoke("select_artefact_name_path")
                 }}
-            >Select icon path</Button>
+            >Select name path</Button>
         </Group>
+        </>
     }
     </>
 }
 
-export default ArtifactIconSelector;
+export default ArtifactPathsSelector;

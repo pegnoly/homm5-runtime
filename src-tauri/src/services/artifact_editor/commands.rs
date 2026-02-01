@@ -112,6 +112,7 @@ pub async fn update_artefact_name_path(
     id: i32,
     value: String
 ) -> Result<(), Error> {
+    println!("Update name called for id {}", id);
     Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_name_txt(value)).await?)
 }
 
@@ -138,13 +139,14 @@ pub async fn update_artefact_desc_path(
     id: i32,
     value: String
 ) -> Result<(), Error> {
+    println!("Update desc called for id {}", id);
     Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(value)).await?)
 }
 
 #[tauri::command]
 pub async fn select_artefact_icon_path(
     app: AppHandle,
-    app_manager: State<'_, LocalAppManager>,
+    app_manager: State<'_, LocalAppManager>
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     let path = profile.data_path.clone();
@@ -166,6 +168,7 @@ pub async fn update_artefact_icon_path(
     value: String,
     path: String
 ) -> Result<(), Error> {
+    println!("Update icon called for id {}", id);
     let profile = app_manager.current_profile_data.read().await;
     let base_cfg = app_manager.base_config.read().await;
     let icon_xdb_path = PathBuf::from(format!("{}GOG_Mod\\{}", profile.data_path, path));
@@ -187,6 +190,7 @@ pub async fn update_artefact_name(
     value: String,
     path: String
 ) -> Result<(), Error> {
+    println!("Path: {}", &path);
     let profile = app_manager.current_profile_data.read().await;
     let path = PathBuf::from(format!("{}{}", profile.texts_path, path));
     let mut file = File::create(path)?;
@@ -205,6 +209,7 @@ pub async fn update_artefact_desc(
     value: String,
     path: String
 ) -> Result<(), Error> {
+    println!("Desc path: {}", &path);
     let profile = app_manager.current_profile_data.read().await;
     let path = PathBuf::from(format!("{}{}", profile.texts_path, path));
     let mut file = File::create(path)?;
@@ -222,7 +227,7 @@ pub async fn update_artefact_texts_paths(
     value: String
 ) -> Result<(), Error> {
     let name_txt = format!("{}/name.txt", &value.to_lowercase().replace("\\", "/"));
-    let desc_txt = format!("{}/name.txt", &value.to_lowercase().replace("\\", "/"));
+    let desc_txt = format!("{}/desc.txt", &value.to_lowercase().replace("\\", "/"));
     scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_name_txt(name_txt)).await?;
     scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(desc_txt)).await?;
     Ok(())
