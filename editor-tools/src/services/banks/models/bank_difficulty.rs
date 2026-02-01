@@ -1,3 +1,5 @@
+#![allow(clippy::enum_variant_names)]
+
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};

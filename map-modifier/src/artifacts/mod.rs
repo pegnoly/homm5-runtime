@@ -119,8 +119,8 @@ impl<'a> ArtifactsModifier<'a> {
     pub fn modify(&mut self, artifact: &mut AdvMapArtifact, writer: &mut Writer<&mut Vec<u8>>) {
         let empty = String::new();
         let artifact_shared = artifact.shared.href.as_ref().unwrap_or(&empty);
-        if !artifact_shared.is_empty() {
-            if let Some(artifact_data) = self.artifacts_data.iter().find(|a| a.shared == artifact_shared.as_str()) {
+        if !artifact_shared.is_empty()
+            && let Some(artifact_data) = self.artifacts_data.iter().find(|a| a.shared == artifact_shared.as_str()) {
                 if let Some(artifacts) = self.new_artifacts.get_mut(&artifact_data._type) {
                     artifact.name = Some(format!("{}_{}", artifact_data._type, artifacts.len() + 1));
                     artifacts.push(artifact.name.clone().unwrap());
@@ -129,7 +129,6 @@ impl<'a> ArtifactsModifier<'a> {
                     self.new_artifacts.insert(artifact_data._type.clone(), vec![artifact.name.clone().unwrap()]);
                 }
             }
-        }
         if artifact.point_lights.is_some() && artifact.point_lights.as_ref().unwrap().items.is_none() {
             artifact.point_lights = None;
         }

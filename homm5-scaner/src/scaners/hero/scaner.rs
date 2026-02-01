@@ -137,30 +137,26 @@ impl Scan for HeroScaner {
 
                                         let mut db_model = model::Model::from(hero);
                                         db_model.id = self.id.clone();
-                                        if !db_model.spec_name_txt.is_empty() {
-                                            if let Some(data) = files.get(&db_model.spec_name_txt) {
+                                        if !db_model.spec_name_txt.is_empty()
+                                            && let Some(data) = files.get(&db_model.spec_name_txt) {
                                                 db_model.spec_name = data.content.clone();
                                             }
-                                        }
-                                        if !db_model.spec_name_txt.is_empty() {
-                                            if let Some(data) = files.get(&db_model.spec_desc_txt) {
+                                        if !db_model.spec_name_txt.is_empty()
+                                            && let Some(data) = files.get(&db_model.spec_desc_txt) {
                                                 db_model.spec_desc = data.content.clone();
                                             }
-                                        }
-                                        if !db_model.editable.name_txt.is_empty() {
-                                            if let Some(data) =
+                                        if !db_model.editable.name_txt.is_empty()
+                                            && let Some(data) =
                                                 files.get(&db_model.editable.name_txt)
                                             {
                                                 db_model.editable.name = data.content.clone();
                                             }
-                                        }
-                                        if !db_model.editable.bio_txt.is_empty() {
-                                            if let Some(data) =
+                                        if !db_model.editable.bio_txt.is_empty()
+                                            && let Some(data) =
                                                 files.get(&db_model.editable.bio_txt)
                                             {
                                                 db_model.editable.bio = data.content.clone();
                                             }
-                                        }
                                         break Ok(Some(db_model));
                                     }
                                     Err(e) => {

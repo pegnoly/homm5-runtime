@@ -1,3 +1,5 @@
+#![allow(clippy::enum_variant_names)]
+
 use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::str;

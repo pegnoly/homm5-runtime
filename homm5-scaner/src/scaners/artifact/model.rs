@@ -1,5 +1,6 @@
-use std::str::FromStr;
+#![allow(clippy::enum_variant_names)]
 
+use std::str::FromStr;
 use homm5_types::{art::{AdvMapArtifactShared, HeroStatsModif}, common::FileRef};
 use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};

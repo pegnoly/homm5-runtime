@@ -167,16 +167,14 @@ impl Scan for CreatureScaner {
                                             .unwrap()
                                             .name
                                             .clone();
-                                        if !db_model.name_txt.is_empty() {
-                                            if let Some(name_data) = files.get(&db_model.name_txt) {
+                                        if !db_model.name_txt.is_empty()
+                                            && let Some(name_data) = files.get(&db_model.name_txt) {
                                                 db_model.name = name_data.content.clone();
                                             }
-                                        }
-                                        if !db_model.desc_txt.is_empty() {
-                                            if let Some(desc_data) = files.get(&db_model.desc_txt) {
+                                        if !db_model.desc_txt.is_empty()
+                                            && let Some(desc_data) = files.get(&db_model.desc_txt) {
                                                 db_model.desc = desc_data.content.clone();
                                             }
-                                        }
                                         if self.id < 180 {
                                             db_model.xdb = Some(entity.content.to_string());
                                         }

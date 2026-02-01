@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+#![allow(clippy::enum_variant_names)]
 
+use std::collections::HashMap;
 use sea_orm::{FromJsonQueryResult, Iterable, prelude::*};
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};

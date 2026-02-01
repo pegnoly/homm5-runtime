@@ -18,12 +18,14 @@ pub struct SheetsConnectorService {
     reqwest_client: reqwest::Client,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct RowTransferData {
     pub index: i32,
     pub row: Vec<RowData>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct ColumnTransferData {
     pub index: i32,

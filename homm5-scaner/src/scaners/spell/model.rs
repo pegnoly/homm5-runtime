@@ -1,5 +1,6 @@
-use std::str::FromStr;
+#![allow(clippy::enum_variant_names)]
 
+use std::str::FromStr;
 use homm5_types::spell::SpellShared;
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};

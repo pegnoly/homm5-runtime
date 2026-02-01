@@ -40,8 +40,8 @@ impl CollectFiles for SpellFileCollector {
                         match spells_de {
                             Ok(spells) => {
                                 for spell in spells.objects {
-                                    if let Some(obj) = spell.Obj {
-                                        if let Some(href) = obj.href.as_ref() {
+                                    if let Some(obj) = spell.Obj
+                                        && let Some(href) = obj.href.as_ref() {
                                             let spell_key = href
                                                 .replace("#xpointer(/Spell)", "")
                                                 .trim_start_matches("/")
@@ -59,7 +59,6 @@ impl CollectFiles for SpellFileCollector {
                                                 }
                                             }
                                         }
-                                    }
                                 }
                             }
                             Err(e) => println!("Error deserializing spells.xdb, {e}"),
