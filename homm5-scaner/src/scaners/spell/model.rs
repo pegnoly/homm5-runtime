@@ -2,11 +2,13 @@
 
 use std::str::FromStr;
 use homm5_types::spell::SpellShared;
-use sea_orm::prelude::*;
+use itertools::Itertools;
+use ordered_float::OrderedFloat;
+use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
-use crate::core::{ToJsonCompatibleString, ToLua};
+use crate::{core::{ToJsonCompatibleString, ToLua}, prelude::ResourcesModel};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "spells")]
@@ -24,6 +26,10 @@ pub struct Model {
     pub school: MagicSchoolType,
     pub is_aimed: bool,
     pub is_area: bool,
+    pub resources_cost: ResourcesModel,
+    pub damage_formula: SpellFormulaModel,
+    pub duration_formula: SpellFormulaModel,
+    pub unused_data: SpellUnusedDataModel
 }
 
 #[derive(
@@ -78,6 +84,31 @@ pub enum MagicSchoolType {
     Warcries,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+pub struct SpellFormulaElementModel {
+    pub base: OrderedFloat<f32>,
+    pub per_power: OrderedFloat<f32>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+pub struct SpellFormulaModel {
+    pub elements: Vec<SpellFormulaElementModel>
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+pub struct SpellUnusedDataModel {
+    pub effect_texture: Option<String>,
+    pub spell_book_predictions: Option<Vec<String>>,
+    pub combat_log_texts: Option<Vec<String>>,
+    pub can_select_dead: bool,
+    pub target: String,
+    pub element: String,
+    pub damage_is_elemental: Option<bool>,
+    pub visuals: Option<Vec<String>>,
+    pub preset_price: Option<i32>,
+    pub available_for_presets: Option<bool>
+}
+
 impl ToJsonCompatibleString for MagicSchoolType {
     fn to_json_compatible_repr(&self) -> &str {
         match self {
@@ -121,11 +152,114 @@ impl From<SpellShared> for Model {
             } else {
                 String::new()
             },
-            cost: value.TrainedCost as i32,
-            level: value.Level as i32,
+            cost: value.TrainedCost,
+            level: value.Level,
             school: MagicSchoolType::from_str(&value.MagicSchool).unwrap_or(MagicSchoolType::None),
             is_aimed: value.IsAimed,
             is_area: value.IsAreaAttack,
+            resources_cost: ResourcesModel {
+                crystal: value.sSpellCost.Crystal,
+                gem: value.sSpellCost.Gem,
+                wood: value.sSpellCost.Wood,
+                ore: value.sSpellCost.Ore,
+                mercury: value.sSpellCost.Mercury,
+                sulfur: value.sSpellCost.Sulfur,
+                gold: value.sSpellCost.Gold
+            },
+            damage_formula: if let Some(formula) = value.damage {
+                SpellFormulaModel { elements: if let Some(items) = formula.items {
+                    items.iter().map(|e| SpellFormulaElementModel {
+                        base: e.Base.into(),
+                        per_power: e.PerPower.into()
+                    }).collect_vec()
+                } else {
+                    vec![]
+                }  }
+            } else {
+                SpellFormulaModel { elements: vec![] }
+            },
+            duration_formula: if let Some(formula) = value.duration {
+                SpellFormulaModel { elements: if let Some(items) = formula.items {
+                    items.iter().map(|e| SpellFormulaElementModel {
+                        base: e.Base.into(),
+                        per_power: e.PerPower.into()
+                    }).collect_vec()
+                } else {
+                    vec![]
+                }  }
+            } else {
+                SpellFormulaModel { elements: vec![] }
+            },
+            unused_data: SpellUnusedDataModel {
+                available_for_presets: value.AvailableForPresets,
+                effect_texture: if let Some(texture_ref) = value.EffectTexture {
+                    texture_ref.href
+                } else {
+                    None
+                },
+                can_select_dead: value.CanSelectDead,
+                combat_log_texts: if let Some(texts) = value.CombatLogTexts  {
+                    if let Some(text_items) = texts.items {
+                        if text_items.iter().any(|f| f.href.is_some()) {
+                            Some(Vec::from_iter(text_items.iter().filter_map(|f| {
+                                if f.href.is_none() {
+                                    None
+                                } else {
+                                    f.href.clone()
+                                }
+                            })))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                },
+                spell_book_predictions: if let Some(texts) = value.SpellBookPredictions  {
+                    if let Some(text_items) = texts.items {
+                        if text_items.iter().any(|f| f.href.is_some()) {
+                            Some(Vec::from_iter(text_items.iter().filter_map(|f| {
+                                if f.href.is_none() {
+                                    None
+                                } else {
+                                    f.href.clone()
+                                }
+                            })))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                },
+                damage_is_elemental: value.DamageIsElemental,
+                target: value.Target,
+                element: value.Element,
+                visuals: if let Some(texts) = value.visuals  {
+                    if let Some(text_items) = texts.items {
+                        if text_items.iter().any(|f| f.href.is_some()) {
+                            Some(Vec::from_iter(text_items.iter().filter_map(|f| {
+                                if f.href.is_none() {
+                                    None
+                                } else {
+                                    f.href.clone()
+                                }
+                            })))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                },
+                preset_price: value.PresetPrice
+            }
         }
     }
 }

@@ -21,13 +21,13 @@ pub struct MagicElement {
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct Resources {
-    pub Wood: u16,
-    pub Ore: u16,
-    pub Mercury: u16,
-    pub Crystal: u16,
-    pub Sulfur: u16,
-    pub Gem: u16,
-    pub Gold: u32,
+    pub Wood: i32,
+    pub Ore: i32,
+    pub Mercury: i32,
+    pub Crystal: i32,
+    pub Sulfur: i32,
+    pub Gem: i32,
+    pub Gold: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

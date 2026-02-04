@@ -26,3 +26,4 @@ bincode = { version = "2.0.1", features = ["serde"] }
 utf16string = "0.2.0"
 itertools = "0.14.0"
 roxmltree = "0.20.0"
+ordered-float = { version = "5.1.0", features = ["serde"] }

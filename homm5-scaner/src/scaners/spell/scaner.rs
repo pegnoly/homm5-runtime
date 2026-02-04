@@ -43,6 +43,10 @@ impl Scan for SpellScaner {
                                     quick_xml::de::from_str(&format!("<Spell>{text}</Spell>"));
                                 match de_res {
                                     Ok(mut spell) => {
+                                        if let Some(game_id) = &entity.id
+                                            && game_id == "SPELL_MAGIC_ARROW" {
+                                                println!("{:#?}", &spell);
+                                            }
                                         let name = configure_path(
                                             spell.NameFileRef.as_ref().unwrap().href.as_ref(),
                                             file_key,
