@@ -11,6 +11,7 @@ import CreatureCopyCreatorLayout from "./creatureCopyCreator";
 import { useEffect } from "react";
 import CreatureEditorLayout from "./creatureEditor";
 import ArtifactEditorLayout from "./artifactEditor";
+import SpellEditorLayout from "./spellEditor";
 
 function EditorMain() {
     const { state } = useParams();
@@ -49,6 +50,8 @@ function RenderEditorMode(params: {
             return <CreatureEditorLayout/>
         case EditorState.ArtifactEditor:
             return <ArtifactEditorLayout/>
+        case EditorState.SpellEditor:
+            return <SpellEditorLayout/>
         default:
             break;
     }

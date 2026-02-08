@@ -1,7 +1,7 @@
 #![allow(clippy::enum_variant_names)]
 
 use std::str::FromStr;
-use homm5_types::spell::SpellShared;
+use homm5_types::{common::FileRef, creature::Resources, spell::{CombatLogTexts, SpellBookPredictions, SpellFormula, SpellFormulaElement, SpellShared, Visuals}};
 use itertools::Itertools;
 use ordered_float::OrderedFloat;
 use sea_orm::{FromJsonQueryResult, prelude::*};
@@ -261,6 +261,78 @@ impl From<SpellShared> for Model {
                 preset_price: value.PresetPrice
             }
         }
+    }
+}
+
+impl From<Model> for SpellShared {
+    fn from(value: Model) -> Self {
+        SpellShared {
+            AvailableForPresets: value.unused_data.available_for_presets,
+            NameFileRef: if value.name_txt.is_empty()  {
+                None
+            } else {
+                Some(FileRef { href: Some(value.name_txt)})
+            },
+            CanSelectDead: value.unused_data.can_select_dead,
+            CombatLogTexts: value.unused_data.combat_log_texts.map(|texts| CombatLogTexts { 
+                items: Some(Vec::from_iter(texts.iter().map(|t| FileRef { href: Some(t.clone()) })))
+            }),
+            DamageIsElemental: value.unused_data.damage_is_elemental,
+            EffectTexture: value.unused_data.effect_texture.map(|texture| FileRef { href: Some(texture) }),
+            Element: value.unused_data.element,
+            IsAimed: value.is_aimed,
+            IsAreaAttack: value.is_area,
+            Level: value.level,
+            LongDescriptionFileRef: if value.desc_txt.is_empty() {
+                None
+            } else {
+                Some(FileRef { href: Some(value.desc_txt) })
+            },
+            MagicSchool: value.school.to_string(),
+            PresetPrice: value.unused_data.preset_price,
+            Target: value.unused_data.target,
+            SpellBookPredictions: value.unused_data.spell_book_predictions.map(|texts| SpellBookPredictions { 
+                items: Some(Vec::from_iter(texts.iter().map(|t| FileRef { href: Some(t.clone()) })))
+            }),
+            Texture: if value.icon_xdb.is_empty() {
+                None
+            } else {
+                Some(FileRef { href: Some(value.icon_xdb) })
+            },
+            TrainedCost: value.cost,
+            damage: if value.damage_formula.elements.is_empty() {
+                None
+            } else {
+                Some(SpellFormula { items: Some(Vec::from_iter(value.damage_formula.elements.iter().map(|e| {
+                    SpellFormulaElement {
+                        Base: e.base.into(),
+                        PerPower: e.per_power.into()
+                    }
+                })))})
+            },
+            duration: if value.duration_formula.elements.is_empty() {
+                None
+            } else {
+                Some(SpellFormula { items: Some(Vec::from_iter(value.duration_formula.elements.iter().map(|e| {
+                    SpellFormulaElement {
+                        Base: e.base.into(),
+                        PerPower: e.per_power.into()
+                    }
+                })))})
+            },
+            sSpellCost: Resources {
+                Crystal: value.resources_cost.crystal,
+                Gem: value.resources_cost.gem,
+                Gold: value.resources_cost.gold,
+                Mercury: value.resources_cost.mercury,
+                Wood: value.resources_cost.wood,
+                Ore: value.resources_cost.ore,
+                Sulfur: value.resources_cost.sulfur
+            },
+            visuals: value.unused_data.visuals.map(|texts| Visuals { 
+                items: Some(Vec::from_iter(texts.iter().map(|t| FileRef { href: Some(t.clone()) })))
+            })
+        } 
     }
 }
 

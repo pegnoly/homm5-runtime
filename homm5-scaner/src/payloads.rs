@@ -1,4 +1,4 @@
-use crate::prelude::{ArtifactClassType, ArtifactSlotType, MagicElementModel, ResourcesModel, Town};
+use crate::prelude::{ArtifactClassType, ArtifactSlotType, MagicElementModel, MagicSchoolType, ResourcesModel, SpellFormulaModel, Town};
 
 #[derive(Default)]
 pub struct UpdateCreaturePayload {
@@ -282,6 +282,109 @@ impl UpdateArtifactPayload {
 
     pub fn with_icon_xdb(mut self, icon: String) -> Self {
         self.icon_xdb = Some(icon);
+        self
+    }
+}
+
+#[derive(Debug)]
+pub struct CreateSpellPayload {
+    pub game_id: String,
+    pub name_txt: String,
+    pub name: String,
+    pub desc_txt: String,
+    pub desc: String,
+    pub icon_xdb: String,
+    pub school: MagicSchoolType
+}
+
+#[derive(Debug, Default)]
+pub struct UpdateSpellPayload {
+    pub id: i32,
+    pub name_txt: Option<String>,
+    pub name: Option<String>,
+    pub desc_txt: Option<String>,
+    pub desc: Option<String>,
+    pub icon_xdb: Option<String>,
+    pub cost: Option<i32>,
+    pub level: Option<i32>,
+    pub school: Option<MagicSchoolType>,
+    pub is_aimed: Option<bool>,
+    pub is_area: Option<bool>,
+    pub resources_cost: Option<ResourcesModel>,
+    pub damage_formula: Option<SpellFormulaModel>,
+    pub duration_formula: Option<SpellFormulaModel>
+}
+
+impl UpdateSpellPayload {
+    pub fn new(id: i32) -> Self {
+        UpdateSpellPayload {
+            id,
+            ..Default::default()
+        }
+    }
+
+    pub fn with_name_txt(mut self, name_txt: String) -> Self {
+        self.name_txt = Some(name_txt);
+        self
+    }
+
+    pub fn with_name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn with_desc_txt(mut self, desc_txt: String) -> Self {
+        self.desc_txt = Some(desc_txt);
+        self
+    }
+
+    pub fn with_desc(mut self, desc: String) -> Self {
+        self.desc = Some(desc);
+        self
+    }
+
+    pub fn with_icon_xdb(mut self, icon_xdb: String) -> Self {
+        self.icon_xdb = Some(icon_xdb);
+        self
+    }
+
+    pub fn with_cost(mut self, cost: i32) -> Self {
+        self.cost = Some(cost);
+        self
+    }
+
+    pub fn with_level(mut self, level: i32) -> Self {
+        self.level = Some(level);
+        self
+    }
+
+    pub fn with_school(mut self, school: MagicSchoolType) -> Self {
+        self.school = Some(school);
+        self
+    }
+
+    pub fn with_is_aimed(mut self, is_aimed: bool) -> Self {
+        self.is_aimed = Some(is_aimed);
+        self
+    }
+
+    pub fn with_is_area(mut self, is_area: bool) -> Self {
+        self.is_area = Some(is_area);
+        self
+    }
+
+    pub fn with_resources_cost(mut self, resources_cost: ResourcesModel) -> Self {
+        self.resources_cost = Some(resources_cost);
+        self
+    }
+
+    pub fn with_damage_formula(mut self, damage_formula: SpellFormulaModel) -> Self {
+        self.damage_formula = Some(damage_formula);
+        self
+    }
+
+    pub fn with_duration_formula(mut self, duration_formula: SpellFormulaModel) -> Self {
+        self.duration_formula = Some(duration_formula);
         self
     }
 }

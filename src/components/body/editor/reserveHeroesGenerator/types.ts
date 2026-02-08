@@ -47,7 +47,10 @@ export enum MagicSchool {
     Dark = "MAGIC_SCHOOL_DARK",
     Summoning = "MAGIC_SCHOOL_SUMMONING",
     Runic = "MAGIC_SCHOOL_RUNIC",
-    Warcries = "MAGIC_SCHOOL_WARCRIES"
+    Warcries = "MAGIC_SCHOOL_WARCRIES",
+    Adventure = "MAGIC_SCHOOL_ADVENTURE",
+    Special = "MAGIC_SCHOOL_SPECIAL",
+    None = "MAGIC_SCHOOL_NONE"
 }
 
 export type SpellData = {

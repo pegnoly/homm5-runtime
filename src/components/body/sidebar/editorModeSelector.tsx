@@ -17,6 +17,7 @@ function EditorModeSelector() {
             <EditorModeLink key={EditorState.CreatureCopyCreator} label='CreatureCreator' state={EditorState.CreatureCopyCreator}/>
             <EditorModeLink key={EditorState.CreatureEditor} label='CreatureEditor' state={EditorState.CreatureEditor}/>
             <EditorModeLink key={EditorState.ArtifactEditor} label='ArtifactEditor' state={EditorState.ArtifactEditor}/>
+            <EditorModeLink key={EditorState.SpellEditor} label='SpellEditor' state={EditorState.SpellEditor}/>
         </List>
     </div>
     )

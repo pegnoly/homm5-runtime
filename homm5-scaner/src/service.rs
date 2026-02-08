@@ -5,7 +5,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, EXTENSIONS, FileStructure}, payloads::UpdateCreaturePayload, prelude::{
-        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, GetArtifactsPayload, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpdateArtifactPayload, UpgradesModel
+        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreateSpellPayload, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, GetArtifactsPayload, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellActiveModel, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpdateArtifactPayload, UpdateSpellPayload, UpgradesModel
     }, scaners::{
         self,
         prelude::{
@@ -494,6 +494,78 @@ impl ScanerService {
                 model_to_update.icon_xdb = Set(icon);
             }
             model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn add_spell(&self, payload: CreateSpellPayload) -> Result<SpellDBModel, ScanerError> {
+        let model_to_insert = SpellActiveModel {
+            game_id: Set(payload.game_id),
+            desc: Set(payload.desc),
+            desc_txt: Set(payload.desc_txt),
+            name_txt: Set(payload.name_txt),
+            name: Set(payload.name),
+            school: Set(payload.school),
+            ..Default::default()
+        };
+
+        Ok(model_to_insert.insert(&self.db).await?)
+    }
+
+    pub async fn update_spell(&self, payload: UpdateSpellPayload) -> Result<(), ScanerError> {
+        if let Some(existing_spell) = SpellDBEntity::find_by_id(payload.id).one(&self.db).await? {
+            let mut model_to_update = existing_spell.into_active_model();
+            if let Some(name_txt) = payload.name_txt {
+                model_to_update.name_txt = Set(name_txt);
+            }
+
+            if let Some(name) = payload.name {
+                model_to_update.name = Set(name);
+            }
+
+            if let Some(desc_txt) = payload.desc_txt {
+                model_to_update.desc_txt = Set(desc_txt);
+            }
+
+            if let Some(desc) = payload.desc {
+                model_to_update.desc = Set(desc);
+            }
+
+            if let Some(icon_xdb) = payload.icon_xdb {
+                model_to_update.icon_xdb = Set(icon_xdb);
+            }
+
+            if let Some(cost) = payload.cost {
+                model_to_update.cost = Set(cost);
+            }
+
+            if let Some(level) = payload.level {
+                model_to_update.level = Set(level);
+            }
+
+            if let Some(school) = payload.school {
+                model_to_update.school = Set(school);
+            }
+
+            if let Some(is_aimed) = payload.is_aimed {
+                model_to_update.is_aimed = Set(is_aimed);
+            }
+
+            if let Some(is_area) = payload.is_area {
+                model_to_update.is_area = Set(is_area);
+            }
+
+            if let Some(resources_cost) = payload.resources_cost {
+                model_to_update.resources_cost = Set(resources_cost);
+            }
+
+            if let Some(damage_formula) = payload.damage_formula {
+                model_to_update.damage_formula = Set(damage_formula);
+            }
+
+            if let Some(duration_formula) = payload.duration_formula {
+                model_to_update.duration_formula = Set(duration_formula);
+            }
         }
         Ok(())
     }

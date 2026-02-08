@@ -1,6 +1,8 @@
 import { create } from "zustand"
 import { ArtifactClassType, ArtifactSlotType } from "../components/body/editor/fightGenerator/elements/artifactsGenerator/types"
 import { TownType } from "../components/body/editor/fightGenerator/types"
+import { ResourcesModel } from "@/components/body/editor/creatureEditor/types"
+import { MagicSchool } from "@/components/body/editor/reserveHeroesGenerator/types"
 
 export type ArtifactModel = {
     id: number,
@@ -53,9 +55,30 @@ export type HeroModel = {
     editable: Editable
 }
 
+type SpellFormulaElement = {
+    base: number,
+    per_power: number
+}
+
+type SpellFormula = {
+    elements: SpellFormulaElement[]
+}
+
 export type SpellModel = {
+    id: number,
     game_id: string,
-    name: string
+    name: string,
+    name_txt: string,
+    desc: string,
+    desc_txt: string,
+    icon_xdb: string,
+    damage_formula: SpellFormula,
+    duration_formula: SpellFormula,
+    is_aimed: boolean,
+    is_area: boolean,
+    cost: number,
+    resources_cost: ResourcesModel,
+    school: MagicSchool
 }
 
 type Data = {
@@ -72,7 +95,8 @@ type Action = {
     load_abilities: (values: AbilityModel[]) => void,
     load_spells: (values: SpellModel[]) => void,
     load_heroes: (values: HeroModel[]) => void,
-    update_artifacts: (value: ArtifactModel) => void
+    update_artifacts: (value: ArtifactModel) => void,
+    update_spells: (value: SpellModel) => void
 }
 
 const useGameDataStore = create<Data & Action>((set, get) => ({
@@ -105,7 +129,16 @@ const useGameDataStore = create<Data & Action>((set, get) => ({
                 return a
             }
         })})
-    }
+    },
+    update_spells(value) {
+        set({spells: get().spells.map(s => {
+            if (s.id == value.id) {
+                return value;
+            } else {
+                return s
+            }
+        })})  
+    },
 }))
 
 export default useGameDataStore;
