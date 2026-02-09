@@ -1,11 +1,11 @@
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, SqlxSqlitePoolConnection, prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition, DatabaseConnection, EntityTrait, IntoActiveModel, PaginatorTrait, QueryFilter, QuerySelect, SqlxSqlitePoolConnection, prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool
 };
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, EXTENSIONS, FileStructure}, payloads::UpdateCreaturePayload, prelude::{
-        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreateSpellPayload, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, GetArtifactsPayload, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellActiveModel, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpdateArtifactPayload, UpdateSpellPayload, UpgradesModel
+        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreateSpellPayload, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, GetArtifactsPayload, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, ResourcesModel, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellActiveModel, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellFormulaModel, SpellUnusedDataModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpdateArtifactPayload, UpdateSpellPayload, UpgradesModel
     }, scaners::{
         self,
         prelude::{
@@ -498,7 +498,12 @@ impl ScanerService {
         Ok(())
     }
 
+    pub async fn get_spell(&self, id: i32) -> Result<Option<SpellDBModel>, ScanerError> {
+        Ok(SpellDBEntity::find_by_id(id).one(&self.db).await?)
+    }
+
     pub async fn add_spell(&self, payload: CreateSpellPayload) -> Result<SpellDBModel, ScanerError> {
+        let spells_count = SpellDBEntity::find().count(&self.db).await?;
         let model_to_insert = SpellActiveModel {
             game_id: Set(payload.game_id),
             desc: Set(payload.desc),
@@ -506,10 +511,41 @@ impl ScanerService {
             name_txt: Set(payload.name_txt),
             name: Set(payload.name),
             school: Set(payload.school),
-            ..Default::default()
+            cost: Set(0),
+            damage_formula: Set(SpellFormulaModel { elements: vec![]}),
+            duration_formula: Set(SpellFormulaModel { elements: vec![] }),
+            icon_xdb: Set(payload.icon_xdb),
+            level: Set(1),
+            is_aimed: Set(false),
+            is_area: Set(false),
+            resources_cost: Set(ResourcesModel {
+                wood: 0,
+                mercury: 0,
+                ore: 0,
+                sulfur: 0,
+                crystal: 0,
+                gem: 0,
+                gold: 0
+            }),
+            unused_data: Set(SpellUnusedDataModel { 
+                effect_texture: None,
+                spell_book_predictions: None, 
+                combat_log_texts: None, 
+                can_select_dead: false, 
+                target: "TARGET_FRIEND".to_string(), 
+                element: "ELEMENT_NONE".to_string(), 
+                damage_is_elemental: Some(true), 
+                visuals: None, 
+                preset_price: Some(-1), 
+                available_for_presets: Some(false) 
+            }),
+            id: Set((spells_count + 1) as i32)
         };
-
-        Ok(model_to_insert.insert(&self.db).await?)
+        let res = SpellDBEntity::insert(model_to_insert)
+            .exec_with_returning(&self.db)
+            .await?;
+        println!("Inserted spell: {:#?}", &res);
+        Ok(res)
     }
 
     pub async fn update_spell(&self, payload: UpdateSpellPayload) -> Result<(), ScanerError> {

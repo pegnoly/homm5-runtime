@@ -29,6 +29,8 @@ pub enum Error {
     Scaner(#[from] homm5_scaner::prelude::ScanerError),
     #[error(transparent)]
     SheetsConnector(#[from] Box<sheets_connector::error::Error>),
+    #[error(transparent)]
+    Zip(#[from]zip::result::ZipError)
 }
 
 impl Serialize for Error {

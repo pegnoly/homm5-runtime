@@ -1,12 +1,14 @@
-use std::{io::{Read, Write}, path::{Path, PathBuf}};
+use std::{io::{Read, Write}, path::PathBuf};
 
-use homm5_scaner::prelude::{MagicSchoolType, ScanerError, ScanerService, SpellDBModel};
+use homm5_scaner::prelude::{CreateSpellPayload, FileObject, FileObjects, MagicSchoolType, ScanerService, SpellDBModel};
+use homm5_types::spell::SpellShared;
 use itertools::Itertools;
-use quick_xml::{Reader, Writer, events::{BytesEnd, BytesStart, BytesText, Event}};
+use map_modifier::FileRef;
+use quick_xml::{Reader, Writer, events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event}};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
-use zip::read::ZipFile;
+use zip::{read::ZipFile, write::FileOptions};
 
 use crate::{error::Error, utils::LocalAppManager};
 
@@ -60,14 +62,35 @@ pub async fn create_new_spell(
     texts_path: String,
     icon_path: String,
     school: MagicSchoolType
-) -> Result<(), Error> {
+) -> Result<SpellDBModel, Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let texts_dir = PathBuf::from(format!("{}{}\\{}\\", &profile.texts_path, &texts_path, &name));
+    let texts_dir = PathBuf::from(format!("{}{}\\", &profile.texts_path, &texts_path));
+    let base_cfg = app_manager.base_config.read().await;
     if !texts_dir.exists()  {
         std::fs::create_dir_all(&texts_dir)?;
     }
     let name_path = texts_dir.join("name.txt");
     let desc_path = texts_dir.join("desc.txt");
+
+    let mut name_file = std::fs::File::create(&name_path)?;
+    name_file.write_all(&[255, 254])?;
+    for utf16 in name.encode_utf16() {
+        name_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+    }
+
+    let mut desc_file = std::fs::File::create(&desc_path)?;
+    desc_file.write_all(&[255, 254])?;
+    for utf16 in desc.encode_utf16() {
+        desc_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+    }
+
+    let icon_xdb_path = PathBuf::from(format!("{}GOG_Mod\\{}\\Icon.xdb", profile.data_path, &icon_path));
+    if !icon_xdb_path.exists() {
+        let icon_xdb = base_cfg.generic_icon_128.as_ref().unwrap();
+        let icon_dds = base_cfg.generic_icon_dds.as_ref().unwrap();
+        std::fs::copy(icon_xdb, &icon_xdb_path)?;
+        std::fs::copy(icon_dds, icon_xdb_path.to_str().unwrap().replace(".xdb", ".dds"))?;
+    }
 
     let universe_pak_path = PathBuf::from(format!("{}Universe_mod.pak", profile.data_path));
     let temp_pak_path = PathBuf::from(format!("{}Universe_mod_temp.pak", profile.data_path));
@@ -75,30 +98,43 @@ pub async fn create_new_spell(
     let old_file = std::fs::File::open(&universe_pak_path)?;
     let mut old_archive = zip::ZipArchive::new(old_file).unwrap();
     let mut new_archive = zip::ZipWriter::new(temp_file);
-
+    let file_options = FileOptions::default().last_modified_time(zip::DateTime::from_date_and_time(2107, 12, 31, 23, 59, 59).unwrap());
     for i in 0..old_archive.len() {
         let mut entry = old_archive.by_index(i).unwrap();
         if entry.name() == "types.xml" {
-            process_types_xml(&mut entry, game_id.clone())?;
+            let updated_types = process_types_xml(&mut entry, game_id.clone())?;
+            new_archive.start_file("types.xml", file_options)?;
+            new_archive.write_all(&updated_types)?;
         } else if entry.name() == "GameMechanics/RefTables/UndividedSpells.xdb" {
-
-        } 
-        new_archive.raw_copy_file(entry).unwrap();
+            let updated_spells = process_undivided_spells(&mut entry, name.clone(), game_id.clone())?;
+            new_archive.start_file("GameMechanics/RefTables/UndividedSpells.xdb", file_options)?;
+            new_archive.write_all(&updated_spells)?;
+        } else {
+            new_archive.raw_copy_file(entry)?;
+        }
     }
-
-    // let mut output: Vec<u8> = Vec::new();
-    // let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
-    // writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
-    // writer.create_element("Table_DBArtifact_ArtifactEffect").write_inner_content(|w| {
-    //     w.write_serializable("objects", &table).unwrap();
-    //     Ok(())
-    // })?;
-    // new_archive.start_file("GameMechanics/RefTables/Artifacts.xdb", FileOptions::default()).unwrap();
-    // new_archive.write_all(&output)?;
-    // new_archive.finish().unwrap();
     std::fs::rename(temp_pak_path, universe_pak_path)?;
-
-    Ok(())
+    let created_spell = scaner_service.add_spell(CreateSpellPayload {
+        desc,
+        desc_txt: desc_path.to_str().unwrap().replace(&profile.texts_path, "").replace("\\", "/"),
+        name: name.clone(),
+        name_txt: name_path.to_str().unwrap().replace(&profile.texts_path, "").replace("\\", "/"),
+        icon_xdb: format!("{}#xpointer(/Texture)", icon_xdb_path.to_str().unwrap().replace(&format!("{}GOG_Mod", &profile.data_path), "")).replace("\\", "/"),
+        game_id,
+        school
+    }).await?;
+    let spell_xdb_dir = PathBuf::from(format!("{}GOG_Mod\\GameMechanics\\Spell\\GOG\\{}\\", &profile.data_path, &name));
+    if !spell_xdb_dir.exists() {
+        std::fs::create_dir_all(&spell_xdb_dir)?;
+    }
+    let mut xdb_file = std::fs::File::create(spell_xdb_dir.join("Spell.xdb"))?;
+    let mut output: Vec<u8> = Vec::new();
+    let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
+        writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
+    let shared: SpellShared = created_spell.clone().into();
+    writer.write_serializable("Spell", &shared)?;
+    xdb_file.write_all(&output)?;
+    Ok(created_spell)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -121,8 +157,7 @@ struct SharedClassEntries {
     pub entries: Vec<SharedClassEntry>
 }
 
-fn process_types_xml(zip_file: &mut ZipFile<'_>, game_id: String) -> Result<(), Error> {
-    println!("Started");
+fn process_types_xml(zip_file: &mut ZipFile<'_>, game_id: String) -> Result<Vec<u8>, Error> {
     let mut types_xml_string = String::new();
     zip_file.read_to_string(&mut types_xml_string)?;
 
@@ -209,7 +244,99 @@ fn process_types_xml(zip_file: &mut ZipFile<'_>, game_id: String) -> Result<(), 
         }
         buf.clear();
     }
-    let mut file = std::fs::File::create("D:\\Homm5Dev\\types_test.xml")?;
-    file.write_all(&output)?;
+    Ok(output)
+}
+
+fn process_undivided_spells(zip_file: &mut ZipFile<'_>, name: String, game_id: String) -> Result<Vec<u8>, Error> {
+    let mut spells_string = String::new();
+    zip_file.read_to_string(&mut spells_string)?;
+
+    let mut output: Vec<u8> = Vec::new();
+    let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
+    let mut reader = Reader::from_str(&spells_string);
+    let reader_config = reader.config_mut();
+    reader_config.expand_empty_elements = true;
+    reader_config.trim_text(true);
+
+    let mut buf: Vec<u8> = Vec::new();
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            Ok(Event::Eof) => break,
+            Ok(Event::Start(e)) => {
+                let actual_tag = std::str::from_utf8(e.name().as_ref())?.to_string();
+                match actual_tag.as_str() {
+                    "objects" => {
+                        let end = e.to_end().into_owned();
+                        let text = reader.read_text(end.name())?.to_string();
+                        let mut file_objects: FileObjects = quick_xml::de::from_str(&format!("<objects>{}</objects>", &text))?;
+                        file_objects.objects.push(FileObject { 
+                            ID: game_id.clone(),
+                            Obj: Some(FileRef {
+                                href: Some(format!("/GameMechanics/Spell/GOG/{}/Spell.xdb#xpointer(/Spell)", &name))
+                            })
+                        });
+                        writer.write_serializable("objects", &file_objects)?;
+                    }
+                    _=> {
+                        let mut elem = BytesStart::new(str::from_utf8(e.name().0).unwrap());
+                        elem.extend_attributes(e.attributes().map(|attr| attr.unwrap()));
+                        writer.write_event(Event::Start(elem)).unwrap();
+                    }
+                }
+            }
+            Ok(Event::Text(e)) => {
+                writer.write_event(Event::Text(e)).unwrap();
+            },
+            Ok(Event::End(e)) => {
+                let elem = BytesEnd::new(str::from_utf8(e.name().0).unwrap());
+                writer.write_event(Event::End(elem)).unwrap();
+            },
+            _ => ()
+        }
+        buf.clear();
+    }
+
+    Ok(output)
+}
+
+#[tauri::command]
+pub async fn save_spell_xdb(
+    app_manager: State<'_, LocalAppManager>,
+    scaner_service: State<'_, ScanerService>,
+    id: i32
+) -> Result<(), Error> {
+    let profile = app_manager.current_profile_data.read().await;
+    if let Some(model) = scaner_service.get_spell(id).await? {
+        let name_path = PathBuf::from(format!("{}{}", &profile.texts_path, &model.name_txt));
+        let desc_path = PathBuf::from(format!("{}{}", &profile.texts_path, &model.desc_txt));
+
+        let mut name_file = std::fs::File::create(&name_path)?;
+        name_file.write_all(&[255, 254])?;
+        for utf16 in model.name.encode_utf16() {
+            name_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+        }
+
+        let mut desc_file = std::fs::File::create(&desc_path)?;
+        desc_file.write_all(&[255, 254])?;
+        for utf16 in model.desc.encode_utf16() {
+            desc_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+        }
+
+        let xdb_name = name_path.parent().unwrap().to_str().unwrap().split("/").last().unwrap();
+        println!("Xdb name: {}", xdb_name);
+
+        let spell_xdb_dir = PathBuf::from(format!("{}GOG_Mod\\GameMechanics\\Spell\\GOG\\{}\\", &profile.data_path, &xdb_name));
+        if !spell_xdb_dir.exists() {
+            std::fs::create_dir_all(&spell_xdb_dir)?;
+        }
+        let mut xdb_file = std::fs::File::create(spell_xdb_dir.join("Spell.xdb"))?;
+        let mut output: Vec<u8> = Vec::new();
+        let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
+            writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
+        let shared: SpellShared = model.into();
+        writer.write_serializable("Spell", &shared)?;
+        xdb_file.write_all(&output)?;
+    }
     Ok(())
 }

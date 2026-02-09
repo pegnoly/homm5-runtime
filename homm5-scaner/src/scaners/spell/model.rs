@@ -13,7 +13,7 @@ use crate::{core::{ToJsonCompatibleString, ToLua}, prelude::ResourcesModel};
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "spells")]
 pub struct Model {
-    #[sea_orm(primary_key)]
+    #[sea_orm(primary_key, auto_increment = true)]
     pub id: i32,
     pub game_id: String,
     pub name_txt: String,
@@ -271,7 +271,7 @@ impl From<Model> for SpellShared {
             NameFileRef: if value.name_txt.is_empty()  {
                 None
             } else {
-                Some(FileRef { href: Some(value.name_txt)})
+                Some(FileRef { href: Some(format!("/{}",value.name_txt))})
             },
             CanSelectDead: value.unused_data.can_select_dead,
             CombatLogTexts: value.unused_data.combat_log_texts.map(|texts| CombatLogTexts { 
@@ -286,7 +286,7 @@ impl From<Model> for SpellShared {
             LongDescriptionFileRef: if value.desc_txt.is_empty() {
                 None
             } else {
-                Some(FileRef { href: Some(value.desc_txt) })
+                Some(FileRef { href: Some(format!("/{}",value.desc_txt)) })
             },
             MagicSchool: value.school.to_string(),
             PresetPrice: value.unused_data.preset_price,

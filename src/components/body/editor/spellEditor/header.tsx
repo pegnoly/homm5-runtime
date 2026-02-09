@@ -41,7 +41,7 @@ function SpellEditorHeader() {
                     bg="gray"
                     radius={0}
                     disabled={current == undefined}
-                    onClick={() => invoke("generate_spell_file", {id: current?.id})}
+                    onClick={() => invoke("save_spell_xdb", {id: current?.id})}
                 >Generate spell xdb</Button>
             </ButtonGroup>
             <SpellCreator/>

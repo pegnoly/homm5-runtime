@@ -35,6 +35,7 @@ function SpellCreator() {
                 actions.updateCurrent(value);
                 updateSpells(value);
             });
+        close();
     }
 
     return <>
