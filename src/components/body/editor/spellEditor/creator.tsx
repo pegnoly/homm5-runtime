@@ -25,15 +25,14 @@ function SpellCreator() {
     });
 
     listen<string>("spell_icon_directory_picked", e => {
-        console.log("??? ", e.payload)
         setIconPath(e.payload);
     });
 
     async function create() {
         await invoke<SpellModel>("create_new_spell", {gameId: gameId, name: name, desc: desc, textsPath: textsPath, iconPath: iconPath, school: school})
             .then((value) => {
-                actions.updateCurrent(value);
                 updateSpells(value);
+                actions.updateCurrent(value);
             });
         close();
     }

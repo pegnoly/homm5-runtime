@@ -1,5 +1,5 @@
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition, DatabaseConnection, EntityTrait, IntoActiveModel, PaginatorTrait, QueryFilter, QuerySelect, SqlxSqlitePoolConnection, prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, SqlxSqlitePoolConnection, prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool
 };
 use std::{collections::HashMap, path::PathBuf};
 
@@ -503,7 +503,7 @@ impl ScanerService {
     }
 
     pub async fn add_spell(&self, payload: CreateSpellPayload) -> Result<SpellDBModel, ScanerError> {
-        let spells_count = SpellDBEntity::find().count(&self.db).await?;
+        // let spells_count = SpellDBEntity::find().count(&self.db).await?;
         let model_to_insert = SpellActiveModel {
             game_id: Set(payload.game_id),
             desc: Set(payload.desc),
@@ -539,12 +539,13 @@ impl ScanerService {
                 preset_price: Some(-1), 
                 available_for_presets: Some(false) 
             }),
-            id: Set((spells_count + 1) as i32)
+            // id: Set((spells_count + 1) as i32),
+            xdb_path: Set(payload.xdb_path),
+            ..Default::default()
         };
         let res = SpellDBEntity::insert(model_to_insert)
             .exec_with_returning(&self.db)
             .await?;
-        println!("Inserted spell: {:#?}", &res);
         Ok(res)
     }
 

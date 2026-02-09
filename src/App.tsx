@@ -1,4 +1,4 @@
-import useGameDataStore, { AbilityModel, ArtifactModel, CreatureModel } from "./stores/GameDataStore";
+import useGameDataStore, { AbilityModel, ArtifactModel, CreatureModel, SpellModel } from "./stores/GameDataStore";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect } from "react";
 import { useShallow } from "zustand/shallow";
@@ -33,7 +33,7 @@ function App() {
     }
 
     const loadSpellModels = async () => {
-        await invoke<AbilityModel[]>("load_spells_models")
+        await invoke<SpellModel[]>("load_spells_models")
             .then((values) => setSpells(values));
     }
 

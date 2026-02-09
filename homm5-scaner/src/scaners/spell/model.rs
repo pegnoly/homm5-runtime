@@ -29,6 +29,7 @@ pub struct Model {
     pub resources_cost: ResourcesModel,
     pub damage_formula: SpellFormulaModel,
     pub duration_formula: SpellFormulaModel,
+    pub xdb_path: String,
     pub unused_data: SpellUnusedDataModel
 }
 
@@ -259,7 +260,8 @@ impl From<SpellShared> for Model {
                     None
                 },
                 preset_price: value.PresetPrice
-            }
+            },
+            xdb_path: String::new()
         }
     }
 }

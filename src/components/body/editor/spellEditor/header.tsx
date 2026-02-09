@@ -17,7 +17,7 @@ function SpellEditorHeader() {
             <Select
                 label="Select by name"
                 radius={0}
-                data={spells.map(s => ({value: s.id.toString(), label: s.name}))}
+                data={spells.map(s => ({value: s.id.toString(), label: `${s.name} [${s.id}]`}))}
                 value={selectedId?.toString()}
                 onChange={(value) => setSelectedId(parseInt(value!))}
                 searchable
@@ -26,7 +26,7 @@ function SpellEditorHeader() {
                 label="Select by id"
                 radius={0}
                 min={1}
-                max={500}
+                max={999}
                 value={selectedId}
                 onChange={(value) => setSelectedId(value as number)}
             />

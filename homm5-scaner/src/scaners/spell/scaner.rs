@@ -93,6 +93,7 @@ impl Scan for SpellScaner {
                                             && let Some(data) = files.get(&db_model.desc_txt) {
                                                 db_model.desc = data.content.clone();
                                             }
+                                        db_model.xdb_path = file_key.to_string();
                                         break Ok(Some(db_model));
                                     }
                                     Err(e) => {

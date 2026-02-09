@@ -114,6 +114,13 @@ pub async fn create_new_spell(
         }
     }
     std::fs::rename(temp_pak_path, universe_pak_path)?;
+    let spell_xdb_dir = PathBuf::from(format!("{}GOG_Mod\\GameMechanics\\Spell\\GOG\\{}\\", &profile.data_path, &name));
+    if !spell_xdb_dir.exists() {
+        std::fs::create_dir_all(&spell_xdb_dir)?;
+    }
+    let spell_xdb_path = spell_xdb_dir.join("Spell.xdb");
+    let mut xdb_file = std::fs::File::create(&spell_xdb_path)?;
+
     let created_spell = scaner_service.add_spell(CreateSpellPayload {
         desc,
         desc_txt: desc_path.to_str().unwrap().replace(&profile.texts_path, "").replace("\\", "/"),
@@ -121,19 +128,16 @@ pub async fn create_new_spell(
         name_txt: name_path.to_str().unwrap().replace(&profile.texts_path, "").replace("\\", "/"),
         icon_xdb: format!("{}#xpointer(/Texture)", icon_xdb_path.to_str().unwrap().replace(&format!("{}GOG_Mod", &profile.data_path), "")).replace("\\", "/"),
         game_id,
-        school
+        school,
+        xdb_path: spell_xdb_path.to_str().unwrap().replace(&format!("{}GOG_Mod", &profile.data_path), "").replace("\\", "/")
     }).await?;
-    let spell_xdb_dir = PathBuf::from(format!("{}GOG_Mod\\GameMechanics\\Spell\\GOG\\{}\\", &profile.data_path, &name));
-    if !spell_xdb_dir.exists() {
-        std::fs::create_dir_all(&spell_xdb_dir)?;
-    }
-    let mut xdb_file = std::fs::File::create(spell_xdb_dir.join("Spell.xdb"))?;
     let mut output: Vec<u8> = Vec::new();
     let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
         writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
     let shared: SpellShared = created_spell.clone().into();
     writer.write_serializable("Spell", &shared)?;
     xdb_file.write_all(&output)?;
+
     Ok(created_spell)
 }
 
@@ -323,14 +327,8 @@ pub async fn save_spell_xdb(
             desc_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
         }
 
-        let xdb_name = name_path.parent().unwrap().to_str().unwrap().split("/").last().unwrap();
-        println!("Xdb name: {}", xdb_name);
-
-        let spell_xdb_dir = PathBuf::from(format!("{}GOG_Mod\\GameMechanics\\Spell\\GOG\\{}\\", &profile.data_path, &xdb_name));
-        if !spell_xdb_dir.exists() {
-            std::fs::create_dir_all(&spell_xdb_dir)?;
-        }
-        let mut xdb_file = std::fs::File::create(spell_xdb_dir.join("Spell.xdb"))?;
+        let spell_xdb_path = PathBuf::from(format!("{}GOG_Mod\\{}", &profile.data_path, &model.xdb_path));
+        let mut xdb_file = std::fs::File::create(&spell_xdb_path)?;
         let mut output: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
             writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;

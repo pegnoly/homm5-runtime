@@ -294,6 +294,7 @@ pub struct CreateSpellPayload {
     pub desc_txt: String,
     pub desc: String,
     pub icon_xdb: String,
+    pub xdb_path: String,
     pub school: MagicSchoolType
 }
 
