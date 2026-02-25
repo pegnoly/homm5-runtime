@@ -226,9 +226,18 @@ pub async fn generate_dialog(
                 .iter()
                 .find(|s| s.id == variant.speaker_id.unwrap())
             {
+                let updated_name = if speaker.name.contains("#") {
+                    speaker.name.split("#")
+                        .collect_vec()
+                        .first()
+                        .ok_or(Error::UndefinedData("Dialog speaker name split error".to_string()))?
+                        .trim_end()
+                } else {
+                    &speaker.name
+                };
                 let text = format!(
                     "<color={}>{}<color=white>: {}",
-                    &speaker.color, &speaker.name, &variant.text
+                    &speaker.color, updated_name, &variant.text
                 );
                 variant_file.write_all(&[255, 254]).unwrap();
                 for utf16 in text.encode_utf16() {
