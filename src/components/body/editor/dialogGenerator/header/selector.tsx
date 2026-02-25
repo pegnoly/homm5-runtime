@@ -25,6 +25,7 @@ function DialogsSelector(params: {
         <Select
             label="Select existing dialog"
             placeholder="Pick dialog"
+            searchable
             radius={0}
             value={currentDialogId?.toString()}
             onChange={(value) => params.selectedCallback(parseInt(value!))}

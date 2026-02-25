@@ -29,6 +29,7 @@ function DialogSpeakerExtencion() {
                 radius={0}
                 disabled={currentDialogId == undefined}
                 label="Select speaker to add"
+                searchable
                 placeholder="Speaker name"
                 value={selectedSpeaker?.toString()}
                 data={speakers?.filter(s => !currentDialogSpeakers?.includes(s.id)).map(s => ({

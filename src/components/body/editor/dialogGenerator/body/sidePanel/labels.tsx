@@ -51,6 +51,7 @@ function CurrentDialogLabels() {
         </Group>
         <Select
             radius={0}
+            searchable
             label="Select current step label"
             value={currentLabel}
             onChange={(value) => labelSelected(value!)}

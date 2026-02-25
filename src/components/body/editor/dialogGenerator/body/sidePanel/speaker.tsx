@@ -19,6 +19,7 @@ function DialogStepSpeakerSelector() {
                 // size="xs"
                 label="Select speaker"
                 placeholder="Speaker name"
+                searchable
                 value={currentSpeaker?.toString()}
                 onChange={(value) => selectSpeaker(parseInt(value!))}
                 data={availableSpeakers?.filter(s => dialogSpeakers?.includes(s.id)).map(s => ({
