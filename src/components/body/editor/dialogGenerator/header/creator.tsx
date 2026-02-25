@@ -85,6 +85,7 @@ function DialogCreator(params: {
                     </Tooltip>
                     <MultiSelect
                         label="Dialog speakers"
+                        searchable
                         value={speakers.map(s => s.toString())}
                         onChange={(value) => setSpeakers(value.map(v => parseInt(v)))}
                         data={availableSpeakers!.map(speaker => ({

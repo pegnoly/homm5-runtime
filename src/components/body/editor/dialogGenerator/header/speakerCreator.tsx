@@ -1,9 +1,10 @@
-import { Button, ColorPicker, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select, Stack, TextInput } from "@mantine/core";
+import { Button, Checkbox, ColorPicker, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { Speaker, SpeakerType } from "../types";
 import { useMutation } from "@tanstack/react-query";
 import { DialogGeneratorApi } from "../api";
+import { useSpeakers } from "../store";
 
 export type CreateSpeakerPayload = {
     name: string,
@@ -20,6 +21,9 @@ function SpeakerCreator(params: {
     const [scriptName, setScriptName] = useState<string | undefined>(undefined);
     const [type, setType] = useState<SpeakerType | undefined>(undefined);
     const [color, setColor] = useState<string | undefined>(undefined);
+
+    const speakers = useSpeakers();
+    const [useColorFromExistingSpeaker, setUseColorFromExistingSpeaker] = useState<boolean>(false);
 
     const mutation = useMutation({
         mutationFn: async(payload: CreateSpeakerPayload) => {
@@ -75,6 +79,19 @@ function SpeakerCreator(params: {
                         format="hex"
                         value={color}
                         onChange={setColor}
+                    />
+                    <Checkbox
+                        label="Use color of existing speaker?" 
+                        checked={useColorFromExistingSpeaker} 
+                        onChange={(e) => setUseColorFromExistingSpeaker(e.currentTarget.checked)}/>
+                    <Select
+                        searchable
+                        disabled={!useColorFromExistingSpeaker}
+                        value={color}
+                        onChange={(e) => setColor(e!)}
+                        data={speakers?.map(s => ({
+                            label: `${s.name} [${s.color}]`, value: s.color
+                        }))}
                     />
                     <Group justify="end">
                         <Button 

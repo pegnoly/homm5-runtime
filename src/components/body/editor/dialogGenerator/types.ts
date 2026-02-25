@@ -27,7 +27,8 @@ export enum SpeakerType {
 
 export type Speaker = {
     id: number,
-    name: string
+    name: string,
+    color: string
 }
 
 export type DialogVariant = {
