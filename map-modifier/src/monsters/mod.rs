@@ -63,10 +63,10 @@ impl MonstersModifier {
     }
 
     pub fn convert_to_lua(&self) -> String {
-        let mut lua_string = String::from("GENERATABLE_STACKS = {\n");
+        let mut lua_string = String::from("---@type table<string, GeneratableStack>\nGENERATABLE_STACKS = {\n");
         for (name, model) in &self.random_stacks {
             lua_string += &format!("\t[\"{}\"] = {{min_stacks = {}, max_stacks = {}, power = {}, use_allied_fracs = {}}},\n", 
-            name, model.min_stacks, model.max_stacks, model.total_power, model.use_allied_fractions);
+            name, model.min_stacks, model.max_stacks, model.total_power, if model.use_allied_fractions { "1" } else { "nil" });
         }
         lua_string.push_str("}\n\n");
         lua_string
