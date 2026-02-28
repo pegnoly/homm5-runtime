@@ -13,7 +13,7 @@ type Actions = {
     loadVariant: (value: DialogVariant) => void,
     setCurrentVariantStep: (value: number) => void,
     setCurrentVariantLabel: (value: string) => void,
-    setCurrentVariantSpeaker: (value: number) => void,
+    setCurrentVariantSpeaker: (value: number | undefined) => void,
     setCurrentVariantText: (value: string) => void,
 
     setCurrentVariantSaved: (value: boolean) => void
@@ -81,7 +81,7 @@ const dialogGeneratorStore = create<Store>((set) => ({
             set({
                 currentVariantId: value.id,
                 currentVariantStep: value.step,
-                currentVariantSpeaker: value.speaker_id,
+                currentVariantSpeaker: value.speaker_id == null ? undefined : value.speaker_id,
                 currentVariantLabel: value.label,
                 currentVariantText: value.text
             });

@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { DialogGeneratorApi } from "../../api";
 import { IconPlus } from "@tabler/icons-react";
 
-function DialogSpeakerExtencion() {
+function DialogSpeakerExtension() {
     const speakers = useSpeakers();
     const currentDialogId = useCurrentDialogId();
     const currentDialogSpeakers = useDialogSpeakers();
@@ -48,4 +48,4 @@ function DialogSpeakerExtencion() {
     )
 }
 
-export default DialogSpeakerExtencion;
+export default DialogSpeakerExtension;

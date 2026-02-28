@@ -9,6 +9,7 @@ function DialogStepSwitcher() {
 
     async function moveToNextStep() {
         actions.setCurrentVariantLabel("main");
+        actions.setCurrentVariantSpeaker(undefined);
         actions.setCurrentVariantStep(currentStep! + 1);
     }
 
