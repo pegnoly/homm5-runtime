@@ -1,16 +1,23 @@
-import { useState } from "react";
-import { useCurrentQuestId, useQuestsActions } from "../store";
+import { useEffect, useState } from "react";
+import { useCurrentQuestDesc, useCurrentQuestId, useQuestsActions } from "../store";
 import { Button, Group, Textarea } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { UpdateQuestPayloadBase } from "./data";
 import { QuestGeneratorApi } from "../api";
 
-function QuestDescription({initial}: {initial: string | undefined}) {
+function QuestDescription() {
     const currentId = useCurrentQuestId();
     const actions = useQuestsActions();
+    const currentDesc = useCurrentQuestDesc();
 
-    const [desc, setDesc] = useState<string | undefined>(initial);
+    const [desc, setDesc] = useState<string | undefined>(undefined);
     const [editable, setEditable] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (currentDesc != undefined) {
+            setDesc(currentDesc);
+        }
+    }, [currentDesc])
 
     const mutation = useMutation({
         mutationFn: async(payload: UpdateQuestPayloadBase & {desc: string}) => {

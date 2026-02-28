@@ -101,7 +101,7 @@ function QuestGeneratorDataBlock() {
             </div>
             {
                 currentDesc == undefined ? null :
-                <QuestDescription initial={currentDesc}/>
+                <QuestDescription/>
             }
             <Group justify="space-between">
                 <Checkbox 
