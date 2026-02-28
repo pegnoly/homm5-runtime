@@ -204,9 +204,6 @@ pub async fn apply_modifications(
         }
     }
 
-    println!("Primary quests: {:?}", &modifiers_queue.primary_quests);
-    println!("Secondary quests: {:?}", &modifiers_queue.secondary_quests);
-
     modifiers_queue
         .apply_changes_to_map(
             map,

@@ -74,7 +74,6 @@ impl QuestCreationRequest {
         }
 
         let local_file_name = format!("{map_local_data}\\name.txt").replace("\\", "/");
-        println!("Name generator, local file name {:?}", &local_file_name);
 
         quest.caption_file_ref = FileRef {href: Some(local_file_name)};
     }
@@ -87,7 +86,6 @@ impl QuestCreationRequest {
         }
 
         let local_file_name = format!("{map_local_data}\\desc.txt").replace("\\", "/");
-        println!("Desc generator, local file name {:?}", &local_file_name);
 
         quest.description_file_ref = FileRef {href: Some(local_file_name)};
     }
@@ -113,7 +111,6 @@ impl QuestCreationRequest {
             }
 
             let local_file_name = format!("{}\\Progress\\{}.txt", map_local_data, progress.number).replace("\\", "/");
-            println!("Progress generator, local file name {:?}", &local_file_name);
 
             quest.progress_comments_file_ref.items.as_mut().unwrap().push(FileRef {href: Some(local_file_name)});
         }
@@ -183,6 +180,9 @@ c{}m{}_{} = {{
 
     Load = 
     function()
+        while not Quest and Quest.Names do 
+            sleep()
+        end
         Quest.Names[\"{}\"] = \"{}\"
     end,
 

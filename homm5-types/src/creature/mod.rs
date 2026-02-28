@@ -271,7 +271,9 @@ pub struct AdvMapMonster {
     #[serde(rename = "GeneratedStacksMax")]
     pub generated_stacks_max: Option<u8>,
     #[serde(rename = "TotalPower")]
-    pub total_power: Option<u32>
+    pub total_power: Option<u32>,
+    #[serde(rename = "UseAlliedFractions")]
+    pub use_allied_fractions: Option<bool>
 }
 
 impl Homm5Type for AdvMapMonster {}

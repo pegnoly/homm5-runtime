@@ -122,7 +122,6 @@ impl<'a> ModifiersQueue<'a> {
                             self.monsters_modifier.modify(&mut monster, &mut writer);
                         }
                         "Objectives" => {
-                            println!("Objectives found");
                             let end = e.to_end().into_owned();
                             let text = reader.read_text(end.name()).unwrap().to_string();
                             let mut objectives: ObjectivesInfo = quick_xml::de::from_str(&format!("<Objectives>{}</Objectives>", &text)).unwrap();

@@ -20,7 +20,8 @@ pub struct RandomStackModel {
     pub is_runtime_generated: bool,
     pub min_stacks: u8,
     pub max_stacks: u8,
-    pub total_power: u32
+    pub total_power: u32,
+    pub use_allied_fractions: bool
 }
 
 pub struct MonstersModifier {
@@ -45,7 +46,8 @@ impl MonstersModifier {
                 is_runtime_generated: true, 
                 min_stacks: monster.generated_stacks_min.unwrap_or(0), 
                 max_stacks: monster.generated_stacks_max.unwrap_or(0), 
-                total_power: monster.total_power.unwrap_or(0) 
+                total_power: monster.total_power.unwrap_or(0),
+                use_allied_fractions: monster.use_allied_fractions.unwrap_or(false)
             });
         }
         if monster.additional_stacks.is_some() && monster.additional_stacks.as_ref().unwrap().items.is_none() {
@@ -63,7 +65,8 @@ impl MonstersModifier {
     pub fn convert_to_lua(&self) -> String {
         let mut lua_string = String::from("GENERATABLE_STACKS = {\n");
         for (name, model) in &self.random_stacks {
-            lua_string += &format!("\t[\"{}\"] = {{min_stacks = {}, max_stacks = {}, power = {}}},\n", name, model.min_stacks, model.max_stacks, model.total_power);
+            lua_string += &format!("\t[\"{}\"] = {{min_stacks = {}, max_stacks = {}, power = {}, use_allied_fracs = {}}},\n", 
+            name, model.min_stacks, model.max_stacks, model.total_power, model.use_allied_fractions);
         }
         lua_string.push_str("}\n\n");
         lua_string
