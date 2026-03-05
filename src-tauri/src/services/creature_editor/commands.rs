@@ -284,7 +284,7 @@ pub async fn generate_creature_file(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
     id: i32
-) -> Result<(), Error> {
+) -> Result<String, Error> {
     if let Some(creature_data) = scaner_service.get_creature(id).await? {
         let profile_locked = app_manager.current_profile_data.read().await;
 
@@ -326,6 +326,8 @@ pub async fn generate_creature_file(
         }
         writer.write_serializable("Creature", &shared)?;
         file.write_all(&output)?;
+        return Ok(format!("[{}] Creature {} generated into {}", chrono::Local::now()
+            .to_rfc3339_opts(chrono::SecondsFormat::Secs, false), id, &path.to_string_lossy().to_string()));
     } 
-    Ok(())
+    Err(Error::UndefinedData(format!("Creature generation model with id {} is not found", id)))
 }
