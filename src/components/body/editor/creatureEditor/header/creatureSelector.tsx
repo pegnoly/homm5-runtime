@@ -34,7 +34,7 @@ function CreatureToEditSelector() {
                     onChange={(value) => setSelectedId(parseInt(value!))}
                     searchable
                     data={creatures.map(c => ({
-                        label: c.inner_name != null ? c.inner_name : c.name,
+                        label: c.inner_name != null && c.inner_name.length > 0 ? c.inner_name : c.name,
                         value: c.id.toString()
                     }))}
                 />
