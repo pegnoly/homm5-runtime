@@ -139,3 +139,9 @@ pub struct MapFrontendModel {
     pub id: u16,
     pub name: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TimelineMessage {
+    pub timestamp: String,
+    pub message: String
+}

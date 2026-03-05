@@ -4,14 +4,21 @@ import { CreatureEditorStore } from "../store";
 import { invoke } from "@tauri-apps/api/core";
 import CreatureTextsEditor from "../body/texts";
 import { EditorTimelineStore } from "@/components/timeline/store";
+import { TimelineMessage } from "@/components/timeline/types";
 
 function CreatureEditorHeader() {
     const currentCreature = CreatureEditorStore.useCurrent();
     const actions = EditorTimelineStore.useActions();
 
     async function generateCreature() {
-        await invoke<string>("generate_creature_file", {id: currentCreature?.id})
-            .then((value) => actions.addItem(value));
+        await invoke<TimelineMessage>("generate_creature_file", {id: currentCreature?.id})
+            .then((value) => {
+                actions.addItem(value);
+                actions.changeActivity(true);
+                setTimeout(() => {
+                    actions.changeActivity(false);
+                }, 5000)
+            });
     }
 
     return <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>

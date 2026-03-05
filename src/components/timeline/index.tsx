@@ -1,4 +1,4 @@
-import { Button, Dialog, List, Text } from "@mantine/core";
+import { Button, Dialog, List } from "@mantine/core";
 import { EditorTimelineStore } from "./store";
 
 function EditorTimeline() {
@@ -11,11 +11,10 @@ function EditorTimeline() {
         <Button onClick={() => actions.changeActivity(!activityStatus)} variant='gradient' bg="dark">Open timeline</Button>
         <Dialog position={{left: 20, top: 20}} opened={activityStatus} style={{width: 400}}>
             <List>{timelineItems.map(t => (
-                // <List.Item w={350}>
                 <div style={{width: 350}}>
-                    <Text style={{ width: 350, fontSize: 12, wordBreak: "break-word", wordWrap: 'break-word'}}>{t}</Text>
+                    <span style={{fontSize: 13, fontWeight: 'bold'}}>{`[${t.timestamp}]: `}</span>
+                    <span style={{ fontSize: 12, wordBreak: "break-word", wordWrap: 'break-word'}}>{t.message}</span>
                 </div>
-                // </List.Item>
             ))}</List>
         </Dialog>
     </>

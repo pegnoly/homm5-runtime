@@ -1,11 +1,12 @@
 use std::{io::Write, path::PathBuf};
 
+use chrono::Local;
 use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use quick_xml::{Writer, events::{BytesDecl, Event}};
 use tauri::State;
 
-use crate::{error::Error, utils::LocalAppManager};
+use crate::{error::Error, utils::{LocalAppManager, TimelineMessage}};
 
 #[tauri::command]
 pub async fn load_creature(
@@ -284,7 +285,7 @@ pub async fn generate_creature_file(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
     id: i32
-) -> Result<String, Error> {
+) -> Result<TimelineMessage, Error> {
     if let Some(creature_data) = scaner_service.get_creature(id).await? {
         let profile_locked = app_manager.current_profile_data.read().await;
 
@@ -326,8 +327,10 @@ pub async fn generate_creature_file(
         }
         writer.write_serializable("Creature", &shared)?;
         file.write_all(&output)?;
-        return Ok(format!("[{}] Creature {} generated into {}", chrono::Local::now()
-            .to_rfc3339_opts(chrono::SecondsFormat::Secs, false), id, &path.to_string_lossy().to_string()));
+        return Ok(TimelineMessage {
+            timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
+            message: format!("Creature {} generated into {}", id, &path.to_string_lossy().to_string())
+        });
     } 
     Err(Error::UndefinedData(format!("Creature generation model with id {} is not found", id)))
 }

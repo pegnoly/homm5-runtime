@@ -1,13 +1,14 @@
 import { create } from "zustand"
+import { TimelineMessage } from "./types"
 
 type Actions = {
     changeActivity: (value: boolean) => void,
-    addItem: (value: string) => void
+    addItem: (value: TimelineMessage) => void
 }
 
 type Store = {
     active: boolean,
-    items: string[],
+    items: TimelineMessage[],
     actions: Actions
 }
 
