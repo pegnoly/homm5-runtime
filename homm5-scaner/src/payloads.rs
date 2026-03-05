@@ -1,4 +1,4 @@
-use crate::prelude::{ArtifactClassType, ArtifactSlotType, MagicElementModel, MagicSchoolType, ResourcesModel, SpellFormulaModel, Town};
+use crate::prelude::{ArtifactClassType, ArtifactSlotType, MagicElementModel, MagicSchoolType, ResourcesModel, SpellFormulaModel, Town, TownExtended};
 
 #[derive(Default)]
 pub struct UpdateCreaturePayload {
@@ -29,7 +29,8 @@ pub struct UpdateCreaturePayload {
     pub is_flying: Option<bool>,
     pub is_upgrade: Option<bool>,
     pub desc: Option<String>,
-    pub name: Option<String>
+    pub name: Option<String>,
+    pub town_extended: Option<TownExtended>
 }
 
 impl UpdateCreaturePayload {
@@ -172,6 +173,11 @@ impl UpdateCreaturePayload {
 
     pub fn with_name(mut self, name: String) -> Self {
         self.name = Some(name);
+        self
+    }
+    
+    pub fn with_town_extended(mut self, town_extended: TownExtended) -> Self {
+        self.town_extended = Some(town_extended);
         self
     }
 }

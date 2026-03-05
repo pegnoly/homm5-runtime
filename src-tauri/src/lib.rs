@@ -10,6 +10,7 @@ use sheets_connector::service::SheetsConnectorService;
 use std::path::PathBuf;
 use tokio::sync::RwLock;
 use utils::{DataContainer, GlobalConfig, LocalAppManager, ModifiersConfig, RuntimeConfig};
+use crate::services::creature_editor::commands as creature_editor_commands;
 
 mod commands;
 pub mod error;
@@ -19,7 +20,7 @@ mod profiles;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() -> Result<(), Error> {
-    let exe_path = std::env::current_exe().unwrap();
+    let exe_path = std::env::current_exe()?;
     let cfg_path = exe_path.parent().unwrap().join("cfg\\");
 
     let global_config = GlobalConfig::new(&cfg_path)?;
@@ -30,12 +31,11 @@ pub async fn run() -> Result<(), Error> {
 
     let db_path = cfg_path.join(format!("{}\\runtime_database.db", &current_profile));
     if !db_path.exists() {
-        std::fs::File::create(&db_path).unwrap();
+        std::fs::File::create(&db_path)?;
     }
 
     let pool = sqlx::SqlitePool::connect(db_path.to_str().unwrap())
-        .await
-        .unwrap();
+        .await?;
 
     let current_profile = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(cfg_path.join(format!("{}\\profile.json", &current_profile)))?)?;
     //sqlx::migrate!("./migrations").run(&pool).await.unwrap();
@@ -197,37 +197,38 @@ pub async fn run() -> Result<(), Error> {
             //
             services::sheets_connector::commands::upload_to_sheets,
             //
-            services::creature_editor::commands::load_creature,
-            services::creature_editor::commands::update_creature_attack,
-            services::creature_editor::commands::update_creature_defence,
-            services::creature_editor::commands::update_creature_exp,
-            services::creature_editor::commands::update_creature_grow,
-            services::creature_editor::commands::update_creature_health,
-            services::creature_editor::commands::update_creature_initiative,
-            services::creature_editor::commands::update_creature_max_damage,
-            services::creature_editor::commands::update_creature_min_damage,
-            services::creature_editor::commands::update_creature_power,
-            services::creature_editor::commands::update_creature_range,
-            services::creature_editor::commands::update_creature_shots,
-            services::creature_editor::commands::update_creature_size,
-            services::creature_editor::commands::update_creature_speed,
-            services::creature_editor::commands::update_creature_tier,
-            services::creature_editor::commands::update_creature_base_creature,
-            services::creature_editor::commands::update_creature_pair_creature,
-            services::creature_editor::commands::update_creature_upgrades,
-            services::creature_editor::commands::update_creature_abilities,
-            services::creature_editor::commands::update_creature_magic_element,
-            services::creature_editor::commands::update_creature_cost,
-            services::creature_editor::commands::update_creature_town,
-            services::creature_editor::commands::update_creature_is_generatable,
-            services::creature_editor::commands::update_creature_is_flying,
-            services::creature_editor::commands::update_creature_is_upgrade,
-            services::creature_editor::commands::update_creature_name,
-            services::creature_editor::commands::update_creature_desc,
-            services::creature_editor::commands::add_creature_spell,
-            services::creature_editor::commands::remove_creature_spell,
-            services::creature_editor::commands::update_creature_spell,
-            services::creature_editor::commands::generate_creature_file,
+            creature_editor_commands::load_creature,
+            creature_editor_commands::update_creature_attack,
+            creature_editor_commands::update_creature_defence,
+            creature_editor_commands::update_creature_exp,
+            creature_editor_commands::update_creature_grow,
+            creature_editor_commands::update_creature_health,
+            creature_editor_commands::update_creature_initiative,
+            creature_editor_commands::update_creature_max_damage,
+            creature_editor_commands::update_creature_min_damage,
+            creature_editor_commands::update_creature_power,
+            creature_editor_commands::update_creature_range,
+            creature_editor_commands::update_creature_shots,
+            creature_editor_commands::update_creature_size,
+            creature_editor_commands::update_creature_speed,
+            creature_editor_commands::update_creature_tier,
+            creature_editor_commands::update_creature_base_creature,
+            creature_editor_commands::update_creature_pair_creature,
+            creature_editor_commands::update_creature_upgrades,
+            creature_editor_commands::update_creature_abilities,
+            creature_editor_commands::update_creature_magic_element,
+            creature_editor_commands::update_creature_cost,
+            creature_editor_commands::update_creature_town,
+            creature_editor_commands::update_creature_town_extended,
+            creature_editor_commands::update_creature_is_generatable,
+            creature_editor_commands::update_creature_is_flying,
+            creature_editor_commands::update_creature_is_upgrade,
+            creature_editor_commands::update_creature_name,
+            creature_editor_commands::update_creature_desc,
+            creature_editor_commands::add_creature_spell,
+            creature_editor_commands::remove_creature_spell,
+            creature_editor_commands::update_creature_spell,
+            creature_editor_commands::generate_creature_file,
             //
             services::artifact_editor::commands::rebuild_artifacts_file,
             services::artifact_editor::commands::update_artefact_attack,

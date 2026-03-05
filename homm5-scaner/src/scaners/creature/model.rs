@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use crate::{
     core::ToLua,
-    scaners::common::{MagicElement as DBMagicElement, Mastery, ResourcesModel, Town},
+    scaners::common::{MagicElement as DBMagicElement, Mastery, ResourcesModel, Town, TownExtended},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
@@ -54,6 +54,7 @@ pub struct Model {
     pub xdb_path: String,
     pub is_upgrade: bool,
     pub shots: i32,
+    pub town_extended: Option<TownExtended>,
     pub unused_data: UnusedCreatureDataModel
 }
 
@@ -99,8 +100,8 @@ pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
-impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
-    fn from(value: homm5_types::creature::AdvMapCreatureShared) -> Self {
+impl From<AdvMapCreatureShared> for Model {
+    fn from(value: AdvMapCreatureShared) -> Self {
         Model {
             id: Default::default(),
             game_id: Default::default(),
@@ -232,6 +233,11 @@ impl From<homm5_types::creature::AdvMapCreatureShared> for Model {
                 } else {
                     None
                 }
+            },
+            town_extended: if let Some(town) = value.TownExtended {
+                Some(TownExtended::from_str(&town).unwrap_or(TownExtended::TownNoType))
+            } else {
+                Some(TownExtended::from(Town::from_str(&value.CreatureTown).unwrap_or(Town::TownNoType)))
             }
         }
     }
@@ -304,7 +310,8 @@ impl From<Model> for AdvMapCreatureShared  {
             SpellPoints2: value.unused_data.spell_points_2,
             PatternAttack: value.unused_data.pattern_attack.map(|data| serde_json::from_str(&data).unwrap()),
             TimeToCommand: value.unused_data.time_to_command,
-            flybySequence: value.unused_data.flyby_sequence.map(|data| serde_json::from_str(&data).unwrap())
+            flybySequence: value.unused_data.flyby_sequence.map(|data| serde_json::from_str(&data).unwrap()),
+            TownExtended: Some(value.town_extended.unwrap_or(TownExtended::TownNoType).to_string())
         }
     }
 }
@@ -342,6 +349,7 @@ impl ToLua for Model {
         exp = {},
         power = {},
         town = {},
+        town_extended = {},
         first_element = {},
         second_element = {},
         grow = {},
@@ -370,6 +378,7 @@ impl ToLua for Model {
             self.exp,
             self.power,
             self.town,
+            self.town_extended.clone().unwrap_or(TownExtended::TownNoType).to_string(),
             self.magic_element.first,
             self.magic_element.second,
             self.grow,

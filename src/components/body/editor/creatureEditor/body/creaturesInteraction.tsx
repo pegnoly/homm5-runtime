@@ -1,10 +1,10 @@
 import useGameDataStore from "@/stores/GameDataStore";
-import { CreatureEditorStore } from "../store";
-import { MultiSelect, Select, Text } from "@mantine/core";
+import {CreatureEditorStore} from "../store";
+import {MultiSelect, Select, Text} from "@mantine/core";
 import MagicElementUpdater from "./magicElement";
-import { invoke } from "@tauri-apps/api/core";
-import { ObjectUtils } from "@/lib/utils";
-import { TownType } from "../../fightGenerator/types";
+import {invoke} from "@tauri-apps/api/core";
+import {ObjectUtils} from "@/lib/utils";
+import {TownType, TownTypeExtended} from "../../fightGenerator/types";
 
 function CreaturesInteractionEditor() {
     const currentCreature = CreatureEditorStore.useCurrent();
@@ -53,6 +53,14 @@ function CreaturesInteractionEditor() {
             })
     }
 
+    async function updateCreatureTownExtended(value: TownTypeExtended) {
+        await invoke(`update_creature_town_extended`, {id: currentCreature?.id, value: value})
+            .then(() => {
+                const newModel = ObjectUtils.updateObjectDynamically(currentCreature!, "town_extended", value)
+                actions.updateCreature(newModel);
+            })
+    }
+
     return (
     <>
     {
@@ -66,7 +74,7 @@ function CreaturesInteractionEditor() {
                 radius={0}
                 label="Base creature"
                 value={currentCreature.base_creature == "CREATURE_UNKNOWN" ? null : currentCreature.base_creature}
-                data={creatures.map(c => ({label: `${c.inner_name != null ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
+                data={creatures.map(c => ({label: `${c.inner_name != null && c.inner_name.length != 0 ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
                 onChange={(value) => updateCreatureBaseCreature(value!)}   
             />
             <Select
@@ -76,7 +84,7 @@ function CreaturesInteractionEditor() {
                 radius={0}
                 label="Pair creature"
                 value={currentCreature.pair_creature == "CREATURE_UNKNOWN" ? null : currentCreature.pair_creature}
-                data={creatures.map(c => ({label: `${c.inner_name != null ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}   
+                data={creatures.map(c => ({label: `${c.inner_name != null && c.inner_name.length != 0 ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
                 onChange={(value) => updateCreaturePairCreature(value!)}    
             />
             <MultiSelect
@@ -86,7 +94,7 @@ function CreaturesInteractionEditor() {
                 radius={0}
                 label="Upgrades"
                 value={currentCreature.upgrades.upgrades}
-                data={creatures.map(c => ({label: `${c.inner_name != null ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
+                data={creatures.map(c => ({label: `${c.inner_name != null && c.inner_name.length != 0 ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
                 onChange={(value) => updateCreatureUpgrades(value!)}   
             />
             <div style={{width: '100%'}}>
@@ -103,26 +111,51 @@ function CreaturesInteractionEditor() {
                 />
             </div>
             <div style={{width: '100%'}}>
-                <Text style={{textAlign: 'center', fontSize: 20}}>Town</Text>
-                <Select
-                    radius={0}
-                    miw={100}
-                    size="xs"
-                    label="Town"
-                    value={currentCreature.town}
-                    onChange={(value) => updateCreatureTown(value as TownType)}
-                    data={[
-                        {value: TownType.TownAcademy, label: "Academy"}, 
-                        {value: TownType.TownDungeon, label: "Dungeon"},
-                        {value: TownType.TownHeaven, label: "Heaven"},
-                        {value: TownType.TownInferno, label: "Inferno"},
-                        {value: TownType.TownFortress, label: "Fortress"},
-                        {value: TownType.TownPreserve, label: "Preserve"},
-                        {value: TownType.TownNecromancy, label: "Necromancy"},
-                        {value: TownType.TownStronghold, label: "Stronghold"},
-                        {value: TownType.TownNoType, label: "Neutral"},
-                    ]}
-                />
+                <Text style={{textAlign: 'center', fontSize: 20}}>Towns info</Text>
+                <div style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                    <Select
+                        searchable
+                        radius={0}
+                        w={140}
+                        size="xs"
+                        label="Actual"
+                        value={currentCreature.town}
+                        onChange={(value) => updateCreatureTown(value as TownType)}
+                        data={[
+                            {value: TownType.TownAcademy, label: "Academy"},
+                            {value: TownType.TownDungeon, label: "Dungeon"},
+                            {value: TownType.TownHeaven, label: "Heaven"},
+                            {value: TownType.TownInferno, label: "Inferno"},
+                            {value: TownType.TownFortress, label: "Fortress"},
+                            {value: TownType.TownPreserve, label: "Preserve"},
+                            {value: TownType.TownNecromancy, label: "Necromancy"},
+                            {value: TownType.TownStronghold, label: "Stronghold"},
+                            {value: TownType.TownNoType, label: "Neutral"},
+                        ]}
+                    />
+                    <Select
+                        searchable
+                        radius={0}
+                        w={140}
+                        size="xs"
+                        label="Extended"
+                        value={currentCreature.town_extended}
+                        onChange={(value) => updateCreatureTownExtended(value as TownTypeExtended)}
+                        data={[
+                            {value: TownTypeExtended.TownAcademy, label: "Academy"},
+                            {value: TownTypeExtended.TownDungeon, label: "Dungeon"},
+                            {value: TownTypeExtended.TownHeaven, label: "Heaven"},
+                            {value: TownTypeExtended.TownInferno, label: "Inferno"},
+                            {value: TownTypeExtended.TownFortress, label: "Fortress"},
+                            {value: TownTypeExtended.TownPreserve, label: "Preserve"},
+                            {value: TownTypeExtended.TownNecromancy, label: "Necromancy"},
+                            {value: TownTypeExtended.TownStronghold, label: "Stronghold"},
+                            {value: TownTypeExtended.TownBastion, label: "Bastion"},
+                            {value: TownTypeExtended.TownSanctuary, label: "Sanctuary"},
+                            {value: TownTypeExtended.TownNoType, label: "Neutral"},
+                        ]}
+                    />
+                </div>
                 <MagicElementUpdater/>
             </div>
         </div>

@@ -1,4 +1,4 @@
-import { TownType } from "../fightGenerator/types"
+import {TownType, TownTypeExtended} from "../fightGenerator/types"
 import { Mastery } from "../reserveHeroesGenerator/types"
 
 type CreatureSpellModel = {
@@ -71,5 +71,6 @@ export type CreatureEditableModel = {
     pair_creature: string,
     abilities: Abilities,
     magic_element: MagicElementModel,
-    desc: string
+    desc: string,
+    town_extended: TownTypeExtended | null
 }

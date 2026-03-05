@@ -1,7 +1,7 @@
 use std::{io::Write, path::PathBuf};
 
 use chrono::Local;
-use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, UpdateCreaturePayload};
+use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, TownExtended, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use quick_xml::{Writer, events::{BytesDecl, Event}};
 use tauri::State;
@@ -260,6 +260,15 @@ pub async fn update_creature_town(
     value: Town,
 ) -> Result<(), Error> {
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_town(value)).await?)
+}
+
+#[tauri::command]
+pub async fn update_creature_town_extended(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: TownExtended
+) -> Result<(), Error> {
+    Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_town_extended(value)).await?)
 }
 
 #[tauri::command]

@@ -160,7 +160,8 @@ pub struct AdvMapCreatureShared {
     pub Upgrades: Option<Upgrades>,
     pub Abilities: Option<Abilities>,
     pub VisualExplained: Option<CreatureVisual>,
-    pub InnerName: Option<String>
+    pub InnerName: Option<String>,
+    pub TownExtended: Option<String>
 }
 
 #[derive(Debug, Serialize, Deserialize)]

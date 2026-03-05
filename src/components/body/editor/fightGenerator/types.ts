@@ -30,6 +30,20 @@ export enum TownType {
     TownStronghold = "TOWN_STRONGHOLD"
 }
 
+export enum TownTypeExtended {
+    TownNoType = "TOWN_NO_TYPE",
+    TownHeaven = "TOWN_HEAVEN",
+    TownInferno = "TOWN_INFERNO",
+    TownNecromancy = "TOWN_NECROMANCY", 
+    TownPreserve = "TOWN_PRESERVE",
+    TownDungeon = "TOWN_DUNGEON",
+    TownAcademy = "TOWN_ACADEMY",
+    TownFortress = "TOWN_FORTRESS",
+    TownStronghold = "TOWN_STRONGHOLD",
+    TownBastion = "TOWN_BASTION",
+    TownSanctuary = "TOWN_SANCTUARY"
+}
+
 export const townsNames = new Map<TownType, string>([
     [TownType.TownNoType, "Neutral"],
     [TownType.TownHeaven, "Heaven"],

@@ -69,6 +69,82 @@ pub enum Town {
     Display,
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum TownExtended {
+    #[sea_orm(string_value = "TOWN_NO_TYPE")]
+    #[serde(rename = "TOWN_NO_TYPE")]
+    #[strum(serialize = "TOWN_NO_TYPE")]
+    TownNoType,
+    #[sea_orm(string_value = "TOWN_HEAVEN")]
+    #[serde(rename = "TOWN_HEAVEN")]
+    #[strum(serialize = "TOWN_HEAVEN")]
+    TownHeaven,
+    #[sea_orm(string_value = "TOWN_INFERNO")]
+    #[serde(rename = "TOWN_INFERNO")]
+    #[strum(serialize = "TOWN_INFERNO")]
+    TownInferno,
+    #[sea_orm(string_value = "TOWN_NECROMANCY")]
+    #[serde(rename = "TOWN_NECROMANCY")]
+    #[strum(serialize = "TOWN_NECROMANCY")]
+    TownNecromancy,
+    #[sea_orm(string_value = "TOWN_DUNGEON")]
+    #[serde(rename = "TOWN_DUNGEON")]
+    #[strum(serialize = "TOWN_DUNGEON")]
+    TownDungeon,
+    #[sea_orm(string_value = "TOWN_PRESERVE")]
+    #[serde(rename = "TOWN_PRESERVE")]
+    #[strum(serialize = "TOWN_PRESERVE")]
+    TownPreserve,
+    #[sea_orm(string_value = "TOWN_ACADEMY")]
+    #[serde(rename = "TOWN_ACADEMY")]
+    #[strum(serialize = "TOWN_ACADEMY")]
+    TownAcademy,
+    #[sea_orm(string_value = "TOWN_FORTRESS")]
+    #[serde(rename = "TOWN_FORTRESS")]
+    #[strum(serialize = "TOWN_FORTRESS")]
+    TownFortress,
+    #[sea_orm(string_value = "TOWN_STRONGHOLD")]
+    #[serde(rename = "TOWN_STRONGHOLD")]
+    #[strum(serialize = "TOWN_STRONGHOLD")]
+    TownStronghold,
+    #[sea_orm(string_value = "TOWN_BASTION")]
+    #[serde(rename = "TOWN_BASTION")]
+    #[strum(serialize = "TOWN_BASTION")]
+    TownBastion,
+    #[sea_orm(string_value = "TOWN_SANCTUARY")]
+    #[serde(rename = "TOWN_SANCTUARY")]
+    #[strum(serialize = "TOWN_SANCTUARY")]
+    TownSanctuary
+}
+
+impl From<Town> for TownExtended {
+    fn from(town: Town) -> Self {
+        match town {
+            Town::TownNoType => TownExtended::TownNoType,
+            Town::TownHeaven => TownExtended::TownHeaven,
+            Town::TownPreserve => TownExtended::TownPreserve,
+            Town::TownAcademy => TownExtended::TownAcademy,
+            Town::TownDungeon => TownExtended::TownDungeon,
+            Town::TownNecromancy => TownExtended::TownNecromancy,
+            Town::TownInferno => TownExtended::TownInferno,
+            Town::TownFortress => TownExtended::TownFortress,
+            Town::TownStronghold => TownExtended::TownStronghold
+        }
+    }
+}
+
+#[derive(
+    Debug,
+    DeriveActiveEnum,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    Eq,
+    Clone,
+    Serialize,
+    Deserialize,
+    Display,
+)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum HeroClass {
     #[sea_orm(string_value = "HERO_CLASS_NONE")]
     #[serde(rename = "HERO_CLASS_NONE")]
