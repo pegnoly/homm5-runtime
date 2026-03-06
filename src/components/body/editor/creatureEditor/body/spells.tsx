@@ -1,4 +1,22 @@
-import { ActionIcon, Button, Card, CardSection, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select, SimpleGrid, Stack, Text } from "@mantine/core";
+import {
+    ActionIcon,
+    Box,
+    Button,
+    Card,
+    CardSection,
+    Group,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalHeader,
+    ModalOverlay,
+    ModalRoot,
+    ModalTitle,
+    Select,
+    SimpleGrid,
+    Stack,
+    Text
+} from "@mantine/core";
 import { CreatureEditorStore } from "../store";
 import useGameDataStore from "@/stores/GameDataStore";
 import { Mastery } from "../../reserveHeroesGenerator/types";
@@ -60,52 +78,56 @@ function CreatureSpellsEditor() {
     {
         currentCreature == undefined ? null :
         <div style={{width: '95%', paddingTop: '7%'}}>
-            <Group justify="space-between">
-                <Text style={{fontSize: 20}}>Spells</Text>
-                <SpellCreator/>
-            </Group>
-            <SimpleGrid cols={{xs: 2, xl: 3}}>{currentCreature.known_spells.spells.map(s => (
-                <Card radius={0} withBorder key={s.spell}>
-                    <CardSection>
-                        <ActionIcon 
-                            radius={0} 
-                            size="xs" 
-                            bg="red" 
-                            style={{ display: 'flex', justifySelf: 'end'}}
-                            onClick={() => removeSpell(s.spell)}
-                        >
-                            <IconX/>
-                        </ActionIcon>
-                    </CardSection>
-                    <Select
-                        searchable
-                        label="Spell"
-                        size="xs"
-                        radius={0}
-                        value={s.spell}
-                        data={
-                            spells
-                                .filter(sp => !currentCreature.known_spells.spells.some(spt => sp.game_id != s.spell && sp.game_id == spt.spell))
-                                .map(sp => ({label: sp.name, value: sp.game_id}))
-                        }
-                        onChange={(value) => updateSpell(s.spell, value!)}
-                    />
-                    <Select
-                        label="Mastery"
-                        size="xs"
-                        radius={0}
-                        value={s.mastery}
-                        data={[
-                            {label: 'None', value: Mastery.None},
-                            {label: 'Basic', value: Mastery.Basic},
-                            {label: 'Advanced', value: Mastery.Advanced},
-                            {label: 'Expert', value: Mastery.Expert},
-                            {label: 'ExtraExpert', value: Mastery.ExtraExpert},
-                        ]}
-                        onChange={(value) => updateMastery(s.spell, value as Mastery)}
-                    />
-                </Card>
-            ))}</SimpleGrid>
+            <div style={{width: '100%', height: '100%' }}>
+                <Group justify="space-between">
+                    <Text style={{fontSize: 20}}>Spells</Text>
+                    <SpellCreator/>
+                </Group>
+                <Box w={390} h={350} style={{overflow: "auto"}}>
+                    <SimpleGrid cols={{xs: 2, xl: 3}}>{currentCreature.known_spells.spells.map(s => (
+                        <Card radius={0} withBorder key={s.spell}>
+                            <CardSection>
+                                <ActionIcon
+                                    radius={0}
+                                    size="xs"
+                                    bg="red"
+                                    style={{ display: 'flex', justifySelf: 'end'}}
+                                    onClick={() => removeSpell(s.spell)}
+                                >
+                                    <IconX/>
+                                </ActionIcon>
+                            </CardSection>
+                            <Select
+                                searchable
+                                label="Spell"
+                                size="xs"
+                                radius={0}
+                                value={s.spell}
+                                data={
+                                    spells
+                                        .filter(sp => !currentCreature.known_spells.spells.some(spt => sp.game_id != s.spell && sp.game_id == spt.spell))
+                                        .map(sp => ({label: sp.name, value: sp.game_id}))
+                                }
+                                onChange={(value) => updateSpell(s.spell, value!)}
+                            />
+                            <Select
+                                label="Mastery"
+                                size="xs"
+                                radius={0}
+                                value={s.mastery}
+                                data={[
+                                    {label: 'None', value: Mastery.None},
+                                    {label: 'Basic', value: Mastery.Basic},
+                                    {label: 'Advanced', value: Mastery.Advanced},
+                                    {label: 'Expert', value: Mastery.Expert},
+                                    {label: 'ExtraExpert', value: Mastery.ExtraExpert},
+                                ]}
+                                onChange={(value) => updateMastery(s.spell, value as Mastery)}
+                            />
+                        </Card>
+                    ))}</SimpleGrid>
+                </Box>
+            </div>
         </div>
     }
     </>
