@@ -17,7 +17,7 @@ function CreatureEditorHeader() {
                 actions.changeActivity(true);
                 setTimeout(() => {
                     actions.changeActivity(false);
-                }, 5000)
+                }, 3000)
             });
     }
 

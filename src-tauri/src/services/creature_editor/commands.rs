@@ -347,3 +347,64 @@ pub async fn generate_creature_file(
     } 
     Err(Error::UndefinedData(format!("Creature generation model with id {} is not found", id)))
 }
+
+#[tauri::command]
+pub async fn rebuild_creatures_shared_group(
+    app_manager: State<'_, LocalAppManager>,
+    scaner_service: State<'_, ScanerService>
+) -> Result<TimelineMessage, Error> {
+    let creatures = scaner_service.get_all_creature_models().await?;
+    let generatable_creatures = creatures.into_iter()
+        .filter(|c| {
+            c.is_generatable && !c.shared.is_empty()
+        }).collect::<Vec<_>>();
+
+    if generatable_creatures.is_empty() {
+        return Err(Error::UndefinedData("Creatures are empty".to_string()));
+    }
+
+    let profile_locked = app_manager.current_profile_data.read().await;
+    let dir = PathBuf::from(format!("{}GOG_Mod\\MapObjects\\_(AdvMapSharedGroup)\\Monsters\\", &profile_locked.data_path));
+    if !dir.exists() {
+        std::fs::create_dir_all(&dir)?;
+    }
+    let path = dir.join("Any.xdb");
+    let mut file = std::fs::File::create(&path)?;
+    let mut output: Vec<u8> = Vec::new();
+    let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
+    writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
+    writer.create_element("AdvMapSharedGroup")
+        .write_inner_content(|w| {
+            w.create_element("links").write_inner_content(|w| {
+                for creature in &generatable_creatures {
+                    w.create_element("Item").with_attribute(("href", creature.shared.as_str())).write_empty()?;
+                }
+                Ok(())
+            })?;
+            Ok(())
+        })?;
+    file.write_all(&output)?;
+
+    for tier in 1..8 {
+        let path = dir.join(format!("Level_{}.xdb", tier));
+        let mut file = std::fs::File::create(&path)?;
+        let mut output: Vec<u8> = Vec::new();
+        let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
+        writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
+        writer.create_element("AdvMapSharedGroup")
+            .write_inner_content(|w| {
+                w.create_element("links").write_inner_content(|w| {
+                    for creature in generatable_creatures.iter().filter(|c| c.tier == tier).collect::<Vec<_>>() {
+                        w.create_element("Item").with_attribute(("href", creature.shared.as_str())).write_empty()?;
+                    }
+                    Ok(())
+                })?;
+                Ok(())
+            })?;
+        file.write_all(&output)?;
+    }
+    Ok(TimelineMessage {
+        timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
+        message: "Creatures AdvMapSharedGroup regenerated".to_string(),
+    })
+}

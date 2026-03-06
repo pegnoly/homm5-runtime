@@ -1,10 +1,11 @@
-import { EditorState, useEditorState } from '../../../stores/EditorStateStore';
+import {EditorState, useEditorState} from '@/stores/EditorStateStore.ts';
 import BankGeneratorGlobals from '../editor/bankGenerator/globals';
 import DialogGeneratorGlobals from '../editor/dialogGenerator/globals';
 import FightGeneratorGlobals from '../editor/fightGenerator/globals';
 import QuestGeneratorGlobals from '../editor/questGenerator/globals';
 import ReserveHeroesGeneratorGlobals from '../editor/reserveHeroesGenerator/globals';
 import styles from '../styles.module.css';
+import CreatureEditorGlobals from "@/components/body/editor/creatureEditor/globals.tsx";
 
 function EditorGlobals() {
 
@@ -29,6 +30,8 @@ function RenderEditorGlobals() {
             return <ReserveHeroesGeneratorGlobals/>
         case EditorState.Banks:
             return <BankGeneratorGlobals/>
+        case EditorState.CreatureEditor:
+            return <CreatureEditorGlobals/>
         default:
             return null;
     }
