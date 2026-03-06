@@ -113,7 +113,11 @@ pub enum TownExtended {
     #[sea_orm(string_value = "TOWN_SANCTUARY")]
     #[serde(rename = "TOWN_SANCTUARY")]
     #[strum(serialize = "TOWN_SANCTUARY")]
-    TownSanctuary
+    TownSanctuary,
+    #[sea_orm(string_value = "TOWN_RENEGADES")]
+    #[serde(rename = "TOWN_RENEGADES")]
+    #[strum(serialize = "TOWN_RENEGADES")]
+    TownRenegades
 }
 
 impl From<Town> for TownExtended {
@@ -127,7 +131,7 @@ impl From<Town> for TownExtended {
             Town::TownNecromancy => TownExtended::TownNecromancy,
             Town::TownInferno => TownExtended::TownInferno,
             Town::TownFortress => TownExtended::TownFortress,
-            Town::TownStronghold => TownExtended::TownStronghold
+            Town::TownStronghold => TownExtended::TownStronghold,
         }
     }
 }

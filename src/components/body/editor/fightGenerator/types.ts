@@ -41,7 +41,8 @@ export enum TownTypeExtended {
     TownFortress = "TOWN_FORTRESS",
     TownStronghold = "TOWN_STRONGHOLD",
     TownBastion = "TOWN_BASTION",
-    TownSanctuary = "TOWN_SANCTUARY"
+    TownSanctuary = "TOWN_SANCTUARY",
+    TownRenegades = "TOWN_RENEGADES"
 }
 
 export const townsNames = new Map<TownType, string>([
