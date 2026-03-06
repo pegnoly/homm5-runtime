@@ -301,6 +301,10 @@ pub async fn generate_creature_file(
         let name_path = PathBuf::from(format!("{}GOG_Texts/{}", &profile_locked.data_path, &creature_data.name_txt));
         let desc_path = PathBuf::from(format!("{}GOG_Texts/{}", &profile_locked.data_path, &creature_data.desc_txt));
 
+        if name_path.parent().is_some() && !name_path.parent().unwrap().exists() {
+            std::fs::create_dir_all(name_path.parent().unwrap())?;
+        }
+
         let mut name_file = std::fs::File::create(&name_path)?;
         name_file.write_all(&[255, 254])?;
         for utf16 in creature_data.name.encode_utf16() {

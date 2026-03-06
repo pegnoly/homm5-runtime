@@ -378,7 +378,7 @@ impl ToLua for Model {
             self.exp,
             self.power,
             self.town,
-            self.town_extended.clone().unwrap_or(TownExtended::TownNoType).to_string(),
+            self.town_extended.clone().unwrap_or(TownExtended::TownNoType),
             self.magic_element.first,
             self.magic_element.second,
             self.grow,
