@@ -152,6 +152,7 @@ function CreaturesInteractionEditor() {
                             {value: TownTypeExtended.TownStronghold, label: "Stronghold"},
                             {value: TownTypeExtended.TownBastion, label: "Bastion"},
                             {value: TownTypeExtended.TownSanctuary, label: "Sanctuary"},
+                            {value: TownTypeExtended.TownRenegades, label: "Renegades"},
                             {value: TownTypeExtended.TownNoType, label: "Neutral"},
                         ]}
                     />
