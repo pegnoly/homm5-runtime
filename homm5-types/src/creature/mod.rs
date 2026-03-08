@@ -274,7 +274,11 @@ pub struct AdvMapMonster {
     #[serde(rename = "TotalPower")]
     pub total_power: Option<u32>,
     #[serde(rename = "UseAlliedFractions")]
-    pub use_allied_fractions: Option<bool>
+    pub use_allied_fractions: Option<bool>,
+    #[serde(rename = "MaxTier")]
+    pub max_tier: Option<i32>,
+    #[serde(rename = "InitPriority")]
+    pub init_priority: Option<i32>,
 }
 
 impl Homm5Type for AdvMapMonster {}
