@@ -39,6 +39,7 @@ pub fn process_files(
         Town::TownPreserve => "Preserve",
         Town::TownNoType => "Neutral",
         Town::TownStronghold => "Orcs",
+        Town::TownSpecial => "Neutral"
     };
 
     let name_file_dir = PathBuf::from(format!(
@@ -165,6 +166,7 @@ pub fn process_files(
         Town::TownPreserve => "Preserve",
         Town::TownNoType => "Neutral",
         Town::TownStronghold => "Orcs",
+        Town::TownSpecial => "Special"
     };
 
     let xdb_file_dir = PathBuf::from(format!(

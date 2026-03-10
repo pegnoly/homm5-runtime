@@ -54,6 +54,10 @@ pub enum Town {
     #[serde(rename = "TOWN_STRONGHOLD")]
     #[strum(serialize = "TOWN_STRONGHOLD")]
     TownStronghold,
+    #[sea_orm(string_value = "TOWN_SPECIAL")]
+    #[serde(rename = "TOWN_SPECIAL")]
+    #[strum(serialize = "TOWN_SPECIAL")]
+    TownSpecial
 }
 
 #[derive(
@@ -132,6 +136,7 @@ impl From<Town> for TownExtended {
             Town::TownInferno => TownExtended::TownInferno,
             Town::TownFortress => TownExtended::TownFortress,
             Town::TownStronghold => TownExtended::TownStronghold,
+            Town::TownSpecial => TownExtended::TownNoType
         }
     }
 }

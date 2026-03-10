@@ -27,7 +27,8 @@ export enum TownType {
     TownDungeon = "TOWN_DUNGEON",
     TownAcademy = "TOWN_ACADEMY",
     TownFortress = "TOWN_FORTRESS",
-    TownStronghold = "TOWN_STRONGHOLD"
+    TownStronghold = "TOWN_STRONGHOLD",
+    TownSpecial = "TOWN_SPECIAL"
 }
 
 export enum TownTypeExtended {

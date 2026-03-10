@@ -382,6 +382,7 @@ impl IntoSheetValidatedValue for Town {
             Town::TownInferno => String::from("Inferno [1]"),
             Town::TownFortress => String::from("Fortress [6]"),
             Town::TownStronghold => String::from("Stronghold [7]"),
+            Town::TownSpecial => String::from("Special [8]"),
         }
     }
 }

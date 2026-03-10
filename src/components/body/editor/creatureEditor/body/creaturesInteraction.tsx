@@ -131,6 +131,7 @@ function CreaturesInteractionEditor() {
                             {value: TownType.TownNecromancy, label: "Necromancy"},
                             {value: TownType.TownStronghold, label: "Stronghold"},
                             {value: TownType.TownNoType, label: "Neutral"},
+                            {value: TownType.TownSpecial, label: "Special"}
                         ]}
                     />
                     <Select
