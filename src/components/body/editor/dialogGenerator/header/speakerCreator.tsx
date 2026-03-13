@@ -88,9 +88,12 @@ function SpeakerCreator(params: {
                         searchable
                         disabled={!useColorFromExistingSpeaker}
                         value={color}
-                        onChange={(e) => setColor(e!)}
+                        onChange={(e) => {
+                            const speaker: Speaker = JSON.parse(e!);
+                            setColor(speaker.color)
+                        }}
                         data={speakers?.map(s => ({
-                            label: `${s.name} [${s.color}]`, value: s.color
+                            label: `${s.name} [${s.color}]`, value: JSON.stringify(s)
                         }))}
                     />
                     <Group justify="end">

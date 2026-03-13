@@ -410,6 +410,9 @@ impl ScanerService {
             if let Some(town_extended) = payload.town_extended {
                 model_to_update.town_extended = Set(Some(town_extended));
             }
+            if let Some(town) = payload.town {
+                model_to_update.town = Set(town);
+            }
             model_to_update.update(&self.db).await?;
         }
         Ok(())
