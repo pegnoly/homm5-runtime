@@ -1,4 +1,4 @@
-import { Button, ButtonGroup } from '@mantine/core';
+import {Button, ButtonGroup} from '@mantine/core';
 import RuntimeRunner from './runtimeRunner';
 import ScanerExecutor from './scanerExecutor';
 import styles from '../styles.module.css'
@@ -10,7 +10,16 @@ function HeaderCore() {
         <ButtonGroup orientation='vertical'>
             <RuntimeRunner/>
             <ScanerExecutor/>
-            <Button onClick={() => invoke("generate_images")}>Test shit</Button>
+            <Button
+                style={{fontSize: 10}}
+                radius={0}
+                onClick={() => invoke("generate_validation_data")}
+            >
+                <div style={{display:"flex", flexDirection: "column"}}>
+                    <span>Generate sheets</span>
+                    <span>validation</span>
+                </div>
+            </Button>
         </ButtonGroup>
     </div>
     )

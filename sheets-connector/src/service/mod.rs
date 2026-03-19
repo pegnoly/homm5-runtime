@@ -181,4 +181,16 @@ impl SheetsConnectorService {
 
         Ok(value)
     }
+
+    pub async fn upload_validation_data(&self, spreadsheet_id: &str, data: ValueRange) -> Result<(), Error> {
+        let hub_locked = self.sheets_hub.lock().await;
+        hub_locked
+            .spreadsheets()
+            .values_update(data.clone(), spreadsheet_id, &data.range.unwrap())
+            .value_input_option("USER_ENTERED")
+            .doit()
+            .await
+            .map_err(|e| Error::Sheets(Box::new(e)))?;
+        Ok(())
+    }
 }

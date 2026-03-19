@@ -196,6 +196,7 @@ pub async fn run() -> Result<(), Error> {
             services::reserve_hero_creator::commands::update_favorite_enemies,
             //
             services::sheets_connector::commands::upload_to_sheets,
+            services::sheets_connector::commands::generate_validation_data,
             //
             creature_editor_commands::load_creature,
             creature_editor_commands::update_creature_attack,
