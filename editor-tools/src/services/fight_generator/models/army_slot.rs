@@ -1,5 +1,5 @@
 use super::common::{AssetGenerationType, DifficultyMappedValue};
-use homm5_scaner::prelude::Town;
+use homm5_scaner::prelude::{Town, TownExtended};
 use sea_orm::{FromJsonQueryResult, FromQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::str;
@@ -34,7 +34,7 @@ pub struct ArmySlotId {
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct CreatureTowns {
-    pub towns: Vec<Town>,
+    pub towns: Vec<TownExtended>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]

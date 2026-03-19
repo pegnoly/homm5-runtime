@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { AssetGenerationType, DifficultyMappedValue, TownType } from "../../types"
+import {AssetGenerationType, DifficultyMappedValue, TownTypeExtended} from "../../types"
 import { ArmyGenerationStatElement, CreatureIds, CreatureTiers, CreatureTowns, FightAssetStackModel, StackCountGenerationType, StackGenerationParam, StackGenerationRules, StackUnitGenerationType, StatGenerationRule, StatGenerationType } from "./types"
 import { UpdateStackDataPayload } from "./data"
 
@@ -10,7 +10,7 @@ type Actions = {
     setBasePowers: (value: DifficultyMappedValue) => void,
     setPowersGrow: (value: DifficultyMappedValue) => void,
     setConcreteCounts: (value: DifficultyMappedValue) => void,
-    setTowns: (value: TownType []) => void
+    setTowns: (value: TownTypeExtended []) => void
     setTiers: (value: number []) => void,
     setConcreteCreatures: (value: number []) => void,
     setRules: (value: StackGenerationParam []) => void,

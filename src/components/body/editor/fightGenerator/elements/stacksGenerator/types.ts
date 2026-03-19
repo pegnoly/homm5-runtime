@@ -1,4 +1,4 @@
-import { AssetGenerationType, DifficultyMappedValue, TownType } from "../../types"
+import {AssetGenerationType, DifficultyMappedValue, TownTypeExtended} from "../../types"
 
 export enum StackUnitGenerationType {
     ConcreteUnit = "UNIT_TYPE_GENERATION_MODE_CONCRETE",
@@ -63,7 +63,7 @@ export type StackGenerationRules = {
 }
 
 export type CreatureTowns = {
-    towns: TownType[]
+    towns: TownTypeExtended[]
 }
 
 export type CreatureTiers = {

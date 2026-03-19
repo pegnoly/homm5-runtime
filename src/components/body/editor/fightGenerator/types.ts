@@ -46,18 +46,6 @@ export enum TownTypeExtended {
     TownRenegades = "TOWN_RENEGADES"
 }
 
-export const townsNames = new Map<TownType, string>([
-    [TownType.TownNoType, "Neutral"],
-    [TownType.TownHeaven, "Heaven"],
-    [TownType.TownInferno, "Inferno"],
-    [TownType.TownNecromancy, "Necromancy"],
-    [TownType.TownPreserve, "Preserve"],
-    [TownType.TownDungeon, "Dungeon"],
-    [TownType.TownAcademy, "Academy"],
-    [TownType.TownFortress, "Fortress"],
-    [TownType.TownStronghold, "Stronghold"]
-]);
-
 export type DifficultyMappedValue = {
     data: Record<DifficultyType, number>
 }

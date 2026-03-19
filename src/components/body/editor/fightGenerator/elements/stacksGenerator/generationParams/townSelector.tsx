@@ -1,12 +1,12 @@
-import { useMutation } from "@tanstack/react-query";
-import { TownType } from "../../../types";
-import { useCurrentStackActions, useCurrentStackId, useCurrentStackTowns } from "../store";
-import { FightGeneratorApi } from "../../../api";
-import { MultiSelect } from "@mantine/core";
+import {useMutation} from "@tanstack/react-query";
+import {TownTypeExtended} from "../../../types";
+import {useCurrentStackActions, useCurrentStackId, useCurrentStackTowns} from "../store";
+import {FightGeneratorApi} from "../../../api";
+import {MultiSelect} from "@mantine/core";
 
 export type UpdateTownsPayload = {
     stackId: number,
-    towns: TownType []
+    towns: TownTypeExtended []
 }
 
 function TownSelector() {
@@ -32,18 +32,21 @@ function TownSelector() {
             label="Select towns"
             value={towns?.towns}
             onChange={(value) => {
-                mutation.mutate({stackId: currentStackId!, towns: value.map(v => v as TownType)});
+                mutation.mutate({stackId: currentStackId!, towns: value.map(v => v as TownTypeExtended)});
             }}
             data={[
-                {value: TownType.TownAcademy, label: "Academy"}, 
-                {value: TownType.TownDungeon, label: "Dungeon"},
-                {value: TownType.TownHeaven, label: "Heaven"},
-                {value: TownType.TownInferno, label: "Inferno"},
-                {value: TownType.TownFortress, label: "Fortress"},
-                {value: TownType.TownPreserve, label: "Preserve"},
-                {value: TownType.TownNecromancy, label: "Necromancy"},
-                {value: TownType.TownStronghold, label: "Stronghold"},
-                {value: TownType.TownNoType, label: "Neutral"},
+                {value: TownTypeExtended.TownAcademy, label: "Academy"},
+                {value: TownTypeExtended.TownDungeon, label: "Dungeon"},
+                {value: TownTypeExtended.TownHeaven, label: "Heaven"},
+                {value: TownTypeExtended.TownInferno, label: "Inferno"},
+                {value: TownTypeExtended.TownFortress, label: "Fortress"},
+                {value: TownTypeExtended.TownPreserve, label: "Preserve"},
+                {value: TownTypeExtended.TownNecromancy, label: "Necromancy"},
+                {value: TownTypeExtended.TownStronghold, label: "Stronghold"},
+                {value: TownTypeExtended.TownBastion, label: "Bastion"},
+                {value: TownTypeExtended.TownSanctuary, label: "Sanctuary"},
+                {value: TownTypeExtended.TownRenegades, label: "Renegades"},
+                {value: TownTypeExtended.TownNoType, label: "Neutral"},
             ]}
         />
     )

@@ -15,6 +15,7 @@ use crate::{
         },
     }
 };
+use crate::prelude::TownExtended;
 
 pub struct ScanerService {
     db: DatabaseConnection,
@@ -184,11 +185,11 @@ impl ScanerService {
     pub async fn get_average_counts_for_power(
         &self,
         power: i32,
-        towns: Vec<Town>,
+        towns: Vec<TownExtended>,
         tiers: Vec<i32>,
     ) -> Result<Option<i32>, ScanerError> {
         let towns_condition = Condition::all().add_option(if !towns.is_empty() {
-            Some(Expr::col(CreatureDBColumn::Town).is_in(towns))
+            Some(Expr::col(CreatureDBColumn::TownExtended).is_in(towns))
         } else {
             None::<SimpleExpr>
         });

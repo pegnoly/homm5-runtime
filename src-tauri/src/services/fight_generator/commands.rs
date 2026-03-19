@@ -6,9 +6,7 @@ use crate::{
 use editor_tools::prelude::{
     AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateArtifactsAssetPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
 };
-use homm5_scaner::prelude::{
-    AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, GetArtifactsPayload, ScanerService, SpellDBModel, Town
-};
+use homm5_scaner::prelude::{AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, GetArtifactsPayload, ScanerService, SpellDBModel, Town, TownExtended};
 
 use itertools::Itertools;
 use sheets_connector::service::{SheetId, SheetsConnectorService};
@@ -400,7 +398,7 @@ pub async fn update_stack_concrete_creatures(
 pub async fn update_stack_towns(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     stack_id: i32,
-    towns: Vec<Town>,
+    towns: Vec<TownExtended>,
 ) -> Result<(), Error> {
     Ok(fight_generator_repo
         .update_stack_towns(UpdateStackTownsPayload { stack_id, towns })
@@ -503,7 +501,7 @@ pub async fn update_stat_generation_params(
 pub async fn get_average_creatures_count(
     scaner_repo: State<'_, ScanerService>,
     power: i32,
-    towns: Vec<Town>,
+    towns: Vec<TownExtended>,
     tiers: Vec<i32>,
 ) -> Result<Option<i32>, Error> {
     Ok(scaner_repo

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use editor_tools::prelude::{
     ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotGenerationRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, CreatureIds, CreatureTiers, CreatureTowns, DifficultyMappedValue, DifficultyType, OptionalArtifacts, RequiredArtifacts
 };
-use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, Town};
+use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, TownExtended};
 use itertools::Itertools;
 use serde_json::Number;
 use sheets_connector::{error::Error, prelude::ValueRange, utils::*};
@@ -198,15 +198,18 @@ impl FromSheetValueRange for SheetToArmyAssetsConverter {
                                 Ok(CreatureTowns {
                                     towns: Vec::from_iter(towns_strings_list.iter().map(
                                         |t| match *t {
-                                            "Haven [0]" => Town::TownHeaven,
-                                            "Inferno [1]" => Town::TownInferno,
-                                            "Necropolis [2]" => Town::TownNecromancy,
-                                            "Preserve [3]" => Town::TownPreserve,
-                                            "Dungeon [4]" => Town::TownDungeon,
-                                            "Academy [5]" => Town::TownAcademy,
-                                            "Fortress [6]" => Town::TownFortress,
-                                            "Stronghold [7]" => Town::TownStronghold,
-                                            "Neutral [8]" => Town::TownNoType,
+                                            "Haven [0]" => TownExtended::TownHeaven,
+                                            "Inferno [1]" => TownExtended::TownInferno,
+                                            "Necropolis [2]" => TownExtended::TownNecromancy,
+                                            "Preserve [3]" => TownExtended::TownPreserve,
+                                            "Dungeon [4]" => TownExtended::TownDungeon,
+                                            "Academy [5]" => TownExtended::TownAcademy,
+                                            "Fortress [6]" => TownExtended::TownFortress,
+                                            "Stronghold [7]" => TownExtended::TownStronghold,
+                                            "Bastion [8]" => TownExtended::TownBastion,
+                                            "Sanctuary [9]" => TownExtended::TownSanctuary,
+                                            "Renegades [10]" => TownExtended::TownRenegades,
+                                            "Neutral [-1]" => TownExtended::TownNoType,
                                             _ => unreachable!(),
                                         },
                                     )),
@@ -370,19 +373,21 @@ pub trait IntoSheetValidatedValue {
     fn to_sheet_validated_value(&self) -> String;
 }
 
-impl IntoSheetValidatedValue for Town {
+impl IntoSheetValidatedValue for TownExtended {
     fn to_sheet_validated_value(&self) -> String {
         match self {
-            Town::TownAcademy => String::from("Academy [5]"),
-            Town::TownNoType => String::from("Neutral [8]"),
-            Town::TownHeaven => String::from("Haven [0]"),
-            Town::TownPreserve => String::from("Preserve [3]"),
-            Town::TownDungeon => String::from("Dungeon [4]"),
-            Town::TownNecromancy => String::from("Necropolis [2]"),
-            Town::TownInferno => String::from("Inferno [1]"),
-            Town::TownFortress => String::from("Fortress [6]"),
-            Town::TownStronghold => String::from("Stronghold [7]"),
-            Town::TownSpecial => String::from("Special [8]"),
+            TownExtended::TownAcademy => String::from("Academy [5]"),
+            TownExtended::TownNoType => String::from("Neutral [-1]"),
+            TownExtended::TownHeaven => String::from("Haven [0]"),
+            TownExtended::TownPreserve => String::from("Preserve [3]"),
+            TownExtended::TownDungeon => String::from("Dungeon [4]"),
+            TownExtended::TownNecromancy => String::from("Necropolis [2]"),
+            TownExtended::TownInferno => String::from("Inferno [1]"),
+            TownExtended::TownFortress => String::from("Fortress [6]"),
+            TownExtended::TownStronghold => String::from("Stronghold [7]"),
+            TownExtended::TownBastion => String::from("Bastion [8]"),
+            TownExtended::TownSanctuary => String::from("Sanctuary [9]"),
+            TownExtended::TownRenegades => String::from("Renegades [10]"),
         }
     }
 }

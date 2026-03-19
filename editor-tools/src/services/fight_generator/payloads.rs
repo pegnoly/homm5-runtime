@@ -1,4 +1,4 @@
-use homm5_scaner::prelude::{ArtifactSlotType, Town};
+use homm5_scaner::prelude::{ArtifactSlotType, Town, TownExtended};
 use sea_orm::prelude::Uuid;
 
 use crate::prelude::{DifficultyMappedValue, OptionalArtifacts, RequiredArtifacts};
@@ -145,7 +145,7 @@ pub struct UpdateStackConcreteCreaturesPayload {
 
 pub struct UpdateStackTownsPayload {
     pub stack_id: i32,
-    pub towns: Vec<Town>,
+    pub towns: Vec<TownExtended>,
 }
 
 pub struct UpdateStackTiersPayload {
