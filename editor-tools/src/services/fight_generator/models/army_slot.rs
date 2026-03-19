@@ -1,5 +1,5 @@
 use super::common::{AssetGenerationType, DifficultyMappedValue};
-use homm5_scaner::prelude::{Town, TownExtended};
+use homm5_scaner::prelude::TownExtended;
 use sea_orm::{FromJsonQueryResult, FromQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::str;

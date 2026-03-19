@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { EditablePropertyWrapperProps } from "@/components/common/editableProperty";
 import { useCountGenerationMode, useCurrentStackTiers, useCurrentStackTowns } from "../store";
 import { StackCountGenerationType } from "../types";
-import { TownType } from "../../../types";
+import { TownTypeExtended } from "../../../types";
 
 function AverageTownsTiersTooltip({children, value} : EditablePropertyWrapperProps) {
     const generationMode = useCountGenerationMode();
@@ -23,7 +23,7 @@ function AverageTownsTiersTooltip({children, value} : EditablePropertyWrapperPro
     )
 }
 
-function useAverageTownsTiersCounts(towns: TownType[], tiers: number[], power: string) {
+function useAverageTownsTiersCounts(towns: TownTypeExtended[], tiers: number[], power: string) {
     return useQuery({
         queryKey: ["average_towns_tiers_counts", towns, tiers, power],
         queryFn: async() => {

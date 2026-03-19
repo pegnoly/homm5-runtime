@@ -1,4 +1,4 @@
-use homm5_scaner::prelude::{ArtifactSlotType, Town, TownExtended};
+use homm5_scaner::prelude::{ArtifactSlotType, TownExtended};
 use sea_orm::prelude::Uuid;
 
 use crate::prelude::{DifficultyMappedValue, OptionalArtifacts, RequiredArtifacts};
