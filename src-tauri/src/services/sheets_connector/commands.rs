@@ -65,7 +65,7 @@ static ARTIFACT_SLOTS_QUEUE: LazyLock<Vec<ArtifactSlotType>> = LazyLock::new(|| 
         ArtifactSlotType::Neck,
         ArtifactSlotType::Primary,
         ArtifactSlotType::Secondary,
-        ArtifactSlotType::Secondary,
+        ArtifactSlotType::Shoulders,
     ]
 });
 
