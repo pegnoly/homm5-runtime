@@ -27,7 +27,8 @@ pub struct AdvMapArtifactShared {
     pub HeroStatsModif: HeroStatsModif,
     pub ArtifactShared: Option<FileRef>,
     pub AvailableForPresets: bool,
-    pub PresetPrice: i32
+    pub PresetPrice: i32,
+    pub UniqueForHero: Option<bool>
 }
 
 #[derive(Debug, Serialize, Deserialize)]

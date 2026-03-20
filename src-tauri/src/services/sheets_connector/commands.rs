@@ -89,6 +89,9 @@ pub async fn generate_validation_data(
 ) -> Result<(), Error> {
     let generatable_creatures = scaner_service.get_creature_models().await?;
     let artifacts = scaner_service.get_artifact_models(GetArtifactsPayload::default().with_generatable(true)).await?;
+    let artifacts = artifacts.iter().filter(|artifact| {
+        (artifact.is_generatable || artifact.is_unique) && !artifact.name_txt.is_empty()
+    }).collect_vec();
     let mut data: Vec<Vec<serde_json::Value>> = vec![
         COUNT_CALC_RULES.iter().map(|x| serde_json::Value::String(x.to_string())).collect_vec(),
         GROW_RULES.iter().map(|x| serde_json::Value::String(x.to_string())).collect_vec(),

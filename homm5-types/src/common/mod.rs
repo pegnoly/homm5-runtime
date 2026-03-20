@@ -88,3 +88,11 @@ impl Default for SkillMastery {
         }
     }
 }
+
+pub fn unpack_file_ref(file_ref: Option<FileRef>) -> String {
+    if let Some(file_ref) = file_ref {
+        file_ref.href.unwrap_or_default()
+    } else {
+        String::new()
+    }
+}

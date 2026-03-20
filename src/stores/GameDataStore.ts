@@ -20,7 +20,8 @@ export type ArtifactModel = {
     morale: number,
     name_txt: string,
     desc_txt: string,
-    icon_xdb: string
+    icon_xdb: string,
+    is_unique: boolean
 }
 
 export type CreatureModel = {

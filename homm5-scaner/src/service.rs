@@ -500,6 +500,12 @@ impl ScanerService {
             if let Some(icon) = payload.icon_xdb {
                 model_to_update.icon_xdb = Set(icon);
             }
+            if let Some(generatable) = payload.generatable {
+                model_to_update.is_generatable = Set(generatable);
+            }
+            if let Some(unique) = payload.unique {
+                model_to_update.is_unique = Set(unique);
+            }
             model_to_update.update(&self.db).await?;
         }
         Ok(())

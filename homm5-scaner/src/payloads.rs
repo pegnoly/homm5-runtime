@@ -210,7 +210,9 @@ pub struct UpdateArtifactPayload {
     pub luck: Option<i32>,
     pub class: Option<ArtifactClassType>,
     pub slot: Option<ArtifactSlotType>,
-    pub icon_xdb: Option<String>
+    pub icon_xdb: Option<String>,
+    pub generatable: Option<bool>,
+    pub unique: Option<bool>
 }
 
 impl UpdateArtifactPayload {
@@ -288,6 +290,16 @@ impl UpdateArtifactPayload {
 
     pub fn with_icon_xdb(mut self, icon: String) -> Self {
         self.icon_xdb = Some(icon);
+        self
+    }
+    
+    pub fn with_generatable(mut self, is_generatable: bool) -> Self {
+        self.generatable = Some(is_generatable);
+        self
+    }
+    
+    pub fn with_unique(mut self, is_unique: bool) -> Self {
+        self.unique = Some(is_unique);
         self
     }
 }

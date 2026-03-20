@@ -5,7 +5,7 @@ use homm5_types::{art::{AdvMapArtifactShared, HeroStatsModif}, common::FileRef};
 use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString, FromRepr};
-
+use homm5_types::common::unpack_file_ref;
 use crate::core::{ToJsonCompatibleString, ToLua};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
@@ -29,7 +29,8 @@ pub struct Model {
     pub knowledge: i32,
     pub luck: i32,
     pub morale: i32,
-    pub unused_data: UnusedArtifactDataModel
+    pub unused_data: UnusedArtifactDataModel,
+    pub is_unique: bool
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
@@ -168,25 +169,13 @@ impl From<AdvMapArtifactShared> for Model {
     fn from(value: AdvMapArtifactShared) -> Self {
         Model {
             id: Default::default(),
-            name_txt: if let Some(ref file) = value.NameFileRef {
-                file.href.clone().unwrap_or(String::new())
-            } else {
-                String::new()
-            },
+            name_txt: unpack_file_ref(value.NameFileRef),
             name: String::new(),
-            desc_txt: if let Some(ref file) = value.DescriptionFileRef {
-                file.href.clone().unwrap_or(String::new())
-            } else {
-                String::new()
-            },
+            desc_txt: unpack_file_ref(value.DescriptionFileRef),
             desc: String::new(),
             slot: ArtifactSlotType::from_str(&value.Slot).unwrap_or(ArtifactSlotType::Inventory),
             class: ArtifactClassType::from_str(&value.Type).unwrap_or(ArtifactClassType::Grail),
-            icon_xdb: if let Some(ref file) = value.Icon {
-                file.href.clone().unwrap_or(String::new())
-            } else {
-                String::new()
-            },
+            icon_xdb: unpack_file_ref(value.Icon),
             cost: value.CostOfGold as i32,
             is_generatable: value.CanBeGeneratedToSell,
             game_id: Default::default(),
@@ -210,7 +199,8 @@ impl From<AdvMapArtifactShared> for Model {
                 }, 
                 available_for_presets: value.AvailableForPresets, 
                 preset_price: value.PresetPrice 
-            }
+            },
+            is_unique: value.UniqueForHero.unwrap_or_default(),
         }
     }
 }
@@ -219,8 +209,16 @@ impl From<Model> for AdvMapArtifactShared {
     fn from(value: Model) -> Self {
         AdvMapArtifactShared {
             AIValue: value.unused_data.ai_value,
-            NameFileRef: Some(FileRef { href: Some(format!("/{}", value.name_txt.replace("\\", "/"))) }),
-            DescriptionFileRef: Some(FileRef { href: Some(format!("/{}",value.desc_txt.replace("\\", "/"))) }),
+            NameFileRef: if value.name_txt.is_empty() {
+                None  
+            } else {
+                Some(FileRef { href: Some(format!("/{}", value.name_txt.replace("\\", "/"))) })
+            },
+            DescriptionFileRef: if value.desc_txt.is_empty() {
+                None  
+            } else {
+                Some(FileRef { href: Some(format!("/{}", value.desc_txt.replace("\\", "/"))) })
+            },
             Model: value.unused_data.model.map(|model| FileRef { href: Some(model) }),
             Type: value.class.to_string(),
             Slot: value.slot.to_string(),
@@ -241,7 +239,8 @@ impl From<Model> for AdvMapArtifactShared {
             },
             ArtifactShared: value.unused_data.shared.map(|shared| FileRef { href: Some(shared) }),
             AvailableForPresets: value.unused_data.available_for_presets,
-            PresetPrice: value.unused_data.preset_price
+            PresetPrice: value.unused_data.preset_price,
+            UniqueForHero: Some(value.is_unique)
         }
     }
 }

@@ -209,7 +209,6 @@ pub async fn update_artefact_desc(
     value: String,
     path: String
 ) -> Result<(), Error> {
-    println!("Desc path: {}", &path);
     let profile = app_manager.current_profile_data.read().await;
     let path = PathBuf::from(format!("{}{}", profile.texts_path, path));
     let mut file = File::create(path)?;
@@ -218,6 +217,24 @@ pub async fn update_artefact_desc(
         file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
     }
     Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc(value)).await?)
+}
+
+#[tauri::command]
+pub async fn update_artefact_is_generatable(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: bool
+) -> Result<(), Error> {
+    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_generatable(value)).await?)
+}
+
+#[tauri::command]
+pub async fn update_artefact_is_unique(
+    scaner_service: State<'_, ScanerService>,
+    id: i32,
+    value: bool
+) -> Result<(), Error> {
+    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_unique(value)).await?)
 }
 
 #[tauri::command]
@@ -252,13 +269,13 @@ pub async fn rebuild_artifacts_file(
     let temp_pak_path = PathBuf::from(format!("{}Universe_mod_temp.pak", profile_locked.data_path));
     let temp_file = File::create(&temp_pak_path)?;
     let old_file = File::open(&universe_pak_path)?;
-    let mut old_archive = zip::ZipArchive::new(old_file).unwrap();
+    let mut old_archive = zip::ZipArchive::new(old_file)?;
     let mut new_archive = zip::ZipWriter::new(temp_file);
 
     for i in 0..old_archive.len() {
-        let entry = old_archive.by_index(i).unwrap();
+        let entry = old_archive.by_index(i)?;
         if entry.name() != "GameMechanics/RefTables/Artifacts.xdb" {
-            new_archive.raw_copy_file(entry).unwrap();
+            new_archive.raw_copy_file(entry)?;
         }
     }
 
@@ -269,9 +286,9 @@ pub async fn rebuild_artifacts_file(
         w.write_serializable("objects", &table).unwrap();
         Ok(())
     })?;
-    new_archive.start_file("GameMechanics/RefTables/Artifacts.xdb", FileOptions::default()).unwrap();
+    new_archive.start_file("GameMechanics/RefTables/Artifacts.xdb", FileOptions::default())?;
     new_archive.write_all(&output)?;
-    new_archive.finish().unwrap();
+    new_archive.finish()?;
     std::fs::rename(temp_pak_path, universe_pak_path)?;
     Ok(())
 }

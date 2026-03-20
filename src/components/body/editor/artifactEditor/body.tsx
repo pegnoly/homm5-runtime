@@ -1,6 +1,6 @@
 import EditableProperty from "@/components/common/editableProperty";
 import { ArtifactEditorStore } from "./store";
-import { Button, Group, Select, Stack, Textarea, TextInput } from "@mantine/core";
+import {Button, Checkbox, Group, Select, Stack, Textarea, TextInput} from "@mantine/core";
 import { ArtifactClassType, ArtifactSlotType } from "../fightGenerator/elements/artifactsGenerator/types";
 import { invoke } from "@tauri-apps/api/core";
 import { ObjectUtils } from "@/lib/utils";
@@ -68,6 +68,24 @@ function ArtifactEditorBody() {
         await invoke("update_artefact_desc", {id: current?.id, value: localDesc, path: current?.desc_txt})
             .then(() => {
                 const updated = ObjectUtils.updateObjectDynamically(current!, "desc", localDesc);
+                action.updateCurrent(updated);
+                updateArtifacts(updated);
+            })
+    }
+
+    async function updateIsGeneratable(value: boolean) {
+        await invoke("update_artefact_is_generatable", {id: current?.id, value: value})
+            .then(() => {
+                const updated = ObjectUtils.updateObjectDynamically(current!, "is_generatable", value);
+                action.updateCurrent(updated);
+                updateArtifacts(updated);
+            })
+    }
+
+    async function updateIsUnique(value: boolean) {
+        await invoke("update_artefact_is_unique", {id: current?.id, value: value})
+            .then(() => {
+                const updated = ObjectUtils.updateObjectDynamically(current!, "is_unique", value);
                 action.updateCurrent(updated);
                 updateArtifacts(updated);
             })
@@ -144,6 +162,12 @@ function ArtifactEditorBody() {
                             label="Cost"
                             onSave={(value) => updateStat("cost", value as number)}
                         />
+                        <Checkbox
+                            onChange={(e) => updateIsGeneratable(e.currentTarget.checked)}
+                            checked={current.is_generatable} label="Generatable?"/>
+                        <Checkbox
+                            onChange={(e) => updateIsUnique(e.currentTarget.checked)}
+                            checked={current.is_unique} label="Unique?"/>
                     </Stack>
                 </div>
                 <div style={{width: '72%', alignContent: 'center', paddingTop: '3%', display: 'flex', flexDirection: 'column', gap: '2%'}}>
@@ -157,7 +181,7 @@ function ArtifactEditorBody() {
                         <Button 
                             radius={0}
                             onClick={() => {
-                                if (nameEditable == true) {
+                                if (nameEditable) {
                                     setNameEditable(false)
                                     saveName()
                                 } else {
@@ -177,7 +201,7 @@ function ArtifactEditorBody() {
                             <Button 
                                 radius={0}
                                 onClick={() => {
-                                    if (descEditable == true) {
+                                    if (descEditable) {
                                         setDescEditable(false)
                                         saveDesc()
                                     } else {
