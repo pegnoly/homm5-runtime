@@ -46,10 +46,10 @@ function FightGeneratorGlobals() {
     <Stack>
         {
             assetName == undefined ?
-            <Text c="red">Asset not selected</Text> :
-            <div style={{display: 'flex', flexDirection: 'column'}}>
-                <Text style={{fontWeight: 'bold'}} c="dark">Current asset:</Text>
-                <Text size="sm">{assetName}</Text>
+            <Text c="red" style={{fontSize: 14}}>Asset not selected</Text> :
+            <div style={{display: 'flex', flexDirection: 'row'}}>
+                <Text style={{fontWeight: 'bold', fontSize: 14}} c="dark">Current asset: </Text>
+                <Text style={{fontSize: 14}}>{assetName}</Text>
             </div>
         }
         <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>

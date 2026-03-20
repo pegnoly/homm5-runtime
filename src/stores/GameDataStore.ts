@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import { ArtifactClassType, ArtifactSlotType } from "../components/body/editor/fightGenerator/elements/artifactsGenerator/types"
-import { TownType } from "../components/body/editor/fightGenerator/types"
+import {TownType, TownTypeExtended} from "../components/body/editor/fightGenerator/types"
 import { ResourcesModel } from "@/components/body/editor/creatureEditor/types"
 import { MagicSchool } from "@/components/body/editor/reserveHeroesGenerator/types"
 
@@ -38,7 +38,8 @@ export type CreatureModel = {
     is_generatable: boolean,
     name: string,
     game_id: string,
-    inner_name: string | null
+    inner_name: string | null,
+    town_extended: TownTypeExtended
 }
 
 export type AbilityModel = {

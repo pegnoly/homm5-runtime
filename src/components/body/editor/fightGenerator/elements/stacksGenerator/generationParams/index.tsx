@@ -1,16 +1,27 @@
-import { useConcreteCreatures, useCurrentStackActions, useCurrentStackId, useTypeGenerationMode } from "../store";
+import {useConcreteCreatures, useCurrentStackActions, useCurrentStackId, useTypeGenerationMode} from "../store";
 import styles from '../../styles.module.css'
-import { StackUnitGenerationType } from "../types";
+import {StackUnitGenerationType} from "../types";
 import TiersSelector from "./tiersSelector";
 import TownSelector from "./townSelector";
 import AssetStackRuleSelector from "./ruleSelector";
 import FightAssetStackStatsData from "./statSelector";
-import { Accordion, AccordionControl, AccordionItem, AccordionPanel, ComboboxItem, Group, MultiSelect, OptionsFilter, Select, Stack } from "@mantine/core";
-import { useState } from "react";
-import { TownType } from "../../../types";
+import {
+    Accordion,
+    AccordionControl,
+    AccordionItem,
+    AccordionPanel,
+    ComboboxItem,
+    Group,
+    MultiSelect,
+    OptionsFilter,
+    Select,
+    Stack
+} from "@mantine/core";
+import {useState} from "react";
+import {TownTypeExtended} from "../../../types";
 import useGameDataStore from "../../../../../../../stores/GameDataStore";
-import { useMutation } from "@tanstack/react-query";
-import { FightGeneratorApi } from "../../../api";
+import {useMutation} from "@tanstack/react-query";
+import {FightGeneratorApi} from "../../../api";
 
 enum ParamsSelectionMode {
     Towns = "Towns",
@@ -25,11 +36,11 @@ function FightAssetStackParamsData() {
     return (
     <div className={styles.stack_params_panel}>
         {
-            currentStackId == undefined ? ( null ) :
+            currentStackId == undefined ? null :
             (
                 unitGenerationMode == StackUnitGenerationType.TierSlotBased ?
                 <TierSlotBasedGenerationData/> :
-                <ConcreteUnitsSelection/>
+                <SpecificUnitsSelection/>
             )
         }
     </div> 
@@ -85,54 +96,58 @@ function TierSlotBasedGenerationData() {
     )
 }
 
-function ConcreteUnitsSelection() {
-    const [currentTown, setCurrentTown] = useState<TownType | null>(null);
+function SpecificUnitsSelection() {
+    const [currentTown, setCurrentTown] = useState<TownTypeExtended | null>(null);
     const [currentTier, setCurrentTier] = useState<number | null>(null);
     
     return (
     <Stack>
         <Group>
-            <ConcreteCreatureTownSelector currentTown={currentTown} townSelectedCallback={setCurrentTown}/>
-            <ConcreteCreatureTierSelector currentTier={currentTier} tierSelectedCallback={setCurrentTier}/>
+            <SpecificCreatureTownSelector currentTown={currentTown} townSelectedCallback={setCurrentTown}/>
+            <SpecificCreatureTierSelector currentTier={currentTier} tierSelectedCallback={setCurrentTier}/>
         </Group>
         <CreatureSelector tier={currentTier} town={currentTown}/>
     </Stack>
     )
 }
 
-function ConcreteCreatureTownSelector(params: {
-    currentTown: TownType | null,
-    townSelectedCallback: (value: TownType) => void
+function SpecificCreatureTownSelector(params: {
+    currentTown: TownTypeExtended | null,
+    townSelectedCallback: (value: TownTypeExtended) => void
 }) {
 
     return (
     <Select
+        searchable
         size="sm"
-        label="Select concrete creature town"
+        label="Select specific creature town"
         value={params.currentTown}
-        onChange={(value) => params.townSelectedCallback(value as TownType)}
+        onChange={(value) => params.townSelectedCallback(value as TownTypeExtended)}
         data={[
-            {value: TownType.TownAcademy, label: "Academy"}, 
-            {value: TownType.TownDungeon, label: "Dungeon"},
-            {value: TownType.TownHeaven, label: "Heaven"},
-            {value: TownType.TownInferno, label: "Inferno"},
-            {value: TownType.TownFortress, label: "Fortress"},
-            {value: TownType.TownPreserve, label: "Preserve"},
-            {value: TownType.TownNecromancy, label: "Necromancy"},
-            {value: TownType.TownStronghold, label: "Stronghold"},
-            {value: TownType.TownNoType, label: "Neutral"},
+            {value: TownTypeExtended.TownAcademy, label: "Academy"},
+            {value: TownTypeExtended.TownDungeon, label: "Dungeon"},
+            {value: TownTypeExtended.TownHeaven, label: "Heaven"},
+            {value: TownTypeExtended.TownInferno, label: "Inferno"},
+            {value: TownTypeExtended.TownFortress, label: "Fortress"},
+            {value: TownTypeExtended.TownPreserve, label: "Preserve"},
+            {value: TownTypeExtended.TownNecromancy, label: "Necromancy"},
+            {value: TownTypeExtended.TownStronghold, label: "Stronghold"},
+            {value: TownTypeExtended.TownBastion, label: "Bastion"},
+            {value: TownTypeExtended.TownSanctuary, label: "Sanctuary"},
+            {value: TownTypeExtended.TownRenegades, label: "Renegades"},
+            {value: TownTypeExtended.TownNoType, label: "Neutral"},
         ]}
     />
     )
 }
 
-function ConcreteCreatureTierSelector(params: {
+function SpecificCreatureTierSelector(params: {
     currentTier: number | null,
     tierSelectedCallback: (value: number) => void
 }) {
     return (
     <Select
-        label="Select concrete creature tier"
+        label="Select specific creature tier"
         value={params.currentTier?.toString()}
         onChange={(value) => params.tierSelectedCallback(parseInt(value!))}
         data={[
@@ -154,7 +169,7 @@ export type UpdateConcreteCreaturesPayload = {
 }
 
 function CreatureSelector(params: {
-    town: TownType | null,
+    town: TownTypeExtended | null,
     tier: number | null
 }) {
     const currentStackId = useCurrentStackId();
@@ -174,7 +189,7 @@ function CreatureSelector(params: {
     const optionsFilter: OptionsFilter = ({ options }) => {
         return (options as ComboboxItem[]).filter((option) => {
             const creature = creatures.find(c => c.id == parseInt(option.value));
-            return creature?.town == params.town && creature?.tier == params.tier
+            return creature?.town_extended == params.town && creature?.tier == params.tier
         });
     };
 

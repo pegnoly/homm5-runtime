@@ -169,7 +169,7 @@ impl FromSheetValueRange for SheetToArmyAssetsConverter {
                             "Tier-slot based [0]" => {
                                 Ok(ArmySlotStackUnitGenerationMode::TierSlotBased)
                             }
-                            "Concrete unit [1]" => {
+                            "Specific unit [1]" => {
                                 Ok(ArmySlotStackUnitGenerationMode::ConcreteUnit)
                             }
                             _ => Err(Error::UndefinedValue(
@@ -591,7 +591,7 @@ impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
                     serde_json::Value::String(String::from("Tier-slot based [0]"))
                 }
                 ArmySlotStackUnitGenerationMode::ConcreteUnit => {
-                    serde_json::Value::String(String::from("Concrete unit [1]"))
+                    serde_json::Value::String(String::from("Specific unit [1]"))
                 }
             });
 
@@ -660,8 +660,13 @@ impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
                             format!(
                                 "{} [{}]",
                                 if let Some(inner_name) = &model.inner_name {
-                                    let mut updated_name = inner_name.clone();
-                                    updated_name.drain(3..).collect::<String>()
+                                    if !inner_name.is_empty() {
+                                        let mut updated_name = inner_name.clone();
+                                        updated_name.drain(3..).collect::<String>()
+                                    } else {
+                                        let mut updated_name = model.name.clone();
+                                        updated_name.drain(3..).collect()
+                                    }
                                 } else {
                                     let mut updated_name = model.name.clone();
                                     updated_name.drain(3..).collect()
