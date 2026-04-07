@@ -176,17 +176,16 @@ pub async fn update_artifacts_base_cost(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     container_id: i32,
     difficulty: DifficultyType,
-    value: String,
+    value: i32
 ) -> Result<i32, Error> {
-    let actual_value = value.parse::<i32>()?;
     fight_generator_repo
         .update_artifacts_base_generation_power(UpdateDifficultyBasedPowerPayload {
             id: container_id,
             difficulty,
-            value: actual_value,
+            value
         })
         .await?;
-    Ok(actual_value)
+    Ok(value)
 }
 
 #[tauri::command]

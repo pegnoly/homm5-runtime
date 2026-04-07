@@ -16,7 +16,7 @@ function ReserveHeroesList({heroes}: {heroes: ReservedHero[]}) {
                 style={{textDecoration: 'none'}} 
                 to={`/editor/${EditorState.ReserveHeroes}/focused/${h.id}`} key={i}>
                 <div style={{backgroundColor: h.id == currentId ? 'greenyellow' : 'transparent'}}>
-                    <Text c="dark" fw="bold">{h.name}</Text>
+                    <Text c="dark" fw="bold" style={{fontSize: 14, wordBreak: "break-word", wordWrap: "normal"}}>{h.name}</Text>
                 </div>
             </Link>
         ))}</List>
