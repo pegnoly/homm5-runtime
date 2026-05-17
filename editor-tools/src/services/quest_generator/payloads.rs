@@ -1,3 +1,5 @@
+use crate::prelude::QuestProgressType;
+
 pub struct CreateQuestPayload {
     pub mission_id: i32,
     pub name: String,
@@ -60,8 +62,14 @@ pub struct GetProgressPayload {
     pub number: i32,
 }
 
+pub struct CreateProgressPayload {
+    pub quest_id: i32,
+    pub number: i32,
+    pub progress_type: QuestProgressType
+}
+
 pub struct SaveProgressPayload {
     pub id: i32,
-    pub text: String,
+    pub progress_type: QuestProgressType,
     pub concatenate: bool,
 }

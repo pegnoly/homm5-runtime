@@ -8,8 +8,20 @@ export type Quest = {
     is_secondary: boolean
 }
 
+export type OneOfQuestProgress = {
+    text: string,
+    start_value: number,
+    count: number
+}
+
+export type QuestProgressType =
+    | { type: "Default", data: string }
+    | { type: "OneOf", data: OneOfQuestProgress }
+
 export type QuestProgress = {
     id: number,
-    text: string,
+    number: number,
+    text: string | null,
+    one_of_progress: OneOfQuestProgress | null,
     concatenate: boolean
 }

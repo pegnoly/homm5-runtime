@@ -30,7 +30,9 @@ pub enum Error {
     #[error(transparent)]
     SheetsConnector(#[from] Box<sheets_connector::error::Error>),
     #[error(transparent)]
-    Zip(#[from]zip::result::ZipError)
+    Zip(#[from]zip::result::ZipError),
+    #[error(transparent)]
+    MapModifier(#[from]map_modifier::error::MapModifierError)
 }
 
 impl Serialize for Error {

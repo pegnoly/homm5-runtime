@@ -4,6 +4,8 @@ import { useState } from "react";
 import { FightAssetSimple } from "../types";
 import { invoke } from "@tauri-apps/api/core";
 import { Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Stack, Text, TextInput, Tooltip } from "@mantine/core";
+import {EditorTimelineStore} from "@/components/timeline/store.ts";
+import {GetCurrentTimestamp} from "@/components/timeline/types.ts";
 
 function FightAssetCreator({onCreated}: {
     onCreated: (value: FightAssetSimple) => void
@@ -13,12 +15,34 @@ function FightAssetCreator({onCreated}: {
     const [name, setName] = useState<string | null>("");
     const [tableName, setTableName] = useState<string | null>("");
 
+    const actions = EditorTimelineStore.useActions();
+
     listen<string>("hero_lua_directory_picked", (event => setDirectory(event.payload)));
 
     async function create() {
         close();
         await invoke<FightAssetSimple>("init_new_asset", {name: name, path: directory, tableName: tableName})
-            .then((value) => onCreated(value));
+            .then((value) => {
+                onCreated(value);
+                actions.addItem({
+                    message: `${name} added to sheets successfully`,
+                    timestamp: GetCurrentTimestamp()
+                });
+                actions.changeActivity(true);
+                setTimeout(() => {
+                    actions.changeActivity(false);
+                }, 3000);
+            })
+            .catch((error) => {
+                actions.addItem({
+                    timestamp: GetCurrentTimestamp(),
+                    message: error.toString()
+                })
+                actions.changeActivity(true);
+                setTimeout(() => {
+                    actions.changeActivity(false);
+                }, 3000);
+            })
     }
 
     return <div style={{position: 'sticky'}}>

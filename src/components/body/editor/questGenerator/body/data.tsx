@@ -82,12 +82,14 @@ function QuestGeneratorDataBlock() {
     >
         <Stack>
             <EditableProperty 
-                label="Quest name" 
+                label="Quest name"
+                type="text"
                 initialValue={currentName!} 
                 onSave={(value) => updateNameMutation.mutate({questId: currentId!, name: value as string})}
             />
             <EditableProperty 
-                label="Quest script name" 
+                label="Quest script name"
+                type="text"
                 initialValue={currentScriptName!} 
                 onSave={(value) => updateScriptNameMutation.mutate({questId: currentId!, scriptName: value as string})}
             />

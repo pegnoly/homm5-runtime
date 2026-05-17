@@ -13,6 +13,7 @@ use crate::{
         prelude::{QuestModel, QuestProgressModel},
     },
 };
+use crate::prelude::{CreateProgressPayload, QuestProgressType};
 
 pub struct QuestGeneratorRepo {
     db: DatabaseConnection,
@@ -89,12 +90,21 @@ impl QuestGeneratorRepo {
 
     pub async fn create_progress(
         &self,
-        payload: GetProgressPayload,
+        payload: CreateProgressPayload,
     ) -> Result<QuestProgressModel, EditorToolsError> {
         let model_to_insert = progress::ActiveModel {
             number: Set(payload.number),
             quest_id: Set(payload.quest_id),
-            text: Set(String::new()),
+            text: match &payload.progress_type {
+                QuestProgressType::Default(value) => {
+                    Set(Some(value.clone()))
+                },
+                _=> Set(None)
+            },
+            one_of_progress: match payload.progress_type {
+                QuestProgressType::OneOf(value) => Set(Some(value)),
+                _ => Set(None)
+            },
             concatenate: Set(false),
             ..Default::default()
         };
@@ -109,9 +119,22 @@ impl QuestGeneratorRepo {
             .one(&self.db)
             .await?
         {
-            let mut progress_to_update = existing_progress.into_active_model();
+            let mut progress_to_update = existing_progress.clone().into_active_model();
+            match payload.progress_type {
+                QuestProgressType::Default(value) => {
+                    progress_to_update.text = Set(Some(value));
+                    if existing_progress.one_of_progress.is_some() {
+                        progress_to_update.one_of_progress = Set(None);
+                    }
+                },
+                QuestProgressType::OneOf(value) => {
+                    progress_to_update.one_of_progress = Set(Some(value));
+                    if existing_progress.text.is_some() {
+                        progress_to_update.text = Set(None);
+                    }
+                }
+            }
             progress_to_update.concatenate = Set(payload.concatenate);
-            progress_to_update.text = Set(payload.text);
             progress_to_update.update(&self.db).await?;
         }
         Ok(())

@@ -9,12 +9,14 @@ pub use homm5_types::{common::FileRef, quest::{Objectives, Quest, QuestList}, Ho
 use monsters::MonstersModifier;
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, Event}, Reader, Writer};
 use serde::{Deserialize, Serialize};
+use crate::error::MapModifierError;
 
 pub mod quest;
 pub mod reserve_heroes;
 pub mod artifacts;
 pub mod buildings;
 pub mod monsters;
+pub mod error;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct  PlayerSpecific {
@@ -51,7 +53,7 @@ pub trait GenerateBoilerplate {
     type Output: Homm5Type;
     type Additional;
 
-    fn generate(&self, additional_data: Option<&Self::Additional>) -> Result<Self::Output, std::io::Error>;
+    fn generate(&self, additional_data: Option<&Self::Additional>) -> Result<Self::Output, MapModifierError>;
 }
 pub struct ModifiersQueue<'a> {
     pub primary_quests: Vec<Quest>,

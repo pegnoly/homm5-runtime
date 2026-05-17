@@ -85,6 +85,7 @@ pub async fn run() -> Result<(), Error> {
             load_quest,
             pick_quest_directory,
             create_quest,
+            create_quest_progress,
             load_quest_progress,
             save_progress,
             update_quest_directory,

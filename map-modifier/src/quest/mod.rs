@@ -1,6 +1,7 @@
 use std::{fs::File, io::Write, path::PathBuf};
+use editor_tools::prelude::QuestProgressType;
 use homm5_types::{common::FileRef, quest::Quest};
-
+use crate::error::MapModifierError;
 use crate::GenerateBoilerplate;
 
 pub fn test_convert(quest: Quest) {
@@ -8,10 +9,9 @@ pub fn test_convert(quest: Quest) {
     println!("Quest string is: {s}");
 }
 
-#[derive(Default)]
+#[derive(Debug)]
 pub struct QuestProgress {
-    pub number: u32,
-    pub text: String,
+    pub progress_type: QuestProgressType,
     pub concatenate: bool
 }
 
@@ -90,30 +90,65 @@ impl QuestCreationRequest {
         quest.description_file_ref = FileRef {href: Some(local_file_name)};
     }
 
-    fn generate_progresses(&self, quest: &mut Quest, progresses_texts_dir: &String, map_local_data: &String) {
+    fn generate_progresses(&self, quest: &mut Quest, progresses_texts_dir: &String, map_local_data: &String) -> Result<(), MapModifierError> {
+        for file in std::fs::read_dir(progresses_texts_dir)? {
+            let file = file?;
+            let path = file.path();
+            if path.is_file() {
+                std::fs::remove_file(path)?;
+            }
+        }
 
         let mut previous_progresses = String::new();
 
         quest.progress_comments_file_ref.items = Some(vec![]);
 
+        let mut count = 0;
         for progress in &self.progresses {
-            let mut file = std::fs::File::create(format!("{progresses_texts_dir}{}.txt", progress.number)).unwrap();
-            file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
-
-            let current_progress = format!("<color=grey>{}<color=white>{}", &previous_progresses, &progress.text);
-
-            for utf16 in current_progress.encode_utf16() {
-                file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+            match &progress.progress_type {
+                QuestProgressType::Default(text) => {
+                    self.create_progress(count, text, progresses_texts_dir, map_local_data, &mut previous_progresses, quest)?;
+                    count += 1;
+                    if progress.concatenate {
+                        previous_progresses += &format!("{}\n\n", text);
+                    }
+                },
+                QuestProgressType::OneOf(data) => {
+                    let mut generated_text = String::new() ;
+                    for value in data.start_value..data.count + 1 {
+                        generated_text = data.text.replace("[current_value]", &value.to_string())
+                            .replace("[values_count]", &data.count.to_string());
+                        self.create_progress(count, &generated_text, progresses_texts_dir, map_local_data, &mut previous_progresses, quest)?;
+                        count += 1;
+                    }
+                    if progress.concatenate {
+                        previous_progresses += &format!("{}\n\n", generated_text);
+                    }
+                }
             }
-
-            if progress.concatenate {
-                previous_progresses += &format!("{}\n\n", progress.text);
-            }
-
-            let local_file_name = format!("{}\\Progress\\{}.txt", map_local_data, progress.number).replace("\\", "/");
-
-            quest.progress_comments_file_ref.items.as_mut().unwrap().push(FileRef {href: Some(local_file_name)});
         }
+        Ok(())
+    }
+    fn create_progress(
+        &self,
+        number: i32,
+        text: &String,
+        dir: &String,
+        map_local_dir: &String,
+        previous: &mut String,
+        quest: &mut Quest
+    ) -> Result<(), MapModifierError> {
+        let mut file = std::fs::File::create(format!("{dir}{number}.txt"))?;
+        file.write_all(&[255, 254])?;
+        let current_progress = format!("<color=grey>{}<color=white>{}", previous, text);
+        for utf16 in current_progress.encode_utf16() {
+            file.write_all(&(bincode::serialize(&utf16)?))?;
+        }
+
+        let local_file_name = format!("{}\\Progress\\{}.txt", map_local_dir, number).replace("\\", "/");
+
+        quest.progress_comments_file_ref.items.as_mut().unwrap().push(FileRef {href: Some(local_file_name)});
+        Ok(())
     }
 }
 
@@ -127,7 +162,7 @@ impl GenerateBoilerplate for QuestCreationRequest {
     type Output = Quest;
     type Additional = QuestBoilerplateHelper;
 
-    fn generate(&self, additional_data: Option<&QuestBoilerplateHelper>) -> Result<Quest, std::io::Error> {
+    fn generate(&self, additional_data: Option<&QuestBoilerplateHelper>) -> Result<Quest, MapModifierError> {
         let mut quest = Quest {
             name: Some(self.script_name.clone()),
             is_hidden: false,
@@ -164,7 +199,7 @@ impl GenerateBoilerplate for QuestCreationRequest {
 
         self.generate_name(&mut quest, &quest_texts_base, &map_local_path);
         self.generate_desc(&mut quest, &quest_texts_base, &map_local_path);
-        self.generate_progresses(&mut quest, &progresses_texts_dir.to_string_lossy().to_string(), &map_local_path);
+        self.generate_progresses(&mut quest, &progresses_texts_dir.to_string_lossy().to_string(), &map_local_path)?;
 
         let script_path = self.path.join("script.lua");
 

@@ -1,11 +1,12 @@
 use std::sync::LazyLock;
+use chrono::Local;
 use itertools::Itertools;
 use sheets_connector::service::SheetsConnectorService;
 use tauri::State;
 use homm5_scaner::prelude::{ArtifactSlotType, GetArtifactsPayload, ScanerService};
 use sheets_connector::prelude::ValueRange;
 use crate::error::Error;
-use crate::utils::LocalAppManager;
+use crate::utils::{LocalAppManager, TimelineMessage};
 
 static COUNT_CALC_RULES: LazyLock<Vec<&str>> = LazyLock::new(|| {
    vec!["Power based [0]", "Raw [1]"]
@@ -86,7 +87,7 @@ pub async fn generate_validation_data(
     sheets_connector: State<'_, SheetsConnectorService>,
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
-) -> Result<(), Error> {
+) -> Result<TimelineMessage, Error> {
     let generatable_creatures = scaner_service.get_creature_models().await?;
     let artifacts = scaner_service.get_artifact_models(GetArtifactsPayload::default().with_generatable(true)).await?;
     let artifacts = artifacts.iter().filter(|artifact| {
@@ -142,5 +143,8 @@ pub async fn generate_validation_data(
     
     sheets_connector.upload_validation_data(spreadsheet_id, output).await.map_err(Box::new)?;
     
-    Ok(())
+    Ok(TimelineMessage {
+        timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
+        message: format!("Validation data generated into sheet with id {}", spreadsheet_id)
+    })
 }

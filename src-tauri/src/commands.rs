@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::path::PathBuf;
 
-use editor_tools::prelude::{QuestGeneratorRepo, ReserveHeroCreatorRepo};
+use editor_tools::prelude::{QuestGeneratorRepo, QuestProgressType, ReserveHeroCreatorRepo};
 use homm5_repacker::Repacker;
 use homm5_scaner::prelude::{GetArtifactsPayload, ScanerService, Town};
 use itertools::Itertools;
@@ -146,7 +146,7 @@ pub async fn repack(
 pub async fn apply_modifications(
     app_manager: State<'_, LocalAppManager>,
     quests_repo: State<'_, QuestGeneratorRepo>,
-    data_containter: State<'_, DataContainer>,
+    data_container: State<'_, DataContainer>,
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
 ) -> Result<(), super::error::Error> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
@@ -160,9 +160,9 @@ pub async fn apply_modifications(
     let mod_path = &profile.mod_path;
 
     let mut modifiers_queue = ModifiersQueue::new(
-        &data_containter.banks,
-        &data_containter.buildings,
-        &data_containter.artifacts,
+        &data_container.banks,
+        &data_container.buildings,
+        &data_container.artifacts,
     );
 
     // get all ids of quest for current map
@@ -182,9 +182,14 @@ pub async fn apply_modifications(
             progresses
                 .into_iter()
                 .map(|p| QuestProgress {
-                    number: p.number as u32,
-                    text: p.text,
-                    concatenate: p.concatenate,
+                    progress_type: if let Some(one_of) = p.one_of_progress {
+                        QuestProgressType::OneOf(one_of)
+                    } else if let Some(text) = p.text { 
+                        QuestProgressType::Default(text)
+                    } else { 
+                        QuestProgressType::Default(String::default())
+                    },
+                    concatenate: p.concatenate
                 })
                 .collect(),
         )

@@ -1,9 +1,6 @@
 use std::path::PathBuf;
 
-use editor_tools::prelude::{
-    CreateQuestPayload, GetProgressPayload, QuestGeneratorRepo, QuestModel, QuestProgressModel,
-    SaveProgressPayload, UpdateQuestPayload,
-};
+use editor_tools::prelude::{CreateProgressPayload, CreateQuestPayload, GetProgressPayload, QuestGeneratorRepo, QuestModel, QuestProgressModel, QuestProgressType, SaveProgressPayload, UpdateQuestPayload};
 use map_modifier::quest::write_quest_text_file;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
@@ -168,30 +165,39 @@ pub async fn load_quest_progress(
     quests_repo: State<'_, QuestGeneratorRepo>,
     quest_id: i32,
     number: i32,
-) -> Result<QuestProgressModel, Error> {
-    if let Some(progress) = quests_repo
-        .get_progress(GetProgressPayload { quest_id, number })
-        .await?
-    {
-        Ok(progress)
+) -> Result<Option<QuestProgressModel>, Error> {
+    if let Some(progress) = quests_repo.get_progress(GetProgressPayload { quest_id, number }).await? {
+        Ok(Some(progress))
     } else {
-        Ok(quests_repo
-            .create_progress(GetProgressPayload { quest_id, number })
-            .await?)
+        if number == 0 {
+            Ok(None)
+        } else {
+            Ok(Some(quests_repo.create_progress(CreateProgressPayload { quest_id, number, progress_type: QuestProgressType::Default(String::new()) }).await?))
+        }
     }
+}
+
+#[tauri::command]
+pub async fn create_quest_progress(
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
+    number: i32,
+    progress_type: QuestProgressType
+) -> Result<QuestProgressModel, Error> {
+    Ok(quests_repo.create_progress(CreateProgressPayload { quest_id, number, progress_type }).await?)
 }
 
 #[tauri::command]
 pub async fn save_progress(
     quests_repo: State<'_, QuestGeneratorRepo>,
     id: i32,
-    text: String,
+    progress_type: QuestProgressType,
     concatenate: bool,
 ) -> Result<(), Error> {
     Ok(quests_repo
         .save_progress(SaveProgressPayload {
             id,
-            text,
+            progress_type,
             concatenate,
         })
         .await?)

@@ -1,11 +1,12 @@
 import { create } from "zustand"
-import { Quest, QuestProgress } from "./types"
+import {OneOfQuestProgress, Quest, QuestProgress} from "./types"
 
 type Actions = {
     loadQuests: (value: Quest []) => void,
 
     loadCurrentQuest: (value: Quest) => void,
     loadCurrentProgress: (value: QuestProgress) => void,
+    resetCurrentProgress: () => void,
 
     setCurrentQuestId: (value: number) => void,
     setCurrentQuestName: (value: string) => void,
@@ -18,7 +19,8 @@ type Actions = {
     setCurrentProgressNumber: (value: number) => void,
     setCurrentProgressId: (value: number) => void,
     setCurrentProgressText: (value: string) => void,
-    setCurrentProgressConcatenate: (value: boolean) => void
+    setCurrentProgressConcatenate: (value: boolean) => void,
+    setCurrentProgressOneOf: (value: OneOfQuestProgress) => void
 }
 
 type Store = {
@@ -35,6 +37,7 @@ type Store = {
     currentProgressNumber: number | undefined,
     currentProgressId: number | undefined,
     currentProgressText: string | undefined,
+    currentProgressOneOf: OneOfQuestProgress | undefined,
     currentProgressIsConcatenate: boolean | undefined,
 
     actions: Actions
@@ -55,6 +58,7 @@ const questGeneratorStore = create<Store>((set) => ({
     currentProgressId: undefined,
     currentProgressIsConcatenate: undefined,
     currentProgressText: undefined,
+    currentProgressOneOf: undefined,
 
     actions: {
         loadQuests(value) {
@@ -72,10 +76,20 @@ const questGeneratorStore = create<Store>((set) => ({
                 currentQuestDirectory: value.directory
             })
         },
+        resetCurrentProgress() {
+            set({
+                currentProgressId: undefined,
+                currentProgressText: undefined,
+                currentProgressOneOf: undefined,
+                currentProgressIsConcatenate: undefined
+            })
+        },
         loadCurrentProgress(value) {
             set({
                 currentProgressId: value.id,
-                currentProgressText: value.text,
+                currentProgressText: value.text == null ? undefined : value.text,
+                currentProgressOneOf: value.one_of_progress == null ? { text: "", start_value: 0, count: 0 } : value.one_of_progress,
+                currentProgressNumber: value.number,
                 currentProgressIsConcatenate: value.concatenate
             })
         },
@@ -112,6 +126,9 @@ const questGeneratorStore = create<Store>((set) => ({
         setCurrentProgressConcatenate(value) {
             set({currentProgressIsConcatenate: value});
         },
+        setCurrentProgressOneOf(value) {
+            set({currentProgressOneOf: value});
+        }
     }
 }));
 
@@ -128,3 +145,4 @@ export const useCurrentProgressNumber = () => questGeneratorStore(state => state
 export const useCurrentProgressId = () => questGeneratorStore(state => state.currentProgressId);
 export const useCurrentProgressText = () => questGeneratorStore(state => state.currentProgressText);
 export const useCurrentProgressIsConcatenate = () => questGeneratorStore(state => state.currentProgressIsConcatenate);
+export const useCurrentProgressOneOf = () => questGeneratorStore(state => state.currentProgressOneOf);

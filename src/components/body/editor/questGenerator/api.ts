@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Quest, QuestProgress } from "./types";
 import { CreateQuestPayload } from "./header/creator";
 import { UpdateQuestPayloadBase } from "./body/data";
-import { SaveQuestProgressPayload } from "./body/progress";
+import {CreateQuestProgressPayload, SaveQuestProgressPayload} from "./body/progress";
 
 export class QuestGeneratorApi {
     static async loadQuests(): Promise<Quest[]> {
@@ -39,6 +39,10 @@ export class QuestGeneratorApi {
 
     static async updateQuestIsActive(payload: UpdateQuestPayloadBase & {isActive: boolean}): Promise<void> {
         return invoke("update_is_active", payload);
+    }
+
+    static async createProgress(payload: CreateQuestProgressPayload): Promise<QuestProgress> {
+        return invoke<QuestProgress>("create_quest_progress", payload);
     }
 
     static async loadProgress(questId: number, progressNumber: number): Promise<QuestProgress> {
