@@ -17,6 +17,7 @@ pub struct GlobalConfig {
     pub generic_hero_xdb: Option<String>,
     pub generic_icon_128: Option<String>,
     pub generic_icon_dds: Option<String>,
+    pub generic_map_xdb: Option<String>,
     pub session_configs_path: Option<String>,
     pub auth_path: PathBuf
 }
@@ -37,6 +38,9 @@ impl GlobalConfig {
         }
         if cfg.generic_icon_dds.is_none() {
             cfg.generic_icon_dds = Some(path.join("Icon.dds").to_string_lossy().to_string());
+        }
+        if cfg.generic_map_xdb.is_none() {
+            cfg.generic_map_xdb = Some(path.join("map.xdb").to_string_lossy().to_string());
         }
         if cfg.session_configs_path.is_none() {
             cfg.session_configs_path = Some(path.join("sessions\\").to_string_lossy().to_string());

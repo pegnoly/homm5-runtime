@@ -258,7 +258,10 @@ pub async fn run() -> Result<(), Error> {
             services::spell_editor::commands::pick_spell_texts_directory,
             services::spell_editor::commands::pick_spell_icon_directory,
             services::spell_editor::commands::create_new_spell,
-            services::spell_editor::commands::save_spell_xdb
+            services::spell_editor::commands::save_spell_xdb,
+            //
+            services::map_editor::commands::pick_map_xdb_directory,
+            services::map_editor::commands::move_map_to_dir
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

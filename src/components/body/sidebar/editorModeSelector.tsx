@@ -1,5 +1,5 @@
-import { List } from '@mantine/core';
-import { EditorState } from '../../../stores/EditorStateStore';
+import {List} from '@mantine/core';
+import {EditorState} from '@/stores/EditorStateStore.ts';
 import styles from '../styles.module.css';
 import EditorModeLink from './editorModeLink';
 
@@ -18,6 +18,7 @@ function EditorModeSelector() {
             <EditorModeLink key={EditorState.CreatureEditor} label='CreatureEditor' state={EditorState.CreatureEditor}/>
             <EditorModeLink key={EditorState.ArtifactEditor} label='ArtifactEditor' state={EditorState.ArtifactEditor}/>
             <EditorModeLink key={EditorState.SpellEditor} label='SpellEditor' state={EditorState.SpellEditor}/>
+            <EditorModeLink state={EditorState.MapEditor} label='MapEditor' key={EditorState.MapEditor}/>
         </List>
     </div>
     )

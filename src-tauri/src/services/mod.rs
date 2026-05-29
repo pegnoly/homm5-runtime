@@ -8,3 +8,4 @@ pub mod sheets_connector;
 pub mod creature_editor;
 pub mod artifact_editor;
 pub mod spell_editor;
+pub mod map_editor;

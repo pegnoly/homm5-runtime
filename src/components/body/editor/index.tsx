@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 import styles from '../styles.module.css';
-import { EditorState, useEditorStateActions } from "../../../stores/EditorStateStore";
+import { EditorState, useEditorStateActions } from "@/stores/EditorStateStore.ts";
 import QuestGeneratorLayout from "./questGenerator";
 import DialogGeneratorLayout from "./dialogGenerator";
 import ReserveHeroesGeneratorLayout from "./reserveHeroesGenerator";
@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import CreatureEditorLayout from "./creatureEditor";
 import ArtifactEditorLayout from "./artifactEditor";
 import SpellEditorLayout from "./spellEditor";
+import MapEditorLayout from "@/components/body/editor/mapEditor";
 
 function EditorMain() {
     const { state } = useParams();
@@ -52,6 +53,8 @@ function RenderEditorMode(params: {
             return <ArtifactEditorLayout/>
         case EditorState.SpellEditor:
             return <SpellEditorLayout/>
+        case EditorState.MapEditor:
+            return <MapEditorLayout/>
         default:
             break;
     }
