@@ -15,7 +15,7 @@ import {
     Textarea
 } from "@mantine/core";
 import {QuestProgressType} from "@/components/body/editor/questGenerator/types.ts";
-import {useState} from "react";
+import {useRef, useState} from "react";
 
 export type SaveQuestProgressPayload = {
     id: number,
@@ -57,6 +57,9 @@ function CurrentProgress() {
     const currentProgressNumber = useCurrentProgressNumber();
     const actions = useQuestsActions();
 
+    const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+    const [_, setCaretPosition] = useState<number>(0);
     const [currentProgressType, setCurrentProgressType] = useState<ProgressType | undefined>(
         currentProgressText != undefined ? ProgressType.Default : currentProgressOneOf != undefined ? ProgressType.OneOf : undefined
     );
@@ -88,6 +91,24 @@ function CurrentProgress() {
             console.log("Creation failed with an error: ", error);
         }
     })
+
+    const handleCursorUpdate = () => {
+        if (textAreaRef.current) {
+            setCaretPosition(textAreaRef.current.selectionStart)
+        }
+    }
+
+    const insertTextAtCaret = (text: string) => {
+        if (!textAreaRef.current || currentProgressOneOf == undefined) {
+            return;
+        }
+
+        const start = textAreaRef.current.selectionStart;
+        const end = textAreaRef.current.selectionEnd;
+        const newText = currentProgressOneOf.text.substring(0, start) + text + currentProgressOneOf.text.substring(end);
+        actions.setCurrentProgressOneOf({...currentProgressOneOf!, text: newText});
+    }
+
 
     return (
     <>
@@ -145,7 +166,27 @@ function CurrentProgress() {
                                 checked={currentProgressConcatenate}
                                 onChange={(e) => actions.setCurrentProgressConcatenate(e.currentTarget.checked)}
                             />
+                            <ButtonGroup>
+                                <Button
+                                    radius={0}
+                                    size="xs"
+                                    disabled={currentProgressType == ProgressType.Default}
+                                    onClick={() => insertTextAtCaret("[current_value]")}
+                                >
+                                    Add current oneof
+                                </Button>
+                                <Button
+                                    bg="cyan"
+                                    radius={0}
+                                    size="xs"
+                                    disabled={currentProgressType == ProgressType.Default}
+                                    onClick={() => insertTextAtCaret("[values_count]")}
+                                >
+                                    Add max oneof
+                                </Button>
+                            </ButtonGroup>
                             <Textarea
+                                ref={textAreaRef}
                                 rows={10}
                                 minRows={10}
                                 maxRows={12}
@@ -154,6 +195,8 @@ function CurrentProgress() {
                                     currentProgressType == ProgressType.Default ? actions.setCurrentProgressText(e.currentTarget.value)
                                         : actions.setCurrentProgressOneOf(({...currentProgressOneOf!, text: e.currentTarget.value}));
                                 }}
+                                onMouseUp={handleCursorUpdate}
+                                onKeyUp={handleCursorUpdate}
                             />
                             <Button
                                 radius={0}

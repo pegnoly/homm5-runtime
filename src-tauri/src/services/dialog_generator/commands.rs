@@ -235,15 +235,15 @@ pub async fn generate_dialog(
                 } else {
                     &speaker.name
                 };
-                let text = format!(
+                let mut text = format!(
                     "<color={}>{}<color=white>: {}",
                     &speaker.color, updated_name, &variant.text
                 );
-                variant_file.write_all(&[255, 254]).unwrap();
+                text = text.replace("<b>", "<font face=Header size=20>").replace("</b>", "<font face=Default size=20>");
+                variant_file.write_all(&[255, 254])?;
                 for utf16 in text.encode_utf16() {
                     variant_file
-                        .write_all(&(bincode::serialize(&utf16).unwrap()))
-                        .unwrap();
+                        .write_all(&(bincode::serialize(&utf16).unwrap()))?;
                 }
                 let speaker_script = if speaker.speaker_type == SpeakerType::Hero {
                     format!("\"{}\"", speaker.script_name)
