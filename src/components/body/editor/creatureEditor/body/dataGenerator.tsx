@@ -1,12 +1,10 @@
-import { Button, ButtonGroup } from "@mantine/core";
-import CreatureToEditSelector from "./creatureSelector";
-import { CreatureEditorStore } from "../store";
-import { invoke } from "@tauri-apps/api/core";
-import CreatureTextsEditor from "../body/texts";
-import { EditorTimelineStore } from "@/components/timeline/store";
-import { TimelineMessage } from "@/components/timeline/types";
+import {Button} from "@mantine/core";
+import {invoke} from "@tauri-apps/api/core";
+import {CreatureEditorStore} from "@/components/body/editor/creatureEditor/store.ts";
+import {EditorTimelineStore} from "@/components/timeline/store.ts";
+import {TimelineMessage} from "@/components/timeline/types.ts";
 
-function CreatureEditorHeader() {
+function CreatureDataGenerator() {
     const currentCreature = CreatureEditorStore.useCurrent();
     const actions = EditorTimelineStore.useActions();
 
@@ -22,16 +20,12 @@ function CreatureEditorHeader() {
     }
 
     return <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
-        <CreatureToEditSelector/>
-        <ButtonGroup>
-            <CreatureTextsEditor/>
             <Button
                 radius={0}
                 disabled={currentCreature == undefined}
                 onClick={() => generateCreature()}
             >Generate game files for creature</Button>
-        </ButtonGroup>
     </div>
 }
 
-export default CreatureEditorHeader;
+export default CreatureDataGenerator;
