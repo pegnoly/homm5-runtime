@@ -7,7 +7,7 @@ import {CreatureEditorStore} from "@/components/body/editor/creatureEditor/store
 function CreaturesEditorList({models}: {models: CreatureModel[]}) {
 
     const currentCreature = CreatureEditorStore.useCurrent();
-
+    console.log(models);
     return (
         <>
             <List>{models.map((model, index) => (
@@ -15,7 +15,8 @@ function CreaturesEditorList({models}: {models: CreatureModel[]}) {
                     <div>
                         <Text bg={currentCreature?.id == model.id ? "green" : "silver"}
                               size='sm'
-                              lineClamp={1}>{model.inner_name != null ? model.inner_name : model.name}</Text>
+                              lineClamp={1}>{model.inner_name != null && model.inner_name != "" ?
+                            `${model.inner_name}[${model.id}]` : `${model.name}[${model.id}]`}</Text>
                     </div>
                 </Link>
             ))}</List>

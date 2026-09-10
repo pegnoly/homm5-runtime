@@ -11,7 +11,6 @@ function CreaturesInteractionEditor() {
     const actions = CreatureEditorStore.useActions();
 
     const creatures = useGameDataStore(state => state.creatures);
-    const abilities = useGameDataStore(state => state.abilities);
 
     async function updateCreatureBaseCreature(value: string) {
         await invoke(`update_creature_base_creature`, {id: currentCreature?.id, value: value})
@@ -37,14 +36,6 @@ function CreaturesInteractionEditor() {
             })
     }
 
-    async function updateCreatureAbilities(value: string[]) {
-        await invoke(`update_creature_abilities`, {id: currentCreature?.id, value: value})
-            .then(() => {
-                const newModel = ObjectUtils.updateObjectDynamically(currentCreature!, "abilities", { abilities: value })
-                actions.updateCreature(newModel);
-            })
-    }
-
     async function updateCreatureTown(value: TownType) {
         await invoke(`update_creature_town`, {id: currentCreature?.id, value: value})
             .then(() => {
@@ -65,14 +56,14 @@ function CreaturesInteractionEditor() {
     <>
     {
         currentCreature == undefined ? null :
-        <div style={{width: '30%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5%', paddingTop: '2%'}}>
-            <Text style={{textAlign: 'center', fontSize: 20}}>Other creatures interactions</Text>
+        <div style={{width: '60%', display: 'flex', flexDirection: 'column', gap: '1.5%'}}>
+            <Text style={{textAlign: 'center', fontSize: 20}}>Связи с другими существами</Text>
             <Select
                 size="xs"
                 searchable
                 style={{width: '100%'}}
                 radius={0}
-                label="Base creature"
+                label="Базовое существо"
                 value={currentCreature.base_creature == "CREATURE_UNKNOWN" ? null : currentCreature.base_creature}
                 data={creatures.map(c => ({label: `${c.inner_name != null && c.inner_name.length != 0 ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
                 onChange={(value) => updateCreatureBaseCreature(value!)}   
@@ -82,7 +73,7 @@ function CreaturesInteractionEditor() {
                 searchable
                 style={{width: '100%'}}
                 radius={0}
-                label="Pair creature"
+                label="Парное существо"
                 value={currentCreature.pair_creature == "CREATURE_UNKNOWN" ? null : currentCreature.pair_creature}
                 data={creatures.map(c => ({label: `${c.inner_name != null && c.inner_name.length != 0 ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
                 onChange={(value) => updateCreaturePairCreature(value!)}    
@@ -92,69 +83,56 @@ function CreaturesInteractionEditor() {
                 searchable
                 style={{width: '100%'}}
                 radius={0}
-                label="Upgrades"
+                label="Улучшения"
                 value={currentCreature.upgrades.upgrades}
                 data={creatures.map(c => ({label: `${c.inner_name != null && c.inner_name.length != 0 ? c.inner_name : c.name} [${c.id}]`, value: c.game_id}))}
                 onChange={(value) => updateCreatureUpgrades(value!)}   
             />
             <div style={{width: '100%'}}>
-                <Text style={{textAlign: 'center', fontSize: 20}}>Abilities</Text>
-                <MultiSelect
-                    size="xs"
-                    searchable
-                    style={{width: '100%'}}
-                    radius={0}
-                    label="Abilities"
-                    value={currentCreature.abilities.abilities}
-                    data={abilities.map(a => ({label: a.name, value: a.game_id}))}   
-                    onChange={(value) => updateCreatureAbilities(value!)}    
-                />
-            </div>
-            <div style={{width: '100%'}}>
-                <Text style={{textAlign: 'center', fontSize: 20}}>Towns info</Text>
-                <div style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                <Text style={{textAlign: 'center', fontSize: 20}}>Города</Text>
+                <div style={{display: "flex", flexDirection: "row", justifyContent: "center", gap: '10%'}}>
                     <Select
                         searchable
                         radius={0}
-                        w={140}
+                        w={200}
                         size="xs"
-                        label="Actual"
+                        label="Город с точки зрения игры"
                         value={currentCreature.town}
                         onChange={(value) => updateCreatureTown(value as TownType)}
                         data={[
-                            {value: TownType.TownAcademy, label: "Academy"},
-                            {value: TownType.TownDungeon, label: "Dungeon"},
-                            {value: TownType.TownHeaven, label: "Heaven"},
-                            {value: TownType.TownInferno, label: "Inferno"},
-                            {value: TownType.TownFortress, label: "Fortress"},
-                            {value: TownType.TownPreserve, label: "Preserve"},
-                            {value: TownType.TownNecromancy, label: "Necromancy"},
-                            {value: TownType.TownStronghold, label: "Stronghold"},
-                            {value: TownType.TownNoType, label: "Neutral"},
-                            {value: TownType.TownSpecial, label: "Special"}
+                            {value: TownType.TownAcademy, label: "Академия волшебства"},
+                            {value: TownType.TownDungeon, label: "Лига теней"},
+                            {value: TownType.TownHeaven, label: "Орден порядка"},
+                            {value: TownType.TownInferno, label: "Инферно"},
+                            {value: TownType.TownFortress, label: "Северные кланы"},
+                            {value: TownType.TownPreserve, label: "Лесной союз"},
+                            {value: TownType.TownNecromancy, label: "Некрополис"},
+                            {value: TownType.TownStronghold, label: "Великая орда"},
+                            {value: TownType.TownNoType, label: "Нейтралы"},
+                            {value: TownType.TownSpecial, label: "Специальный"}
                         ]}
                     />
                     <Select
                         searchable
                         radius={0}
-                        w={140}
+                        w={200}
                         size="xs"
-                        label="Extended"
+                        label="Город с точки зрения скриптов"
                         value={currentCreature.town_extended}
                         onChange={(value) => updateCreatureTownExtended(value as TownTypeExtended)}
                         data={[
-                            {value: TownTypeExtended.TownAcademy, label: "Academy"},
-                            {value: TownTypeExtended.TownDungeon, label: "Dungeon"},
-                            {value: TownTypeExtended.TownHeaven, label: "Heaven"},
-                            {value: TownTypeExtended.TownInferno, label: "Inferno"},
-                            {value: TownTypeExtended.TownFortress, label: "Fortress"},
-                            {value: TownTypeExtended.TownPreserve, label: "Preserve"},
-                            {value: TownTypeExtended.TownNecromancy, label: "Necromancy"},
-                            {value: TownTypeExtended.TownStronghold, label: "Stronghold"},
-                            {value: TownTypeExtended.TownBastion, label: "Bastion"},
-                            {value: TownTypeExtended.TownSanctuary, label: "Sanctuary"},
-                            {value: TownTypeExtended.TownRenegades, label: "Renegades"},
-                            {value: TownTypeExtended.TownNoType, label: "Neutral"},
+                            {value: TownTypeExtended.TownAcademy, label: "Академия волшебства"},
+                            {value: TownTypeExtended.TownDungeon, label: "Лига теней"},
+                            {value: TownTypeExtended.TownHeaven, label: "Орден порядка"},
+                            {value: TownTypeExtended.TownInferno, label: "Инферно"},
+                            {value: TownTypeExtended.TownFortress, label: "Северные кланы"},
+                            {value: TownTypeExtended.TownPreserve, label: "Лесной союз"},
+                            {value: TownTypeExtended.TownNecromancy, label: "Некрополис"},
+                            {value: TownTypeExtended.TownStronghold, label: "Великая орда"},
+                            {value: TownTypeExtended.TownBastion, label: "Твердыня"},
+                            {value: TownTypeExtended.TownSanctuary, label: "Святилище"},
+                            {value: TownTypeExtended.TownRenegades, label: "Ренегаты"},
+                            {value: TownTypeExtended.TownNoType, label: "Нейтралы"},
                         ]}
                     />
                 </div>

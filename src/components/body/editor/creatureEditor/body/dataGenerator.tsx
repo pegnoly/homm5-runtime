@@ -19,13 +19,14 @@ function CreatureDataGenerator() {
             });
     }
 
-    return <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
-            <Button
-                radius={0}
-                disabled={currentCreature == undefined}
-                onClick={() => generateCreature()}
-            >Generate game files for creature</Button>
-    </div>
+    return (
+    <Button bg="green" c="dark" h={75} style={{position: 'absolute', right: 20, bottom: 10}} onClick={() => generateCreature()} radius={0}>
+        <div>
+            <span>Сгенерировать файлы существа</span>
+            <br/>
+            <span>{`${currentCreature?.name} [${currentCreature?.id}]`}</span>
+        </div>
+    </Button> )
 }
 
 export default CreatureDataGenerator;

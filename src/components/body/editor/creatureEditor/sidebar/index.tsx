@@ -7,11 +7,9 @@ function CreatureEditorSidebar() {
     const creaturesData = useGameDataStore(state => state.creatures);
     const [selectedCreatures, setSelectedCreatures] = useState<CreatureModel[]>(creaturesData);
     function selectionUpdated(request: CreatureSelectionRequest) {
-        console.log("Selection request: ", request)
         if (request.id != undefined && !Number.isNaN(request.id)) {
             const specificSelection = creaturesData.find(c => c.id == request.id);
             if (specificSelection != undefined) {
-                console.log("Specific selection: ", specificSelection)
                 setSelectedCreatures([specificSelection])
             }
             return
@@ -34,7 +32,7 @@ function CreatureEditorSidebar() {
     }
 
     return (
-        <div style={{display: "flex", flexDirection: "column", width: '100%', height: '100%'}}>
+        <div style={{display: "flex", flexDirection: "column", width: '100%', height: '100%', gap: '2%'}}>
             <div style={{width: '100%', height: '15%'}}>
                 <CreatureToEditSelector onSelectionUpdated={selectionUpdated}/>
             </div>

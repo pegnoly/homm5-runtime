@@ -31,12 +31,13 @@ function MagicElementUpdater() {
         {
             currentCreature == undefined ? null :
             <>
-                <Text style={{textAlign: 'center', fontSize: 20}}>Magic elements</Text>
-                <div style={{width: '100%', display: 'flex', flexDirection: 'row', gap: '5%'}}>
+                <Text style={{textAlign: 'center', fontSize: 20}}>Магические элементы</Text>
+                <div style={{width: '100%', display: 'flex', flexDirection: 'row', gap: '5%', justifyContent: 'center'}}>
                     <Select
                         style={{width: '45%'}}
                         radius={0}
-                        label="First"
+                        label="Первый"
+                        size='xs'
                         value={currentCreature.magic_element.first}
                         data={[
                             {label: 'None', value: MagicElement.None},
@@ -50,7 +51,8 @@ function MagicElementUpdater() {
                     <Select
                         style={{width: '45%'}}
                         radius={0}
-                        label="Second"
+                        size="xs"
+                        label="Второй"
                         value={currentCreature.magic_element.second}
                         data={[
                             {label: 'None', value: MagicElement.None},

@@ -64,8 +64,8 @@ function CreatureNumberPropsEditor() {
     {
         currentCreature == undefined ? null :
         <>
-            <div style={{width: '25%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75%', paddingTop: '1%'}}>
-            <Text style={{textAlign: 'center', fontSize: 20}}>Numeric params</Text>
+            <div style={{width: '35%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75%', paddingTop: '1%'}}>
+            <Text style={{textAlign: 'center', fontSize: 20}}>Числовые параметры</Text>
             {
                 Object.entries(currentCreature).filter(v => creatureNumberProperties.includes(v[0])).map(v => (
                     <EditableProperty
@@ -79,19 +79,19 @@ function CreatureNumberPropsEditor() {
                 <Stack gap="xs">
                     <Checkbox
                         radius={0}
-                        label="Is generatable"
+                        label="Генерируемое?"
                         checked={currentCreature.is_generatable}
                         onChange={(e) => updateIsGeneratable(e.currentTarget.checked)}
                     />
                     <Checkbox
                         radius={0}
-                        label="Is flying"
+                        label="Летающее?"
                         checked={currentCreature.is_flying}
                         onChange={(e) => updateIsFlying(e.currentTarget.checked)}
                     />
                     <Checkbox
                         radius={0}
-                        label="Is upgrade"
+                        label="Улучшение?"
                         checked={currentCreature.is_upgrade}
                         onChange={(e) => updateIsUpgrade(e.currentTarget.checked)}
                     />
