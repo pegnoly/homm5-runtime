@@ -44,7 +44,7 @@ impl SheetsConnectorService {
             yup_oauth2::InstalledFlowReturnMethod::HTTPRedirect,
         )
         .persist_tokens_to_disk(
-            "D:\\projects\\homm5-runtime\\editor-tools\\target\\tokens\\token.json",
+            client_secret_path.parent().unwrap().join("tokens\\token.json")
         )
         .build()
         .await?;

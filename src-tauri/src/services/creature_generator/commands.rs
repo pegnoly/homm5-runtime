@@ -29,11 +29,7 @@ pub async fn save_generation_session(
     };
     let json = serde_json::to_string_pretty(&config)?;
     let base_config_locked = app_manager.base_config.read().await;
-    let path = PathBuf::from(format!(
-        "{}{}.json",
-        &base_config_locked.session_configs_path.as_ref().unwrap(),
-        session_name
-    ));
+    let path = base_config_locked.session_configs_path.join(format!("{}.json", session_name));
     let mut file = std::fs::File::create(&path)?;
     file.write_all(json.as_bytes())?;
     Ok(())
@@ -49,10 +45,7 @@ pub async fn generate_creatures(
     let profile = app_manager.current_profile_data.read().await;
     let creatures_data = scaner_repo.get_all_creature_models().await?;
     let abilities_data = scaner_repo.get_abilities().await?;
-    let generation_path = format!(
-        "{}GOG_Mod\\GameMechanics\\Creature\\Creatures\\Neutrals\\",
-        &profile.data_path
-    );
+    let generation_path = profile.mod_path.join("GameMechanics\\Creature\\Creatures\\Neutrals\\");
 
     for model in &models {
         let base_creature_data = scaner_repo
@@ -68,7 +61,7 @@ pub async fn generate_creatures(
         )
         .await?;
         let mut file =
-            std::fs::File::create(format!("{}Creature_{}.xdb", &generation_path, model.id))?;
+            std::fs::File::create(generation_path.join(format!("Creature_{}.xdb", model.id)))?;
         file.write_all(result.as_bytes())?;
     }
 

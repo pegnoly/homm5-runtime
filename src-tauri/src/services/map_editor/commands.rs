@@ -14,8 +14,7 @@ pub async fn pick_map_xdb_directory(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
     let map = profile
         .maps
         .iter()
@@ -47,7 +46,7 @@ pub async fn move_map_to_dir(
     size: i32
 ) -> Result<(), crate::Error> {
     let global_config = app_manager.base_config.read().await;
-    let map_path = global_config.generic_map_xdb.clone().unwrap();
+    let map_path = global_config.generic_map_xdb.clone();
     let mut map_data = std::fs::read_to_string(&map_path)?;
     map_data = map_data.replace("<TileX>72</TileX>", &format!("<TileX>{size}</TileX>"))
         .replace("<TileY>72</TileY>", &format!("<TileY>{size}</TileY>"));

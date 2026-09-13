@@ -132,8 +132,7 @@ pub async fn generate_validation_data(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
     let spreadsheet_id = &profile
         .maps
         .iter()

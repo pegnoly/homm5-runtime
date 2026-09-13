@@ -33,8 +33,7 @@ pub async fn pick_hero_lua_generation_directory(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
     let map = profile
         .maps
         .iter()
@@ -64,8 +63,7 @@ pub async fn init_new_asset(
     let runtime_config_locked = app_manager.runtime_config.read().await;
     let profile = app_manager.current_profile_data.read().await;
     let current_map_id = runtime_config_locked
-        .current_selected_map
-        .ok_or(Error::UndefinedData("Current map id".to_string()))?;
+        .current_selected_map;
     let map_data = profile
         .maps
         .iter()

@@ -10,7 +10,7 @@ use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
 use tauri::State;
 
-use crate::profiles::{ProfileConfig, ProfileType};
+use crate::profiles::ProfileConfig;
 use crate::DataContainer;
 use crate::error::Error;
 use crate::utils::{LocalAppManager, MapFrontendModel, RepackerFrontendData, RuntimeData};
@@ -21,10 +21,9 @@ pub async fn execute_scan(
     scaner_service: State<'_, ScanerService>,
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let data_path = PathBuf::from(&profile.data_path);
-    let root_folder = data_path.parent().unwrap();
-    let maps_path = root_folder.join("Maps\\");
-    let mods_path = root_folder.join("UserMODs\\");
+    let data_path = profile.game_path.join("data\\");
+    let maps_path = profile.game_path.join("Maps\\");
+    let mods_path = profile.game_path.join("UserMODs\\");
     let output_path = data_path.join("MCCS_GeneratedFiles.pak");
     scaner_service
         .run(vec![data_path, maps_path, mods_path], output_path)
@@ -37,10 +36,7 @@ pub async fn run_game(
     app_manager: State<'_, LocalAppManager>,
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let mut runtime_runner = RuntimeRunner::new(PathBuf::from(format!(
-        "{}{}",
-        &profile.bin_path, &profile.exe_name
-    )));
+    let mut runtime_runner = RuntimeRunner::new(profile.game_path.join("bin\\").join(&profile.exe_name));
     runtime_runner.run();
     Ok(())
 }
@@ -77,17 +73,17 @@ pub async fn load_maps(
 }
 
 #[tauri::command]
-pub async fn load_current_map(app_manager: State<'_, LocalAppManager>) -> Result<Option<u16>, ()> {
+pub async fn load_current_map(app_manager: State<'_, LocalAppManager>) -> Result<i32, ()> {
     Ok(app_manager.runtime_config.read().await.current_selected_map)
 }
 
 #[tauri::command]
 pub async fn select_map(
     app_manager: State<'_, LocalAppManager>, 
-    id: u16
+    id: i32
 ) -> Result<(), ()> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
-    runtime_config_locked.current_selected_map = Some(id);
+    runtime_config_locked.current_selected_map = id;
     let exe_path = std::env::current_exe().unwrap();
     let runtime_cfg_path = exe_path.parent().unwrap().join("cfg\\runtime.json");
     let new_runtime_data = serde_json::to_string_pretty(&RuntimeData {
@@ -101,7 +97,7 @@ pub async fn select_map(
     let map = profile
         .maps
         .iter()
-        .find(|m| m.id == runtime_config_locked.current_selected_map.unwrap())
+        .find(|m| m.id == runtime_config_locked.current_selected_map)
         .unwrap();
     let current_map_data = MapData::read(map);
     let current_map_data_path = exe_path
@@ -131,9 +127,9 @@ pub async fn repack(
             .to_rfc3339_opts(chrono::SecondsFormat::Secs, false)
             .to_string();
         repacker_data.last_update = date.clone();
-        let updated_profile_data = serde_json::to_string_pretty(&*profile).unwrap();
+        let updated_profile_data = serde_json::to_string_pretty(&*profile)?;
         let exe_path = std::env::current_exe()?;
-        let profile_cfg_path = exe_path.parent().unwrap().join(format!("cfg\\{}\\main.json", base_config_locked.current_profile));
+        let profile_cfg_path = exe_path.parent().unwrap().join(format!("cfg\\{}\\profile.json", base_config_locked.current_profile));
         let mut file = std::fs::File::create(&profile_cfg_path)?;
         file.write_all(updated_profile_data.as_bytes())?;
         Ok(date)
@@ -148,16 +144,16 @@ pub async fn apply_modifications(
     quests_repo: State<'_, QuestGeneratorRepo>,
     data_container: State<'_, DataContainer>,
     reserve_heroes_repo: State<'_, ReserveHeroCreatorRepo>,
-) -> Result<(), super::error::Error> {
+) -> Result<(), Error> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     let profile = app_manager.current_profile_data.read().await;
-    let current_map_id = runtime_config_locked.current_selected_map.unwrap();
+    let current_map_id = runtime_config_locked.current_selected_map;
     let map = profile
         .maps
         .iter()
         .find(|m| m.id == current_map_id)
         .unwrap();
-    let mod_path = &profile.mod_path;
+    let map_path = &profile.map_path;
 
     let mut modifiers_queue = ModifiersQueue::new(
         &data_container.banks,
@@ -169,7 +165,7 @@ pub async fn apply_modifications(
 
     // get all quests data for these ids and convert db models to quests
 
-    let this_mission_quests = quests_repo.load_quests(current_map_id as i32).await?;
+    let this_mission_quests = quests_repo.load_quests(current_map_id).await?;
     for model in &this_mission_quests {
         let progresses = quests_repo.load_progresses(model.id).await?;
         let request = QuestCreationRequest::new(
@@ -198,9 +194,9 @@ pub async fn apply_modifications(
         .initialy_active(model.is_active);
 
         let quest = request.generate(Some(&QuestBoilerplateHelper {
-            mod_path: mod_path.clone(),
-            map_data_path: map.data_path.clone(),
-            texts_path: profile.texts_path.clone(),
+            mod_path: map_path.to_string_lossy().to_string().clone(),
+            map_data_path: map.data_path.to_string_lossy().to_string().clone(),
+            texts_path: profile.texts_path.to_string_lossy().to_string().clone(),
         }))?;
         if model.is_secondary {
             modifiers_queue.secondary_quests.push(quest);
@@ -230,10 +226,10 @@ pub async fn create_hero(
 ) -> Result<(), Error> {
     let global_config_locked = app_manager.base_config.read().await;
     editor_tools::prelude::process_files(
-        &PathBuf::from(global_config_locked.generic_hero_xdb.as_ref().unwrap()),
-        &PathBuf::from(global_config_locked.generic_icon_128.as_ref().unwrap()),
-        &PathBuf::from(global_config_locked.generic_icon_dds.as_ref().unwrap()),
-        format!("{}GOG_Mod\\", &profile_data.data_path),
+        &global_config_locked.generic_hero_xdb,
+        &global_config_locked.generic_icon_128,
+        &global_config_locked.generic_icon_dds,
+        profile_data.mod_path.to_string_lossy().to_string(),
         town,
         hero_script_name,
         hero_name,
@@ -244,7 +240,7 @@ pub async fn create_hero(
 #[tauri::command]
 pub async fn switch_profile(
     app_manager: State<'_, LocalAppManager>,
-    new_profile: ProfileType
+    new_profile: String
 ) -> Result<(), Error> {
     let mut base_config_locked = app_manager.base_config.write().await;
     let mut profile = app_manager.current_profile_data.write().await; 
@@ -277,7 +273,7 @@ pub async fn generate_images(
         let splitted = line.split('=').collect::<Vec<&str>>();
         let name = splitted.first().unwrap().trim();
         let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
-        let id = id.parse::<i32>().unwrap();
+        let id = id.parse::<i32>()?;
         let creature_game_id = creatures.iter().find(|c| c.id == id).unwrap().game_id.clone();
         creature_gen_string += &format!("{{CreatureType.{name}, PathHelper.AssetsDirectory + \"\\\\CreaturesImages\\\\{creature_game_id}.png\"}},\n");
     }
@@ -290,7 +286,7 @@ pub async fn generate_images(
         let splitted = line.split('=').collect::<Vec<&str>>();
         let name = splitted.first().unwrap().trim();
         let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
-        let id = id.parse::<i32>().unwrap();
+        let id = id.parse::<i32>()?;
         println!("Id: {id}");
         if let Some(spell) = spells.iter().find(|c| c.id == id) {
             let spell_game_id = spell.game_id.clone();
@@ -306,7 +302,7 @@ pub async fn generate_images(
         let splitted = line.split('=').collect::<Vec<&str>>();
         let name = splitted.first().unwrap().trim();
         let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
-        let id = id.parse::<i32>().unwrap();
+        let id = id.parse::<i32>()?;
         if let Some(artifact) =  artifacts.iter().find(|c| c.id == id) {
             let art_game_id = artifact.game_id.clone();
             arts_gen += &format!("{{ArtifactType.{name}, PathHelper.AssetsDirectory + \"\\\\Artifacts\\\\{art_game_id}.png\"}},\n");
@@ -324,7 +320,7 @@ pub async fn generate_images(
         let splitted = line.split('=').collect::<Vec<&str>>();
         let game_id = splitted.first().unwrap().trim();
         let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
-        let id = id.parse::<i32>().unwrap();
+        let id = id.parse::<i32>()?;
         if let Some(skill) = skills.iter().find(|s| s.id == id) {
             if skill.names.names.len() > 1 {
                 skills_gen += &format!("{{SkillType.{game_id}, PathHelper.AssetsDirectory + \"\\\\Skills\\\\{}_\"}},\n", skill.game_id);
@@ -346,7 +342,7 @@ pub async fn generate_images(
         let splitted = line.split('=').collect::<Vec<&str>>();
         let game_id = splitted.first().unwrap().trim();
         let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
-        let id = id.parse::<i32>().unwrap();
+        let id = id.parse::<i32>()?;
         if let Some(skill) = skills.iter().find(|s| s.id == id) {
             perks_data_gen += &format!("{{PerkType.{game_id}, \"{}\"}},\n", skill.game_id)
         }

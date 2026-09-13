@@ -1,4 +1,4 @@
-use crate::{error::Error, profiles::{ProfileConfig, ProfileType}};
+use crate::{error::Error, profiles::ProfileConfig};
 use map_modifier::{
     MapData,
     artifacts::ArtifactConfigEntity,
@@ -13,12 +13,18 @@ use tokio::sync::RwLock;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalConfig {
-    pub current_profile: ProfileType,
-    pub generic_hero_xdb: Option<String>,
-    pub generic_icon_128: Option<String>,
-    pub generic_icon_dds: Option<String>,
-    pub generic_map_xdb: Option<String>,
-    pub session_configs_path: Option<String>,
+    pub current_profile: String,
+    #[serde(skip)]
+    pub generic_hero_xdb: PathBuf,
+    #[serde(skip)]
+    pub generic_icon_128: PathBuf,
+    #[serde(skip)]
+    pub generic_icon_dds: PathBuf,
+    #[serde(skip)]
+    pub generic_map_xdb: PathBuf,
+    #[serde(skip)]
+    pub session_configs_path: PathBuf,
+    #[serde(skip)]
     pub auth_path: PathBuf
 }
 
@@ -26,25 +32,11 @@ impl GlobalConfig {
     pub fn new(path: &Path) -> Result<Self, Error> {
         let cfg_string = std::fs::read_to_string(path.join("main.json"))?;
         let mut cfg = serde_json::from_str::<GlobalConfig>(&cfg_string)?;
-        if cfg.generic_hero_xdb.is_none() {
-            cfg.generic_hero_xdb = Some(
-                path.join("Hero.(AdvMapHeroShared).xdb")
-                    .to_string_lossy()
-                    .to_string(),
-            );
-        }
-        if cfg.generic_icon_128.is_none() {
-            cfg.generic_icon_128 = Some(path.join("Icon.xdb").to_string_lossy().to_string());
-        }
-        if cfg.generic_icon_dds.is_none() {
-            cfg.generic_icon_dds = Some(path.join("Icon.dds").to_string_lossy().to_string());
-        }
-        if cfg.generic_map_xdb.is_none() {
-            cfg.generic_map_xdb = Some(path.join("map.xdb").to_string_lossy().to_string());
-        }
-        if cfg.session_configs_path.is_none() {
-            cfg.session_configs_path = Some(path.join("sessions\\").to_string_lossy().to_string());
-        }
+        cfg.generic_hero_xdb = path.join("Hero.(AdvMapHeroShared).xdb");
+        cfg.generic_icon_128 = path.join("Icon.xdb");
+        cfg.generic_icon_dds = path.join("Icon.dds");
+        cfg.generic_map_xdb = path.join("map.xdb");
+        cfg.session_configs_path = path.join("sessions\\");
         cfg.auth_path = path.join("auth\\client-secret.json");
         Ok(cfg)
     }
@@ -52,12 +44,12 @@ impl GlobalConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RuntimeData {
-    pub current_selected_map: u16,
+    pub current_selected_map: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RuntimeConfig {
-    pub current_selected_map: Option<u16>,
+    pub current_selected_map: i32,
     pub current_map_data: MapData,
 }
 
@@ -69,7 +61,7 @@ impl RuntimeConfig {
         let current_map_data: MapData = serde_json::from_str(&current_map_string)?;
 
         Ok(RuntimeConfig {
-            current_selected_map: Some(runtime_data.current_selected_map),
+            current_selected_map: runtime_data.current_selected_map,
             current_map_data,
         })
     }
@@ -127,8 +119,8 @@ pub struct LocalAppManager {
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct RepackerPathsData {
-    pub from: String,
-    pub to: String,
+    pub from: PathBuf,
+    pub to: PathBuf,
     pub last_update: String,
 }
 
@@ -140,7 +132,7 @@ pub struct RepackerFrontendData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MapFrontendModel {
-    pub id: u16,
+    pub id: i32,
     pub name: String,
 }
 

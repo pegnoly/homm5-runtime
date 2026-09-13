@@ -1,4 +1,4 @@
-use std::{io::{Read, Write}, path::PathBuf};
+use std::io::{Read, Write};
 
 use homm5_scaner::prelude::{CreateSpellPayload, FileObject, FileObjects, MagicSchoolType, ScanerService, SpellDBModel};
 use homm5_types::spell::SpellShared;
@@ -21,11 +21,11 @@ pub async fn pick_spell_texts_directory(
     let path = profile.texts_path.clone();
     app.dialog()
         .file()
-        .set_directory(PathBuf::from(&format!("{}Text\\Game\\Spells\\", path)))
+        .set_directory(path.join("Text\\Game\\Spells\\"))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
             if let Some(dir) = f {
-                app.emit("spell_texts_directory_picked", dir.to_string().replace(&path, "")).ok();
+                app.emit("spell_texts_directory_picked", dir.to_string().replace(&path.to_str().unwrap(), "")).ok();
             }
         });
     Ok(())
@@ -37,14 +37,14 @@ pub async fn pick_spell_icon_directory(
     app_manager: State<'_, LocalAppManager>
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let path = profile.data_path.clone();
+    let path = profile.mod_path.clone();
     app.dialog()
         .file()
-        .set_directory(PathBuf::from(&format!("{}GOG_Mod\\Textures\\Icons\\Spells\\", &path)))
+        .set_directory(path.join("Textures\\Icons\\Spells\\"))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
             if let Some(dir) = f {
-                app.emit("spell_icon_directory_picked", dir.to_string().replace(&format!("{}GOG_Mod\\", &path), "")).ok();
+                app.emit("spell_icon_directory_picked", dir.to_string().replace(&path.to_str().unwrap(), "")).ok();
             }
         });
     Ok(())
@@ -64,7 +64,7 @@ pub async fn create_new_spell(
     school: MagicSchoolType
 ) -> Result<SpellDBModel, Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let texts_dir = PathBuf::from(format!("{}{}\\", &profile.texts_path, &texts_path));
+    let texts_dir = profile.texts_path.join(texts_path);
     let base_cfg = app_manager.base_config.read().await;
     if !texts_dir.exists()  {
         std::fs::create_dir_all(&texts_dir)?;
@@ -84,23 +84,23 @@ pub async fn create_new_spell(
         desc_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
     }
 
-    let icon_xdb_path = PathBuf::from(format!("{}GOG_Mod\\{}\\Icon.xdb", profile.data_path, &icon_path));
+    let icon_xdb_path = profile.mod_path.join(format!("{}\\Icon.xdb", &icon_path));
     if !icon_xdb_path.exists() {
-        let icon_xdb = base_cfg.generic_icon_128.as_ref().unwrap();
-        let icon_dds = base_cfg.generic_icon_dds.as_ref().unwrap();
+        let icon_xdb = base_cfg.generic_icon_128.clone();
+        let icon_dds = base_cfg.generic_icon_dds.clone();
         std::fs::copy(icon_xdb, &icon_xdb_path)?;
         std::fs::copy(icon_dds, icon_xdb_path.to_str().unwrap().replace(".xdb", ".dds"))?;
     }
 
-    let universe_pak_path = PathBuf::from(format!("{}Universe_mod.pak", profile.data_path));
-    let temp_pak_path = PathBuf::from(format!("{}Universe_mod_temp.pak", profile.data_path));
+    let universe_pak_path = profile.game_path.join("data\\Universe_mod.pak");
+    let temp_pak_path = profile.game_path.join("data\\Universe_mod_temp.pak");
     let temp_file = std::fs::File::create(&temp_pak_path)?;
     let old_file = std::fs::File::open(&universe_pak_path)?;
-    let mut old_archive = zip::ZipArchive::new(old_file).unwrap();
+    let mut old_archive = zip::ZipArchive::new(old_file)?;
     let mut new_archive = zip::ZipWriter::new(temp_file);
     let file_options = FileOptions::default().last_modified_time(zip::DateTime::from_date_and_time(2107, 12, 31, 23, 59, 59).unwrap());
     for i in 0..old_archive.len() {
-        let mut entry = old_archive.by_index(i).unwrap();
+        let mut entry = old_archive.by_index(i)?;
         if entry.name() == "types.xml" {
             let updated_types = process_types_xml(&mut entry, game_id.clone())?;
             new_archive.start_file("types.xml", file_options)?;
@@ -114,7 +114,7 @@ pub async fn create_new_spell(
         }
     }
     std::fs::rename(temp_pak_path, universe_pak_path)?;
-    let spell_xdb_dir = PathBuf::from(format!("{}GOG_Mod\\GameMechanics\\Spell\\GOG\\{}\\", &profile.data_path, &name));
+    let spell_xdb_dir = profile.mod_path.join(format!("GameMechanics\\Spell\\{}\\{}\\", base_cfg.current_profile, &name));
     if !spell_xdb_dir.exists() {
         std::fs::create_dir_all(&spell_xdb_dir)?;
     }
@@ -123,13 +123,13 @@ pub async fn create_new_spell(
 
     let created_spell = scaner_service.add_spell(CreateSpellPayload {
         desc,
-        desc_txt: desc_path.to_str().unwrap().replace(&profile.texts_path, "").replace("\\", "/"),
+        desc_txt: desc_path.to_str().unwrap().replace(profile.texts_path.to_str().unwrap(), "").replace("\\", "/"),
         name: name.clone(),
-        name_txt: name_path.to_str().unwrap().replace(&profile.texts_path, "").replace("\\", "/"),
-        icon_xdb: format!("{}#xpointer(/Texture)", icon_xdb_path.to_str().unwrap().replace(&format!("{}GOG_Mod", &profile.data_path), "")).replace("\\", "/"),
+        name_txt: name_path.to_str().unwrap().replace(profile.texts_path.to_str().unwrap(), "").replace("\\", "/"),
+        icon_xdb: format!("{}#xpointer(/Texture)", icon_xdb_path.to_str().unwrap().replace(profile.mod_path.to_str().unwrap(), "")).replace("\\", "/"),
         game_id,
         school,
-        xdb_path: spell_xdb_path.to_str().unwrap().replace(&format!("{}GOG_Mod", &profile.data_path), "").replace("\\", "/")
+        xdb_path: spell_xdb_path.to_str().unwrap().replace(profile.mod_path.to_str().unwrap(), "").replace("\\", "/")
     }).await?;
     let mut output: Vec<u8> = Vec::new();
     let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
@@ -312,22 +312,22 @@ pub async fn save_spell_xdb(
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     if let Some(model) = scaner_service.get_spell(id).await? {
-        let name_path = PathBuf::from(format!("{}{}", &profile.texts_path, &model.name_txt));
-        let desc_path = PathBuf::from(format!("{}{}", &profile.texts_path, &model.desc_txt));
+        let name_path = profile.texts_path.join(&model.name_txt);
+        let desc_path = profile.texts_path.join(&model.desc_txt);
 
         let mut name_file = std::fs::File::create(&name_path)?;
         name_file.write_all(&[255, 254])?;
         for utf16 in model.name.encode_utf16() {
-            name_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+            name_file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
         }
 
         let mut desc_file = std::fs::File::create(&desc_path)?;
         desc_file.write_all(&[255, 254])?;
         for utf16 in model.desc.encode_utf16() {
-            desc_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+            desc_file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
         }
 
-        let spell_xdb_path = PathBuf::from(format!("{}GOG_Mod\\{}", &profile.data_path, &model.xdb_path));
+        let spell_xdb_path = profile.mod_path.join(&model.xdb_path);
         let mut xdb_file = std::fs::File::create(&spell_xdb_path)?;
         let mut output: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output, b' ', 4);

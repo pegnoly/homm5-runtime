@@ -20,8 +20,7 @@ pub async fn load_dialogs(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
     Ok(dialog_generator_repo
         .load_dialogs(current_map_id as i32)
         .await?)
@@ -45,8 +44,7 @@ pub async fn pick_dialog_directory(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
     let map = profile
         .maps
         .iter()
@@ -77,8 +75,7 @@ pub async fn create_new_dialog(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
     Ok(dialog_generator_repo
         .create_dialog(CreateDialogPayload {
             mission_id: current_map_id as i32,
@@ -188,8 +185,7 @@ pub async fn generate_dialog(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
 
     let map_data = profile
         .maps
@@ -205,13 +201,13 @@ pub async fn generate_dialog(
         let variants = dialog_generator_repo
             .get_all_variants_for_dialog(dialog_id)
             .await?;
-        let dialog_local_path = dialog.directory.replace(&profile.mod_path, "");
-        let dialog_texts_path = format!("{}\\{}", &profile.texts_path, &dialog_local_path);
+        let dialog_local_path = dialog.directory.replace(profile.map_path.to_str().unwrap(), "");
+        let dialog_texts_path = profile.texts_path.join(&dialog_local_path);
 
-        std::fs::create_dir_all(&dialog_texts_path).unwrap();
+        std::fs::create_dir_all(&dialog_texts_path)?;
 
         let mut script_file =
-            std::fs::File::create(format!("{}\\script.lua", dialog.directory)).unwrap();
+            std::fs::File::create(format!("{}\\script.lua", dialog.directory))?;
         let mut script = format!("MiniDialog.Sets[\"{}\"] = {{\n", dialog.script_name);
 
         for variant in &variants
@@ -221,7 +217,7 @@ pub async fn generate_dialog(
         {
             let file_name = format!("{}_{}.txt", &variant.step, &variant.label);
             let mut variant_file =
-                std::fs::File::create(format!("{dialog_texts_path}\\{file_name}")).unwrap();
+                std::fs::File::create(dialog_texts_path.join(format!("\\{file_name}")))?;
             if let Some(speaker) = speakers
                 .iter()
                 .find(|s| s.id == variant.speaker_id.unwrap())
@@ -258,7 +254,7 @@ pub async fn generate_dialog(
         }
 
         script += "}\n\n";
-        script_file.write_all(script.as_bytes()).unwrap();
+        script_file.write_all(script.as_bytes())?;
 
         if !dialog.was_generated {
             dialog_generator_repo
@@ -273,10 +269,9 @@ pub async fn generate_dialog(
             let mut paths_file = OpenOptions::new()
                 .append(true)
                 .create(true)
-                .open(format!("{map_data_path}dialogs_paths.lua"))
-                .unwrap();
+                .open(map_data_path.join("dialogs_paths.lua"))?;
 
-            paths_file.write_all(path_script.as_bytes()).unwrap();
+            paths_file.write_all(path_script.as_bytes())?;
         }
     }
 

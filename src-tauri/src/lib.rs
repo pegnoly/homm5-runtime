@@ -7,9 +7,9 @@ use homm5_scaner::prelude::ScanerService;
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
 use sheets_connector::service::SheetsConnectorService;
-use std::path::PathBuf;
 use tokio::sync::RwLock;
 use utils::{DataContainer, GlobalConfig, LocalAppManager, ModifiersConfig, RuntimeConfig};
+use crate::commands::{apply_modifications, create_hero, execute_scan, generate_images, load_current_map, load_maps, load_repackers, repack, run_game, select_map, switch_profile};
 use crate::services::creature_editor::commands as creature_editor_commands;
 
 mod commands;
@@ -24,7 +24,7 @@ pub async fn run() -> Result<(), Error> {
     let cfg_path = exe_path.parent().unwrap().join("cfg\\");
 
     let global_config = GlobalConfig::new(&cfg_path)?;
-    let current_profile = global_config.current_profile;
+    let current_profile = global_config.current_profile.clone();
     let runtime_config = RuntimeConfig::new(&cfg_path)?;
     let modifiers_config = ModifiersConfig::new(&cfg_path)?;
     let data_container = DataContainer::new(&cfg_path)?;
@@ -37,8 +37,21 @@ pub async fn run() -> Result<(), Error> {
     let pool = sqlx::SqlitePool::connect(db_path.to_str().unwrap())
         .await?;
 
-    let current_profile = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(cfg_path.join(format!("{}\\profile.json", &current_profile)))?)?;
-    //sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    let mut current_profile = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(cfg_path.join(format!("{}\\profile.json", &current_profile)))?)?;
+    current_profile.map_path = current_profile.game_path.join(&current_profile.map_path);
+    current_profile.mod_path = current_profile.game_path.join(&current_profile.mod_path);
+    current_profile.texts_path = current_profile.game_path.join(&current_profile.texts_path);
+    for data in current_profile.repackers.values_mut() {
+        data.from = current_profile.game_path.join(data.from.clone());
+        data.to = current_profile.game_path.join(data.to.clone());
+    }
+
+    for map in &mut current_profile.maps {
+        map.xdb = current_profile.game_path.join(map.xdb.clone());
+        map.data_path = current_profile.game_path.join(map.data_path.clone());
+    }
+
+    println!("Profile data: {:#?}", &current_profile);
 
     let quest_generator_repo = QuestGeneratorRepo::new(pool.clone());
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
@@ -50,6 +63,10 @@ pub async fn run() -> Result<(), Error> {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .manage(BanksGeneratorRepo::new(
+            pool.clone(),
+            current_profile.map_path.join("scripts\\advmap\\Banks\\Data\\")
+        ))
         .manage(LocalAppManager {
             base_config: RwLock::new(global_config),
             runtime_config: RwLock::new(runtime_config),
@@ -58,10 +75,6 @@ pub async fn run() -> Result<(), Error> {
         })
         .manage(quest_generator_repo)
         .manage(dialog_generator_repo)
-        .manage(BanksGeneratorRepo::new(
-            pool.clone(),
-            PathBuf::from("D:/Homm5Dev/Mods/GOG/scripts/advmap/Banks/Data/"),
-        ))
         .manage(fight_generator_repo)
         .manage(reserve_hero_creator_repo)
         .manage(ScanerService::new(pool.clone()))
@@ -69,17 +82,17 @@ pub async fn run() -> Result<(), Error> {
         .manage(sheets_connector_repo)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
-            commands::execute_scan,
-            commands::run_game,
-            commands::load_repackers,
-            commands::repack,
-            commands::load_maps,
-            commands::load_current_map,
-            commands::select_map,
-            commands::apply_modifications,
-            commands::create_hero,
-            commands::switch_profile,
-            commands::generate_images,
+            execute_scan,
+            run_game,
+            load_repackers,
+            repack,
+            load_maps,
+            load_current_map,
+            select_map,
+            apply_modifications,
+            create_hero,
+            switch_profile,
+            generate_images,
             // quest commands
             load_quests,
             load_quest,

@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{fs::File, io::Write};
 use homm5_scaner::prelude::{ArtifactClassType, ArtifactSlotType, GetArtifactsPayload, ScanerService, UpdateArtifactPayload};
 use homm5_types::art::{AdvMapArtifactShared, ArtifactObject, Table_DBArtifact_ArtifactEffect};
 use itertools::Itertools;
@@ -98,10 +98,10 @@ pub async fn select_artefact_name_path(
     let path = profile.texts_path.clone();
     app.dialog()
         .file()
-        .set_directory(PathBuf::from(&format!("{}Text\\Game\\Artifacts\\NAF\\", path)))
+        .set_directory(path.join("Text\\Game\\Artifacts\\NAF\\"))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
-            app.emit("artifact_name_path_selected", f.unwrap().to_string().replace(&path, "")).unwrap();
+            app.emit("artifact_name_path_selected", f.unwrap().to_string().replace(&path.to_str().unwrap(), "")).unwrap();
         });
     Ok(())
 }
@@ -125,10 +125,10 @@ pub async fn select_artefact_desc_path(
     let path = profile.texts_path.clone();
     app.dialog()
         .file()
-        .set_directory(PathBuf::from(&format!("{}Text\\Game\\Artifacts\\NAF\\", path)))
+        .set_directory(path.join("Text\\Game\\Artifacts\\NAF\\"))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
-            app.emit("artifact_desc_path_selected", f.unwrap().to_string().replace(&path, "")).unwrap();
+            app.emit("artifact_desc_path_selected", f.unwrap().to_string().replace(path.to_str().unwrap(), "")).unwrap();
         });
     Ok(())
 }
@@ -149,13 +149,13 @@ pub async fn select_artefact_icon_path(
     app_manager: State<'_, LocalAppManager>
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let path = profile.data_path.clone();
+    let path = profile.mod_path.clone();
     app.dialog()
         .file()
-        .set_directory(PathBuf::from(&format!("{}GOG_Mod\\Textures\\Icons\\Artifacts\\", &path)))
+        .set_directory(path.join("Textures\\Icons\\Artifacts\\"))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
-            app.emit("artifact_icon_path_selected", f.unwrap().to_string().replace(&format!("{}GOG_Mod\\", &path), "")).unwrap();
+            app.emit("artifact_icon_path_selected", f.unwrap().to_string().replace(path.to_str().unwrap(), "")).unwrap();
         });
     Ok(())
 }
@@ -171,10 +171,10 @@ pub async fn update_artefact_icon_path(
     println!("Update icon called for id {}", id);
     let profile = app_manager.current_profile_data.read().await;
     let base_cfg = app_manager.base_config.read().await;
-    let icon_xdb_path = PathBuf::from(format!("{}GOG_Mod\\{}", profile.data_path, path));
+    let icon_xdb_path = profile.mod_path.join(&path);
     if !icon_xdb_path.exists() {
-        let icon_xdb = base_cfg.generic_icon_128.as_ref().unwrap();
-        let icon_dds = base_cfg.generic_icon_dds.as_ref().unwrap();
+        let icon_xdb = base_cfg.generic_icon_128.clone();
+        let icon_dds = base_cfg.generic_icon_dds.clone();
         std::fs::copy(icon_xdb, &icon_xdb_path)?;
         std::fs::copy(icon_dds, icon_xdb_path.to_str().unwrap().replace(".xdb", ".dds"))?;
     }
@@ -192,11 +192,11 @@ pub async fn update_artefact_name(
 ) -> Result<(), Error> {
     println!("Path: {}", &path);
     let profile = app_manager.current_profile_data.read().await;
-    let path = PathBuf::from(format!("{}{}", profile.texts_path, path));
+    let path = profile.texts_path.join(path);
     let mut file = File::create(path)?;
     file.write_all(&[255, 254])?;
     for utf16 in value.encode_utf16() {
-        file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+        file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
     }
     Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_name(value)).await?)
 }
@@ -210,11 +210,11 @@ pub async fn update_artefact_desc(
     path: String
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let path = PathBuf::from(format!("{}{}", profile.texts_path, path));
+    let path = profile.texts_path.join(path);
     let mut file = File::create(path)?;
     file.write_all(&[255, 254])?;
     for utf16 in value.encode_utf16() {
-        file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
+        file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
     }
     Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc(value)).await?)
 }
@@ -265,8 +265,8 @@ pub async fn rebuild_artifacts_file(
             }
         }).collect_vec()
     };
-    let universe_pak_path = PathBuf::from(format!("{}Universe_mod.pak", profile_locked.data_path));
-    let temp_pak_path = PathBuf::from(format!("{}Universe_mod_temp.pak", profile_locked.data_path));
+    let universe_pak_path = profile_locked.game_path.join("data\\Universe_mod.pak");
+    let temp_pak_path = profile_locked.game_path.join("data\\Universe_mod_temp.pak");
     let temp_file = File::create(&temp_pak_path)?;
     let old_file = File::open(&universe_pak_path)?;
     let mut old_archive = zip::ZipArchive::new(old_file)?;

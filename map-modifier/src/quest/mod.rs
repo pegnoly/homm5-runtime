@@ -18,8 +18,8 @@ pub struct QuestProgress {
 // frontend send this when user wants to create a new quest with given params
 #[derive(Default)]
 pub struct QuestCreationRequest {
-    campaign_number: u8,
-    mission_number: u8,
+    campaign_number: i32,
+    mission_number: i32,
     path: PathBuf,
     name: String,
     script_name: String,
@@ -50,7 +50,7 @@ impl QuestCreationRequest {
         self
     }
 
-    pub fn with_mission_data(mut self, campaign: u8, mission: u8) -> Self {
+    pub fn with_mission_data(mut self, campaign: i32, mission: i32) -> Self {
         self.campaign_number = campaign;
         self.mission_number = mission;
         self
@@ -67,7 +67,7 @@ impl QuestCreationRequest {
     }
 
     fn generate_name(&self, quest: &mut Quest, base_texts_dir: &String, map_local_data: &String) {
-        let mut file = std::fs::File::create(format!("{base_texts_dir}name.txt")).unwrap();
+        let mut file = File::create(format!("{base_texts_dir}name.txt")).unwrap();
         file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.name.encode_utf16() {
             file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
@@ -79,7 +79,7 @@ impl QuestCreationRequest {
     }
 
     fn generate_desc(&self, quest: &mut Quest, base_texts_dir: &String, map_local_data: &String) {
-        let mut file = std::fs::File::create(format!("{base_texts_dir}desc.txt")).unwrap();
+        let mut file = File::create(format!("{base_texts_dir}desc.txt")).unwrap();
         file.write_all(&[255, 254]).unwrap(); // byte-order mask for homm encoding
         for utf16 in self.desc.encode_utf16() {
             file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
@@ -138,7 +138,7 @@ impl QuestCreationRequest {
         previous: &mut String,
         quest: &mut Quest
     ) -> Result<(), MapModifierError> {
-        let mut file = std::fs::File::create(format!("{dir}{number}.txt"))?;
+        let mut file = File::create(format!("{dir}{number}.txt"))?;
         file.write_all(&[255, 254])?;
         let current_progress = format!("<color=grey>{}<color=white>{}", previous, text);
         for utf16 in current_progress.encode_utf16() {
@@ -237,8 +237,8 @@ c{}m{}_{} = {{
             self.path.join("name.txt").to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/")
         );
 
-            let mut script_file = std::fs::File::create(self.path.join("script.lua")).unwrap();
-            script_file.write_all(script_boilerplate.as_bytes()).unwrap();
+            let mut script_file = File::create(self.path.join("script.lua"))?;
+            script_file.write_all(script_boilerplate.as_bytes())?;
         }
     
         Ok(quest)

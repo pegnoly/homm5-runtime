@@ -19,9 +19,8 @@ pub async fn load_quests(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
-    Ok(quests_repo.load_quests(current_map_id as i32).await?)
+        .current_selected_map;
+    Ok(quests_repo.load_quests(current_map_id).await?)
 }
 
 #[tauri::command]
@@ -44,12 +43,11 @@ pub async fn create_quest(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
 
     Ok(quests_repo
         .create_quest(CreateQuestPayload {
-            mission_id: current_map_id as i32,
+            mission_id: current_map_id,
             name,
             script_name,
             directory,
@@ -67,8 +65,7 @@ pub async fn pick_quest_directory(
         .runtime_config
         .read()
         .await
-        .current_selected_map
-        .unwrap();
+        .current_selected_map;
 
     let profile = app_manager.current_profile_data.read().await;
     let map = profile
@@ -211,10 +208,10 @@ pub async fn save_quest_text(
     text: String,
 ) -> Result<(), ()> {
     let profile = app_manager.current_profile_data.read().await;
-    let dir_relative_path = quest_directory.replace(&profile.mod_path, "");
-    let text_directory = format!("{}{}\\Texts\\", &profile.texts_path, &dir_relative_path);
+    let dir_relative_path = quest_directory.replace(profile.map_path.to_str().unwrap(), "");
+    let text_directory = profile.texts_path.join(format!("{}\\Texts\\", &dir_relative_path));
     std::fs::create_dir_all(&text_directory).unwrap();
-    let mut file = std::fs::File::create(format!("{}{}.txt", &text_directory, &text_name)).unwrap();
+    let mut file = std::fs::File::create(text_directory.join(&text_name)).unwrap();
     write_quest_text_file(&mut file, text);
     Ok(())
 }

@@ -1,6 +1,6 @@
 use core::str;
 use std::{collections::HashMap, io::Write};
-
+use std::path::PathBuf;
 use artifacts::{ArtifactConfigEntity, ArtifactsModifier};
 use buildings::{BankConfigEntity, BuildingConfigEntity, BuildingsModifier};
 use editor_tools::prelude::ReserveHeroCreatorRepo;
@@ -183,9 +183,9 @@ impl<'a> ModifiersQueue<'a> {
         let buildinds_lua_data = self.buildings_modifier.convert_to_lua();
         let artifacts_lua_data = self.artifacts_modifier.convert_to_lua();
         let monsters_lua_data = self.monsters_modifier.convert_to_lua();
-        let mut buildings_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "buildings_generated_data.lua")).unwrap();
-        let mut artifacts_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "artifacts_generated_data.lua")).unwrap();
-        let mut monsters_lua_file = std::fs::File::create(format!("{}{}", &map.data_path, "monsters_generated_data.lua")).unwrap();
+        let mut buildings_lua_file = std::fs::File::create(map.data_path.join("buildings_generated_data.lua")).unwrap();
+        let mut artifacts_lua_file = std::fs::File::create(map.data_path.join("artifacts_generated_data.lua")).unwrap();
+        let mut monsters_lua_file = std::fs::File::create(map.data_path.join("monsters_generated_data.lua")).unwrap();
         buildings_lua_file.write_all(buildinds_lua_data.as_bytes()).unwrap();
         artifacts_lua_file.write_all(artifacts_lua_data.as_bytes()).unwrap();
         monsters_lua_file.write_all(monsters_lua_data.as_bytes()).unwrap();
@@ -242,12 +242,12 @@ impl<'a> ModifiersQueue<'a> {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Map {
-    pub id: u16,
+    pub id: i32,
     pub name: String,
-    pub campaign: u8,
-    pub mission: u8,
-    pub xdb: String,
-    pub data_path: String,
+    pub campaign: i32,
+    pub mission: i32,
+    pub xdb: PathBuf,
+    pub data_path: PathBuf,
     pub fights_spreadsheet_id: String 
 }
 

@@ -1,4 +1,4 @@
-use std::{io::Write, path::PathBuf};
+use std::io::Write;
 
 use chrono::Local;
 use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, TownExtended, UpdateCreaturePayload};
@@ -298,8 +298,8 @@ pub async fn generate_creature_file(
     if let Some(creature_data) = scaner_service.get_creature(id).await? {
         let profile_locked = app_manager.current_profile_data.read().await;
 
-        let name_path = PathBuf::from(format!("{}GOG_Texts/{}", &profile_locked.data_path, &creature_data.name_txt));
-        let desc_path = PathBuf::from(format!("{}GOG_Texts/{}", &profile_locked.data_path, &creature_data.desc_txt));
+        let name_path = profile_locked.texts_path.join(&creature_data.name_txt);
+        let desc_path = profile_locked.texts_path.join(&creature_data.desc_txt);
 
         if name_path.parent().is_some() && !name_path.parent().unwrap().exists() {
             std::fs::create_dir_all(name_path.parent().unwrap())?;
@@ -317,7 +317,7 @@ pub async fn generate_creature_file(
             desc_file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
         }
 
-        let path = PathBuf::from(format!("{}GOG_Mod/{}", &profile_locked.data_path, &creature_data.xdb_path));
+        let path = profile_locked.mod_path.join(&creature_data.xdb_path);
         let mut file = std::fs::File::create(&path)?;
         let mut output: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
@@ -364,7 +364,7 @@ pub async fn rebuild_creatures_shared_group(
     }
 
     let profile_locked = app_manager.current_profile_data.read().await;
-    let dir = PathBuf::from(format!("{}GOG_Mod\\MapObjects\\_(AdvMapSharedGroup)\\Monsters\\", &profile_locked.data_path));
+    let dir = profile_locked.mod_path.join("MapObjects\\_(AdvMapSharedGroup)\\Monsters\\");
     if !dir.exists() {
         std::fs::create_dir_all(&dir)?;
     }
