@@ -47,8 +47,8 @@ pub async fn run() -> Result<(), Error> {
     }
 
     for map in &mut current_profile.maps {
-        map.xdb = current_profile.game_path.join(map.xdb.clone());
-        map.data_path = current_profile.game_path.join(map.data_path.clone());
+        map.xdb = current_profile.map_path.join(map.xdb.clone());
+        map.data_path = current_profile.map_path.join(map.data_path.clone());
     }
 
     println!("Profile data: {:#?}", &current_profile);

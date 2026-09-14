@@ -217,7 +217,7 @@ pub async fn generate_dialog(
         {
             let file_name = format!("{}_{}.txt", &variant.step, &variant.label);
             let mut variant_file =
-                std::fs::File::create(dialog_texts_path.join(format!("\\{file_name}")))?;
+                std::fs::File::create(dialog_texts_path.join(file_name))?;
             if let Some(speaker) = speakers
                 .iter()
                 .find(|s| s.id == variant.speaker_id.unwrap())
