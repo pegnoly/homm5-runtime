@@ -600,19 +600,23 @@ end
                 army_generation_rules_script += &format!("\t\t[{stack_count}] = function ()\n");
 
                 let mut generation_rules_script = String::from("local result = ");
-                for rule in &asset.generation_rule.params {
-                    match rule {
-                        ArmyGenerationRuleParam::Generatable => {
-                            generation_rules_script +=
-                                "Creature.Params.IsGeneratable(creature) and "
+                if asset.generation_rule.params.is_empty() {
+                    generation_rules_script += "1"
+                } else {
+                    for rule in &asset.generation_rule.params {
+                        match rule {
+                            ArmyGenerationRuleParam::Generatable => {
+                                generation_rules_script +=
+                                    "Creature.Params.IsGeneratable(creature) and "
+                            }
+                            ArmyGenerationRuleParam::Caster => {
+                                generation_rules_script += "Creature.Type.IsCaster(creature) and "
+                            }
+                            ArmyGenerationRuleParam::Shooter => {
+                                generation_rules_script += "Creature.Type.IsShooter(creature) and "
+                            }
+                            _ => {}
                         }
-                        ArmyGenerationRuleParam::Caster => {
-                            generation_rules_script += "Creature.Type.IsCaster(creature) and "
-                        }
-                        ArmyGenerationRuleParam::Shooter => {
-                            generation_rules_script += "Creature.Type.IsShooter(creature) and "
-                        }
-                        _ => {}
                     }
                 }
                 generation_rules_script = generation_rules_script
@@ -620,6 +624,7 @@ end
                     .trim_end_matches("and")
                     .trim_end()
                     .to_string();
+
                 // construct getter function
                 let towns = asset.towns.towns.iter().join(", ");
                 let tiers = asset.tiers.tiers.iter().join(", ");
