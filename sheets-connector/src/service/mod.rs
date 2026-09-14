@@ -44,7 +44,7 @@ impl SheetsConnectorService {
             yup_oauth2::InstalledFlowReturnMethod::HTTPRedirect,
         )
         .persist_tokens_to_disk(
-            client_secret_path.parent().unwrap().join("tokens\\token.json")
+            client_secret_path.parent().unwrap().join("token.json")
         )
         .build()
         .await?;
@@ -53,8 +53,7 @@ impl SheetsConnectorService {
             hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
                 .build(
                     hyper_rustls::HttpsConnectorBuilder::new()
-                        .with_native_roots()
-                        .unwrap()
+                        .with_native_roots()?
                         .https_or_http()
                         .enable_http1()
                         .build(),

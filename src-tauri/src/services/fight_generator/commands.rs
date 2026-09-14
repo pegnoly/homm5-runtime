@@ -872,7 +872,7 @@ pub async fn push_to_sheet(
     let spreadsheet_id = &profile
         .maps
         .iter()
-        .find(|map| (map.id as i32) == asset.mission_id)
+        .find(|map| map.id == asset.mission_id)
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
