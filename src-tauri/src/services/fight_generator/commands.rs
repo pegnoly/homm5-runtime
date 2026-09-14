@@ -540,7 +540,7 @@ pub async fn generate_current_hero_script(
         ))?;
         let mut script = format!(
             "
-while not UNIT_COUNT_GENERATION_MODE_POWER_BASED and not UNIT_COUNT_GENERATION_MODE_RAW do
+while not (UNIT_COUNT_GENERATION_MODE_POWER_BASED and UNIT_COUNT_GENERATION_MODE_RAW and Iterator) do
     sleep()
 end
 
@@ -636,6 +636,7 @@ end
                     getter_function += 
         r#"     
                 .TakeRandom(1)
+                .Collect()[1]
             return id"#;
                     army_generation_rules_script += &format!("{getter_function}\n\t\tend,\n");
                 } else {
