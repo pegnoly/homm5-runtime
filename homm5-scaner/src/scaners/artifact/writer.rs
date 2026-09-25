@@ -71,12 +71,12 @@ impl<'a> Output for ArtifactDataOutput<'a> {
         .exec(self.db)
         .await?;
 
-        let mut script_file = String::from("MCCS_ARTIFACTS_GENERATED_TABLE = {\n");
+        let mut script_file = String::from("ARTIFACTS_GENERATED_TABLE = {\n");
         for model in &self.entities {
             script_file += &model.to_lua_string();
         }
-        script_file.push('}');
-        zip_writer.start_file("scripts/generated/artifacts.lua", FileOptions::default())?;
+        script_file.push_str("}\n\n__end_import()");
+        zip_writer.start_file("libs/generated/artifacts.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 
         let json_models = self

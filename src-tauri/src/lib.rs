@@ -9,7 +9,7 @@ use services::quest_creator::prelude::*;
 use sheets_connector::service::SheetsConnectorService;
 use tokio::sync::RwLock;
 use utils::{DataContainer, GlobalConfig, LocalAppManager, ModifiersConfig, RuntimeConfig};
-use crate::commands::{apply_modifications, create_hero, execute_scan, generate_images, load_current_map, load_maps, load_repackers, repack, run_game, select_map, switch_profile};
+use crate::commands::{apply_modifications, create_hero, execute_scan, generate_images, load_current_map, load_maps, run_game, select_map, switch_profile};
 use crate::services::creature_editor::commands as creature_editor_commands;
 
 mod commands;
@@ -39,7 +39,6 @@ pub async fn run() -> Result<(), Error> {
 
     let mut current_profile = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(cfg_path.join(format!("{}\\profile.json", &current_profile)))?)?;
     current_profile.map_path = current_profile.game_path.join(&current_profile.map_path);
-    current_profile.mod_path = current_profile.game_path.join(&current_profile.mod_path);
     current_profile.texts_path = current_profile.game_path.join(&current_profile.texts_path);
     for data in current_profile.repackers.values_mut() {
         data.from = current_profile.game_path.join(data.from.clone());
@@ -84,8 +83,6 @@ pub async fn run() -> Result<(), Error> {
         .invoke_handler(tauri::generate_handler![
             execute_scan,
             run_game,
-            load_repackers,
-            repack,
             load_maps,
             load_current_map,
             select_map,

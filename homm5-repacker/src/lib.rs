@@ -2,13 +2,13 @@ use std::{io::{Read, Write}, path::PathBuf};
 
 use zip::{DateTime, write::SimpleFileOptions};
 
-pub struct Repacker {
-    pub from: PathBuf,
-    pub to: PathBuf
+pub struct Repacker<'a> {
+    pub from: &'a PathBuf,
+    pub to: &'a PathBuf
 }
 
-impl Repacker {
-    pub fn new(from: PathBuf, to: PathBuf) -> Self {
+impl<'a> Repacker<'a> {
+    pub fn new(from: &'a PathBuf, to: &'a PathBuf) -> Self {
         Repacker {
             from,
             to
@@ -16,16 +16,16 @@ impl Repacker {
     }
 
     pub fn run(&self) {
-        let file = std::fs::File::create(&self.to).unwrap();
+        let file = std::fs::File::create(self.to).unwrap();
         let mut zipped_file = zip::ZipWriter::new(file);
         let file_options = SimpleFileOptions::default()
             .last_modified_time(DateTime::from_date_and_time(2107, 12, 31, 23, 59, 59).unwrap());
-        for entry in walkdir::WalkDir::new(&self.from) {
+        for entry in walkdir::WalkDir::new(self.from) {
             match entry {
                 Ok(entry) => {
                     let path = entry.path();
                     if path.is_file() && !path.to_str().unwrap().contains(".git") {
-                        let file_name = path.strip_prefix(&self.from).unwrap();
+                        let file_name = path.strip_prefix(self.from).unwrap();
                         let mut curr_file = std::fs::File::open(path).unwrap();
                         let mut container = Vec::new();
                         curr_file.read_to_end(&mut container).unwrap();

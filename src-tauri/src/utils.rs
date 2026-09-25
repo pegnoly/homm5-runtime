@@ -121,7 +121,6 @@ pub struct LocalAppManager {
 pub struct RepackerPathsData {
     pub from: PathBuf,
     pub to: PathBuf,
-    pub last_update: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

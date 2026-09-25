@@ -45,12 +45,12 @@ impl<'a> Output for CreatureDataOutput<'a> {
 
         transaction.commit().await?;
 
-        let mut script_file = String::from("MCCS_CREATURE_GENERATED_TABLE = {\n");
+        let mut script_file = String::from("CREATURES_GENERATED_TABLE = {\n");
         for model in &self.entities {
             script_file += &model.to_lua_string();
         }
-        script_file.push('}');
-        zip_writer.start_file("scripts/generated/creatures.lua", FileOptions::default())?;
+        script_file.push_str("}\n\n__end_import()");
+        zip_writer.start_file("libs/generated/creatures.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 
         let mut json_file = std::fs::File::create("D:\\creatures.json")?;

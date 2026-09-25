@@ -37,7 +37,7 @@ pub async fn pick_spell_icon_directory(
     app_manager: State<'_, LocalAppManager>
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let path = profile.mod_path.clone();
+    let path = profile.map_path.clone();
     app.dialog()
         .file()
         .set_directory(path.join("Textures\\Icons\\Spells\\"))
@@ -84,7 +84,7 @@ pub async fn create_new_spell(
         desc_file.write_all(&(bincode::serialize(&utf16).unwrap())).unwrap();
     }
 
-    let icon_xdb_path = profile.mod_path.join(format!("{}\\Icon.xdb", &icon_path));
+    let icon_xdb_path = profile.map_path.join(format!("{}\\Icon.xdb", &icon_path));
     if !icon_xdb_path.exists() {
         let icon_xdb = base_cfg.generic_icon_128.clone();
         let icon_dds = base_cfg.generic_icon_dds.clone();
@@ -114,7 +114,7 @@ pub async fn create_new_spell(
         }
     }
     std::fs::rename(temp_pak_path, universe_pak_path)?;
-    let spell_xdb_dir = profile.mod_path.join(format!("GameMechanics\\Spell\\{}\\{}\\", base_cfg.current_profile, &name));
+    let spell_xdb_dir = profile.map_path.join(format!("GameMechanics\\Spell\\{}\\{}\\", base_cfg.current_profile, &name));
     if !spell_xdb_dir.exists() {
         std::fs::create_dir_all(&spell_xdb_dir)?;
     }
@@ -126,10 +126,10 @@ pub async fn create_new_spell(
         desc_txt: desc_path.to_str().unwrap().replace(profile.texts_path.to_str().unwrap(), "").replace("\\", "/"),
         name: name.clone(),
         name_txt: name_path.to_str().unwrap().replace(profile.texts_path.to_str().unwrap(), "").replace("\\", "/"),
-        icon_xdb: format!("{}#xpointer(/Texture)", icon_xdb_path.to_str().unwrap().replace(profile.mod_path.to_str().unwrap(), "")).replace("\\", "/"),
+        icon_xdb: format!("{}#xpointer(/Texture)", icon_xdb_path.to_str().unwrap().replace(profile.map_path.to_str().unwrap(), "")).replace("\\", "/"),
         game_id,
         school,
-        xdb_path: spell_xdb_path.to_str().unwrap().replace(profile.mod_path.to_str().unwrap(), "").replace("\\", "/")
+        xdb_path: spell_xdb_path.to_str().unwrap().replace(profile.map_path.to_str().unwrap(), "").replace("\\", "/")
     }).await?;
     let mut output: Vec<u8> = Vec::new();
     let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
@@ -327,7 +327,7 @@ pub async fn save_spell_xdb(
             desc_file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
         }
 
-        let spell_xdb_path = profile.mod_path.join(&model.xdb_path);
+        let spell_xdb_path = profile.map_path.join(&model.xdb_path);
         let mut xdb_file = std::fs::File::create(&spell_xdb_path)?;
         let mut output: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output, b' ', 4);

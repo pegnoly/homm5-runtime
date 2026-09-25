@@ -45,12 +45,12 @@ impl<'a> Output for HeroDataOutput<'a> {
             )
             .exec(self.db)
             .await?;
-        let mut script_file = String::from("MCCS_GENERATED_HEROES_TABLE = {\n");
+        let mut script_file = String::from("HEROES_GENERATED_TABLE = {\n");
         for model in models {
             script_file += &model.to_lua_string();
         }
-        script_file.push('}');
-        zip_writer.start_file("scripts/generated/heroes.lua", FileOptions::default())?;
+        script_file.push_str("}\n\n__end_import()");
+        zip_writer.start_file("libs/generated/heroes.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 
         let mut json_file = std::fs::File::create("D:\\heroes.json")?;

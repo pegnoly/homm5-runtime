@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use editor_tools::prelude::{QuestGeneratorRepo, QuestProgressType, ReserveHeroCreatorRepo};
 use homm5_repacker::Repacker;
 use homm5_scaner::prelude::{GetArtifactsPayload, ScanerService, Town};
-use itertools::Itertools;
 use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
@@ -21,10 +20,11 @@ pub async fn execute_scan(
     scaner_service: State<'_, ScanerService>,
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
+    let base_config = app_manager.base_config.read().await;
     let data_path = profile.game_path.join("data\\");
     let maps_path = profile.game_path.join("Maps\\");
     let mods_path = profile.game_path.join("UserMODs\\");
-    let output_path = data_path.join("MCCS_GeneratedFiles.pak");
+    let output_path = data_path.join(format!("{}-generated.pak", base_config.current_profile.to_lowercase()));
     scaner_service
         .run(vec![data_path, maps_path, mods_path], output_path)
         .await?;
@@ -37,24 +37,12 @@ pub async fn run_game(
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     let mut runtime_runner = RuntimeRunner::new(profile.game_path.join("bin\\").join(&profile.exe_name));
+    for (_, repack_data) in &profile.repackers {
+        let repacker = Repacker::new(&repack_data.from, &repack_data.to);
+        repacker.run();
+    }
     runtime_runner.run();
     Ok(())
-}
-
-#[tauri::command]
-pub async fn load_repackers(
-    app_manager: State<'_, LocalAppManager>
-) -> Result<Vec<RepackerFrontendData>, Error> {
-    let profile = app_manager.current_profile_data.read().await;
-    let repackers_data = profile
-        .repackers
-        .iter()
-        .map(|(key, value)| RepackerFrontendData {
-            label: key.clone(),
-            update_time: value.last_update.clone(),
-        })
-        .collect_vec();
-    Ok(repackers_data)
 }
 
 #[tauri::command]
@@ -109,33 +97,6 @@ pub async fn select_map(
     file.write_all(current_map_data_string.as_bytes()).unwrap();
     runtime_config_locked.current_map_data = current_map_data;
     Ok(())
-}
-
-#[tauri::command]
-pub async fn repack(
-    app_manager: State<'_, LocalAppManager>,
-    repacker_label: String,
-) -> Result<String, Error> {
-    let mut profile = app_manager.current_profile_data.write().await;
-    let base_config_locked = app_manager.base_config.read().await;
-    if let Some(repacker_data) = profile.repackers.get_mut(&repacker_label) {
-        let from = PathBuf::from(&repacker_data.from);
-        let to = PathBuf::from(&repacker_data.to);
-        let repacker = Repacker::new(from, to);
-        repacker.run();
-        let date = chrono::Local::now()
-            .to_rfc3339_opts(chrono::SecondsFormat::Secs, false)
-            .to_string();
-        repacker_data.last_update = date.clone();
-        let updated_profile_data = serde_json::to_string_pretty(&*profile)?;
-        let exe_path = std::env::current_exe()?;
-        let profile_cfg_path = exe_path.parent().unwrap().join(format!("cfg\\{}\\profile.json", base_config_locked.current_profile));
-        let mut file = std::fs::File::create(&profile_cfg_path)?;
-        file.write_all(updated_profile_data.as_bytes())?;
-        Ok(date)
-    } else {
-        Err(Error::UndefinedData("Repacker to update".to_string()))
-    }
 }
 
 #[tauri::command]
@@ -229,7 +190,7 @@ pub async fn create_hero(
         &global_config_locked.generic_hero_xdb,
         &global_config_locked.generic_icon_128,
         &global_config_locked.generic_icon_dds,
-        profile_data.mod_path.to_string_lossy().to_string(),
+        profile_data.map_path.to_string_lossy().to_string(),
         town,
         hero_script_name,
         hero_name,

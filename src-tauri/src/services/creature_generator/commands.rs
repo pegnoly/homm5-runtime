@@ -7,7 +7,7 @@ use crate::{
     utils::LocalAppManager,
 };
 use homm5_scaner::prelude::ScanerService;
-use std::{io::Write, path::PathBuf};
+use std::io::Write;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -45,7 +45,7 @@ pub async fn generate_creatures(
     let profile = app_manager.current_profile_data.read().await;
     let creatures_data = scaner_repo.get_all_creature_models().await?;
     let abilities_data = scaner_repo.get_abilities().await?;
-    let generation_path = profile.mod_path.join("GameMechanics\\Creature\\Creatures\\Neutrals\\");
+    let generation_path = profile.map_path.join("GameMechanics\\Creature\\Creatures\\Neutrals\\");
 
     for model in &models {
         let base_creature_data = scaner_repo

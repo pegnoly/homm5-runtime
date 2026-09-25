@@ -10,7 +10,6 @@ pub struct ProfileConfig {
     pub exe_name: PathBuf,
     pub game_path: PathBuf,
     pub map_path: PathBuf,
-    pub mod_path: PathBuf,
     pub texts_path: PathBuf,
     pub repackers: HashMap<String, RepackerPathsData>,
     pub maps: Vec<Map>

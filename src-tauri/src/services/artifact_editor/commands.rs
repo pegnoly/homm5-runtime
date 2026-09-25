@@ -149,7 +149,7 @@ pub async fn select_artefact_icon_path(
     app_manager: State<'_, LocalAppManager>
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let path = profile.mod_path.clone();
+    let path = profile.map_path.clone();
     app.dialog()
         .file()
         .set_directory(path.join("Textures\\Icons\\Artifacts\\"))
@@ -168,10 +168,9 @@ pub async fn update_artefact_icon_path(
     value: String,
     path: String
 ) -> Result<(), Error> {
-    println!("Update icon called for id {}", id);
     let profile = app_manager.current_profile_data.read().await;
     let base_cfg = app_manager.base_config.read().await;
-    let icon_xdb_path = profile.mod_path.join(&path);
+    let icon_xdb_path = profile.map_path.join(&path);
     if !icon_xdb_path.exists() {
         let icon_xdb = base_cfg.generic_icon_128.clone();
         let icon_dds = base_cfg.generic_icon_dds.clone();

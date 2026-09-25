@@ -317,7 +317,7 @@ pub async fn generate_creature_file(
             desc_file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
         }
 
-        let path = profile_locked.mod_path.join(&creature_data.xdb_path);
+        let path = profile_locked.map_path.join(&creature_data.xdb_path);
         let mut file = std::fs::File::create(&path)?;
         let mut output: Vec<u8> = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
@@ -364,7 +364,7 @@ pub async fn rebuild_creatures_shared_group(
     }
 
     let profile_locked = app_manager.current_profile_data.read().await;
-    let dir = profile_locked.mod_path.join("MapObjects\\_(AdvMapSharedGroup)\\Monsters\\");
+    let dir = profile_locked.map_path.join("MapObjects\\_(AdvMapSharedGroup)\\Monsters\\");
     if !dir.exists() {
         std::fs::create_dir_all(&dir)?;
     }

@@ -68,12 +68,12 @@ impl<'a> Output for SpellDataOutput<'a> {
         .exec(self.db)
         .await?;
 
-        let mut script_file = String::from("MCCS_SPELL_GENERATED_TABLE = {\n");
+        let mut script_file = String::from("SPELLS_GENERATED_TABLE = {\n");
         for model in &self.entities {
             script_file += &model.to_lua_string();
         }
-        script_file.push('}');
-        zip_writer.start_file("scripts/generated/spells.lua", FileOptions::default())?;
+        script_file.push_str("}\n\n__end_import()");
+        zip_writer.start_file("libs/generated/spells.lua", FileOptions::default())?;
         zip_writer.write_all(script_file.as_bytes())?;
 
         let _json_models = self
