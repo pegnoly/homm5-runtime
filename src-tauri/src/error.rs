@@ -1,6 +1,14 @@
 use serde::{Serialize, Serializer};
 use std::{num::ParseIntError, str::Utf8Error, string::FromUtf8Error};
 
+#[derive(thiserror::Error, Debug)]
+#[error("Ошибка {info:?} произошла при вызове функции {func_name:?} с параметрами: {params:?}")]
+pub struct ErrorFrontendModel {
+    pub info: String,
+    pub func_name: String,
+    pub params: Vec<String>,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("{0} is not defined")]
@@ -32,7 +40,11 @@ pub enum Error {
     #[error(transparent)]
     Zip(#[from]zip::result::ZipError),
     #[error(transparent)]
-    MapModifier(#[from]map_modifier::error::MapModifierError)
+    MapModifier(#[from]map_modifier::error::MapModifierError),
+    #[error(transparent)]
+    Repack(#[from]homm5_repacker::RepackError),
+    #[error(transparent)]
+    FrontendModel(ErrorFrontendModel)
 }
 
 impl Serialize for Error {

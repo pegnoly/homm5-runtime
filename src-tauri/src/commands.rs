@@ -11,8 +11,8 @@ use tauri::State;
 
 use crate::profiles::ProfileConfig;
 use crate::DataContainer;
-use crate::error::Error;
-use crate::utils::{LocalAppManager, MapFrontendModel, RepackerFrontendData, RuntimeData};
+use crate::error::{Error, ErrorFrontendModel};
+use crate::utils::{LocalAppManager, MapFrontendModel, RuntimeData};
 
 #[tauri::command]
 pub async fn execute_scan(
@@ -37,9 +37,15 @@ pub async fn run_game(
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     let mut runtime_runner = RuntimeRunner::new(profile.game_path.join("bin\\").join(&profile.exe_name));
-    for (_, repack_data) in &profile.repackers {
+    for repack_data in profile.repackers.values() {
         let repacker = Repacker::new(&repack_data.from, &repack_data.to);
-        repacker.run();
+        repacker.run().map_err(|e| {
+            Error::FrontendModel(ErrorFrontendModel {
+                info: e.to_string(),
+                func_name: "repacker.run".to_string(),
+                params: vec![repacker.from.to_str().unwrap().to_string(), repacker.to.to_str().unwrap().to_string()],
+            })
+        })?
     }
     runtime_runner.run();
     Ok(())

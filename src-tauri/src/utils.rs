@@ -123,12 +123,6 @@ pub struct RepackerPathsData {
     pub to: PathBuf,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RepackerFrontendData {
-    pub label: String,
-    pub update_time: String,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MapFrontendModel {
     pub id: i32,

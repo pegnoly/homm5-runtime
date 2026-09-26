@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 walkdir = "2.5.0"
 zip = "2.2.1"
+thiserror = "2.0.21"
