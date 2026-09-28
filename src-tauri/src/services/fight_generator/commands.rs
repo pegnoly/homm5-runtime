@@ -540,11 +540,12 @@ pub async fn generate_current_hero_script(
         ))?;
         let mut script = format!(
             "
-while not (UNIT_COUNT_GENERATION_MODE_POWER_BASED and UNIT_COUNT_GENERATION_MODE_RAW and Iterator) do
+while not (UNIT_COUNT_GENERATION_MODE_POWER_BASED and UNIT_COUNT_GENERATION_MODE_RAW and Iterator and GeneratedCombat) do
     sleep()
 end
 
-{} = {{\n",
+---@type GeneratedCombat
+{} = GeneratedCombat({{\n",
             &main_asset.table_name
         );
         // stacks script
@@ -592,7 +593,8 @@ end
                 let creatures_list = asset.concrete_creatures.ids.iter().join(", ");
                 army_generation_rules_script += &format!(
                     "\t\t[{stack_count}] = function ()
-            local result = Random.FromTable({{{creatures_list}}})
+            local id = Random.FromTable({{{creatures_list}}})
+            local result = Creature(id)
             return result
         end,\n"
                 );
@@ -607,13 +609,13 @@ end
                         match rule {
                             ArmyGenerationRuleParam::Generatable => {
                                 generation_rules_script +=
-                                    "Creature.Params.IsGeneratable(creature) and "
+                                    "creature.is_generatable and "
                             }
                             ArmyGenerationRuleParam::Caster => {
-                                generation_rules_script += "Creature.Type.IsCaster(creature) and "
+                                generation_rules_script += "creature:IsCaster() and "
                             }
                             ArmyGenerationRuleParam::Shooter => {
-                                generation_rules_script += "Creature.Type.IsShooter(creature) and "
+                                generation_rules_script += "creature:IsShooter() and "
                             }
                             _ => {}
                         }
@@ -632,11 +634,18 @@ end
                     .get_stat_generation_elements(asset.id)
                     .await?;
                 let mut getter_function = format!(
-        r#"            local id = Iterator(Creature.Selection.FromTownsAndTiers({{{towns}}}, {{{tiers}}}))
-                .Filter(function(creature)
-                    {generation_rules_script}
-                    return result
-                end)"#);
+    r#"            local id = CREATURES_ITERATOR.Filter(
+                   ---@param item Creature
+                   function(item)
+                      local result = contains({{{towns}}}, item.town) and contains({{{tiers}}}, item.tier)
+                      return result
+                   end)
+                   .Filter(
+                   ---@param creature Creature
+                   function(creature)
+                       {generation_rules_script}
+                       return result
+                   end)"#);
                 if stats_elements.is_empty() || stats_elements[0].stats.values.is_empty() {
                     getter_function += 
         r#"     
@@ -650,19 +659,19 @@ end
                     for param in &stat_element.stats.values {
                         match param {
                             ArmyGenerationStatParam::Attack => {
-                                sort_expression += "Creature.Params.Attack(creature) + ";
+                                sort_expression += "creature.attack + ";
                             }
                             ArmyGenerationStatParam::Defence => {
-                                sort_expression += "Creature.Params.Defence(creature) + ";
+                                sort_expression += "creature.defence + ";
                             }
                             ArmyGenerationStatParam::Initiative => {
-                                sort_expression += "Creature.Params.Initiative(creature) + ";
+                                sort_expression += "creature.initiative + ";
                             }
                             ArmyGenerationStatParam::Speed => {
-                                sort_expression += "Creature.Params.Speed(creature) + ";
+                                sort_expression += "creature.speed + ";
                             }
                             ArmyGenerationStatParam::Hitpoints => {
-                                sort_expression += "Creature.Params.Health(creature) + ";
+                                sort_expression += "creature.health + ";
                             }
                         }
                     }
@@ -691,15 +700,11 @@ end
 
         // artifacts script
         if let Some(artifacts_asset) = fight_generator_repo.get_artifacts_model(asset_id).await? {
-            script += "\trequired_artifacts = {";
-            for artifact_id in artifacts_asset.required.ids {
-                script += &format!("{artifact_id}, ");
-            }
-            script.push_str("\t},\n");
+            script += &format!("\trequired_artifacts = Iterator({{{}}}).Map(function(a) local result = Artifact(a) return result end).Collect(),\n", artifacts_asset.required.ids.iter().join(","));
             script += "\toptional_artifacts = {\n";
             for (slot, ids) in artifacts_asset.optional.values {
                 if !ids.is_empty() {
-                    script += &format!("\t\t[{}] = {{{}}},\n", &slot, ids.iter().join(", "));
+                    script += &format!("\t\t[{}] = Iterator({{{}}}).Map(function(a) local result = Artifact(a) return result end).Collect(),\n", &slot, ids.iter().join(", "));
                 }
             }
             script.push_str("\t},\n\n");
@@ -719,7 +724,7 @@ end
             }
         }
 
-        script.push('}');
+        script.push_str("})\n\n __end_import()");
         output_file.write_all(script.as_bytes())?;
     }
     Ok(())
