@@ -350,7 +350,8 @@ impl ToLua for Model {
         school = {},
         level = {},
         is_aimed = {},
-        is_area = {}
+        is_area = {},
+        cost = {}
     }},\n",
             self.id,
             self.name_txt,
@@ -359,7 +360,8 @@ impl ToLua for Model {
             self.school,
             self.level,
             is_aimed,
-            is_area
+            is_area,
+            self.cost
         )
     }
 }
