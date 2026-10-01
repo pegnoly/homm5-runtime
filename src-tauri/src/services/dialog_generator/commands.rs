@@ -262,7 +262,7 @@ pub async fn generate_dialog(
                 .await?;
 
             let path_script = &format!(
-                "MiniDialog.Paths[\"{}\"] = \"{}\"\n",
+                "\nMiniDialog.Paths[\"{}\"] = \"{}\"",
                 dialog.script_name,
                 &dialog_local_path.replace("\\", "/")
             );
