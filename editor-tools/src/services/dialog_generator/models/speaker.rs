@@ -39,6 +39,7 @@ pub struct Model {
     pub script_name: String,
     pub color: String,
     pub speaker_type: SpeakerType,
+    pub local_to_map: Option<i32>
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

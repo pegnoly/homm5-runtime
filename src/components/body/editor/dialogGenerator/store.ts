@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { Dialog, DialogSimple, DialogVariant, Speaker } from "./types"
+import {Dialog, DialogSimple, DialogVariant, Speaker, VariantSpeakerIds} from "./types"
 
 type Actions = {
     loadDialogs: (value: DialogSimple []) => void,
@@ -13,7 +13,7 @@ type Actions = {
     loadVariant: (value: DialogVariant) => void,
     setCurrentVariantStep: (value: number) => void,
     setCurrentVariantLabel: (value: string) => void,
-    setCurrentVariantSpeaker: (value: number | undefined) => void,
+    setCurrentVariantSpeakers: (value: number[]) => void,
     setCurrentVariantText: (value: string) => void,
 
     setCurrentVariantSaved: (value: boolean) => void
@@ -33,7 +33,7 @@ type Store = {
     currentVariantId: number | undefined,
     currentVariantStep: number | undefined,
     currentVariantLabel: string | undefined,
-    currentVariantSpeaker: number | null,
+    currentVariantSpeakers: VariantSpeakerIds,
     currentVariantText: string | undefined,
 
     currentVariantSaved: boolean,
@@ -55,7 +55,7 @@ const dialogGeneratorStore = create<Store>((set) => ({
     currentVariantId: undefined,
     currentVariantStep: undefined,
     currentVariantLabel: undefined,
-    currentVariantSpeaker: null,
+    currentVariantSpeakers: { ids: [] },
     currentVariantText: undefined,
 
     currentVariantSaved: true,
@@ -81,7 +81,7 @@ const dialogGeneratorStore = create<Store>((set) => ({
             set({
                 currentVariantId: value.id,
                 currentVariantStep: value.step,
-                currentVariantSpeaker: value.speaker_id == null ? undefined : value.speaker_id,
+                currentVariantSpeakers: value.speaker_ids,
                 currentVariantLabel: value.label,
                 currentVariantText: value.text
             });
@@ -101,8 +101,8 @@ const dialogGeneratorStore = create<Store>((set) => ({
         setCurrentVariantLabel(value) {
             set({currentVariantLabel: value});
         },
-        setCurrentVariantSpeaker(value) {
-            set({currentVariantSpeaker: value});
+        setCurrentVariantSpeakers(value: number[]) {
+            set({currentVariantSpeakers: { ids: value }});
         },
         setCurrentVariantText(value) {
             set({currentVariantText: value});
@@ -120,7 +120,7 @@ export const useCurrentDialogId = () => dialogGeneratorStore(state => state.curr
 export const useCurrentDialogVariantId = () => dialogGeneratorStore(state => state.currentVariantId);
 export const useCurrentDialogVariantLabel = () => dialogGeneratorStore(state => state.currentVariantLabel);
 export const useCurrentDialogVariantStep = () => dialogGeneratorStore(state => state.currentVariantStep);
-export const useCurrentDialogVariantSpeaker = () => dialogGeneratorStore(state => state.currentVariantSpeaker);
+export const useCurrentDialogVariantSpeakers = () => dialogGeneratorStore(state => state.currentVariantSpeakers);
 export const useCurrentDialogVariantText = () => dialogGeneratorStore(state => state.currentVariantText);
 export const useDialogLabels = () => dialogGeneratorStore(state => state.currentDialogLabels);
 export const useDialogSpeakers = () => dialogGeneratorStore(state => state.currentDialogSpeakers);

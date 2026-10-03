@@ -1,3 +1,4 @@
+use sea_orm::FromJsonQueryResult;
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -9,8 +10,13 @@ pub struct Model {
     pub dialog_id: i32,
     pub step: i32,
     pub label: String,
-    pub speaker_id: Option<i32>,
+    pub speaker_ids: VariantSpeakerIds,
     pub text: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+pub struct VariantSpeakerIds {
+    pub ids: Vec<i32>
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

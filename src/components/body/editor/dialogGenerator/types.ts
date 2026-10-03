@@ -31,11 +31,15 @@ export type Speaker = {
     color: string
 }
 
+export type VariantSpeakerIds = {
+    ids: number[]
+}
+
 export type DialogVariant = {
     id: number,
     dialogId: number,
     step: number,
     label: string,
-    speaker_id: number | null,
+    speaker_ids: VariantSpeakerIds,
     text: string
 }

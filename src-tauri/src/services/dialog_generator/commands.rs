@@ -1,5 +1,5 @@
-use std::{fs::OpenOptions, io::Write, path::PathBuf};
-
+use std::{io::Write, path::PathBuf};
+use std::collections::HashMap;
 use editor_tools::prelude::{
     CreateDialogPayload, CreateDialogVariantPayload, CreateSpeakerPayload, DialogGeneratorRepo,
     DialogModel, DialogVariantModel, GetDialogVariantPayload, SaveVariantPayload, SpeakerModel,
@@ -10,6 +10,7 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::{error::Error, utils::LocalAppManager};
+use crate::services::dialog_generator::types::DialogStepModel;
 
 #[tauri::command]
 pub async fn load_dialogs(
@@ -166,11 +167,11 @@ pub async fn load_dialog_variant(
 pub async fn save_dialog_variant(
     dialog_generator_repo: State<'_, DialogGeneratorRepo>,
     id: i32,
-    speaker: i32,
+    speakers: Vec<i32>,
     text: String,
 ) -> Result<(), Error> {
     Ok(dialog_generator_repo
-        .save_variant(SaveVariantPayload { id, text, speaker })
+        .save_variant(SaveVariantPayload { id, text, speakers })
         .await?)
 }
 
@@ -181,18 +182,6 @@ pub async fn generate_dialog(
     dialog_id: i32,
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let current_map = app_manager
-        .runtime_config
-        .read()
-        .await
-        .current_selected_map;
-
-    let map_data = profile
-        .maps
-        .iter()
-        .find(|m| m.id == current_map)
-        .unwrap();
-    let map_data_path = &map_data.data_path;
 
     if let Some(dialog) = dialog_generator_repo.get_dialog(dialog_id).await? {
         let speakers = dialog_generator_repo
@@ -208,70 +197,49 @@ pub async fn generate_dialog(
 
         let mut script_file =
             std::fs::File::create(format!("{}\\script.lua", dialog.directory))?;
-        let mut script = format!("MiniDialog.Sets[\"{}\"] = {{\n", dialog.script_name);
 
-        for variant in &variants
-            .iter()
-            .filter(|v| v.speaker_id.is_some())
-            .collect_vec()
-        {
+        let steps_count = variants.iter().unique_by(|v| v.step).count();
+        let mut script = format!("{} = MiniDialog({{\n", dialog.script_name);
+        script += &format!("\tpath = \"{}\",\n", &dialog_local_path.replace("\\", "/"));
+        script += &format!("\tsteps_count = {},\n\tcurrent_step = 0,\n", steps_count);
+
+        let mut steps: HashMap<i32, DialogStepModel> = HashMap::new();
+
+        for variant in &variants {
             let file_name = format!("{}_{}.txt", &variant.step, &variant.label);
-            let mut variant_file =
-                std::fs::File::create(dialog_texts_path.join(file_name))?;
-            if let Some(speaker) = speakers
-                .iter()
-                .find(|s| s.id == variant.speaker_id.unwrap())
-            {
-                let updated_name = if speaker.name.contains("#") {
-                    speaker.name.split("#")
-                        .collect_vec()
-                        .first()
-                        .ok_or(Error::UndefinedData("Dialog speaker name split error".to_string()))?
-                        .trim_end()
-                } else {
-                    &speaker.name
-                };
-                let mut text = format!(
-                    "<color={}>{}<color=white>: {}",
-                    &speaker.color, updated_name, &variant.text
-                );
-                text = text.replace("<b>", "<font face=Header size=20>").replace("</b>", "<font face=Default size=20>");
-                variant_file.write_all(&[255, 254])?;
-                for utf16 in text.encode_utf16() {
-                    variant_file
-                        .write_all(&(bincode::serialize(&utf16).unwrap()))?;
-                }
-                let speaker_script = if speaker.speaker_type == SpeakerType::Hero {
-                    format!("\"{}\"", speaker.script_name)
-                } else {
-                    speaker.script_name.to_string()
-                };
-                script += &format!(
-                    "\t[\"{}_{}\"] = {{speaker = {}, speaker_type = {}}},\n",
-                    &variant.step, &variant.label, speaker_script, speaker.speaker_type
-                );
+            let mut variant_file = std::fs::File::create(dialog_texts_path.join(file_name))?;
+            let mut text = format!("<color=<value=speaker_color>><value=speaker_name><color=white>: {}", &variant.text);
+            text = text.replace("<b>", "<font face=Header size=20>").replace("</b>", "<font face=Default size=20>");
+            variant_file.write_all(&[255, 254])?;
+            for utf16 in text.encode_utf16() {
+                variant_file
+                    .write_all(&(bincode::serialize(&utf16).unwrap()))?;
+            }
+            if let Some(step_data) = steps.get_mut(&variant.step) {
+                step_data.labels.push(&variant.label);
+            } else {
+                steps.insert(variant.step, DialogStepModel {
+                    speakers: variant.speaker_ids.ids.iter().map(|s| speakers.iter().find(|sp| sp.id == *s).unwrap().script_name.as_str()).collect(),
+                    labels: vec![&variant.label],
+                });
             }
         }
 
-        script += "}\n\n";
+        script += &format!("\tsteps = {{{}}},\n", steps.values().map(|v| v.to_string()).join(", "));
+        script += &format!("\tspeakers_data = {{{}}}\n",
+                           speakers.iter().map(|s| {
+                               format!("[{}] = {{color = \"{}\", type = {}}}", if s.speaker_type == SpeakerType::Hero {
+                                   format!("\"{}\"", &s.script_name)
+                               } else {
+                                   s.script_name.clone()
+                               }, s.color, s.speaker_type)
+                           }).collect_vec().join(", "));
+
+        script += "})\n\n__end_import()";
         script_file.write_all(script.as_bytes())?;
 
         if !dialog.was_generated {
-            dialog_generator_repo
-                .set_dialog_was_generated(dialog_id)
-                .await?;
-
-            let path_script = &format!(
-                "\nMiniDialog.Paths[\"{}\"] = \"{}\"",
-                dialog.script_name,
-                &dialog_local_path.replace("\\", "/")
-            );
-            let mut paths_file = OpenOptions::new()
-                .append(true)
-                .create(true)
-                .open(map_data_path.join("dialogs_paths.lua"))?;
-
-            paths_file.write_all(path_script.as_bytes())?;
+            dialog_generator_repo.set_dialog_was_generated(dialog_id).await?;
         }
     }
 

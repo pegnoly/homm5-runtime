@@ -36,5 +36,5 @@ pub struct CreateDialogVariantPayload {
 pub struct SaveVariantPayload {
     pub id: i32,
     pub text: String,
-    pub speaker: i32,
+    pub speakers: Vec<i32>,
 }

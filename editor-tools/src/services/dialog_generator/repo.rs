@@ -15,6 +15,7 @@ use crate::{
         speaker, variant,
     },
 };
+use crate::services::dialog_generator::models::variant::VariantSpeakerIds;
 
 pub struct DialogGeneratorRepo {
     db: DatabaseConnection,
@@ -136,6 +137,7 @@ impl DialogGeneratorRepo {
             step: Set(payload.step),
             label: Set(payload.label),
             text: Set("".to_string()),
+            speaker_ids: Set(VariantSpeakerIds { ids: vec![]}),
             ..Default::default()
         };
         Ok(model_to_insert.insert(&self.db).await?)
@@ -148,7 +150,7 @@ impl DialogGeneratorRepo {
         {
             let mut model_to_update = existing_variant.into_active_model();
             model_to_update.text = Set(payload.text);
-            model_to_update.speaker_id = Set(Some(payload.speaker));
+            model_to_update.speaker_ids = Set(VariantSpeakerIds { ids: payload.speakers });
             model_to_update.update(&self.db).await?;
         }
         Ok(())
