@@ -201,14 +201,14 @@ pub async fn generate_dialog(
         let steps_count = variants.iter().unique_by(|v| v.step).count();
         let mut script = format!("{} = MiniDialog({{\n", dialog.script_name);
         script += &format!("\tpath = \"{}\",\n", &dialog_local_path.replace("\\", "/"));
-        script += &format!("\tsteps_count = {},\n\tcurrent_step = 0,\n", steps_count);
+        script += &format!("\tsteps_count = {},\n\tcurrent_step = 1,\n", steps_count);
 
         let mut steps: HashMap<i32, DialogStepModel> = HashMap::new();
 
         for variant in &variants {
             let file_name = format!("{}_{}.txt", &variant.step, &variant.label);
             let mut variant_file = std::fs::File::create(dialog_texts_path.join(file_name))?;
-            let mut text = format!("<color=<value=speaker_color>><value=speaker_name><color=white>: {}", &variant.text);
+            let mut text = format!("<value=color_info><value=speaker_name><color=white>: {}", &variant.text);
             text = text.replace("<b>", "<font face=Header size=20>").replace("</b>", "<font face=Default size=20>");
             variant_file.write_all(&[255, 254])?;
             for utf16 in text.encode_utf16() {
