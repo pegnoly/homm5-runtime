@@ -16,3 +16,4 @@ tokio = { version = "1.44.2", features = ["macros"] }
 quick-xml = { version = "0.37.5", features = ["serde"] }
 widestring = "1.2.0"
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
+restructed = "0.2.2"

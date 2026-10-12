@@ -1132,6 +1132,7 @@ dependencies = [
  "homm5-types",
  "itertools 0.14.0",
  "quick-xml 0.37.5",
+ "restructed",
  "sea-orm",
  "serde",
  "serde_json",
@@ -1966,6 +1967,7 @@ dependencies = [
  "itertools 0.14.0",
  "map-modifier",
  "quick-xml 0.39.2",
+ "regex",
  "runtime-main",
  "serde",
  "serde_json",
@@ -1992,6 +1994,7 @@ dependencies = [
  "ordered-float 5.1.0",
  "quick-xml 0.30.0",
  "rc-zip",
+ "restructed",
  "roxmltree",
  "sea-orm",
  "serde",
@@ -4171,6 +4174,18 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
+]
+
+[[package]]
+name = "restructed"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f6f6e863d7d9d318699737c043d560dce1ea3cb6f5c78e0a3f0d1f257c73dfc"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
 ]
 
 [[package]]

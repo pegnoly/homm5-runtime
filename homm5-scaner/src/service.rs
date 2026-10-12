@@ -163,14 +163,14 @@ impl ScanerService {
     pub async fn get_artifact_models(&self, payload: GetArtifactsPayload) -> Result<Vec<ArtifactDBModel>, ScanerError> {
         let condition = Condition::all()
             .add_option(payload.is_generatable.map(|is_generatable| Expr::col(ArtifactDBColumn::IsGeneratable).eq(is_generatable)));
-        Ok(scaners::prelude::ArtifactDBEntity::find()
+        Ok(ArtifactDBEntity::find()
             .filter(condition)
             .all(&self.db)
             .await?)
     }
 
     pub async fn get_creature_models(&self) -> Result<Vec<CreatureDBModel>, ScanerError> {
-        Ok(scaners::prelude::CreatureDBEntity::find()
+        Ok(CreatureDBEntity::find()
             .filter(CreatureDBColumn::Initiative.between(2, 30))
             .filter(CreatureDBColumn::Speed.between(2, 30))
             .filter(CreatureDBColumn::Power.between(2, 100000))

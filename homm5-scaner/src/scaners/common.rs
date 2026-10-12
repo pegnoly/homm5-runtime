@@ -60,6 +60,24 @@ pub enum Town {
     TownSpecial
 }
 
+impl From<i32> for Town {
+    fn from(value: i32) -> Self {
+        match value {
+            -1 => Town::TownNoType,
+            0 => Town::TownHeaven,
+            1 => Town::TownInferno,
+            2 => Town::TownNecromancy,
+            3 => Town::TownPreserve,
+            4 => Town::TownDungeon,
+            5 => Town::TownAcademy,
+            6 => Town::TownFortress,
+            7 => Town::TownStronghold,
+            8 => Town::TownSpecial,
+            _=> unreachable!(),
+        }
+    }
+}
+
 #[derive(
     Debug,
     DeriveActiveEnum,
@@ -137,6 +155,26 @@ impl From<Town> for TownExtended {
             Town::TownFortress => TownExtended::TownFortress,
             Town::TownStronghold => TownExtended::TownStronghold,
             Town::TownSpecial => TownExtended::TownNoType
+        }
+    }
+}
+
+impl From<i32> for TownExtended {
+    fn from(value: i32) -> Self {
+        match value { 
+            -1 => TownExtended::TownNoType,
+            0 => TownExtended::TownHeaven,
+            1 => TownExtended::TownInferno,
+            2 => TownExtended::TownNecromancy,
+            3 => TownExtended::TownPreserve,
+            4 => TownExtended::TownDungeon,
+            5 => TownExtended::TownAcademy,
+            6 => TownExtended::TownFortress,
+            7 => TownExtended::TownStronghold,
+            8 => TownExtended::TownBastion,
+            9 => TownExtended::TownSanctuary,
+            10 => TownExtended::TownRenegades,
+            _=> unreachable!()
         }
     }
 }

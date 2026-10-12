@@ -9,6 +9,7 @@ use google_sheets4::{
     hyper_util::{self, client::legacy::connect::HttpConnector},
     yup_oauth2,
 };
+use google_sheets4::api::BatchUpdateValuesRequest;
 use serde::{Deserialize, Serialize};
 
 mod types;
@@ -132,6 +133,31 @@ impl SheetsConnectorService {
         Ok(())
     }
 
+    pub async fn upload_to_sheet_bulk<C, I>(
+        &self,
+        spreadsheet_id: &str,
+        input: I,
+        converter: C,
+    ) -> Result<(), Error>
+    where
+        C: IntoSheetsData<Vec<ValueRange>, Input = I> {
+
+        let data = converter.convert_into_sheets_data(input)?;
+        let hub_locked = self.sheets_hub.lock().await;
+        hub_locked
+            .spreadsheets()
+            .values_batch_update(BatchUpdateValuesRequest {
+                data: Some(data),
+                value_input_option: Some("USER_ENTERED".to_string()),
+                ..Default::default()
+            }, spreadsheet_id)
+            .doit()
+            .await
+            .map_err(|e| Error::Sheets(Box::new(e)))?;
+        
+        Ok(())
+    }
+
     pub async fn read_from_sheet<T, V>(
         &self,
         spreadsheet_id: &str,
@@ -140,7 +166,7 @@ impl SheetsConnectorService {
         converter: T,
     ) -> Result<V, Error>
     where
-        T: FromSheetValueRange<Output = V>,
+        T: FromSheetValueRange<ValueRange, Output = V>,
     {
         let hub_locked = self.sheets_hub.lock().await;
         let spreadsheet = hub_locked
@@ -176,7 +202,58 @@ impl SheetsConnectorService {
             .await
             .map_err(|e| Error::Sheets(Box::new(e)))?;
 
-        let value = converter.convert_from_value_range(data.1)?;
+        let value = converter.convert_from_sheets_data(data.1)?;
+
+        Ok(value)
+    }
+
+    pub async fn read_many_from_sheet<T, V>(
+        &self,
+        spreadsheet_id: &str,
+        // sheet_id: i32,
+        ranges: Vec<&str>,
+        converter: T,
+    ) -> Result<V, Error>
+    where
+        T: FromSheetValueRange<Vec<ValueRange>, Output = V> {
+
+        let hub_locked = self.sheets_hub.lock().await;
+        let spreadsheet = hub_locked
+            .spreadsheets()
+            .get(spreadsheet_id)
+            .doit()
+            .await
+            .map_err(|e| Error::Sheets(Box::new(e)))?;
+
+        // let sheet_name = spreadsheet
+        //     .1
+        //     .sheets
+        //     .as_ref()
+        //     .and_then(|sheets| {
+        //         sheets.iter().find(|sheet| {
+        //             sheet
+        //                 .properties
+        //                 .as_ref()
+        //                 .and_then(|props| props.sheet_id)
+        //                 .is_some_and(|id| id == sheet_id)
+        //         })
+        //     })
+        //     .and_then(|sheet| sheet.properties.as_ref())
+        //     .and_then(|properties| properties.title.as_ref())
+        //     .ok_or(Error::UndefinedValue(
+        //         "read_from_sheet Sheet name".to_string(),
+        //     ))?;
+
+        let data = hub_locked
+            .spreadsheets()
+            .values_batch_get(spreadsheet_id)
+            .add_ranges(&ranges.join(","))
+            .major_dimension("ROWS")
+            .doit()
+            .await
+            .map_err(|e| Error::Sheets(Box::new(e)))?;
+
+        let value = converter.convert_from_sheets_data(data.1.value_ranges.unwrap())?;
 
         Ok(value)
     }

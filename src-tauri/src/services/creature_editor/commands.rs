@@ -4,9 +4,11 @@ use chrono::Local;
 use homm5_scaner::prelude::{CreatureDBModel, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, TownExtended, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use quick_xml::{Writer, events::{BytesDecl, Event}};
+use sheets_connector::service::SheetsConnectorService;
 use tauri::State;
 
 use crate::{error::Error, utils::{LocalAppManager, TimelineMessage}};
+use crate::services::creature_editor::utils::{pull_creatures, sync_creatures};
 
 #[tauri::command]
 pub async fn load_creature(
@@ -407,4 +409,15 @@ pub async fn rebuild_creatures_shared_group(
         timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
         message: "Creatures AdvMapSharedGroup regenerated".to_string(),
     })
+}
+
+#[tauri::command]
+pub async fn test_creature_sync(
+    sheets_connector: State<'_, SheetsConnectorService>,
+    scaner_service: State<'_, ScanerService>
+) -> Result<(), Error> {
+    pull_creatures(&sheets_connector).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    // let test_creatures = scaner_service.get_creature_models().await?;
+    // sync_creatures(&sheets_connector, test_creatures).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    Ok(())
 }

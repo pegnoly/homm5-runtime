@@ -242,6 +242,8 @@ pub async fn run() -> Result<(), Error> {
             creature_editor_commands::update_creature_spell,
             creature_editor_commands::generate_creature_file,
             creature_editor_commands::rebuild_creatures_shared_group,
+
+            creature_editor_commands::test_creature_sync,
             //
             services::artifact_editor::commands::rebuild_artifacts_file,
             services::artifact_editor::commands::update_artefact_attack,

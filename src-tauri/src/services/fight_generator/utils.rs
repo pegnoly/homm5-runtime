@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use editor_tools::prelude::{
     ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotGenerationRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, CreatureIds, CreatureTiers, CreatureTowns, DifficultyMappedValue, DifficultyType, OptionalArtifacts, RequiredArtifacts
 };
-use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, TownExtended};
+use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, Town, TownExtended};
 use itertools::Itertools;
 use serde_json::Number;
 use sheets_connector::{error::Error, prelude::ValueRange, utils::*};
@@ -20,10 +20,10 @@ impl SheetToArmyAssetsConverter {
     }
 }
 
-impl FromSheetValueRange for SheetToArmyAssetsConverter {
+impl FromSheetValueRange<ValueRange> for SheetToArmyAssetsConverter {
     type Output = Vec<AssetArmySlotModel>;
 
-    fn convert_from_value_range(
+    fn convert_from_sheets_data(
         &self,
         values: ValueRange,
     ) -> Result<Self::Output, sheets_connector::error::Error> {
@@ -376,18 +376,35 @@ pub trait IntoSheetValidatedValue {
 impl IntoSheetValidatedValue for TownExtended {
     fn to_sheet_validated_value(&self) -> String {
         match self {
-            TownExtended::TownAcademy => String::from("Academy [5]"),
-            TownExtended::TownNoType => String::from("Neutral [-1]"),
-            TownExtended::TownHeaven => String::from("Haven [0]"),
-            TownExtended::TownPreserve => String::from("Preserve [3]"),
-            TownExtended::TownDungeon => String::from("Dungeon [4]"),
-            TownExtended::TownNecromancy => String::from("Necropolis [2]"),
-            TownExtended::TownInferno => String::from("Inferno [1]"),
-            TownExtended::TownFortress => String::from("Fortress [6]"),
-            TownExtended::TownStronghold => String::from("Stronghold [7]"),
-            TownExtended::TownBastion => String::from("Bastion [8]"),
-            TownExtended::TownSanctuary => String::from("Sanctuary [9]"),
-            TownExtended::TownRenegades => String::from("Renegades [10]"),
+            TownExtended::TownAcademy => String::from("Академия [5]"),
+            TownExtended::TownNoType => String::from("Нейтрал [-1]"),
+            TownExtended::TownHeaven => String::from("Орден порядка [0]"),
+            TownExtended::TownPreserve => String::from("Лесной союз [3]"),
+            TownExtended::TownDungeon => String::from("Лига теней [4]"),
+            TownExtended::TownNecromancy => String::from("Некрополис [2]"),
+            TownExtended::TownInferno => String::from("Инферно [1]"),
+            TownExtended::TownFortress => String::from("Северные кланы [6]"),
+            TownExtended::TownStronghold => String::from("Великая орда [7]"),
+            TownExtended::TownBastion => String::from("Твердыня [8]"),
+            TownExtended::TownSanctuary => String::from("Святилище [9]"),
+            TownExtended::TownRenegades => String::from("Ренегаты [10]"),
+        }
+    }
+}
+
+impl IntoSheetValidatedValue for Town {
+    fn to_sheet_validated_value(&self) -> String {
+        match self {
+            Town::TownNoType => String::from("Нейтрал [-1]"),
+            Town::TownHeaven => String::from("Орден порядка [0]"),
+            Town::TownPreserve => String::from("Лесной союз [3]"),
+            Town::TownAcademy => String::from("Академия [5]"),
+            Town::TownDungeon => String::from("Лига теней [4]"),
+            Town::TownNecromancy => String::from("Некрополис [2]"),
+            Town::TownInferno => String::from("Инферно [1]"),
+            Town::TownFortress => String::from("Северные кланы [6]"),
+            Town::TownStronghold => String::from("Великая Орда [7]"),
+            Town::TownSpecial => String::from("Специальный [8]"),
         }
     }
 }
@@ -844,10 +861,10 @@ pub struct ArtifactsFromSheetConvertedModel {
     pub grow: DifficultyMappedValue
 }
 
-impl FromSheetValueRange for SheetToArtifactAssetConverter {
+impl FromSheetValueRange<ValueRange> for SheetToArtifactAssetConverter {
     type Output = ArtifactsFromSheetConvertedModel;
 
-    fn convert_from_value_range(&self, values: ValueRange) -> Result<ArtifactsFromSheetConvertedModel, Error> {
+    fn convert_from_sheets_data(&self, values: ValueRange) -> Result<ArtifactsFromSheetConvertedModel, Error> {
         println!("Converting form values: {:#?}", &values);
         let mut model = ArtifactsFromSheetConvertedModel::default();
         if let Some(values) = values.values {

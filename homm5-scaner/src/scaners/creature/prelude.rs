@@ -5,7 +5,8 @@ pub use super::model::{
     KnownSpellsModel,
     MagicElementModel,
     AbilitiesModel,
-    SpellWithMasteryModel
+    SpellWithMasteryModel,
+    FromSheetsUpdateModel
 };
 pub use super::scaner::CreatureScaner;
 pub use super::writer::CreatureDataOutput;
