@@ -7,18 +7,20 @@ import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Speaker } from './types';
 import DialogGeneratorBody from './body';
+import {useCurrentMapId} from "@/stores/common.ts";
 
 function DialogGeneratorLayout() {
     const actions = useDialogActions();
     const speakers = useSpeakers();
     const dialogId = useCurrentDialogId();
+    const currentMapId = useCurrentMapId();
 
     useEffect(() => {
         loadSpeakers();
     }, []);
 
     const loadSpeakers = async() => {
-        invoke<Speaker[]>("load_speakers")
+        invoke<Speaker[]>("load_speakers", { mapId: currentMapId })
             .then((data) => {
                 actions.loadSpeakers(data);
             });

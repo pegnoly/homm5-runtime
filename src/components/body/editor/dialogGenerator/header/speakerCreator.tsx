@@ -5,12 +5,14 @@ import { Speaker, SpeakerType } from "../types";
 import { useMutation } from "@tanstack/react-query";
 import { DialogGeneratorApi } from "../api";
 import { useSpeakers } from "../store";
+import {useCurrentMapId} from "@/stores/common.ts";
 
 export type CreateSpeakerPayload = {
     name: string,
     scriptName: string,
     color: string,
-    speakerType: SpeakerType
+    speakerType: SpeakerType,
+    local_to_map: number | null
 }
 
 function SpeakerCreator(params: {
@@ -21,8 +23,10 @@ function SpeakerCreator(params: {
     const [scriptName, setScriptName] = useState<string | undefined>(undefined);
     const [type, setType] = useState<SpeakerType | undefined>(undefined);
     const [color, setColor] = useState<string | undefined>(undefined);
+    const [isLocalToMap, setIsLocalToMap] = useState<boolean>(false);
 
     const speakers = useSpeakers();
+    const currentMapId = useCurrentMapId();
     const [useColorFromExistingSpeaker, setUseColorFromExistingSpeaker] = useState<boolean>(false);
 
     const mutation = useMutation({
@@ -42,32 +46,32 @@ function SpeakerCreator(params: {
     return (
     <>
     <Button onClick={open} radius={0} bg="cyan">
-        Create new speaker
+        Создать персонажа
     </Button>
     <ModalRoot centered opened={opened} onClose={close}>
         <ModalOverlay/>
         <ModalContent>
             <ModalHeader>
-                <ModalTitle>New dialog creation</ModalTitle>
+                <ModalTitle>Создание нового персонажа</ModalTitle>
                 <ModalCloseButton/>
             </ModalHeader>
             <ModalBody>
                 <Stack>
                     <TextInput
-                        label="Speaker name"
-                        placeholder="Enter name"
+                        label="Имя персонажа"
+                        placeholder="То, которое будет отображаться в игре"
                         value={name}
                         onChange={(e) => setName(e.currentTarget.value)}
                     />
                     <TextInput
-                        label="Speaker script name"
-                        placeholder="Enter name"
+                        label="Скриптовое имя персонажа"
+                        placeholder="Для персонажей юнитов можно использовать как цифры, так и константы"
                         value={scriptName}
                         onChange={(e) => setScriptName(e.currentTarget.value)}
                     />
                     <Select
-                        label="Speaker type"
-                        placeholder="Select type"
+                        label="Тип персонажа"
+                        placeholder="Выбрать тип"
                         value={type}
                         onChange={(value) => setType(value as SpeakerType)}
                         data={[
@@ -75,13 +79,19 @@ function SpeakerCreator(params: {
                             { label: "Creature", value: SpeakerType.Creature},
                         ]}
                     />
+                    <Checkbox
+                        radius={0}
+                        label="Локальный для текущей карты?"
+                        checked={isLocalToMap}
+                        onChange={(e) => setIsLocalToMap(e.currentTarget.checked)}
+                    />
                     <ColorPicker
                         format="hex"
                         value={color}
                         onChange={setColor}
                     />
                     <Checkbox
-                        label="Use color of existing speaker?" 
+                        label="Использовать цвет существующего персонажа?"
                         checked={useColorFromExistingSpeaker} 
                         onChange={(e) => setUseColorFromExistingSpeaker(e.currentTarget.checked)}/>
                     <Select
@@ -104,9 +114,10 @@ function SpeakerCreator(params: {
                                 name: name!,
                                 scriptName: scriptName!,
                                 color: color!,
-                                speakerType: type!
+                                speakerType: type!,
+                                local_to_map: isLocalToMap ? currentMapId! : null
                             })}
-                        >Create</Button>
+                        >Создать</Button>
                     </Group>
                 </Stack>
             </ModalBody>

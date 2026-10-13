@@ -30,8 +30,9 @@ pub async fn load_dialogs(
 #[tauri::command]
 pub async fn load_speakers(
     dialog_generator_repo: State<'_, DialogGeneratorRepo>,
+    map_id: i32
 ) -> Result<Vec<SpeakerModel>, Error> {
-    let speakers = dialog_generator_repo.load_speakers().await?;
+    let speakers = dialog_generator_repo.load_speakers(map_id).await?;
     Ok(speakers)
 }
 
@@ -95,6 +96,7 @@ pub async fn create_speaker(
     script_name: String,
     color: String,
     speaker_type: SpeakerType,
+    local_to_map: Option<i32>
 ) -> Result<SpeakerModel, Error> {
     Ok(dialog_generator_repo
         .create_speaker(CreateSpeakerPayload {
@@ -102,6 +104,7 @@ pub async fn create_speaker(
             script_name,
             color,
             speaker_type,
+            local_to_map
         })
         .await?)
 }

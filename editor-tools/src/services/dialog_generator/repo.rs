@@ -38,8 +38,11 @@ impl DialogGeneratorRepo {
             .await?)
     }
 
-    pub async fn load_speakers(&self) -> Result<Vec<SpeakerModel>, EditorToolsError> {
-        Ok(speaker::Entity::find().all(&self.db).await?)
+    pub async fn load_speakers(&self, map_id: i32) -> Result<Vec<SpeakerModel>, EditorToolsError> {
+        Ok(speaker::Entity::find()
+            .filter(speaker::Column::LocalToMap.is_null().or(speaker::Column::LocalToMap.eq(map_id)))
+            .all(&self.db)
+            .await?)
     }
 
     pub async fn create_dialog(
@@ -72,6 +75,7 @@ impl DialogGeneratorRepo {
             script_name: Set(payload.script_name),
             color: Set(payload.color),
             speaker_type: Set(payload.speaker_type),
+            local_to_map: Set(payload.local_to_map),
             ..Default::default()
         };
         Ok(model_to_insert.insert(&self.db).await?)
