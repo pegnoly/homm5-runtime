@@ -6,8 +6,8 @@ use editor_tools::prelude::{
 use homm5_scaner::prelude::ScanerService;
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
-use sheets_connector::service::SheetsConnectorService;
 use tokio::sync::RwLock;
+use google_api::service::GoogleApiService;
 use utils::{DataContainer, GlobalConfig, LocalAppManager, ModifiersConfig, RuntimeConfig};
 use crate::commands::{apply_modifications, create_hero, execute_scan, generate_images, load_current_map, load_maps, run_game, select_map, switch_profile};
 use crate::services::creature_editor::commands as creature_editor_commands;
@@ -56,7 +56,7 @@ pub async fn run() -> Result<(), Error> {
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
     let fight_generator_repo = FightGeneratorRepo::new(pool.clone());
     let reserve_hero_creator_repo = ReserveHeroCreatorRepo::new(pool.clone());
-    let sheets_connector_repo = SheetsConnectorService::new(&global_config.auth_path)
+    let sheets_connector_repo = GoogleApiService::new(&global_config.auth_path)
         .await
         .unwrap();
 

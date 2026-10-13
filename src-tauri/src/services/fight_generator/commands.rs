@@ -9,11 +9,11 @@ use editor_tools::prelude::{
 use homm5_scaner::prelude::{AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, GetArtifactsPayload, ScanerService, SpellDBModel, TownExtended};
 
 use itertools::Itertools;
-use sheets_connector::service::{SheetId, SheetsConnectorService};
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use uuid::Uuid;
+use google_api::service::{GoogleApiService, SheetId};
 
 #[tauri::command]
 pub async fn load_all_assets(
@@ -54,7 +54,7 @@ pub async fn pick_hero_lua_generation_directory(
 #[tauri::command]
 pub async fn init_new_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    sheets_connector_repo: State<'_, GoogleApiService>,
     app_manager: State<'_, LocalAppManager>,
     name: String,
     path: String,
@@ -74,7 +74,7 @@ pub async fn init_new_asset(
     let created_sheet_id = sheets_connector_repo
         .create_sheet(spreadsheet_id, &name)
         .await
-        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
 
     let payload = InitFightAssetPayload {
         name,
@@ -141,7 +141,7 @@ pub async fn try_load_artifacts_data_for_asset(
 #[tauri::command]
 pub async fn create_artifacts_data_for_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
     generation_type: AssetGenerationType,
@@ -157,10 +157,10 @@ pub async fn create_artifacts_data_for_asset(
         .find(|map| (map.id as i32) == asset.mission_id)
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
-    sheets_connector_repo
+    google_api
         .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetId": asset.sheet_id.unwrap()}))
         .await
-        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
     let payload = InitAssetArtifactsDataPayload {
         asset_id,
         generation_type,
@@ -734,7 +734,7 @@ end
 pub async fn create_sheet_for_existing_asset(
     scaner_repo: State<'_, ScanerService>,
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
 ) -> Result<SheetId, Error> {
@@ -751,10 +751,10 @@ pub async fn create_sheet_for_existing_asset(
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
-    let created_sheet_id = sheets_connector_repo
+    let created_sheet_id = google_api
         .create_sheet(spreadsheet_id, &asset.name)
         .await
-        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
     let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
     let stat_elements = fight_generator_repo
         .get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec())
@@ -764,10 +764,10 @@ pub async fn create_sheet_for_existing_asset(
         creatures_data: &creatures,
         stats_elements_data: &stat_elements,
     };
-    sheets_connector_repo
+    google_api
         .upload_to_sheet(spreadsheet_id, army_slots, converter)
         .await
-        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
 
     fight_generator_repo
         .update_asset(UpdateFightAssetPayload::new(asset_id).with_sheet_id(created_sheet_id))
@@ -778,7 +778,7 @@ pub async fn create_sheet_for_existing_asset(
 #[tauri::command]
 pub async fn pull_from_sheet(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
 ) -> Result<Vec<AssetArmySlotModel>, Error> {
@@ -799,7 +799,7 @@ pub async fn pull_from_sheet(
         .fights_spreadsheet_id;
 
     let converter = SheetToArmyAssetsConverter::new(asset_id);
-    let values = sheets_connector_repo
+    let values = google_api
         .read_from_sheet(
             spreadsheet_id,
             asset.sheet_id.unwrap(),
@@ -819,7 +819,7 @@ pub async fn pull_from_sheet(
             converter,
         )
         .await
-        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
 
     let updated_slots = fight_generator_repo
         .update_synced_army_slots(values)
@@ -831,7 +831,7 @@ pub async fn pull_from_sheet(
 #[tauri::command]
 pub async fn pull_artifacts_data_from_sheet(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
 ) -> Result<Option<AssetArtifactsModel>, Error> {
@@ -851,10 +851,10 @@ pub async fn pull_artifacts_data_from_sheet(
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
 
-    let converted_model = sheets_connector_repo
+    let converted_model = google_api
         .read_from_sheet(
             spreadsheet_id, 
-            asset.sheet_id.unwrap(), "B27:D37", SheetToArtifactAssetConverter {} ).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+            asset.sheet_id.unwrap(), "B27:D37", SheetToArtifactAssetConverter {} ).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
     let updated_model = fight_generator_repo
         .update_artifacts_asset(
             UpdateArtifactsAssetPayload::new(asset_id)
@@ -869,7 +869,7 @@ pub async fn pull_artifacts_data_from_sheet(
 #[tauri::command]
 pub async fn push_to_sheet(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
     scaner_repo: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
@@ -896,15 +896,17 @@ pub async fn push_to_sheet(
         creatures_data: &creatures,
         stats_elements_data: &stat_elements,
     };
-    sheets_connector_repo
+    google_api
         .upload_to_sheet(spreadsheet_id, army_slots, converter)
         .await
-        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
 
     if let Some(artifacts_model) = fight_generator_repo.get_artifacts_model(asset_id).await? {
         let artifacts = scaner_repo.get_artifact_models(GetArtifactsPayload::default()).await?;
         let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
-        sheets_connector_repo.upload_to_sheet(spreadsheet_id, artifacts_model, converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        google_api.upload_to_sheet(spreadsheet_id, artifacts_model, converter)
+            .await
+            .map_err(|e| Error::GoogleApi(Box::new(e)))?;
     }
     Ok(())
 }
@@ -912,7 +914,7 @@ pub async fn push_to_sheet(
 #[tauri::command]
 pub async fn add_artifacts_data_to_asset_sheet(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    sheets_connector_repo: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
     scaner_repo: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
     asset_id: Uuid,
@@ -928,13 +930,15 @@ pub async fn add_artifacts_data_to_asset_sheet(
         .find(|map| (map.id as i32) == asset.mission_id)
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
-    sheets_connector_repo
+    google_api
         .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetId": asset.sheet_id.unwrap()}))
         .await
-        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
     let updated_asset = fight_generator_repo.update_artifacts_asset(UpdateArtifactsAssetPayload::new(asset_id).with_sheet(asset.sheet_id.unwrap())).await?;
     let artifacts = scaner_repo.get_artifact_models(GetArtifactsPayload::default()).await?;
     let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
-    sheets_connector_repo.upload_to_sheet(spreadsheet_id, updated_asset.clone(), converter).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    google_api.upload_to_sheet(spreadsheet_id, updated_asset.clone(), converter)
+        .await
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
     Ok(updated_asset)
 }

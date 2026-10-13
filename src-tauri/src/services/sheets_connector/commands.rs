@@ -1,10 +1,10 @@
 use std::sync::LazyLock;
 use chrono::Local;
 use itertools::Itertools;
-use sheets_connector::service::SheetsConnectorService;
 use tauri::State;
 use homm5_scaner::prelude::{ArtifactSlotType, GetArtifactsPayload, ScanerService};
-use sheets_connector::prelude::ValueRange;
+use google_api::prelude::ValueRange;
+use google_api::service::GoogleApiService;
 use crate::error::Error;
 use crate::utils::{LocalAppManager, TimelineMessage};
 
@@ -72,19 +72,19 @@ static ARTIFACT_SLOTS_QUEUE: LazyLock<Vec<ArtifactSlotType>> = LazyLock::new(|| 
 
 #[tauri::command]
 pub async fn upload_to_sheets(
-    sheets_connector: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
 ) -> Result<(), Error> {
-    let _data = sheets_connector
+    let _data = google_api
         .convert_xlsx("D:\\2.xlsx")
         .await
-        .map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
     // sheets_connector.upload_to_sheets(data).await?;
     Ok(())
 }
 
 #[tauri::command]
 pub async fn generate_validation_data(
-    sheets_connector: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
 ) -> Result<TimelineMessage, Error> {
@@ -140,7 +140,7 @@ pub async fn generate_validation_data(
         .ok_or(Error::UndefinedData(String::from("Current map")))?
         .fights_spreadsheet_id;
     
-    sheets_connector.upload_validation_data(spreadsheet_id, output).await.map_err(Box::new)?;
+    google_api.upload_validation_data(spreadsheet_id, output).await.map_err(Box::new)?;
     
     Ok(TimelineMessage {
         timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),

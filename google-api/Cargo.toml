@@ -1,0 +1,15 @@
+[package]
+name = "google-api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+calamine = "0.36.1"
+google-sheets4 = "7.0.0+20251215"
+reqwest = { version = "0.13.5", features = ["json"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", features = ["raw_value"] }
+thiserror = "2.0.21"
+tokio = "1.53.2"
+google-docs1 = "7.0.0+20251215"
+yup-oauth2 = "12.1.2"

@@ -4,9 +4,8 @@ use chrono::Local;
 use homm5_scaner::prelude::{CreatureDBModel, GetArtifactsPayload, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, TownExtended, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use quick_xml::{Writer, events::{BytesDecl, Event}};
-use sheets_connector::service::SheetsConnectorService;
 use tauri::State;
-
+use google_api::service::GoogleApiService;
 use crate::{error::Error, utils::{LocalAppManager, TimelineMessage}};
 use crate::services::artifact_editor::utils::{pull_artifacts, sync_artifacts};
 use crate::services::creature_editor::utils::{pull_creatures, sync_creatures};
@@ -414,15 +413,19 @@ pub async fn rebuild_creatures_shared_group(
 
 #[tauri::command]
 pub async fn test_creature_sync(
-    sheets_connector: State<'_, SheetsConnectorService>,
+    google_api: State<'_, GoogleApiService>,
     scaner_service: State<'_, ScanerService>
 ) -> Result<(), Error> {
     // pull_creatures(&sheets_connector).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
     // let test_creatures = scaner_service.get_creature_models().await?;
     // sync_creatures(&sheets_connector, test_creatures).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
-    let test_artifacts = scaner_service.get_artifact_models(GetArtifactsPayload {
-        is_generatable: Some(true),
-    }).await?;
-    pull_artifacts(&sheets_connector).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    // let test_artifacts = scaner_service.get_artifact_models(GetArtifactsPayload {
+    //     is_generatable: Some(true),
+    // }).await?;
+    // pull_artifacts(&google_api).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
+    google_api
+        .create_document_tab("1_6eKhhqRKwMpbuiDyswvnL4JYc9aJETvYzoNfBj54Ns", "test_tab", "Test tab")
+        .await
+        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
     Ok(())
 }

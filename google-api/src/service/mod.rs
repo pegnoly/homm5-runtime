@@ -1,21 +1,25 @@
 use std::{fmt::Debug, path::{Path, PathBuf}};
-
 use crate::{error::Error, service::types::SheetCreationResponse, utils::*};
 use calamine::{Reader, Xlsx, open_workbook};
+use google_docs1::api::{AddDocumentTabRequest, BatchUpdateDocumentRequest, Request, TabProperties};
+use google_docs1::{Docs, yup_oauth2};
+use google_docs1::hyper_rustls::HttpsConnectorBuilder;
+use google_docs1::hyper_util::client::legacy::Client;
+use google_docs1::hyper_util::rt::TokioExecutor;
 use google_sheets4::{
     Sheets,
-    api::{DimensionProperties, RowData, ValueRange},
-    hyper_rustls::{self, HttpsConnector},
-    hyper_util::{self, client::legacy::connect::HttpConnector},
-    yup_oauth2,
+    api::{DimensionProperties, RowData, ValueRange}
 };
 use google_sheets4::api::BatchUpdateValuesRequest;
+use google_sheets4::hyper_rustls::HttpsConnector;
+use google_sheets4::hyper_util::client::legacy::connect::HttpConnector;
 use serde::{Deserialize, Serialize};
 
 mod types;
 
-pub struct SheetsConnectorService {
+pub struct GoogleApiService {
     sheets_hub: tokio::sync::Mutex<Sheets<HttpsConnector<HttpConnector>>>,
+    docs_hub: tokio::sync::Mutex<Docs<HttpsConnector<HttpConnector>>>,
     reqwest_client: reqwest::Client,
 }
 
@@ -37,31 +41,33 @@ pub type SheetId = i32;
 
 const APP_SCRIPT_URL: &str = "https://script.google.com/macros/s/AKfycbzZn1Un3oVkQKpkuasn_Zk8P16OzX3IN8BzjcDgH6-eb2cJREvJ21ePI7RHfws4WF2qmA/exec";
 
-impl SheetsConnectorService {
+impl GoogleApiService {
     pub async fn new(client_secret_path: &PathBuf) -> Result<Self, Error> {
         let secret = yup_oauth2::read_application_secret(client_secret_path).await?;
-        let auth = yup_oauth2::InstalledFlowAuthenticator::builder(
-            secret,
-            yup_oauth2::InstalledFlowReturnMethod::HTTPRedirect,
-        )
-        .persist_tokens_to_disk(
-            client_secret_path.parent().unwrap().join("token.json")
-        )
-        .build()
-        .await?;
+        let connector = HttpsConnectorBuilder::new()
+            .with_native_roots()?  // or .with_webpki_roots()
+            .https_or_http()        // Allows both HTTP and HTTPS
+            .enable_http1()
+            .build();
+        let executor = TokioExecutor::new();
+        let client = Client::builder(executor.clone())
+            .build(connector.clone());
+        let auth = yup_oauth2::InstalledFlowAuthenticator::with_client(
+                secret,
+                yup_oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+                yup_oauth2::client::CustomHyperClientBuilder::from(
+                    Client::builder(executor).build(connector),
+                )
+            )
+            .persist_tokens_to_disk(
+                client_secret_path.parent().unwrap().join("token.json")
+            )
+            .build()
+            .await?;
 
-        let client =
-            hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
-                .build(
-                    hyper_rustls::HttpsConnectorBuilder::new()
-                        .with_native_roots()?
-                        .https_or_http()
-                        .enable_http1()
-                        .build(),
-                );
-
-        Ok(SheetsConnectorService {
-            sheets_hub: tokio::sync::Mutex::new(Sheets::new(client, auth)),
+        Ok(GoogleApiService {
+            sheets_hub: tokio::sync::Mutex::new(Sheets::new(client.clone(), auth.clone())),
+            docs_hub: tokio::sync::Mutex::new(Docs::new(client, auth)),
             reqwest_client: reqwest::Client::new(),
         })
     }
@@ -129,7 +135,7 @@ impl SheetsConnectorService {
             .value_input_option("USER_ENTERED")
             .doit()
             .await
-            .map_err(|e| Error::Sheets(Box::new(e)))?;
+            .map_err(|e| Error::Api(Box::new(e)))?;
         Ok(())
     }
 
@@ -153,7 +159,7 @@ impl SheetsConnectorService {
             }, spreadsheet_id)
             .doit()
             .await
-            .map_err(|e| Error::Sheets(Box::new(e)))?;
+            .map_err(|e| Error::Api(Box::new(e)))?;
         
         Ok(())
     }
@@ -174,7 +180,7 @@ impl SheetsConnectorService {
             .get(spreadsheet_id)
             .doit()
             .await
-            .map_err(|e| Error::Sheets(Box::new(e)))?;
+            .map_err(|e| Error::Api(Box::new(e)))?;
         let sheet_name = spreadsheet
             .1
             .sheets
@@ -200,7 +206,7 @@ impl SheetsConnectorService {
             .major_dimension("COLUMNS")
             .doit()
             .await
-            .map_err(|e| Error::Sheets(Box::new(e)))?;
+            .map_err(|e| Error::Api(Box::new(e)))?;
 
         let value = converter.convert_from_sheets_data(data.1)?;
 
@@ -223,7 +229,7 @@ impl SheetsConnectorService {
             .get(spreadsheet_id)
             .doit()
             .await
-            .map_err(|e| Error::Sheets(Box::new(e)))?;
+            .map_err(|e| Error::Api(Box::new(e)))?;
 
         // let sheet_name = spreadsheet
         //     .1
@@ -251,7 +257,7 @@ impl SheetsConnectorService {
             .major_dimension("ROWS")
             .doit()
             .await
-            .map_err(|e| Error::Sheets(Box::new(e)))?;
+            .map_err(|e| Error::Api(Box::new(e)))?;
 
         let value = converter.convert_from_sheets_data(data.1.value_ranges.unwrap())?;
 
@@ -266,7 +272,31 @@ impl SheetsConnectorService {
             .value_input_option("USER_ENTERED")
             .doit()
             .await
-            .map_err(|e| Error::Sheets(Box::new(e)))?;
+            .map_err(|e| Error::Api(Box::new(e)))?;
+        Ok(())
+    }
+
+    pub async fn create_document_tab(&self, document_id: &str, tab_id: &str, tab_name: &str) -> Result<(), Error> {
+        let hub_locked = self.docs_hub.lock().await;
+        hub_locked.documents()
+            .batch_update(BatchUpdateDocumentRequest {
+                requests: Some(vec![
+                    Request {
+                        add_document_tab: Some(AddDocumentTabRequest {
+                            tab_properties: Some(TabProperties {
+                                title: Some(tab_name.to_string()),
+                                ..Default::default()
+                            })
+                        }),
+                        ..Default::default()
+                    }
+                ]),
+                ..Default::default()
+            }, document_id)
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+
         Ok(())
     }
 }

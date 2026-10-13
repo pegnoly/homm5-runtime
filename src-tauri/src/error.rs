@@ -36,7 +36,7 @@ pub enum Error {
     #[error(transparent)]
     Scaner(#[from] homm5_scaner::prelude::ScanerError),
     #[error(transparent)]
-    SheetsConnector(#[from] Box<sheets_connector::error::Error>),
+    GoogleApi(#[from] Box<google_api::error::Error>),
     #[error(transparent)]
     Zip(#[from]zip::result::ZipError),
     #[error(transparent)]

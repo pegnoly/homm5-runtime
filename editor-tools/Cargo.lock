@@ -818,6 +818,7 @@ dependencies = [
  "ordered-float 5.1.0",
  "quick-xml 0.30.0",
  "rc-zip",
+ "restructed",
  "roxmltree",
  "sea-orm",
  "serde",

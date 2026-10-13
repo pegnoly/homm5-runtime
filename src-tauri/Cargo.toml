@@ -24,7 +24,7 @@ homm5-repacker = { path = "../homm5-repacker"}
 map-modifier = { path = "../map-modifier"}
 runtime-main = { path = "../runtime-main"}
 editor-tools = { path = "../editor-tools"}
-sheets-connector = { path = "../sheets-connector"}
+google-api = { path = "../google-api" }
 
 tauri = { version = "2.10.3", features = [] }
 tauri-plugin-shell = "2.3.5"
@@ -43,6 +43,7 @@ quick-xml = {version = "0.39.2", features = ["serde", "serde-types", "serialize"
 sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio"] }
 zip = "0.6.6"
 regex = "1.11.1"
+rustls = "0.23.28"
 
 [profile.dev.package."*"]
 opt-level = 2

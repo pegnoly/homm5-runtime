@@ -3,11 +3,11 @@ use std::vec;
 use homm5_scaner::prelude::{AbilitiesModel, CreatureDBModel, FromSheetsUpdateModel, KnownSpellsModel, MagicElement, MagicElementModel, Mastery, ResourcesModel, SpellWithMasteryModel, TownExtended, UpgradesModel};
 use itertools::Itertools;
 use serde_json::Value;
-use sheets_connector::error::Error;
-use sheets_connector::prelude::ValueRange;
-use sheets_connector::service::SheetsConnectorService;
-use sheets_connector::utils::{FromSheetValueRange, IntoSheetsData};
 use regex::Regex;
+use google_api::error::Error;
+use google_api::prelude::ValueRange;
+use google_api::service::GoogleApiService;
+use google_api::utils::{FromSheetValueRange, IntoSheetsData};
 use crate::services::fight_generator::utils::IntoSheetValidatedValue;
 
 pub struct CreaturesSheetsConverter;
@@ -407,13 +407,13 @@ impl FromSheetValueRange<Vec<ValueRange>> for CreaturesSheetsConverter {
         Ok(result)
     }
 }
-pub async fn sync_creatures(sheets_connector: &SheetsConnectorService, source: Vec<CreatureDBModel>) -> Result<(), Error> {
-    sheets_connector.upload_to_sheet_bulk("1rCt_qVXPhzFHZwgTwk8DnLyCfIOP1JzW7gbZ22AGhwQ", source, CreaturesSheetsConverter{}).await?;
+pub async fn sync_creatures(google_api: &GoogleApiService, source: Vec<CreatureDBModel>) -> Result<(), Error> {
+    google_api.upload_to_sheet_bulk("1rCt_qVXPhzFHZwgTwk8DnLyCfIOP1JzW7gbZ22AGhwQ", source, CreaturesSheetsConverter{}).await?;
     Ok(())
 }
 
-pub async fn pull_creatures(sheets_connector: &SheetsConnectorService) -> Result<(), Error> {
-    let result = sheets_connector.read_many_from_sheet("1rCt_qVXPhzFHZwgTwk8DnLyCfIOP1JzW7gbZ22AGhwQ", vec!["creatures_data!A4:AH4"], CreaturesSheetsConverter{}).await?;
+pub async fn pull_creatures(google_api: &GoogleApiService) -> Result<(), Error> {
+    let result = google_api.read_many_from_sheet("1rCt_qVXPhzFHZwgTwk8DnLyCfIOP1JzW7gbZ22AGhwQ", vec!["creatures_data!A4:AH4"], CreaturesSheetsConverter{}).await?;
     println!("Pull result: {:#?}", result);
     Ok(())
 }

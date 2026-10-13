@@ -9,7 +9,7 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from] std::io::Error),
     #[error(transparent)]
-    Sheets(#[from] Box<google_sheets4::Error>),
+    Api(#[from] Box<google_sheets4::Error>),
     #[error(transparent)]
     TokioTime(#[from] tokio::time::error::Elapsed),
     #[error(transparent)]

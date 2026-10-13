@@ -6,9 +6,11 @@ use editor_tools::prelude::{
 use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, Town, TownExtended};
 use itertools::Itertools;
 use serde_json::Number;
-use sheets_connector::{error::Error, prelude::ValueRange, utils::*};
 use strum::IntoEnumIterator;
 use uuid::Uuid;
+use google_api::prelude::ValueRange;
+use google_api::utils::{FromSheetValueRange, IntoSheetsData};
+use google_api::error::Error;
 
 pub struct SheetToArmyAssetsConverter {
     asset_id: Uuid, // creatures_data: &'a Vec<CreatureDBModel>
@@ -26,7 +28,7 @@ impl FromSheetValueRange<ValueRange> for SheetToArmyAssetsConverter {
     fn convert_from_sheets_data(
         &self,
         values: ValueRange,
-    ) -> Result<Self::Output, sheets_connector::error::Error> {
+    ) -> Result<Self::Output, Error> {
         let mut stacks = vec![];
         if let Some(values) = values.values {
             for (index, data) in values.iter().enumerate() {
@@ -477,7 +479,7 @@ impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
     fn convert_into_sheets_data(
         &self,
         source: Vec<AssetArmySlotModel>,
-    ) -> Result<ValueRange, sheets_connector::error::Error> {
+    ) -> Result<ValueRange, Error> {
         let mut data: Vec<Vec<serde_json::Value>> = vec![];
         for army_slot in &source {
             let mut values = vec![];

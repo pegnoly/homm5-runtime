@@ -2,10 +2,10 @@ use std::str::FromStr;
 use homm5_scaner::prelude::{ArtifactClassType, ArtifactDBModel, ArtifactSlotType, FromSheetArtifactUpdateModel};
 use itertools::Itertools;
 use serde_json::Value;
-use sheets_connector::error::Error;
-use sheets_connector::prelude::ValueRange;
-use sheets_connector::service::SheetsConnectorService;
-use sheets_connector::utils::{FromSheetValueRange, IntoSheetsData};
+use google_api::prelude::ValueRange;
+use google_api::service::GoogleApiService;
+use google_api::utils::{FromSheetValueRange, IntoSheetsData};
+use google_api::error::Error;
 
 pub struct ArtifactsSheetsConverter;
 
@@ -43,7 +43,7 @@ impl IntoSheetsData<Vec<ValueRange>> for ArtifactsSheetsConverter {
 impl FromSheetValueRange<Vec<ValueRange>> for ArtifactsSheetsConverter {
     type Output = Vec<FromSheetArtifactUpdateModel>;
 
-    fn convert_from_sheets_data(&self, values: Vec<ValueRange>) -> Result<Self::Output, Error> {
+    fn convert_from_sheets_data(&self, values: Vec<ValueRange>) -> Result<Self::Output, google_api::error::Error> {
         let mut result = vec![];
         for value in values {
             let data = value.values.and_then(|row| row.first().cloned())
@@ -135,14 +135,14 @@ impl FromSheetValueRange<Vec<ValueRange>> for ArtifactsSheetsConverter {
     }
 }
 
-pub async fn sync_artifacts(sheets_connector: &SheetsConnectorService, models: Vec<ArtifactDBModel>) -> Result<(), Error> {
+pub async fn sync_artifacts(sheets_connector: &GoogleApiService, models: Vec<ArtifactDBModel>) -> Result<(), Error> {
     sheets_connector
         .upload_to_sheet_bulk("1rCt_qVXPhzFHZwgTwk8DnLyCfIOP1JzW7gbZ22AGhwQ", models, ArtifactsSheetsConverter{})
         .await?;
     Ok(())
 }
 
-pub async fn pull_artifacts(sheets_connector: &SheetsConnectorService) -> Result<(), Error> {
+pub async fn pull_artifacts(sheets_connector: &GoogleApiService) -> Result<(), Error> {
     let data = sheets_connector
         .read_many_from_sheet(
             "1rCt_qVXPhzFHZwgTwk8DnLyCfIOP1JzW7gbZ22AGhwQ",
