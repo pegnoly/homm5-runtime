@@ -398,7 +398,9 @@ impl FromSheetValueRange<Vec<ValueRange>> for CreaturesSheetsConverter {
                     };
                     model.is_upgrade = model.base_creature != "CREATURE_UNKNOWN";
                     result.push(model)
-                } else {}
+                } else {
+                    return Err(Error::UndefinedValue("Creature data can't be read from sheet".to_string()));
+                }
             }
         }
 

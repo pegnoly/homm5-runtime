@@ -10,6 +10,8 @@ use crate::core::{ToJsonCompatibleString, ToLua};
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "artifacts")]
+#[derive(restructed::Models)]
+#[view(FromSheetArtifactUpdateModel, omit(unused_data, is_unique), derive(Debug, Clone))]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
