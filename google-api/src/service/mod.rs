@@ -1,7 +1,7 @@
 use std::{fmt::Debug, path::{Path, PathBuf}};
 use crate::{error::Error, service::types::SheetCreationResponse, utils::*};
 use calamine::{Reader, Xlsx, open_workbook};
-use google_docs1::api::{AddDocumentTabRequest, BatchUpdateDocumentRequest, Request, TabProperties};
+use google_docs1::api::{AddDocumentTabRequest, BatchUpdateDocumentRequest, CreateNamedRangeRequest, DeleteContentRangeRequest, InsertTextRequest, Location, Range, ReplaceAllTextRequest, Request, TabProperties};
 use google_docs1::{Docs, yup_oauth2};
 use google_docs1::hyper_rustls::HttpsConnectorBuilder;
 use google_docs1::hyper_util::client::legacy::Client;
@@ -276,9 +276,9 @@ impl GoogleApiService {
         Ok(())
     }
 
-    pub async fn create_document_tab(&self, document_id: &str, tab_id: &str, tab_name: &str) -> Result<(), Error> {
+    pub async fn create_document_tab(&self, document_id: &str, tab_name: &str) -> Result<String, Error> {
         let hub_locked = self.docs_hub.lock().await;
-        hub_locked.documents()
+        let result = hub_locked.documents()
             .batch_update(BatchUpdateDocumentRequest {
                 requests: Some(vec![
                     Request {
@@ -291,6 +291,185 @@ impl GoogleApiService {
                         ..Default::default()
                     }
                 ]),
+                ..Default::default()
+            }, document_id)
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+
+        let replies = result.1.replies.map(|replies| replies.into_iter().filter(|r| r.add_document_tab.is_some()).collect::<Vec<_>>())
+            .unwrap_or_else(Vec::new);
+
+        let id = replies.iter().find(|r| r.add_document_tab.as_ref().unwrap().tab_properties.as_ref().unwrap().title.as_ref().unwrap() == tab_name)
+            .as_ref().unwrap()
+            .add_document_tab
+            .as_ref().unwrap()
+            .tab_properties
+            .as_ref().unwrap()
+            .tab_id
+            .as_ref()
+            .unwrap();
+
+        Ok(id.clone())
+    }
+
+    pub async fn fill_tab_with_text(&self, document_id: &str, tab_id: &str) -> Result<(), Error> {
+        let hub_locked = self.docs_hub.lock().await;
+
+        let data = hub_locked.documents()
+            .get(document_id)
+            .include_tabs_content(true)
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+
+        let tab = data.1.tabs
+            .and_then(|tabs| tabs.iter().find(|tab| tab.tab_properties.as_ref().unwrap().tab_id.as_ref().unwrap() == tab_id).cloned())
+            .ok_or(Error::UndefinedValue("No tab found".to_string()))?;
+
+        let body_content = tab
+            .document_tab.as_ref()
+            .and_then(|dt| dt.body.as_ref())
+            .and_then(|b| b.content.as_ref())
+            .ok_or_else(|| Error::UndefinedValue("No body content".to_string()))?;
+
+        let segment_end = body_content
+            .iter()
+            .filter_map(|e| e.end_index)
+            .max()
+            .ok_or_else(|| Error::UndefinedValue("Empty segment".to_string()))?;
+
+        let mut ranges = body_content
+            .iter()
+            .filter_map(|e| e.paragraph.as_ref())
+            .filter_map(|p| p.elements.as_ref())
+            .flatten()
+            .filter_map(|el| {
+                if el.text_run.is_some() {
+                    Some((el.start_index?, el.end_index?))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        for (_, end) in ranges.iter_mut() {
+            if *end >= segment_end {
+                *end -= 1;
+            }
+        }
+
+        ranges.retain(|(start, end)| start < end);
+        ranges.sort_by(|a, b| b.0.cmp(&a.0));
+
+        let delete_requests= ranges
+            .into_iter()
+            .map(|(start, end)| Request {
+                delete_content_range: Some(DeleteContentRangeRequest {
+                    range: Some(Range {
+                        tab_id: Some(tab_id.to_string()),
+                        start_index: Some(start),
+                        end_index: Some(end),   // <-- без +1
+                        ..Default::default()
+                    }),
+                }),
+                ..Default::default()
+            })
+            .collect();
+
+        hub_locked.documents()
+            .batch_update(BatchUpdateDocumentRequest {
+                requests: Some(delete_requests),
+                ..Default::default()
+            }, document_id)
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+
+        hub_locked.documents()
+            .batch_update(BatchUpdateDocumentRequest {
+                requests: Some(vec![
+                    Request {
+                        insert_text: Some(InsertTextRequest {
+                            text: Some("Тестовый текст".to_string()),
+                            location: Some(Location {
+                                tab_id: Some(tab_id.to_string()),
+                                index: Some(1),
+                                ..Default::default()
+                            }),
+                            ..Default::default()
+                        }),
+                        ..Default::default()
+                    }
+                ]),
+                ..Default::default()
+            }, document_id)
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+
+        Ok(())
+    }
+
+    pub async fn add_named_ranges_to_tab(&self, document_id: &str, tab_id: &str, ranges: Vec<&str>) -> Result<(), Error> {
+        let hub_locked = self.docs_hub.lock().await;
+
+        let data = hub_locked.documents()
+            .get(document_id)
+            .include_tabs_content(true)
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+
+        let tab = data.1.tabs
+            .and_then(|tabs| tabs.iter().find(|tab| tab.tab_properties.as_ref().unwrap().tab_id.as_ref().unwrap() == tab_id).cloned())
+            .ok_or(Error::UndefinedValue("No tab found".to_string()))?;
+
+        let body_content = tab
+            .document_tab.as_ref()
+            .and_then(|dt| dt.body.as_ref())
+            .and_then(|b| b.content.as_ref())
+            .ok_or_else(|| Error::UndefinedValue("No body content".to_string()))?;
+
+        let ranges = body_content
+            .iter()
+            .filter_map(|e| e.paragraph.as_ref())
+            .filter_map(|p| p.elements.as_ref())
+            .flatten()
+            .filter_map(|el| {
+                if let Some(item) = &el.text_run {
+                    let text = item.content.as_ref().unwrap();
+                    if let Some(range) = ranges.iter().find(|r| text.starts_with(**r)) {
+                        Some((el.start_index?, el.start_index? + range.len() as i32))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        println!("Ranges: {:?}", ranges);
+
+        let requests = ranges
+            .iter()
+            .map(|r| Request {
+                create_named_range: Some(CreateNamedRangeRequest {
+                name: Some(format!("Range{}{}", r.0, r.1)),
+                range: Some(Range {
+                    tab_id: Some(tab_id.to_string()),
+                    start_index: Some(r.0),
+                    end_index: Some(r.1),
+                    ..Default::default()
+                })
+            }),
+            ..Default::default() })
+            .collect::<Vec<_>>();
+
+        hub_locked.documents()
+            .batch_update(BatchUpdateDocumentRequest {
+                requests: Some(requests),
                 ..Default::default()
             }, document_id)
             .doit()

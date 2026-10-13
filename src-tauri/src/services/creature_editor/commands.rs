@@ -423,9 +423,18 @@ pub async fn test_creature_sync(
     //     is_generatable: Some(true),
     // }).await?;
     // pull_artifacts(&google_api).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
-    google_api
-        .create_document_tab("1_6eKhhqRKwMpbuiDyswvnL4JYc9aJETvYzoNfBj54Ns", "test_tab", "Test tab")
+    // google_api
+    //     .create_document_tab("1_6eKhhqRKwMpbuiDyswvnL4JYc9aJETvYzoNfBj54Ns", "Test tab")
+    //     .await
+    //     .map_err(|e| Error::GoogleApi(Box::new(e)))?;
+
+    // google_api.fill_tab_with_text("1_6eKhhqRKwMpbuiDyswvnL4JYc9aJETvYzoNfBj54Ns", "t.nhk8t8pqc5zh")
+    //     .await
+    //     .map_err(|e| Error::GoogleApi(Box::new(e)))?;
+
+    google_api.add_named_ranges_to_tab("1_6eKhhqRKwMpbuiDyswvnL4JYc9aJETvYzoNfBj54Ns", "t.nhk8t8pqc5zh", vec!["[main_0]"])
         .await
         .map_err(|e| Error::GoogleApi(Box::new(e)))?;
+
     Ok(())
 }
