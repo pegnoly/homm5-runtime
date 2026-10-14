@@ -4,12 +4,12 @@ import DialogCreator from "./creator";
 import SpeakerCreator from "./speakerCreator";
 import DialogsSelector from "./selector";
 import { Dialog, Speaker } from "../types";
-import { useDialogActions, useDialogs, useSpeakers } from "../store";
+import { DialogGeneratorStore } from "../store";
 
 function DialogGeneratorHeader() {
-    const speakers = useSpeakers();
-    const dialogs = useDialogs();
-    const actions = useDialogActions();
+    const speakers = DialogGeneratorStore.useSpeakers();
+    const dialogs = DialogGeneratorStore.useDialogs();
+    const actions = DialogGeneratorStore.useActions();
 
     async function dialogSelected(value: number) {
         actions.setCurrentDialogId(value);

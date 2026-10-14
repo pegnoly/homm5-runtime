@@ -1,7 +1,6 @@
 import { Button } from "@mantine/core";
 import {
-    useCurrentDialogVariantId,
-    useCurrentDialogVariantSpeakers, useCurrentDialogVariantText, useCurrentVariantSaved, useDialogActions
+    DialogGeneratorStore
 } from "../../store";
 import { useMutation } from "@tanstack/react-query";
 import { DialogGeneratorApi } from "../../api";
@@ -13,15 +12,14 @@ export type SaveDialogVariantPayload = {
 }
 
 function DialogStepSaver() {
-    const variantId = useCurrentDialogVariantId();
-    const speakers = useCurrentDialogVariantSpeakers();
-    const text = useCurrentDialogVariantText();
-    const isSaved = useCurrentVariantSaved();
-    const actions = useDialogActions();
+    const variantId = DialogGeneratorStore.useCurrentVariantId();
+    const speakers = DialogGeneratorStore.useCurrentVariantSpeakers();
+    const text = DialogGeneratorStore.useCurrentVariantText();
+    const isSaved = DialogGeneratorStore.useCurrentVariantSaved();
+    const actions = DialogGeneratorStore.useActions();
 
     const mutation = useMutation({
         mutationFn: async(payload: SaveDialogVariantPayload) => {
-            console.log("Payload: ", payload)
             return DialogGeneratorApi.saveVariant(payload);
         },
         onSuccess(_data, _variables, _context) {
@@ -36,7 +34,7 @@ function DialogStepSaver() {
             onClick={() => mutation.mutate({id: variantId!, speakers: speakers.ids, text: text!})}
             radius={0} 
             size="md"
-        >Save variant</Button>
+        >Сохранить вариант реплики</Button>
     </> 
     )
 }

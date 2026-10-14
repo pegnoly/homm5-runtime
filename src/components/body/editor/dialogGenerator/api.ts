@@ -3,8 +3,8 @@ import { Dialog, DialogSimple, DialogVariant, Speaker } from "./types";
 import { DialogCreationPayload } from "./header/creator";
 import { CreateSpeakerPayload } from "./header/speakerCreator";
 import { GetVariantPayload } from "./body";
-import { UpdateLabelsPayload } from "./body/sidePanel/labels";
 import { SaveDialogVariantPayload } from "./body/sidePanel/save";
+import {UpdateLabelsPayload} from "@/components/body/editor/dialogGenerator/body/sidePanel/update.tsx";
 
 export class DialogGeneratorApi {
     static async loadDialogs(missionId: number): Promise<DialogSimple []> {

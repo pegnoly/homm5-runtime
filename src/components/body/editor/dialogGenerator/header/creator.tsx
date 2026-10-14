@@ -5,7 +5,7 @@ import { useState } from "react";
 import { IconPick } from "@tabler/icons-react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useSpeakers } from "../store";
+import { DialogGeneratorStore } from "../store";
 import { useMutation } from "@tanstack/react-query";
 import { DialogGeneratorApi } from "../api";
 
@@ -19,7 +19,7 @@ export type DialogCreationPayload = {
 function DialogCreator(params: {
     createdCallback: (value: Dialog) => void
 }) {
-    const availableSpeakers = useSpeakers();
+    const availableSpeakers = DialogGeneratorStore.useSpeakers();
 
     const [opened, {open, close}] = useDisclosure(false);
     const [name, setName] = useState<string | undefined>(undefined);
@@ -51,40 +51,40 @@ function DialogCreator(params: {
 
     return (
     <>
-    <Tooltip disabled={availableSpeakers?.length! > 0} label="Can't create dialogs without speakers">
+    <Tooltip disabled={availableSpeakers?.length! > 0} label="Невозможно создать диалог без персонажей">
         <Button disabled={availableSpeakers?.length == 0} onClick={open} size="sm" radius={0}>
-            Create new dialog
+            Создать диалог
         </Button>
     </Tooltip>
     <ModalRoot centered opened={opened} onClose={close}>
         <ModalOverlay/>
         <ModalContent>
             <ModalHeader>
-                <ModalTitle>New dialog creation</ModalTitle>
+                <ModalTitle>Создание диалога</ModalTitle>
                 <ModalCloseButton/>
             </ModalHeader>
             <ModalBody>
                 <Stack>
                     <TextInput
-                        label="Dialog name"
-                        placeholder="Enter name"
+                        label="Имя диалога"
+                        placeholder="Существует только в программе"
                         value={name}
                         onChange={(e) => setName(e.currentTarget.value)}
                     />
                     <TextInput
-                        label="Dialog script name"
-                        placeholder="Enter name"
+                        label="Скриптовое имя диалога"
+                        placeholder="Это имя будет иметь класс диалога в скриптах"
                         value={scriptName}
                         onChange={(e) => setScriptName(e.currentTarget.value)}
                     />
                     <Button onClick={() => pickDirectory()} radius={0} rightSection={<IconPick/>}>
-                        Pick directory
+                        Выбрать папку для генерации диалога
                     </Button>
                     <Tooltip label={directory}>
                         <Text lineClamp={1}>{directory}</Text>
                     </Tooltip>
                     <MultiSelect
-                        label="Dialog speakers"
+                        label="Укажите персонажей"
                         searchable
                         value={speakers.map(s => s.toString())}
                         onChange={(value) => setSpeakers(value.map(v => parseInt(v)))}
@@ -102,7 +102,7 @@ function DialogCreator(params: {
                                 scriptName: scriptName!,
                                 speakers: speakers
                             })}
-                        >Create</Button>
+                        >Создать</Button>
                     </Group>
                 </Stack>
             </ModalBody>

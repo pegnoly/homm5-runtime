@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import styles from '../../styles.module.css';
 import DialogGeneratorHeader from './header';
 import { DialogGeneratorApi } from './api';
-import { useCurrentDialogId, useDialogActions, useSpeakers } from './store';
+import {DialogGeneratorStore} from './store';
 import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Speaker } from './types';
@@ -10,13 +10,13 @@ import DialogGeneratorBody from './body';
 import {useCurrentMapId} from "@/stores/common.ts";
 
 function DialogGeneratorLayout() {
-    const actions = useDialogActions();
-    const speakers = useSpeakers();
-    const dialogId = useCurrentDialogId();
+    const actions = DialogGeneratorStore.useActions();
+    const speakers = DialogGeneratorStore.useSpeakers();
+    const dialogId = DialogGeneratorStore.useCurrentDialogId();
     const currentMapId = useCurrentMapId();
 
     useEffect(() => {
-        loadSpeakers();
+        loadSpeakers().then(() => {});
     }, []);
 
     const loadSpeakers = async() => {
@@ -55,8 +55,8 @@ function useDialog(id: number) {
 }
 
 function DialogLoader() {
-    const actions = useDialogActions();
-    const dialogId = useCurrentDialogId();
+    const actions = DialogGeneratorStore.useActions();
+    const dialogId = DialogGeneratorStore.useCurrentDialogId();
 
     const { data } = useDialog(dialogId!);
     if (data == undefined) {

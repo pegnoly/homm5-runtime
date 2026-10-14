@@ -1,11 +1,11 @@
 import { Button, ButtonGroup, Text } from "@mantine/core";
-import { useCurrentDialogId, useCurrentDialogVariantStep, useCurrentVariantSaved, useDialogActions } from "../../store";
+import {DialogGeneratorStore} from "@/components/body/editor/dialogGenerator/store.ts";
 
 function DialogStepSwitcher() {
-    const dialogId = useCurrentDialogId();
-    const currentStep = useCurrentDialogVariantStep();
-    const isSaved = useCurrentVariantSaved();
-    const actions = useDialogActions();
+    const dialogId = DialogGeneratorStore.useCurrentDialogId();
+    const currentStep = DialogGeneratorStore.useCurrentVariantStep();
+    const isSaved = DialogGeneratorStore.useCurrentVariantSaved();
+    const actions = DialogGeneratorStore.useActions();
 
     async function moveToNextStep() {
         actions.setCurrentVariantLabel("main");
@@ -20,18 +20,18 @@ function DialogStepSwitcher() {
 
     return (
     <>
-        <Text style={{fontWeight: "bold"}}>{`Current step: ${currentStep}`}</Text>
+        <Text style={{fontWeight: "bold", textAlign: 'center'}}>{`Текущая реплика: ${currentStep}`}</Text>
         <ButtonGroup>
             <Button 
                 onClick={moveToPreviousStep} 
                 radius={0} 
                 disabled={currentStep == 0 || dialogId == undefined || !isSaved}
-            >Previous step</Button>
+            >Предыдущая</Button>
             <Button 
                 onClick={moveToNextStep} 
                 radius={0} 
                 disabled={dialogId == undefined || !isSaved}
-            >Next step</Button>
+            >Следующая</Button>
         </ButtonGroup>
     </>
     )

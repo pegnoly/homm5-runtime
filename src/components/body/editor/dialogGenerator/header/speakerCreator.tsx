@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Speaker, SpeakerType } from "../types";
 import { useMutation } from "@tanstack/react-query";
 import { DialogGeneratorApi } from "../api";
-import { useSpeakers } from "../store";
+import { DialogGeneratorStore } from "../store";
 import {useCurrentMapId} from "@/stores/common.ts";
 
 export type CreateSpeakerPayload = {
@@ -18,15 +18,16 @@ export type CreateSpeakerPayload = {
 function SpeakerCreator(params: {
     createdCallback: (value: Speaker) => void
 }) {
+
+    const speakers = DialogGeneratorStore.useSpeakers();
+    const currentMapId = useCurrentMapId();
+
     const [opened, {open, close}] = useDisclosure(false);
     const [name, setName] = useState<string | undefined>(undefined);
     const [scriptName, setScriptName] = useState<string | undefined>(undefined);
     const [type, setType] = useState<SpeakerType | undefined>(undefined);
     const [color, setColor] = useState<string | undefined>(undefined);
     const [isLocalToMap, setIsLocalToMap] = useState<boolean>(false);
-
-    const speakers = useSpeakers();
-    const currentMapId = useCurrentMapId();
     const [useColorFromExistingSpeaker, setUseColorFromExistingSpeaker] = useState<boolean>(false);
 
     const mutation = useMutation({

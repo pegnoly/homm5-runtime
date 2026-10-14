@@ -1,14 +1,14 @@
-import {Button, ButtonGroup, Textarea} from "@mantine/core";
-import { useCurrentDialogVariantText, useDialogActions } from "../store";
-import {useRef, useState} from "react";
+import { ButtonGroup, Textarea, UnstyledButton } from "@mantine/core";
+import { DialogGeneratorStore } from "../store";
+import { useRef, useState } from "react";
 
 function DialogGeneratorTextArea() {
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
     const [_, setCaretPosition] = useState<number>(0);
 
-    const currentVariantText = useCurrentDialogVariantText();
-    const actions = useDialogActions();
+    const currentVariantText = DialogGeneratorStore.useCurrentVariantText();
+    const actions = DialogGeneratorStore.useActions();
 
     const handleCursorUpdate = () => {
         if (textAreaRef.current) {
@@ -31,9 +31,9 @@ function DialogGeneratorTextArea() {
     return (
         <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 0}}>
             <ButtonGroup>
-                <Button radius={0} onClick={() => insertTextAtCaret("<b>", "</b>")}>
+                <UnstyledButton onClick={() => insertTextAtCaret("<b>", "</b>")}>
                     B
-                </Button>
+                </UnstyledButton>
             </ButtonGroup>
             <Textarea
                 ref={textAreaRef}

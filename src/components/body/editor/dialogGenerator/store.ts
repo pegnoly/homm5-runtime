@@ -113,15 +113,17 @@ const dialogGeneratorStore = create<Store>((set) => ({
     }
 }));
 
-export const useDialogActions = () => dialogGeneratorStore(state => state.actions);
-export const useDialogs = () => dialogGeneratorStore(state => state.dialogs);
-export const useSpeakers = () => dialogGeneratorStore(state => state.speakers);
-export const useCurrentDialogId = () => dialogGeneratorStore(state => state.currentDialogId);
-export const useCurrentDialogVariantId = () => dialogGeneratorStore(state => state.currentVariantId);
-export const useCurrentDialogVariantLabel = () => dialogGeneratorStore(state => state.currentVariantLabel);
-export const useCurrentDialogVariantStep = () => dialogGeneratorStore(state => state.currentVariantStep);
-export const useCurrentDialogVariantSpeakers = () => dialogGeneratorStore(state => state.currentVariantSpeakers);
-export const useCurrentDialogVariantText = () => dialogGeneratorStore(state => state.currentVariantText);
-export const useDialogLabels = () => dialogGeneratorStore(state => state.currentDialogLabels);
-export const useDialogSpeakers = () => dialogGeneratorStore(state => state.currentDialogSpeakers);
-export const useCurrentVariantSaved = () => dialogGeneratorStore(state => state.currentVariantSaved)
+export namespace DialogGeneratorStore {
+    export const useActions = () => dialogGeneratorStore(state => state.actions);
+    export const useDialogs = () => dialogGeneratorStore(state => state.dialogs);
+    export const useSpeakers = () => dialogGeneratorStore(state => state.speakers);
+    export const useCurrentDialogId = () => dialogGeneratorStore(state => state.currentDialogId);
+    export const useCurrentVariantId = () => dialogGeneratorStore(state => state.currentVariantId);
+    export const useCurrentVariantLabel = () => dialogGeneratorStore(state => state.currentVariantLabel);
+    export const useCurrentVariantStep = () => dialogGeneratorStore(state => state.currentVariantStep);
+    export const useCurrentVariantSpeakers = () => dialogGeneratorStore(state => state.currentVariantSpeakers);
+    export const useCurrentVariantText = () => dialogGeneratorStore(state => state.currentVariantText);
+    export const useDialogLabels = () => dialogGeneratorStore(state => state.currentDialogLabels);
+    export const useDialogSpeakers = () => dialogGeneratorStore(state => state.currentDialogSpeakers);
+    export const useCurrentVariantSaved = () => dialogGeneratorStore(state => state.currentVariantSaved)
+}
