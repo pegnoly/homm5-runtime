@@ -14,6 +14,7 @@ use tokio::sync::RwLock;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalConfig {
     pub current_profile: String,
+    pub author: String,
     #[serde(skip)]
     pub generic_hero_xdb: PathBuf,
     #[serde(skip)]

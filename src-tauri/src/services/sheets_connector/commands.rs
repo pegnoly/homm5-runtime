@@ -2,7 +2,7 @@ use std::sync::LazyLock;
 use chrono::Local;
 use itertools::Itertools;
 use tauri::State;
-use homm5_scaner::prelude::{ArtifactSlotType, GetArtifactsPayload, ScanerService};
+use homm5_scaner::prelude::{ArtifactSlotType, GetArtifactsRequest, GetCreaturesRequest, ScanerService};
 use google_api::prelude::ValueRange;
 use google_api::service::GoogleApiService;
 use crate::error::Error;
@@ -88,8 +88,8 @@ pub async fn generate_validation_data(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
 ) -> Result<TimelineMessage, Error> {
-    let generatable_creatures = scaner_service.get_creature_models().await?;
-    let artifacts = scaner_service.get_artifact_models(GetArtifactsPayload::default().with_generatable(true)).await?;
+    let generatable_creatures = scaner_service.get_creature_models(GetCreaturesRequest::NonDefault).await?;
+    let artifacts = scaner_service.get_artifact_models(GetArtifactsRequest::IsGeneratable(true)).await?;
     let artifacts = artifacts.iter().filter(|artifact| {
         (artifact.is_generatable || artifact.is_unique) && !artifact.name_txt.is_empty()
     }).collect_vec();

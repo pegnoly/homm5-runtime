@@ -11,6 +11,7 @@ use google_api::service::GoogleApiService;
 use utils::{DataContainer, GlobalConfig, LocalAppManager, ModifiersConfig, RuntimeConfig};
 use crate::commands::{apply_modifications, create_hero, execute_scan, generate_images, load_current_map, load_maps, run_game, select_map, switch_profile};
 use crate::services::creature_editor::commands as creature_editor_commands;
+use crate::services::version_control::VersionControlService;
 
 mod commands;
 pub mod error;
@@ -49,16 +50,15 @@ pub async fn run() -> Result<(), Error> {
         map.xdb = current_profile.game_path.join(map.xdb.clone());
         map.data_path = current_profile.game_path.join(map.data_path.clone());
     }
-
-    println!("Profile data: {:#?}", &current_profile);
-
+    
     let quest_generator_repo = QuestGeneratorRepo::new(pool.clone());
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
     let fight_generator_repo = FightGeneratorRepo::new(pool.clone());
     let reserve_hero_creator_repo = ReserveHeroCreatorRepo::new(pool.clone());
-    let sheets_connector_repo = GoogleApiService::new(&global_config.auth_path)
+    let google_api = GoogleApiService::new(&global_config.auth_path)
         .await
         .unwrap();
+    let version_control = VersionControlService::new(&google_api);
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -78,7 +78,8 @@ pub async fn run() -> Result<(), Error> {
         .manage(reserve_hero_creator_repo)
         .manage(ScanerService::new(pool.clone()))
         .manage(data_container)
-        .manage(sheets_connector_repo)
+        .manage(google_api)
+        .manage(version_control)
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             execute_scan,
@@ -242,8 +243,6 @@ pub async fn run() -> Result<(), Error> {
             creature_editor_commands::update_creature_spell,
             creature_editor_commands::generate_creature_file,
             creature_editor_commands::rebuild_creatures_shared_group,
-
-            creature_editor_commands::test_creature_sync,
             //
             services::artifact_editor::commands::rebuild_artifacts_file,
             services::artifact_editor::commands::update_artefact_attack,

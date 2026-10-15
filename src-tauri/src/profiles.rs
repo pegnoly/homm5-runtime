@@ -2,8 +2,14 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use map_modifier::Map;
 use serde::{Deserialize, Serialize};
-
+use crate::services::version_control::VersionControlContent;
 use crate::utils::RepackerPathsData;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SheetEntity {
+    pub spreadsheet_id: String,
+    pub sheet_id: i32
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProfileConfig {
@@ -12,5 +18,6 @@ pub struct ProfileConfig {
     pub map_path: PathBuf,
     pub texts_path: PathBuf,
     pub repackers: HashMap<String, RepackerPathsData>,
-    pub maps: Vec<Map>
+    pub maps: Vec<Map>,
+    pub global_sheets: HashMap<VersionControlContent, SheetEntity>
 }

@@ -9,3 +9,4 @@ pub mod creature_editor;
 pub mod artifact_editor;
 pub mod spell_editor;
 pub mod map_editor;
+pub mod version_control;
