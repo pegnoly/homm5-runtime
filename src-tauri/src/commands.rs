@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use editor_tools::prelude::{QuestGeneratorRepo, QuestProgressType, ReserveHeroCreatorRepo};
 use homm5_repacker::Repacker;
-use homm5_scaner::prelude::{GetArtifactsPayload, ScanerService, Town};
+use homm5_scaner::prelude::{GetArtifactsRequest, GetCreaturesRequest, ScanerService, Town};
 use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
@@ -223,8 +223,8 @@ pub async fn switch_profile(
 pub async fn generate_images(
     scaner_service: State<'_, ScanerService>
 ) -> Result<(), Error> {
-    let creatures = scaner_service.get_all_creature_models().await?;
-    let artifacts = scaner_service.get_artifact_models(GetArtifactsPayload::default()).await?;
+    let creatures = scaner_service.get_creature_models(GetCreaturesRequest::Any).await?;
+    let artifacts = scaner_service.get_artifact_models(GetArtifactsRequest::Any).await?;
     let spells = scaner_service.get_all_spells().await?;
     let skills = scaner_service.get_all_skills().await?;
     let exe_path = std::env::current_exe()?;

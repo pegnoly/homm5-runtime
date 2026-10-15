@@ -2,12 +2,10 @@ use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter, QuerySelect, SqlxSqlitePoolConnection, prelude::Expr, sea_query::{IntoCondition, SimpleExpr}, sqlx::SqlitePool
 };
 use std::{collections::HashMap, path::PathBuf};
-
 use crate::{
     core::ScanProcessor, error::ScanerError, pak::{self, EXTENSIONS, FileStructure}, payloads::UpdateCreaturePayload, prelude::{
-        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreateSpellPayload, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, GetArtifactsPayload, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, ResourcesModel, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellActiveModel, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellFormulaModel, SpellUnusedDataModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpdateArtifactPayload, UpdateSpellPayload, UpgradesModel
+        AbilitiesModel, AbilityDBColumn, AbilityDBEntity, AbilityDBModel, AbilityDataOutput, AbilityFileCollector, AbilityScaner, ArtifactDBColumn, ArtifactDBEntity, ArtifactDBModel, BASE_SKILLS, CreateSpellPayload, CreatureDBColumn, CreatureDBEntity, CreatureDBModel, DwellingDataOutput, DwellingScaner, DwellingsFileCollector, HeroClassDataOutput, HeroClassFileCollector, HeroClassScaner, HeroDBColumn, HeroDBEntity, HeroDBModel, KnownSpellsModel, MagicSchoolType, Mastery, ResourcesModel, SkillDBColumn, SkillDBEntity, SkillDBModel, SkillDataOutput, SkillFileCollector, SkillScaner, SpellActiveModel, SpellDBColumn, SpellDBEntity, SpellDBModel, SpellFormulaModel, SpellUnusedDataModel, SpellWithMasteryModel, Town, TypesXmlScaner, UpdateArtifactPayload, UpdateSpellPayload, UpgradesModel
     }, scaners::{
-        self,
         prelude::{
             ArtFileCollector, ArtScaner, ArtifactDataOutput, CreatureDataOutput,
             CreatureFilesCollector, CreatureScaner, HeroDataOutput, HeroFilesCollector, HeroScaner,
@@ -15,6 +13,7 @@ use crate::{
         },
     }
 };
+use crate::payloads::{GetArtifactsRequest, GetCreaturesRequest};
 use crate::prelude::TownExtended;
 
 pub struct ScanerService {
@@ -160,28 +159,36 @@ impl ScanerService {
         Ok(heroes)
     }
 
-    pub async fn get_artifact_models(&self, payload: GetArtifactsPayload) -> Result<Vec<ArtifactDBModel>, ScanerError> {
+    pub async fn get_artifact_models(&self, request: GetArtifactsRequest<'_>) -> Result<Vec<ArtifactDBModel>, ScanerError> {
         let condition = Condition::all()
-            .add_option(payload.is_generatable.map(|is_generatable| Expr::col(ArtifactDBColumn::IsGeneratable).eq(is_generatable)));
+            .add_option(match request {
+                GetArtifactsRequest::Any => None,
+                GetArtifactsRequest::IsGeneratable(b) => Some(Expr::col(ArtifactDBColumn::IsGeneratable).eq(b)),
+                GetArtifactsRequest::OfIds(ids) => Some(Expr::col(ArtifactDBColumn::Id).is_in(ids.clone()))
+            });
         Ok(ArtifactDBEntity::find()
             .filter(condition)
             .all(&self.db)
             .await?)
     }
 
-    pub async fn get_creature_models(&self) -> Result<Vec<CreatureDBModel>, ScanerError> {
+    pub async fn get_creature_models(&self, request: GetCreaturesRequest<'_>) -> Result<Vec<CreatureDBModel>, ScanerError> {
+        let condition = Condition::all()
+            .add_option(match request {
+                GetCreaturesRequest::Any => None,
+                GetCreaturesRequest::NonDefault => Some(
+                    Expr::col(CreatureDBColumn::Initiative).between(2, 30)
+                        .and(Expr::col(CreatureDBColumn::Speed).between(2, 30))
+                        .and(Expr::col(CreatureDBColumn::Power).between(2, 100000))
+                    ),
+                GetCreaturesRequest::OfIds(ids) => Some(CreatureDBColumn::Id.is_in(ids.clone()))
+            });
         Ok(CreatureDBEntity::find()
-            .filter(CreatureDBColumn::Initiative.between(2, 30))
-            .filter(CreatureDBColumn::Speed.between(2, 30))
-            .filter(CreatureDBColumn::Power.between(2, 100000))
+            .filter(condition)
             .all(&self.db)
             .await?)
     }
-
-    pub async fn get_all_creature_models(&self) -> Result<Vec<CreatureDBModel>, ScanerError> {
-        Ok(CreatureDBEntity::find().all(&self.db).await?)
-    }
-
+    
     pub async fn get_average_counts_for_power(
         &self,
         power: i32,

@@ -182,16 +182,16 @@ impl UpdateCreaturePayload {
     }
 }
 
-#[derive(Default)]
-pub struct GetArtifactsPayload {
-    pub is_generatable: Option<bool>
+pub enum GetArtifactsRequest<'a> {
+    Any,
+    IsGeneratable(bool),
+    OfIds(&'a Vec<i32>)
 }
 
-impl GetArtifactsPayload {
-    pub fn with_generatable(mut self, is_generatable: bool) -> Self {
-        self.is_generatable = Some(is_generatable);
-        self
-    } 
+pub enum GetCreaturesRequest<'a> {
+    Any,
+    NonDefault,
+    OfIds(&'a Vec<i32>)
 }
 
 #[derive(Debug, Default)]

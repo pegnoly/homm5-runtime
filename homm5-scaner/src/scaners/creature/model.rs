@@ -15,7 +15,7 @@ use crate::{
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "creatures")]
 #[derive(restructed::Models)]
-#[view(FromSheetsUpdateModel, omit(game_id, xdb, unused_data), derive(Debug, Clone))]
+#[view(FromSheetsCreatureUpdateModel, omit(game_id, xdb, unused_data), derive(Debug, Clone))]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,

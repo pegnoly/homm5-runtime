@@ -1,14 +1,12 @@
 use std::io::Write;
 
 use chrono::Local;
-use homm5_scaner::prelude::{CreatureDBModel, GetArtifactsPayload, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, TownExtended, UpdateCreaturePayload};
+use homm5_scaner::prelude::{CreatureDBModel, GetCreaturesRequest, MagicElementModel, Mastery, ResourcesModel, ScanerService, SpellWithMasteryModel, Town, TownExtended, UpdateCreaturePayload};
 use homm5_types::creature::AdvMapCreatureShared;
 use quick_xml::{Writer, events::{BytesDecl, Event}};
 use tauri::State;
-use google_api::service::GoogleApiService;
 use crate::{error::Error, utils::{LocalAppManager, TimelineMessage}};
-use crate::services::artifact_editor::utils::{pull_artifacts, sync_artifacts};
-use crate::services::creature_editor::utils::{pull_creatures, sync_creatures};
+use crate::services::version_control::VersionControlService;
 
 #[tauri::command]
 pub async fn load_creature(
@@ -21,273 +19,332 @@ pub async fn load_creature(
 #[tauri::command]
 pub async fn update_creature_attack(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_attack(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_defence(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_defence(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_min_damage(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_min_damage(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_max_damage(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_max_damage(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_initiative(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_initiative(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_speed(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_speed(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_health(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_health(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_exp(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_exp(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_tier(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_tier(value)).await?)
 }
-
 
 #[tauri::command]
 pub async fn update_creature_power(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_power(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_grow(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_health(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_size(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_size(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_range(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_range(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_shots(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: i32
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_shots(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_base_creature(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: String
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_base_creature(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_pair_creature(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: String
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_pair_creature(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_upgrades(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: Vec<String>
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_upgrades(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_abilities(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: Vec<String>
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_abilities(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_magic_element(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: MagicElementModel
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_magic_element(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_cost(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: ResourcesModel
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_cost(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_is_generatable(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: bool
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_generatable(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_is_upgrade(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: bool
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_upgrade(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_is_flying(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: bool
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_flying(value)).await?)
 }
 
 #[tauri::command]
 pub async fn remove_creature_spell(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: String
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.remove_creature_spell(id, value).await?)
 }
 
 #[tauri::command]
 pub async fn add_creature_spell(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     spell: String,
     mastery: Mastery
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.add_creature_spell(id, spell, mastery).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_spell(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     curr_spell: String,
     new_spell: SpellWithMasteryModel
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature_spell(id, curr_spell, new_spell).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_town(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: Town,
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_town(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_town_extended(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: TownExtended
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_town_extended(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_name(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: String
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_name(value)).await?)
 }
 
 #[tauri::command]
 pub async fn update_creature_desc(
     scaner_service: State<'_, ScanerService>,
+    version_control: State<'_, VersionControlService>,
     id: i32,
     value: String
 ) -> Result<(), Error> {
+    version_control.updated_creatures.insert(id);
     Ok(scaner_service.update_creature(UpdateCreaturePayload::new(id).with_desc(value)).await?)
 }
 
@@ -355,7 +412,7 @@ pub async fn rebuild_creatures_shared_group(
     app_manager: State<'_, LocalAppManager>,
     scaner_service: State<'_, ScanerService>
 ) -> Result<TimelineMessage, Error> {
-    let creatures = scaner_service.get_all_creature_models().await?;
+    let creatures = scaner_service.get_creature_models(GetCreaturesRequest::Any).await?;
     let generatable_creatures = creatures.into_iter()
         .filter(|c| {
             c.is_generatable && !c.shared.is_empty()
@@ -409,32 +466,4 @@ pub async fn rebuild_creatures_shared_group(
         timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
         message: "Creatures AdvMapSharedGroup regenerated".to_string(),
     })
-}
-
-#[tauri::command]
-pub async fn test_creature_sync(
-    google_api: State<'_, GoogleApiService>,
-    scaner_service: State<'_, ScanerService>
-) -> Result<(), Error> {
-    // pull_creatures(&sheets_connector).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
-    // let test_creatures = scaner_service.get_creature_models().await?;
-    // sync_creatures(&sheets_connector, test_creatures).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
-    // let test_artifacts = scaner_service.get_artifact_models(GetArtifactsPayload {
-    //     is_generatable: Some(true),
-    // }).await?;
-    // pull_artifacts(&google_api).await.map_err(|e| Error::SheetsConnector(Box::new(e)))?;
-    // google_api
-    //     .create_document_tab("1_6eKhhqRKwMpbuiDyswvnL4JYc9aJETvYzoNfBj54Ns", "Test tab")
-    //     .await
-    //     .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-
-    // google_api.fill_tab_with_text("1_6eKhhqRKwMpbuiDyswvnL4JYc9aJETvYzoNfBj54Ns", "t.nhk8t8pqc5zh")
-    //     .await
-    //     .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-
-    google_api.add_named_ranges_to_tab("1_6eKhhqRKwMpbuiDyswvnL4JYc9aJETvYzoNfBj54Ns", "t.nhk8t8pqc5zh", vec!["[main_0]"])
-        .await
-        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-
-    Ok(())
 }
