@@ -18,4 +18,6 @@ pub enum Error {
     UndefinedValue(String),
     #[error(transparent)]
     ParseInt(#[from] std::num::ParseIntError),
+    #[error("Conversion of {0} type was failed")]
+    ConversionError(String),
 }

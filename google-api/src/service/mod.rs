@@ -1,7 +1,7 @@
 use std::{fmt::Debug, path::{Path, PathBuf}};
-use crate::{error::Error, service::types::SheetCreationResponse, utils::*};
+use crate::{error::Error, service::types::SheetCreationResponse};
 use calamine::{Reader, Xlsx, open_workbook};
-use google_docs1::api::{AddDocumentTabRequest, BatchUpdateDocumentRequest, CreateNamedRangeRequest, DeleteContentRangeRequest, InsertTextRequest, Location, Range, ReplaceAllTextRequest, Request, TabProperties};
+use google_docs1::api::{AddDocumentTabRequest, BatchUpdateDocumentRequest, CreateNamedRangeRequest, DeleteContentRangeRequest, InsertTextRequest, Location, Range, Request, TabProperties};
 use google_docs1::{Docs, yup_oauth2};
 use google_docs1::hyper_rustls::HttpsConnectorBuilder;
 use google_docs1::hyper_util::client::legacy::Client;
@@ -10,7 +10,7 @@ use google_sheets4::{
     Sheets,
     api::{DimensionProperties, RowData, ValueRange}
 };
-use google_sheets4::api::BatchUpdateValuesRequest;
+use google_sheets4::api::{BatchUpdateValuesRequest, Spreadsheet};
 use google_sheets4::hyper_rustls::HttpsConnector;
 use google_sheets4::hyper_util::client::legacy::connect::HttpConnector;
 use serde::{Deserialize, Serialize};
@@ -72,6 +72,55 @@ impl GoogleApiService {
         })
     }
 
+    async fn single_update(&self, spreadsheet_id: &str, values: ValueRange) -> Result<(), Error> {
+        let hub_locked = self.sheets_hub.lock().await;
+        hub_locked
+            .spreadsheets()
+            .values_update(values.clone(), spreadsheet_id, &values.range.unwrap())
+            .value_input_option("USER_ENTERED")
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+        Ok(())
+    }
+
+    async fn bulk_update(&self, spreadsheet_id: &str, values: Vec<ValueRange>) -> Result<(), Error> {
+        let hub_locked = self.sheets_hub.lock().await;
+        hub_locked
+            .spreadsheets()
+            .values_batch_update(BatchUpdateValuesRequest {
+                data: Some(values),
+                value_input_option: Some("USER_ENTERED".to_string()),
+                ..Default::default()
+            }, spreadsheet_id)
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+        Ok(())
+    }
+
+    async fn get_sheet_name(&self, spreadsheet: &Spreadsheet, sheet_id: i32) -> Result<String, Error> {
+        let sheet_name = spreadsheet
+            .sheets
+            .as_ref()
+            .and_then(|sheets| {
+                sheets.iter().find(|sheet| {
+                    sheet
+                        .properties
+                        .as_ref()
+                        .and_then(|props| props.sheet_id)
+                        .is_some_and(|id| id == sheet_id)
+                })
+            })
+            .and_then(|sheet| sheet.properties.as_ref())
+            .and_then(|properties| properties.title.as_ref())
+            .ok_or(Error::UndefinedValue(
+                "read_from_sheet Sheet name".to_string(),
+            ))?;
+
+        Ok(sheet_name.clone())
+    }
+
     pub async fn convert_xlsx<T: AsRef<Path>>(&self, path: T) -> Result<Vec<Vec<String>>, Error> {
         let mut xlsx: Xlsx<_> = open_workbook(path)?;
         let mut data = vec![];
@@ -118,87 +167,39 @@ impl GoogleApiService {
         Ok(())
     }
 
-    pub async fn upload_to_sheet<C, I>(
+    pub async fn upload_to_sheet(
         &self,
         spreadsheet_id: &str,
-        input: I,
-        converter: C,
-    ) -> Result<(), Error>
-    where
-        C: IntoSheetsData<ValueRange, Input = I>,
-    {
-        let values = converter.convert_into_sheets_data(input)?;
-        let hub_locked = self.sheets_hub.lock().await;
-        hub_locked
-            .spreadsheets()
-            .values_update(values.clone(), spreadsheet_id, &values.range.unwrap())
-            .value_input_option("USER_ENTERED")
-            .doit()
-            .await
-            .map_err(|e| Error::Api(Box::new(e)))?;
+        values: ValueRange
+    ) -> Result<(), Error> {
+        self.single_update(spreadsheet_id, values).await?;
         Ok(())
     }
 
-    pub async fn upload_to_sheet_bulk<C, I>(
+    pub async fn upload_to_sheet_bulk(
         &self,
         spreadsheet_id: &str,
-        input: I,
-        converter: C,
-    ) -> Result<(), Error>
-    where
-        C: IntoSheetsData<Vec<ValueRange>, Input = I> {
-
-        let data = converter.convert_into_sheets_data(input)?;
-        let hub_locked = self.sheets_hub.lock().await;
-        hub_locked
-            .spreadsheets()
-            .values_batch_update(BatchUpdateValuesRequest {
-                data: Some(data),
-                value_input_option: Some("USER_ENTERED".to_string()),
-                ..Default::default()
-            }, spreadsheet_id)
-            .doit()
-            .await
-            .map_err(|e| Error::Api(Box::new(e)))?;
-        
+        values: Vec<ValueRange>,
+    ) -> Result<(), Error> {
+        self.bulk_update(spreadsheet_id, values).await?;
         Ok(())
     }
 
-    pub async fn read_from_sheet<T, V>(
+    pub async fn read_from_sheet(
         &self,
         spreadsheet_id: &str,
         sheet_id: i32,
-        range: &str,
-        converter: T,
-    ) -> Result<V, Error>
-    where
-        T: FromSheetValueRange<ValueRange, Output = V>,
-    {
+        range: &str
+    ) -> Result<ValueRange, Error> {
         let hub_locked = self.sheets_hub.lock().await;
-        let spreadsheet = hub_locked
+        let response = hub_locked
             .spreadsheets()
             .get(spreadsheet_id)
             .doit()
             .await
             .map_err(|e| Error::Api(Box::new(e)))?;
-        let sheet_name = spreadsheet
-            .1
-            .sheets
-            .as_ref()
-            .and_then(|sheets| {
-                sheets.iter().find(|sheet| {
-                    sheet
-                        .properties
-                        .as_ref()
-                        .and_then(|props| props.sheet_id)
-                        .is_some_and(|id| id == sheet_id)
-                })
-            })
-            .and_then(|sheet| sheet.properties.as_ref())
-            .and_then(|properties| properties.title.as_ref())
-            .ok_or(Error::UndefinedValue(
-                "read_from_sheet Sheet name".to_string(),
-            ))?;
+
+        let sheet_name = self.get_sheet_name(&response.1, sheet_id).await?;
 
         let data = hub_locked
             .spreadsheets()
@@ -208,71 +209,39 @@ impl GoogleApiService {
             .await
             .map_err(|e| Error::Api(Box::new(e)))?;
 
-        let value = converter.convert_from_sheets_data(data.1)?;
-
-        Ok(value)
+        Ok(data.1)
     }
 
-    pub async fn read_many_from_sheet<T, V>(
+    pub async fn read_many_from_sheet(
         &self,
         spreadsheet_id: &str,
-        // sheet_id: i32,
+        sheet_id: i32,
         ranges: Vec<&str>,
-        converter: T,
-    ) -> Result<V, Error>
-    where
-        T: FromSheetValueRange<Vec<ValueRange>, Output = V> {
-
+    ) -> Result<Option<Vec<ValueRange>>, Error> {
         let hub_locked = self.sheets_hub.lock().await;
-        let spreadsheet = hub_locked
+        let response = hub_locked
             .spreadsheets()
             .get(spreadsheet_id)
             .doit()
             .await
             .map_err(|e| Error::Api(Box::new(e)))?;
 
-        // let sheet_name = spreadsheet
-        //     .1
-        //     .sheets
-        //     .as_ref()
-        //     .and_then(|sheets| {
-        //         sheets.iter().find(|sheet| {
-        //             sheet
-        //                 .properties
-        //                 .as_ref()
-        //                 .and_then(|props| props.sheet_id)
-        //                 .is_some_and(|id| id == sheet_id)
-        //         })
-        //     })
-        //     .and_then(|sheet| sheet.properties.as_ref())
-        //     .and_then(|properties| properties.title.as_ref())
-        //     .ok_or(Error::UndefinedValue(
-        //         "read_from_sheet Sheet name".to_string(),
-        //     ))?;
+        let sheet_name = self.get_sheet_name(&response.1, sheet_id).await?;
 
         let data = hub_locked
             .spreadsheets()
             .values_batch_get(spreadsheet_id)
-            .add_ranges(&ranges.join(","))
+            .add_ranges(&ranges.iter().map(|r| format!("{sheet_name}!{r}")).collect::<Vec<_>>().join(","))
             .major_dimension("ROWS")
             .doit()
             .await
             .map_err(|e| Error::Api(Box::new(e)))?;
 
-        let value = converter.convert_from_sheets_data(data.1.value_ranges.unwrap())?;
-
-        Ok(value)
+        Ok(data.1.value_ranges)
     }
 
     pub async fn upload_validation_data(&self, spreadsheet_id: &str, data: ValueRange) -> Result<(), Error> {
-        let hub_locked = self.sheets_hub.lock().await;
-        hub_locked
-            .spreadsheets()
-            .values_update(data.clone(), spreadsheet_id, &data.range.unwrap())
-            .value_input_option("USER_ENTERED")
-            .doit()
-            .await
-            .map_err(|e| Error::Api(Box::new(e)))?;
+        self.single_update(spreadsheet_id, data).await?;
         Ok(())
     }
 
