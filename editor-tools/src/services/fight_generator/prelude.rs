@@ -1,6 +1,6 @@
 pub use super::payloads::*;
 pub use super::{
-    models::common::{AssetGenerationType, DifficultyType},
+    models::common::{AssetUpdateType, DifficultyType},
     models::prelude::*,
     repo::FightGeneratorRepo,
 };

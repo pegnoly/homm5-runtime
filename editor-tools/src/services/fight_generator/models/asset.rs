@@ -5,12 +5,11 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "fight_assets")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: Uuid,
+    pub id: i32,
     pub mission_id: i32,
     pub name: String,
     pub path_to_generate: String,
-    pub table_name: String,
-    pub sheet_id: Option<i32>,
+    pub table_name: String // same as sheet name
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

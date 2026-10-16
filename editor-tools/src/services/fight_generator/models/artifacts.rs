@@ -3,20 +3,19 @@ use sea_orm::{FromJsonQueryResult, Iterable, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, str};
 
-use super::common::{AssetGenerationType, DifficultyMappedValue};
+use super::common::{ AssetUpdateType, DifficultyMappedValue };
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "generated_artifacts")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub asset_id: Uuid,
-    pub generation_type: AssetGenerationType,
+    pub asset_id: i32,
+    pub update_type: AssetUpdateType,
     pub base_powers: DifficultyMappedValue,
     pub powers_grow: DifficultyMappedValue,
     pub required: RequiredArtifacts,
-    pub optional: OptionalArtifacts,
-    pub sheet_id: Option<i32>,
+    pub optional: OptionalArtifacts
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]

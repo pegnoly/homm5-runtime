@@ -51,15 +51,57 @@ pub enum DifficultyType {
     Display,
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
-pub enum AssetGenerationType {
-    #[sea_orm(string_value = "GENERATION_TYPE_STATIC")]
-    #[serde(rename = "GENERATION_TYPE_STATIC")]
-    #[strum(serialize = "GENERATION_TYPE_STATIC")]
+pub enum AssetUpdateType {
+    #[sea_orm(string_value = "STATIC")]
+    #[serde(rename = "STATIC")]
+    #[strum(serialize = "STATIC")]
     Static,
-    #[sea_orm(string_value = "GENERATION_TYPE_DYNAMIC")]
-    #[serde(rename = "GENERATION_TYPE_DYNAMIC")]
-    #[strum(serialize = "GENERATION_TYPE_DYNAMIC")]
+    #[sea_orm(string_value = "DYNAMIC")]
+    #[serde(rename = "DYNAMIC")]
+    #[strum(serialize = "DYNAMIC")]
     Dynamic,
+}
+
+#[derive(
+    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize,
+)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum StatParam {
+    #[sea_orm(string_value = "INITIATIVE")]
+    #[serde(rename = "INITIATIVE")]
+    #[strum(serialize = "INITIATIVE")]
+    Initiative,
+    #[sea_orm(string_value = "SPEED")]
+    #[serde(rename = "SPEED")]
+    #[strum(serialize = "SPEED")]
+    Speed,
+    #[sea_orm(string_value = "HITPOINTS")]
+    #[serde(rename = "HITPOINTS")]
+    #[strum(serialize = "HITPOINTS")]
+    Hitpoints,
+    #[sea_orm(string_value = "ATTACK")]
+    #[serde(rename = "ATTACK")]
+    #[strum(serialize = "ATTACK")]
+    Attack,
+    #[sea_orm(string_value = "DEFENCE")]
+    #[serde(rename = "DEFENCE")]
+    #[strum(serialize = "DEFENCE")]
+    Defence,
+}
+
+#[derive(
+    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize,
+)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+pub enum StatSelectionRule {
+    #[sea_orm(string_value = "MAXBY")]
+    #[serde(rename = "MAXBY")]
+    #[strum(serialize = "MAXBY")]
+    MaxBy,
+    #[sea_orm(string_value = "MINBY")]
+    #[serde(rename = "MINBY")]
+    #[strum(serialize = "MINBY")]
+    MinBy,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]

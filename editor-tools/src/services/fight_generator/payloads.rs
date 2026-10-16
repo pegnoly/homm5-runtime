@@ -1,47 +1,34 @@
 use homm5_scaner::prelude::{ArtifactSlotType, TownExtended};
-use sea_orm::prelude::Uuid;
-
-use crate::prelude::{DifficultyMappedValue, OptionalArtifacts, RequiredArtifacts};
-
-use super::{
-    models::{
-        army_slot::{
-            ArmyGenerationRuleParam, ArmySlotStackCountGenerationMode,
-            ArmySlotStackUnitGenerationMode,
-        },
-        common::AssetGenerationType,
-        stat_generation::{ArmyGenerationStatParam, ArmyGenerationStatRule},
-    },
-    prelude::DifficultyType,
-};
+use crate::prelude::{DifficultyMappedValue, OptionalArtifacts, RequiredArtifacts, StackGenerationRule, StatParam, StatSelectionRule};
+use crate::services::fight_generator::models::army_slot::{CalculationRule, SelectionType, StackStatsRuleModel, StackStatsRules};
+use crate::services::fight_generator::models::common::AssetUpdateType;
+use super::prelude::DifficultyType;
 
 pub struct InitFightAssetPayload {
-    pub name: String,
+    pub app_name: String,
     pub mission_id: i32,
     pub path_to_generate: String,
-    pub lua_table_name: String,
-    pub sheet_id: i32,
+    pub lua_table_name: String
 }
 
 #[derive(Default)]
 pub struct UpdateFightAssetPayload {
-    pub id: Uuid,
-    pub name: Option<String>,
+    pub id: i32,
+    pub app_name: Option<String>,
     pub path_to_generate: Option<String>,
-    pub lua_table_name: Option<String>,
-    pub sheet_id: Option<i32>,
+    pub lua_table_name: Option<String>
 }
 
 impl UpdateFightAssetPayload {
-    pub fn new(id: Uuid) -> Self {
+    pub fn new(id: i32) -> Self {
         UpdateFightAssetPayload {
             id,
             ..Default::default()
         }
     }
 
-    pub fn with_name(mut self, name: String) -> Self {
-        self.name = Some(name);
+    pub fn with_app_name(mut self, app_name: String) -> Self {
+        self.app_name = Some(app_name);
         self
     }
 
@@ -54,23 +41,17 @@ impl UpdateFightAssetPayload {
         self.lua_table_name = Some(name);
         self
     }
-
-    pub fn with_sheet_id(mut self, sheet_id: i32) -> Self {
-        self.sheet_id = Some(sheet_id);
-        self
-    }
 }
 
 #[derive(Debug)]
 pub struct InitAssetArtifactsDataPayload {
-    pub asset_id: Uuid,
-    pub generation_type: AssetGenerationType,
-    pub sheet_id: i32
+    pub asset_id: i32,
+    pub update_type: AssetUpdateType
 }
 
 pub struct UpdateArtifactsGenerationTypePayload {
     pub id: i32,
-    pub new_type: AssetGenerationType,
+    pub new_type: AssetUpdateType,
 }
 
 pub struct UpdateDifficultyBasedPowerPayload {
@@ -102,43 +83,20 @@ pub struct RemoveRequiredArtifactPayload {
 }
 
 pub struct AddStackPayload {
-    pub asset_id: Uuid,
-    pub unit_generation_type: ArmySlotStackUnitGenerationMode,
-    pub count_generation_type: ArmySlotStackCountGenerationMode,
-    pub power_based_generation_type: Option<AssetGenerationType>,
-}
-
-impl AddStackPayload {
-    pub fn new(
-        asset_id: Uuid,
-        unit_generation_type: ArmySlotStackUnitGenerationMode,
-        count_generation_type: ArmySlotStackCountGenerationMode,
-    ) -> Self {
-        AddStackPayload {
-            asset_id,
-            unit_generation_type,
-            count_generation_type,
-            power_based_generation_type: None,
-        }
-    }
-
-    pub fn with_power_based_generation_type(
-        mut self,
-        generation_type: AssetGenerationType,
-    ) -> Self {
-        self.power_based_generation_type = Some(generation_type);
-        self
-    }
+    pub asset_id: i32,
+    pub selection_rule: SelectionType,
+    pub calculation_rule: CalculationRule,
+    pub update_type: AssetUpdateType
 }
 
 pub struct UpdateStackBaseDataPayload {
     pub stack_id: i32,
-    pub unit_generation_type: ArmySlotStackUnitGenerationMode,
-    pub count_generation_type: ArmySlotStackCountGenerationMode,
-    pub power_based_generation_type: AssetGenerationType,
+    pub selection_rule: SelectionType,
+    pub calculation_rule: CalculationRule,
+    pub update_type: AssetUpdateType
 }
 
-pub struct UpdateStackConcreteCreaturesPayload {
+pub struct UpdateStackSpecificCreaturesPayload {
     pub stack_id: i32,
     pub creatures: Vec<i32>,
 }
@@ -155,36 +113,38 @@ pub struct UpdateStackTiersPayload {
 
 pub struct UpdateGenerationRulesPayload {
     pub stack_id: i32,
-    pub rules: Vec<ArmyGenerationRuleParam>,
+    pub rules: Vec<StackGenerationRule>,
 }
 
-pub struct AddGenerationStatElementPayload {
+pub struct AddStatSelectionRulePayload {
     pub stack_id: i32,
-    pub rule: ArmyGenerationStatRule,
+    pub rule: StackStatsRuleModel,
 }
 
-pub struct UpdateGenerationStatParamsPayload {
+pub struct UpdateStatParamsPayload {
     pub element_id: i32,
-    pub params: Vec<ArmyGenerationStatParam>,
+    pub params: Vec<StatParam>,
 }
 
 #[derive(Default)]
 pub struct UpdateGenerationStatElementPayload {
+    pub stack_id: i32,
     pub element_id: i32,
-    pub rule: Option<ArmyGenerationStatRule>,
+    pub rule: Option<StatSelectionRule>,
     pub priority: Option<i32>,
-    pub stats: Option<Vec<ArmyGenerationStatParam>>,
+    pub stats: Option<Vec<StatParam>>,
 }
 
 impl UpdateGenerationStatElementPayload {
-    pub fn new(id: i32) -> Self {
+    pub fn new(stack_id: i32, element_id: i32) -> Self {
         UpdateGenerationStatElementPayload {
-            element_id: id,
+            stack_id,
+            element_id,
             ..Default::default()
         }
     }
 
-    pub fn with_rule(mut self, rule: ArmyGenerationStatRule) -> Self {
+    pub fn with_rule(mut self, rule: StatSelectionRule) -> Self {
         self.rule = Some(rule);
         self
     }
@@ -194,7 +154,7 @@ impl UpdateGenerationStatElementPayload {
         self
     }
 
-    pub fn with_stats(mut self, stats: Vec<ArmyGenerationStatParam>) -> Self {
+    pub fn with_stats(mut self, stats: Vec<StatParam>) -> Self {
         self.stats = Some(stats);
         self
     }
@@ -202,16 +162,15 @@ impl UpdateGenerationStatElementPayload {
 
 #[derive(Default)]
 pub struct UpdateArtifactsAssetPayload {
-    pub asset_id: Uuid,
+    pub asset_id: i32,
     pub required: Option<RequiredArtifacts>,
     pub optional: Option<OptionalArtifacts>,
     pub base_values: Option<DifficultyMappedValue>,
     pub values_grow: Option<DifficultyMappedValue>,
-    pub sheet_id: Option<i32>
 }
 
 impl UpdateArtifactsAssetPayload {
-    pub fn new(asset_id: Uuid) -> Self {
+    pub fn new(asset_id: i32) -> Self {
         UpdateArtifactsAssetPayload {
             asset_id,
             ..Default::default()
@@ -235,11 +194,6 @@ impl UpdateArtifactsAssetPayload {
 
     pub fn with_required(mut self, required: RequiredArtifacts) -> Self {
         self.required = Some(required);
-        self
-    }
-
-    pub fn with_sheet(mut self, sheet_id: i32) -> Self {
-        self.sheet_id = Some(sheet_id);
         self
     }
 }

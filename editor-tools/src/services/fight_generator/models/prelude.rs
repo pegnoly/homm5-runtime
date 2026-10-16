@@ -1,11 +1,8 @@
 pub use super::army_slot::{
-    ArmyGenerationRuleParam, ArmySlotGenerationRule, ArmySlotStackCountGenerationMode,
-    ArmySlotStackUnitGenerationMode, CreatureIds, CreatureTiers, CreatureTowns,
+    CreatureIds, CreatureTiers, CreatureTowns,
+    SelectionType, CalculationRule, StackGenerationRule,
     Model as AssetArmySlotModel,
 };
 pub use super::artifacts::{Model as AssetArtifactsModel, RequiredArtifacts, OptionalArtifacts};
 pub use super::asset::Model as AssetModel;
-pub use super::common::DifficultyMappedValue;
-pub use super::stat_generation::{
-    ArmyGenerationStatParam, ArmyGenerationStatRule, Model as ArmyStatGenerationModel,
-};
+pub use super::common::{StatParam, StatSelectionRule, DifficultyMappedValue};
