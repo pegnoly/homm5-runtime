@@ -31,7 +31,8 @@ pub struct VersionControlCommit {
 pub struct VersionControlService {
     google_api: &'static GoogleApiService,
     pub updated_creatures: DashSet<i32>,
-    pub updated_artifacts: DashSet<i32>
+    pub updated_artifacts: DashSet<i32>,
+    pub updated_fights: DashSet<i32>
 }
 
 impl VersionControlService {
@@ -39,7 +40,8 @@ impl VersionControlService {
         Self {
             google_api: google_api_service,
             updated_creatures: DashSet::new(),
-            updated_artifacts: DashSet::new()
+            updated_artifacts: DashSet::new(),
+            updated_fights: DashSet::new()
         }
     }
 

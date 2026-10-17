@@ -21,3 +21,9 @@ pub struct ProfileConfig {
     pub maps: Vec<Map>,
     pub global_sheets: HashMap<VersionControlContent, SheetEntity>
 }
+
+impl ProfileConfig {
+    pub fn get_map_spreadsheet_id(&self, map_id: i32) -> String {
+        self.maps.get(map_id).unwrap().spreadsheet_id
+    }
+}

@@ -3,10 +3,8 @@ use crate::{
     services::fight_generator::utils::{ArmySlotsConverter, ArtifactsAssetConverter, SheetToArmyAssetsConverter, SheetToArtifactAssetConverter},
     utils::LocalAppManager,
 };
-use editor_tools::prelude::{
-    AddGenerationStatElementPayload, AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, AssetModel, DifficultyType, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, UpdateArtifactsAssetPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackConcreteCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload
-};
-use homm5_scaner::prelude::{AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, GetArtifactsPayload, ScanerService, SpellDBModel, TownExtended};
+use editor_tools::prelude::{AddOptionalArtifactPayload, AddRequiredArtifactPayload, AddStackPayload, AddStatSelectionRulePayload, AssetArmySlotModel, AssetArtifactsModel, AssetModel, AssetUpdateType, CalculationRule, DifficultyType, EditorToolsError, FightGeneratorRepo, InitAssetArtifactsDataPayload, InitFightAssetPayload, RemoveOptionalArtifactPayload, RemoveRequiredArtifactPayload, SelectionType, StackGenerationRule, StackStatsRuleModel, StatParam, StatSelectionRule, UpdateArtifactsAssetPayload, UpdateDifficultyBasedPowerPayload, UpdateFightAssetPayload, UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload, UpdateStackBaseDataPayload, UpdateStackSpecificCreaturesPayload, UpdateStackTiersPayload, UpdateStackTownsPayload};
+use homm5_scaner::prelude::{AbilityDBModel, ArtifactDBModel, ArtifactSlotType, CreatureDBModel, GetArtifactsRequest, GetCreaturesRequest, ScanerService, SpellDBModel, TownExtended};
 
 use itertools::Itertools;
 use std::{collections::HashMap, io::Write, path::PathBuf};
@@ -14,6 +12,7 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use uuid::Uuid;
 use google_api::service::{GoogleApiService, SheetId};
+use crate::services::version_control::VersionControlService;
 
 #[tauri::command]
 pub async fn load_all_assets(
@@ -54,8 +53,9 @@ pub async fn pick_hero_lua_generation_directory(
 #[tauri::command]
 pub async fn init_new_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    sheets_connector_repo: State<'_, GoogleApiService>,
+    google_api: State<'_, GoogleApiService>,
     app_manager: State<'_, LocalAppManager>,
+    version_control: State<'_, VersionControlService>,
     name: String,
     path: String,
     table_name: String,
@@ -64,32 +64,33 @@ pub async fn init_new_asset(
     let profile = app_manager.current_profile_data.read().await;
     let current_map_id = runtime_config_locked
         .current_selected_map;
-    let map_data = profile
-        .maps
-        .iter()
-        .find(|map| map.id == current_map_id)
-        .ok_or(Error::UndefinedData("Current map data".to_string()))?;
 
-    let spreadsheet_id = &map_data.fights_spreadsheet_id;
-    let created_sheet_id = sheets_connector_repo
-        .create_sheet(spreadsheet_id, &name)
+    let spreadsheet_id = profile.get_map_spreadsheet_id(current_map_id);
+
+    google_api
+        .create_sheet(&spreadsheet_id, &table_name)
         .await
         .map_err(|e| Error::GoogleApi(Box::new(e)))?;
 
     let payload = InitFightAssetPayload {
-        name,
+        app_name: name,
         path_to_generate: path,
         lua_table_name: table_name,
-        mission_id: current_map_id as i32,
-        sheet_id: created_sheet_id,
+        mission_id: current_map_id
     };
-    Ok(fight_generator_repo.init_new_asset(payload).await?)
+    match fight_generator_repo.init_new_asset(payload).await {
+        Ok(asset) => {
+            version_control.updated_fights.insert(asset.id);
+            Ok(asset)
+        },
+        Err(e) => e.into()
+    }
 }
 
 #[tauri::command]
 pub async fn load_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    id: Uuid,
+    id: i32,
 ) -> Result<Option<AssetModel>, Error> {
     Ok(fight_generator_repo.get_asset(id).await?)
 }
@@ -97,7 +98,7 @@ pub async fn load_asset(
 #[tauri::command]
 pub async fn delete_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    id: Uuid,
+    id: i32,
 ) -> Result<(), Error> {
     Ok(fight_generator_repo.delete_asset(id).await?)
 }
@@ -106,14 +107,14 @@ pub async fn delete_asset(
 pub async fn load_artifact_models(
     scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<ArtifactDBModel>, Error> {
-    Ok(scaner_repo.get_artifact_models(GetArtifactsPayload::default()).await?)
+    Ok(scaner_repo.get_artifact_models(GetArtifactsRequest::Any).await?)
 }
 
 #[tauri::command]
 pub async fn load_creature_models(
     scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<CreatureDBModel>, Error> {
-    Ok(scaner_repo.get_creature_models().await?)
+    Ok(scaner_repo.get_creature_models(GetCreaturesRequest::NonDefault).await?)
 }
 
 #[tauri::command]
@@ -133,7 +134,7 @@ pub async fn load_spells_models(
 #[tauri::command]
 pub async fn try_load_artifacts_data_for_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: Uuid,
+    asset_id: i32,
 ) -> Result<Option<AssetArtifactsModel>, Error> {
     Ok(fight_generator_repo.get_artifacts_model(asset_id).await?)
 }
@@ -143,130 +144,137 @@ pub async fn create_artifacts_data_for_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     google_api: State<'_, GoogleApiService>,
     app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid,
-    generation_type: AssetGenerationType,
+    version_control: State<'_, VersionControlService>,
+    asset_id: i32,
+    generation_type: AssetUpdateType,
 ) -> Result<AssetArtifactsModel, Error> {
     let profile = app_manager.current_profile_data.read().await;
     let asset = fight_generator_repo
         .get_asset(asset_id)
         .await?
         .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-    let spreadsheet_id = &profile
-        .maps
-        .iter()
-        .find(|map| (map.id as i32) == asset.mission_id)
-        .ok_or(Error::UndefinedData(String::from("Current map")))?
-        .fights_spreadsheet_id;
+    let spreadsheet_id = &profile.get_map_spreadsheet_id(asset.mission_id);
     google_api
-        .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetId": asset.sheet_id.unwrap()}))
+        .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetName": asset.table_name}))
         .await
         .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-    let payload = InitAssetArtifactsDataPayload {
-        asset_id,
-        generation_type,
-        sheet_id: asset.sheet_id.unwrap()
-    };
-    Ok(fight_generator_repo.add_artifacts_model(payload).await?)
+    match fight_generator_repo.add_artifacts_model(InitAssetArtifactsDataPayload {asset_id, update_type: generation_type}).await {
+        Ok(model) => {
+            version_control.updated_fights.insert(asset.id);
+            Ok(model)
+        },
+        Err(e) => e.into()
+    }
 }
 
 #[tauri::command]
 pub async fn update_artifacts_base_cost(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    container_id: i32,
+    version_control: State<'_, VersionControlService>,
+    asset_id: i32,
     difficulty: DifficultyType,
     value: i32
 ) -> Result<i32, Error> {
     fight_generator_repo
         .update_artifacts_base_generation_power(UpdateDifficultyBasedPowerPayload {
-            id: container_id,
+            id: asset_id,
             difficulty,
             value
         })
         .await?;
+    version_control.updated_fights.insert(asset_id);
     Ok(value)
 }
 
 #[tauri::command]
 pub async fn update_artifacts_cost_grow(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    container_id: i32,
+    version_control: State<'_, VersionControlService>,
+    asset_id: i32,
     difficulty: DifficultyType,
     value: i32,
 ) -> Result<i32, Error> {
     fight_generator_repo
         .update_artifacts_grow_power(UpdateDifficultyBasedPowerPayload {
-            id: container_id,
+            id: asset_id,
             difficulty,
             value,
         })
         .await?;
+    version_control.updated_fights.insert(asset_id);
     Ok(value)
 }
 
 #[tauri::command]
 pub async fn add_required_artifact(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     asset_id: i32,
     artifact_id: i32,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .add_required_artifact_id(AddRequiredArtifactPayload {
-            asset_id,
-            artifact_id,
-        })
-        .await?)
+    match fight_generator_repo.add_required_artifact_id(AddRequiredArtifactPayload { asset_id, artifact_id }).await {
+        Ok(_) => {
+            version_control.updated_fights.insert(asset_id);
+            Ok(())
+        },
+        Err(e) => e.into()
+    }
 }
 
 #[tauri::command]
 pub async fn remove_required_artifact(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     asset_id: i32,
     artifact_id: i32,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .remove_required_artifact_id(RemoveRequiredArtifactPayload {
-            asset_id,
-            artifact_id,
-        })
-        .await?)
+    match fight_generator_repo.remove_required_artifact_id(RemoveRequiredArtifactPayload { asset_id, artifact_id}).await {
+        Ok(_) => {
+            version_control.updated_fights.remove(&asset_id);
+            Ok(())
+        },
+        Err(e) => e.into()
+    }
 }
 
 #[tauri::command]
 pub async fn add_optional_artifact(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     asset_id: i32,
     slot: ArtifactSlotType,
     artifact_id: i32,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .add_optional_artifact_id(AddOptionalArtifactPayload {
-            asset_id,
-            slot,
-            artifact_id,
-        })
-        .await?)
+    match fight_generator_repo.add_optional_artifact_id(AddOptionalArtifactPayload { asset_id, slot, artifact_id }).await {
+        Ok(_) => {
+            version_control.updated_fights.insert(asset_id);
+            Ok(())
+        },
+        Err(e) => e.into()
+    }
 }
 
 #[tauri::command]
 pub async fn remove_optional_artifact(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     asset_id: i32,
     slot: ArtifactSlotType,
     artifact_id: i32,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .remove_optional_artifact_id(RemoveOptionalArtifactPayload {
-            asset_id,
-            slot,
-            artifact_id,
-        })
-        .await?)
+    match fight_generator_repo.remove_optional_artifact_id(RemoveOptionalArtifactPayload { asset_id, slot, artifact_id }).await {
+        Ok(_) => {
+            version_control.updated_fights.insert(asset_id);
+            Ok(())
+        },
+        Err(e) => e.into()
+    }
 }
 
 #[tauri::command]
 pub async fn load_stacks_ids(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: Uuid,
+    asset_id: i32,
 ) -> Result<Vec<i32>, Error> {
     Ok(fight_generator_repo.get_stacks_ids(asset_id).await?)
 }
@@ -274,22 +282,25 @@ pub async fn load_stacks_ids(
 #[tauri::command]
 pub async fn create_stack(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: Uuid,
-    type_generation_mode: ArmySlotStackUnitGenerationMode,
-    count_generation_mode: ArmySlotStackCountGenerationMode,
-    generation_type: Option<AssetGenerationType>,
+    version_control: State<'_, VersionControlService>,
+    asset_id: i32,
+    selection_type: SelectionType,
+    calculation_rule: CalculationRule,
+    update_type: AssetUpdateType,
 ) -> Result<i32, Error> {
-    let mut payload = AddStackPayload::new(
+    let payload = AddStackPayload {
         asset_id,
-        type_generation_mode,
-        count_generation_mode.clone(),
-    );
-    if count_generation_mode == ArmySlotStackCountGenerationMode::PowerBased {
-        payload = payload.with_power_based_generation_type(
-            generation_type.unwrap_or(AssetGenerationType::Static),
-        )
+        selection_rule: selection_type,
+        calculation_rule,
+        update_type
+    };
+    match fight_generator_repo.add_stack(payload).await {
+        Ok(stack_id) => {
+            version_control.updated_fights.insert(asset_id);
+            Ok(stack_id)
+        },
+        Err(e) => e.into()
     }
-    Ok(fight_generator_repo.add_stack(payload).await?)
 }
 
 #[tauri::command]
@@ -303,195 +314,228 @@ pub async fn load_stack(
 #[tauri::command]
 pub async fn delete_stack(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     stack_id: i32,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo.delete_stack(stack_id).await?)
+    if let Some(asset_id) = fight_generator_repo.delete_stack(stack_id).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stack_data(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     stack_id: i32,
-    unit_generation_type: ArmySlotStackUnitGenerationMode,
-    count_generation_type: ArmySlotStackCountGenerationMode,
-    count_generation_mode: AssetGenerationType,
+    selection_type: SelectionType,
+    calculation_rule: CalculationRule,
+    update_type: AssetUpdateType,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .update_stack_base_data(UpdateStackBaseDataPayload {
+    if let Some(asset_id) = fight_generator_repo.update_stack_base_data(UpdateStackBaseDataPayload {
             stack_id,
-            unit_generation_type,
-            count_generation_type,
-            power_based_generation_type: count_generation_mode,
-        })
-        .await?)
+            selection_rule: selection_type,
+            calculation_rule,
+            update_type
+        }).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stack_base_powers(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     container_id: i32,
     difficulty: DifficultyType,
     value: i32,
 ) -> Result<i32, Error> {
-    fight_generator_repo
-        .update_stack_base_power(UpdateDifficultyBasedPowerPayload {
-            id: container_id,
-            difficulty,
-            value,
-        })
-        .await?;
-    Ok(value)
+    if let Some(asset_id) = fight_generator_repo.update_stack_base_power(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty, value }).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(value)
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stack_powers_grow(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     container_id: i32,
     difficulty: DifficultyType,
     value: i32,
 ) -> Result<i32, Error> {
-    fight_generator_repo
-        .update_stack_power_grow(UpdateDifficultyBasedPowerPayload {
-            id: container_id,
-            difficulty,
-            value,
-        })
-        .await?;
-    Ok(value)
+    if let Some(asset_id) = fight_generator_repo.update_stack_power_grow(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty, value }).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(value)
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stack_concrete_count(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     container_id: i32,
     difficulty: DifficultyType,
     value: i32
 ) -> Result<i32, Error> {
-    fight_generator_repo
-        .update_stack_creature_count(UpdateDifficultyBasedPowerPayload {
-            id: container_id,
-            difficulty,
-            value
-        })
-        .await?;
-    Ok(value)
+    if let Some(asset_id) = fight_generator_repo.update_stack_creature_count(UpdateDifficultyBasedPowerPayload { id: container_id, difficulty, value }).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(value)
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stack_concrete_creatures(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     stack_id: i32,
     creatures: Vec<i32>,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .update_stack_concrete_creatures(UpdateStackConcreteCreaturesPayload {
-            stack_id,
-            creatures,
-        })
-        .await?)
+     if let Some(asset_id) = fight_generator_repo.update_stack_specific_creatures(UpdateStackSpecificCreaturesPayload { stack_id, creatures }).await? {
+         version_control.updated_fights.insert(asset_id);
+         Ok(())
+     } else {
+         Err(Error::EditorTools(EditorToolsError::Default))
+     }
 }
 
 #[tauri::command]
 pub async fn update_stack_towns(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     stack_id: i32,
     towns: Vec<TownExtended>,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .update_stack_towns(UpdateStackTownsPayload { stack_id, towns })
-        .await?)
+    if let Some(asset_id) = fight_generator_repo.update_stack_towns(UpdateStackTownsPayload { stack_id, towns }).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stack_tiers(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     stack_id: i32,
     tiers: Vec<i32>,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .update_stack_tiers(UpdateStackTiersPayload { stack_id, tiers })
-        .await?)
+    if let Some(asset_id) = fight_generator_repo.update_stack_tiers(UpdateStackTiersPayload { stack_id, tiers }).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stack_rules(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     stack_id: i32,
-    rules: Vec<ArmyGenerationRuleParam>,
+    rules: Vec<StackGenerationRule>,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .update_stack_rules(UpdateGenerationRulesPayload { stack_id, rules })
-        .await?)
-}
-
-#[tauri::command]
-pub async fn load_stats_generation_elements(
-    fight_generator_repo: State<'_, FightGeneratorRepo>,
-    stack_id: i32,
-) -> Result<Vec<ArmyStatGenerationModel>, Error> {
-    Ok(fight_generator_repo
-        .get_stat_generation_elements(stack_id)
-        .await?)
+    if let Some(asset_id) = fight_generator_repo.update_stack_rules(UpdateGenerationRulesPayload { stack_id, rules }).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn add_stat_generation_element(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
     stack_id: i32,
-    rule: ArmyGenerationStatRule,
-) -> Result<ArmyStatGenerationModel, Error> {
-    Ok(fight_generator_repo
-        .add_stat_generation_element(AddGenerationStatElementPayload { stack_id, rule })
-        .await?)
+    rule: StackStatsRuleModel,
+) -> Result<(), Error> {
+     if let Some(asset_id) = fight_generator_repo.add_stat_generation_element(AddStatSelectionRulePayload { stack_id, rule }).await? {
+         version_control.updated_fights.insert(asset_id);
+         Ok(())
+     } else {
+         Err(Error::EditorTools(EditorToolsError::Default))
+     }
 }
 
 #[tauri::command]
 pub async fn remove_stat_generation_element(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
+    stack_id: i32,
     element_id: i32,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .delete_stat_generation_element(element_id)
-        .await?)
+    if let Some(asset_id) = fight_generator_repo.delete_stat_generation_element(stack_id, element_id).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stat_generation_element_priority(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
+    stack_id: i32,
     element_id: i32,
     priority: i32,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .update_stat_generation_element(
-            UpdateGenerationStatElementPayload::new(element_id).with_priority(priority),
-        )
-        .await?)
+    if let Some(asset_id) = fight_generator_repo
+        .update_stat_generation_element(UpdateGenerationStatElementPayload::new(stack_id, element_id).with_priority(priority)).await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stat_generation_element_rule(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
+    stack_id: i32,
     element_id: i32,
-    rule: ArmyGenerationStatRule,
+    rule: StatSelectionRule,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .update_stat_generation_element(
-            UpdateGenerationStatElementPayload::new(element_id).with_rule(rule),
-        )
-        .await?)
+    if let Some(asset_id) = fight_generator_repo
+        .update_stat_generation_element(UpdateGenerationStatElementPayload::new(stack_id, element_id).with_rule(rule))
+        .await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
 pub async fn update_stat_generation_params(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
+    version_control: State<'_, VersionControlService>,
+    stack_id: i32,
     element_id: i32,
-    params: Vec<ArmyGenerationStatParam>,
+    params: Vec<StatParam>,
 ) -> Result<(), Error> {
-    Ok(fight_generator_repo
-        .update_stat_generation_element(
-            UpdateGenerationStatElementPayload::new(element_id).with_stats(params),
-        )
-        .await?)
+    if let Some(asset_id) = fight_generator_repo
+        .update_stat_generation_element(UpdateGenerationStatElementPayload::new(stack_id, element_id).with_stats(params))
+        .await? {
+        version_control.updated_fights.insert(asset_id);
+        Ok(())
+    } else {
+        Err(Error::EditorTools(EditorToolsError::Default))
+    }
 }
 
 #[tauri::command]
@@ -531,7 +575,7 @@ pub async fn get_average_artifacts_cost(
 #[tauri::command]
 pub async fn generate_current_hero_script(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    asset_id: Uuid,
+    asset_id: i32,
 ) -> Result<(), Error> {
     if let Some(main_asset) = fight_generator_repo.get_asset(asset_id).await? {
         let mut output_file = std::fs::File::create(format!(
@@ -561,18 +605,18 @@ end
 
             stack_gen_type_script += &format!(
                 "\t\t[{}] = {},\n",
-                stack_count, &asset.count_generation_mode
+                stack_count, &asset.calculation_type
             );
             base_army_count_data_script += &format!("\t\t[{stack_count}] = {{\n");
 
-            if asset.count_generation_mode == ArmySlotStackCountGenerationMode::PowerBased {
+            if asset.calculation_type == CalculationRule::PowerBased {
                 for (difficulty, power) in asset.base_powers.data {
                     base_army_count_data_script +=
                         &format!("\t\t\t[{}] = {},\n", &difficulty, power);
                 }
                 base_army_count_data_script += "\t\t},\n";
 
-                if asset.power_based_generation_type == AssetGenerationType::Dynamic {
+                if asset.update_type == AssetUpdateType::Dynamic {
                     army_count_grow_script += &format!("\t\t[{stack_count}] = {{\n");
                     for (difficulty, power) in asset.powers_grow.data {
                         army_count_grow_script +=
@@ -581,7 +625,7 @@ end
                     army_count_grow_script += "\t\t},\n";
                 }
             } else {
-                for (difficulty, power) in asset.concrete_count.data {
+                for (difficulty, power) in asset.specific_count.data {
                     base_army_count_data_script +=
                         &format!("\t\t\t[{}] = {},\n", &difficulty, power);
                 }
@@ -589,8 +633,8 @@ end
             }
 
             // construct generation rule filter
-            if asset.type_generation_mode == ArmySlotStackUnitGenerationMode::ConcreteUnit {
-                let creatures_list = asset.concrete_creatures.ids.iter().join(", ");
+            if asset.selection_type == SelectionType::Manual {
+                let creatures_list = asset.specific_creatures.ids.iter().join(", ");
                 army_generation_rules_script += &format!(
                     "\t\t[{stack_count}] = function ()
             local id = Random.FromTable({{{creatures_list}}})
@@ -602,19 +646,19 @@ end
                 army_generation_rules_script += &format!("\t\t[{stack_count}] = function ()\n");
 
                 let mut generation_rules_script = String::from("local result = ");
-                if asset.generation_rule.params.is_empty() {
+                if asset.rules.rules.is_empty() {
                     generation_rules_script += "1"
                 } else {
-                    for rule in &asset.generation_rule.params {
+                    for rule in &asset.rules.rules {
                         match rule {
-                            ArmyGenerationRuleParam::Generatable => {
+                            StackGenerationRule::Generatable => {
                                 generation_rules_script +=
                                     "creature.is_generatable and "
                             }
-                            ArmyGenerationRuleParam::Caster => {
+                            StackGenerationRule::Caster => {
                                 generation_rules_script += "creature:IsCaster() and "
                             }
-                            ArmyGenerationRuleParam::Shooter => {
+                            StackGenerationRule::Shooter => {
                                 generation_rules_script += "creature:IsShooter() and "
                             }
                             _ => {}
@@ -630,9 +674,7 @@ end
                 // construct getter function
                 let towns = asset.towns.towns.iter().join(", ");
                 let tiers = asset.tiers.tiers.iter().join(", ");
-                let stats_elements = fight_generator_repo
-                    .get_stat_generation_elements(asset.id)
-                    .await?;
+                let stats_elements = asset.stat_rules.rules;
                 let mut getter_function = format!(
     r#"            local id = CREATURES_ITERATOR.Filter(
                    ---@param item Creature
@@ -646,7 +688,7 @@ end
                        {generation_rules_script}
                        return result
                    end)"#);
-                if stats_elements.is_empty() || stats_elements[0].stats.values.is_empty() {
+                if stats_elements.is_empty() || stats_elements[0].params.is_empty() {
                     getter_function += 
         r#"     
                 .TakeRandom(1)
@@ -656,21 +698,21 @@ end
                 } else {
                     let stat_element = &stats_elements[0];
                     let mut sort_expression = String::from("local result = ");
-                    for param in &stat_element.stats.values {
+                    for param in &stat_element.params {
                         match param {
-                            ArmyGenerationStatParam::Attack => {
+                            StatParam::Attack => {
                                 sort_expression += "creature.attack + ";
                             }
-                            ArmyGenerationStatParam::Defence => {
+                            StatParam::Defence => {
                                 sort_expression += "creature.defence + ";
                             }
-                            ArmyGenerationStatParam::Initiative => {
+                            StatParam::Initiative => {
                                 sort_expression += "creature.initiative + ";
                             }
-                            ArmyGenerationStatParam::Speed => {
+                            StatParam::Speed => {
                                 sort_expression += "creature.speed + ";
                             }
-                            ArmyGenerationStatParam::Hitpoints => {
+                            StatParam::Hitpoints => {
                                 sort_expression += "creature.health + ";
                             }
                         }
@@ -688,7 +730,7 @@ end
                     return result
                 end)
             return id"#,
-                    if stat_element.rule == ArmyGenerationStatRule::MaxBy { "MaxBy" } else { "MinBy "}, sort_expression);
+                    if stat_element.rule == StatSelectionRule::MaxBy { "MaxBy" } else { "MinBy "}, sort_expression);
                     army_generation_rules_script += &format!("{getter_function}\n\t\tend,\n");
                 }
             }
@@ -715,7 +757,7 @@ end
             }
             script.push_str("\t},\n\n");
 
-            if artifacts_asset.generation_type == AssetGenerationType::Dynamic {
+            if artifacts_asset.update_type == AssetUpdateType::Dynamic {
                 script += "\tartifacts_costs_grow = {\n";
                 for (difficulty, cost) in artifacts_asset.powers_grow.data {
                     script += &format!("\t\t[{difficulty}] = {cost},\n");
@@ -728,217 +770,4 @@ end
         output_file.write_all(script.as_bytes())?;
     }
     Ok(())
-}
-
-#[tauri::command]
-pub async fn create_sheet_for_existing_asset(
-    scaner_repo: State<'_, ScanerService>,
-    fight_generator_repo: State<'_, FightGeneratorRepo>,
-    google_api: State<'_, GoogleApiService>,
-    app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid,
-) -> Result<SheetId, Error> {
-    let profile = app_manager.current_profile_data.read().await;
-    let asset = fight_generator_repo
-        .get_asset(asset_id)
-        .await?
-        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-    let creatures = scaner_repo.get_all_creature_models().await?;
-    let spreadsheet_id = &profile
-        .maps
-        .iter()
-        .find(|map| (map.id as i32) == asset.mission_id)
-        .ok_or(Error::UndefinedData(String::from("Current map")))?
-        .fights_spreadsheet_id;
-
-    let created_sheet_id = google_api
-        .create_sheet(spreadsheet_id, &asset.name)
-        .await
-        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-    let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
-    let stat_elements = fight_generator_repo
-        .get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec())
-        .await?;
-    let converter = ArmySlotsConverter {
-        sheet_name: &asset.name,
-        creatures_data: &creatures,
-        stats_elements_data: &stat_elements,
-    };
-    google_api
-        .upload_to_sheet(spreadsheet_id, army_slots, converter)
-        .await
-        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-
-    fight_generator_repo
-        .update_asset(UpdateFightAssetPayload::new(asset_id).with_sheet_id(created_sheet_id))
-        .await?;
-    Ok(created_sheet_id)
-}
-
-#[tauri::command]
-pub async fn pull_from_sheet(
-    fight_generator_repo: State<'_, FightGeneratorRepo>,
-    google_api: State<'_, GoogleApiService>,
-    app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid,
-) -> Result<Vec<AssetArmySlotModel>, Error> {
-    let profile = app_manager.current_profile_data.read().await;
-    let asset = fight_generator_repo
-        .get_asset(asset_id)
-        .await?
-        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-    let stacks_count = fight_generator_repo
-        .get_stacks_count_for_asset(asset_id)
-        .await?;
-
-    let spreadsheet_id = &profile
-        .maps
-        .iter()
-        .find(|map| (map.id as i32) == asset.mission_id)
-        .ok_or(Error::UndefinedData(String::from("Current map")))?
-        .fights_spreadsheet_id;
-
-    let converter = SheetToArmyAssetsConverter::new(asset_id);
-    let values = google_api
-        .read_from_sheet(
-            spreadsheet_id,
-            asset.sheet_id.unwrap(),
-            &format!(
-                "B2:{}",
-                match stacks_count {
-                    1 => "B24",
-                    2 => "C24",
-                    3 => "D24",
-                    4 => "E24",
-                    5 => "F24",
-                    6 => "G24",
-                    7 => "H24",
-                    _ => unreachable!(),
-                }
-            ),
-            converter,
-        )
-        .await
-        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-
-    let updated_slots = fight_generator_repo
-        .update_synced_army_slots(values)
-        .await?;
-
-    Ok(updated_slots)
-}
-
-#[tauri::command]
-pub async fn pull_artifacts_data_from_sheet(
-    fight_generator_repo: State<'_, FightGeneratorRepo>,
-    google_api: State<'_, GoogleApiService>,
-    app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid,
-) -> Result<Option<AssetArtifactsModel>, Error> {
-    if fight_generator_repo.get_artifacts_model(asset_id).await?.is_none() {
-        return Ok(None);
-    }
-    let profile = app_manager.current_profile_data.read().await;
-    let asset = fight_generator_repo
-        .get_asset(asset_id)
-        .await?
-        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-
-    let spreadsheet_id = &profile
-        .maps
-        .iter()
-        .find(|map| (map.id as i32) == asset.mission_id)
-        .ok_or(Error::UndefinedData(String::from("Current map")))?
-        .fights_spreadsheet_id;
-
-    let converted_model = google_api
-        .read_from_sheet(
-            spreadsheet_id, 
-            asset.sheet_id.unwrap(), "B27:D37", SheetToArtifactAssetConverter {} ).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
-    let updated_model = fight_generator_repo
-        .update_artifacts_asset(
-            UpdateArtifactsAssetPayload::new(asset_id)
-                .with_base_values(converted_model.values)
-                .with_values_grow(converted_model.grow)
-                .with_optional(converted_model.optional)
-                .with_required(converted_model.required)
-        ).await?;
-    Ok(Some(updated_model))
-}
-
-#[tauri::command]
-pub async fn push_to_sheet(
-    fight_generator_repo: State<'_, FightGeneratorRepo>,
-    google_api: State<'_, GoogleApiService>,
-    scaner_repo: State<'_, ScanerService>,
-    app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid,
-) -> Result<(), Error> {
-    let profile = app_manager.current_profile_data.read().await;
-    let asset = fight_generator_repo
-        .get_asset(asset_id)
-        .await?
-        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-    let creatures = scaner_repo.get_all_creature_models().await?;
-    let spreadsheet_id = &profile
-        .maps
-        .iter()
-        .find(|map| map.id == asset.mission_id)
-        .ok_or(Error::UndefinedData(String::from("Current map")))?
-        .fights_spreadsheet_id;
-
-    let army_slots = fight_generator_repo.get_stacks(asset_id).await?;
-    let stat_elements = fight_generator_repo
-        .get_all_stat_elements_for_stacks(army_slots.iter().map(|a| a.id).collect_vec())
-        .await?;
-    let converter = ArmySlotsConverter {
-        sheet_name: &asset.name,
-        creatures_data: &creatures,
-        stats_elements_data: &stat_elements,
-    };
-    google_api
-        .upload_to_sheet(spreadsheet_id, army_slots, converter)
-        .await
-        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-
-    if let Some(artifacts_model) = fight_generator_repo.get_artifacts_model(asset_id).await? {
-        let artifacts = scaner_repo.get_artifact_models(GetArtifactsPayload::default()).await?;
-        let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
-        google_api.upload_to_sheet(spreadsheet_id, artifacts_model, converter)
-            .await
-            .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-    }
-    Ok(())
-}
-
-#[tauri::command]
-pub async fn add_artifacts_data_to_asset_sheet(
-    fight_generator_repo: State<'_, FightGeneratorRepo>,
-    google_api: State<'_, GoogleApiService>,
-    scaner_repo: State<'_, ScanerService>,
-    app_manager: State<'_, LocalAppManager>,
-    asset_id: Uuid,
-) -> Result<AssetArtifactsModel, Error> {
-    let profile = app_manager.current_profile_data.read().await;
-    let asset = fight_generator_repo
-        .get_asset(asset_id)
-        .await?
-        .ok_or(Error::UndefinedData("Asset to sync".to_string()))?;
-    let spreadsheet_id = &profile
-        .maps
-        .iter()
-        .find(|map| (map.id as i32) == asset.mission_id)
-        .ok_or(Error::UndefinedData(String::from("Current map")))?
-        .fights_spreadsheet_id;
-    google_api
-        .update_sheet("addArtifactsData", &serde_json::json!({"spreadsheetId": spreadsheet_id, "sheetId": asset.sheet_id.unwrap()}))
-        .await
-        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-    let updated_asset = fight_generator_repo.update_artifacts_asset(UpdateArtifactsAssetPayload::new(asset_id).with_sheet(asset.sheet_id.unwrap())).await?;
-    let artifacts = scaner_repo.get_artifact_models(GetArtifactsPayload::default()).await?;
-    let converter = ArtifactsAssetConverter { sheet_name: &asset.name, artifacts_data: &artifacts };
-    google_api.upload_to_sheet(spreadsheet_id, updated_asset.clone(), converter)
-        .await
-        .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-    Ok(updated_asset)
 }

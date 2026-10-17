@@ -147,7 +147,8 @@ impl FightGeneratorRepo {
         &self,
         payload: UpdateDifficultyBasedPowerPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.id)
+        if let Some(existing_model) = artifacts::Entity::find()
+            .filter(artifacts::Column::AssetId.eq(payload.id))
             .one(&self.db)
             .await?
         {
@@ -166,7 +167,8 @@ impl FightGeneratorRepo {
         &self,
         payload: UpdateDifficultyBasedPowerPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.id)
+        if let Some(existing_model) = artifacts::Entity::find()
+            .filter(artifacts::Column::AssetId.eq(payload.id))
             .one(&self.db)
             .await?
         {
@@ -185,7 +187,8 @@ impl FightGeneratorRepo {
         &self,
         payload: AddRequiredArtifactPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.asset_id)
+        if let Some(existing_model) = artifacts::Entity::find()
+            .filter(artifacts::Column::AssetId.eq(payload.asset_id))
             .one(&self.db)
             .await?
         {
@@ -202,7 +205,8 @@ impl FightGeneratorRepo {
         &self,
         payload: RemoveRequiredArtifactPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.asset_id)
+        if let Some(existing_model) = artifacts::Entity::find()
+            .filter(artifacts::Column::AssetId.eq(payload.asset_id))
             .one(&self.db)
             .await?
         {
@@ -221,7 +225,8 @@ impl FightGeneratorRepo {
         &self,
         payload: AddOptionalArtifactPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.asset_id)
+        if let Some(existing_model) = artifacts::Entity::find()
+            .filter(artifacts::Column::AssetId.eq(payload.asset_id))
             .one(&self.db)
             .await?
         {
@@ -244,7 +249,8 @@ impl FightGeneratorRepo {
         &self,
         payload: RemoveOptionalArtifactPayload,
     ) -> Result<(), EditorToolsError> {
-        if let Some(existing_model) = artifacts::Entity::find_by_id(payload.asset_id)
+        if let Some(existing_model) = artifacts::Entity::find()
+            .filter(artifacts::Column::AssetId.eq(payload.asset_id))
             .one(&self.db)
             .await?
         {
@@ -313,41 +319,48 @@ impl FightGeneratorRepo {
             .await?)
     }
 
-    pub async fn delete_stack(&self, stack_id: i32) -> Result<(), EditorToolsError> {
+    pub async fn delete_stack(&self, stack_id: i32) -> Result<Option<i32>, EditorToolsError> {
         if let Some(stack) = army_slot::Entity::find_by_id(stack_id)
             .one(&self.db)
             .await?
         {
+            let asset_id = stack.asset_id;
             stack.delete(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn update_stack_base_data(
         &self,
         payload: UpdateStackBaseDataPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(stack) = army_slot::Entity::find_by_id(payload.stack_id)
             .one(&self.db)
             .await?
         {
+            let asset_id = stack.asset_id;
             let mut model_to_update = stack.into_active_model();
             model_to_update.selection_type = Set(payload.selection_rule);
             model_to_update.calculation_type = Set(payload.calculation_rule);
             model_to_update.update_type = Set(payload.update_type);
             model_to_update.update(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn update_stack_base_power(
         &self,
         payload: UpdateDifficultyBasedPowerPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.id)
             .one(&self.db)
             .await?
         {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.clone().into_active_model();
             let mut base_powers_to_update = existing_model.base_powers.clone();
             if let Some(power) = base_powers_to_update.data.get_mut(&payload.difficulty) {
@@ -355,18 +368,21 @@ impl FightGeneratorRepo {
             }
             model_to_update.base_powers = Set(base_powers_to_update);
             model_to_update.update(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn update_stack_power_grow(
         &self,
         payload: UpdateDifficultyBasedPowerPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.id)
             .one(&self.db)
             .await?
         {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.clone().into_active_model();
             let mut powers_grow_to_update = existing_model.powers_grow.clone();
             if let Some(power) = powers_grow_to_update.data.get_mut(&payload.difficulty) {
@@ -374,18 +390,21 @@ impl FightGeneratorRepo {
             }
             model_to_update.powers_grow = Set(powers_grow_to_update);
             model_to_update.update(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn update_stack_creature_count(
         &self,
         payload: UpdateDifficultyBasedPowerPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.id)
             .one(&self.db)
             .await?
         {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.clone().into_active_model();
             let mut creature_counts_to_update = existing_model.specific_count.clone();
             if let Some(power) = creature_counts_to_update.data.get_mut(&payload.difficulty) {
@@ -393,106 +412,127 @@ impl FightGeneratorRepo {
             }
             model_to_update.specific_count = Set(creature_counts_to_update);
             model_to_update.update(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
-    pub async fn update_stack_concrete_creatures(
+    pub async fn update_stack_specific_creatures(
         &self,
         payload: UpdateStackSpecificCreaturesPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id)
             .one(&self.db)
             .await?
         {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.into_active_model();
             model_to_update.specific_creatures = Set(CreatureIds {
                 ids: payload.creatures,
             });
             model_to_update.update(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn update_stack_towns(
         &self,
         payload: UpdateStackTownsPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id)
             .one(&self.db)
             .await?
         {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.into_active_model();
             model_to_update.towns = Set(CreatureTowns {
                 towns: payload.towns,
             });
             model_to_update.update(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn update_stack_tiers(
         &self,
         payload: UpdateStackTiersPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id)
             .one(&self.db)
             .await?
         {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.into_active_model();
             model_to_update.tiers = Set(CreatureTiers {
                 tiers: payload.tiers,
             });
             model_to_update.update(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn update_stack_rules(
         &self,
         payload: UpdateGenerationRulesPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id)
             .one(&self.db)
             .await?
         {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.into_active_model();
             model_to_update.rules = Set(StackGenerationRules {
                 rules: payload.rules,
             });
             model_to_update.update(&self.db).await?;
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn add_stat_generation_element(
         &self,
         payload: AddStatSelectionRulePayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.into_active_model();
             let mut existing_rules = model_to_update.stat_rules.take().unwrap();
             existing_rules.rules.push(payload.rule);
             model_to_update.stat_rules = Set(existing_rules);
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
-    pub async fn delete_stat_generation_element(&self, stack_id: i32, element_id: i32) -> Result<(), EditorToolsError> {
+    pub async fn delete_stat_generation_element(&self, stack_id: i32, element_id: i32) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(stack_id).one(&self.db).await? {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.into_active_model();
             let mut existing_rules = model_to_update.stat_rules.take().unwrap();
             existing_rules.rules.retain(|r| r.id == element_id);
             model_to_update.stat_rules = Set(existing_rules);
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn update_stat_generation_element(
         &self,
         payload: UpdateGenerationStatElementPayload,
-    ) -> Result<(), EditorToolsError> {
+    ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
+            let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.into_active_model();
             let mut existing_rules = model_to_update.stat_rules.take().unwrap();
             if let Some(rule_to_update) = existing_rules.rules.iter_mut().find(|r| r.id == payload.element_id) {
@@ -507,8 +547,10 @@ impl FightGeneratorRepo {
                 }
             }
             model_to_update.stat_rules = Set(existing_rules);
+            Ok(Some(asset_id))
+        } else {
+            Ok(None)
         }
-        Ok(())
     }
 
     pub async fn get_stacks_count_for_asset(
