@@ -9,9 +9,9 @@ use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
 use tauri::State;
 
-use crate::profiles::ProfileConfig;
 use crate::DataContainer;
 use crate::error::{Error, ErrorFrontendModel};
+use crate::profiles::ProfileConfig;
 use crate::utils::{LocalAppManager, MapFrontendModel, RuntimeData};
 
 #[tauri::command]
@@ -24,7 +24,10 @@ pub async fn execute_scan(
     let data_path = profile.game_path.join("data\\");
     let maps_path = profile.game_path.join("Maps\\");
     let mods_path = profile.game_path.join("UserMODs\\");
-    let output_path = data_path.join(format!("{}-generated.pak", base_config.current_profile.to_lowercase()));
+    let output_path = data_path.join(format!(
+        "{}-generated.pak",
+        base_config.current_profile.to_lowercase()
+    ));
     scaner_service
         .run(vec![data_path, maps_path, mods_path], output_path)
         .await?;
@@ -32,18 +35,20 @@ pub async fn execute_scan(
 }
 
 #[tauri::command]
-pub async fn run_game(
-    app_manager: State<'_, LocalAppManager>,
-) -> Result<(), Error> {
+pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
-    let mut runtime_runner = RuntimeRunner::new(profile.game_path.join("bin\\").join(&profile.exe_name));
+    let mut runtime_runner =
+        RuntimeRunner::new(profile.game_path.join("bin\\").join(&profile.exe_name));
     for repack_data in profile.repackers.values() {
         let repacker = Repacker::new(&repack_data.from, &repack_data.to);
         repacker.run().map_err(|e| {
             Error::FrontendModel(ErrorFrontendModel {
                 info: e.to_string(),
                 func_name: "repacker.run".to_string(),
-                params: vec![repacker.from.to_str().unwrap().to_string(), repacker.to.to_str().unwrap().to_string()],
+                params: vec![
+                    repacker.from.to_str().unwrap().to_string(),
+                    repacker.to.to_str().unwrap().to_string(),
+                ],
             })
         })?
     }
@@ -53,7 +58,7 @@ pub async fn run_game(
 
 #[tauri::command]
 pub async fn load_maps(
-    app_manager: State<'_, LocalAppManager>
+    app_manager: State<'_, LocalAppManager>,
 ) -> Result<Vec<MapFrontendModel>, Error> {
     let profile = app_manager.current_profile_data.read().await;
     Ok(profile
@@ -72,10 +77,7 @@ pub async fn load_current_map(app_manager: State<'_, LocalAppManager>) -> Result
 }
 
 #[tauri::command]
-pub async fn select_map(
-    app_manager: State<'_, LocalAppManager>, 
-    id: i32
-) -> Result<(), ()> {
+pub async fn select_map(app_manager: State<'_, LocalAppManager>, id: i32) -> Result<(), ()> {
     let mut runtime_config_locked = app_manager.runtime_config.write().await;
     runtime_config_locked.current_selected_map = id;
     let exe_path = std::env::current_exe().unwrap();
@@ -87,7 +89,8 @@ pub async fn select_map(
     let mut file = std::fs::File::create(&runtime_cfg_path).unwrap();
     file.write_all(new_runtime_data.as_bytes()).unwrap();
 
-    let profile: tokio::sync::RwLockReadGuard<'_, ProfileConfig> = app_manager.current_profile_data.read().await;
+    let profile: tokio::sync::RwLockReadGuard<'_, ProfileConfig> =
+        app_manager.current_profile_data.read().await;
     let map = profile
         .maps
         .iter()
@@ -147,12 +150,12 @@ pub async fn apply_modifications(
                 .map(|p| QuestProgress {
                     progress_type: if let Some(one_of) = p.one_of_progress {
                         QuestProgressType::OneOf(one_of)
-                    } else if let Some(text) = p.text { 
+                    } else if let Some(text) = p.text {
                         QuestProgressType::Default(text)
-                    } else { 
+                    } else {
                         QuestProgressType::Default(String::default())
                     },
-                    concatenate: p.concatenate
+                    concatenate: p.concatenate,
                 })
                 .collect(),
         )
@@ -207,42 +210,86 @@ pub async fn create_hero(
 #[tauri::command]
 pub async fn switch_profile(
     app_manager: State<'_, LocalAppManager>,
-    new_profile: String
+    new_profile: String,
 ) -> Result<(), Error> {
     let mut base_config_locked = app_manager.base_config.write().await;
-    let mut profile = app_manager.current_profile_data.write().await; 
+    let mut profile = app_manager.current_profile_data.write().await;
     let exe_path = std::env::current_exe()?;
-    let new_profile_path = exe_path.parent().unwrap().join(format!("cfg\\{new_profile}\\profile.json"));
-    let new_profile_data = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(new_profile_path)?)?;
+    let new_profile_path = exe_path
+        .parent()
+        .unwrap()
+        .join(format!("cfg\\{new_profile}\\profile.json"));
+    let new_profile_data =
+        serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(new_profile_path)?)?;
     *profile = new_profile_data;
     base_config_locked.current_profile = new_profile;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn generate_images(
-    scaner_service: State<'_, ScanerService>
-) -> Result<(), Error> {
-    let creatures = scaner_service.get_creature_models(GetCreaturesRequest::Any).await?;
-    let artifacts = scaner_service.get_artifact_models(GetArtifactsRequest::Any).await?;
+pub async fn generate_images(scaner_service: State<'_, ScanerService>) -> Result<(), Error> {
+    let creatures = scaner_service
+        .get_creature_models(GetCreaturesRequest::Any)
+        .await?;
+    let artifacts = scaner_service
+        .get_artifact_models(GetArtifactsRequest::Any)
+        .await?;
     let spells = scaner_service.get_all_spells().await?;
     let skills = scaner_service.get_all_skills().await?;
     let exe_path = std::env::current_exe()?;
-    let creatures_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\creatures.txt"))?;
-    let artifacts_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\artifacts.txt"))?;
-    let spells_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\spells.txt"))?;
-    let skills_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\skills.txt"))?;
-    let perks_data = std::fs::read_to_string(exe_path.parent().unwrap().join("cfg\\generation\\perks.txt"))?;
-
+    let creatures_data = std::fs::read_to_string(
+        exe_path
+            .parent()
+            .unwrap()
+            .join("cfg\\generation\\creatures.txt"),
+    )?;
+    let artifacts_data = std::fs::read_to_string(
+        exe_path
+            .parent()
+            .unwrap()
+            .join("cfg\\generation\\artifacts.txt"),
+    )?;
+    let spells_data = std::fs::read_to_string(
+        exe_path
+            .parent()
+            .unwrap()
+            .join("cfg\\generation\\spells.txt"),
+    )?;
+    let skills_data = std::fs::read_to_string(
+        exe_path
+            .parent()
+            .unwrap()
+            .join("cfg\\generation\\skills.txt"),
+    )?;
+    let perks_data = std::fs::read_to_string(
+        exe_path
+            .parent()
+            .unwrap()
+            .join("cfg\\generation\\perks.txt"),
+    )?;
 
     let mut creature_gen_string = String::new();
     for line in creatures_data.lines() {
         let splitted = line.split('=').collect::<Vec<&str>>();
         let name = splitted.first().unwrap().trim();
-        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = splitted
+            .last()
+            .unwrap()
+            .split(";")
+            .collect::<Vec<&str>>()
+            .first()
+            .unwrap()
+            .trim();
         let id = id.parse::<i32>()?;
-        let creature_game_id = creatures.iter().find(|c| c.id == id).unwrap().game_id.clone();
-        creature_gen_string += &format!("{{CreatureType.{name}, PathHelper.AssetsDirectory + \"\\\\CreaturesImages\\\\{creature_game_id}.png\"}},\n");
+        let creature_game_id = creatures
+            .iter()
+            .find(|c| c.id == id)
+            .unwrap()
+            .game_id
+            .clone();
+        creature_gen_string += &format!(
+            "{{CreatureType.{name}, PathHelper.AssetsDirectory + \"\\\\CreaturesImages\\\\{creature_game_id}.png\"}},\n"
+        );
     }
 
     let mut file = std::fs::File::create("D:\\CreatureImages.txt")?;
@@ -252,12 +299,21 @@ pub async fn generate_images(
     for line in spells_data.lines() {
         let splitted = line.split('=').collect::<Vec<&str>>();
         let name = splitted.first().unwrap().trim();
-        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = splitted
+            .last()
+            .unwrap()
+            .split(";")
+            .collect::<Vec<&str>>()
+            .first()
+            .unwrap()
+            .trim();
         let id = id.parse::<i32>()?;
         println!("Id: {id}");
         if let Some(spell) = spells.iter().find(|c| c.id == id) {
             let spell_game_id = spell.game_id.clone();
-            spells_gen += &format!("{{SpellType.{name}, PathHelper.AssetsDirectory + \"\\\\Spells\\\\{spell_game_id}.png\"}},\n");
+            spells_gen += &format!(
+                "{{SpellType.{name}, PathHelper.AssetsDirectory + \"\\\\Spells\\\\{spell_game_id}.png\"}},\n"
+            );
         }
     }
 
@@ -268,17 +324,25 @@ pub async fn generate_images(
     for line in artifacts_data.lines() {
         let splitted = line.split('=').collect::<Vec<&str>>();
         let name = splitted.first().unwrap().trim();
-        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = splitted
+            .last()
+            .unwrap()
+            .split(";")
+            .collect::<Vec<&str>>()
+            .first()
+            .unwrap()
+            .trim();
         let id = id.parse::<i32>()?;
-        if let Some(artifact) =  artifacts.iter().find(|c| c.id == id) {
+        if let Some(artifact) = artifacts.iter().find(|c| c.id == id) {
             let art_game_id = artifact.game_id.clone();
-            arts_gen += &format!("{{ArtifactType.{name}, PathHelper.AssetsDirectory + \"\\\\Artifacts\\\\{art_game_id}.png\"}},\n");
-        } 
+            arts_gen += &format!(
+                "{{ArtifactType.{name}, PathHelper.AssetsDirectory + \"\\\\Artifacts\\\\{art_game_id}.png\"}},\n"
+            );
+        }
     }
 
     let mut file = std::fs::File::create("D:\\ArtImages.txt")?;
     file.write_all(arts_gen.as_bytes())?;
-
 
     let mut skills_gen = String::new();
     let mut perks_gen = String::new();
@@ -286,13 +350,26 @@ pub async fn generate_images(
     for line in skills_data.lines() {
         let splitted = line.split('=').collect::<Vec<&str>>();
         let game_id = splitted.first().unwrap().trim();
-        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = splitted
+            .last()
+            .unwrap()
+            .split(";")
+            .collect::<Vec<&str>>()
+            .first()
+            .unwrap()
+            .trim();
         let id = id.parse::<i32>()?;
         if let Some(skill) = skills.iter().find(|s| s.id == id) {
             if skill.names.names.len() > 1 {
-                skills_gen += &format!("{{SkillType.{game_id}, PathHelper.AssetsDirectory + \"\\\\Skills\\\\{}_\"}},\n", skill.game_id);
+                skills_gen += &format!(
+                    "{{SkillType.{game_id}, PathHelper.AssetsDirectory + \"\\\\Skills\\\\{}_\"}},\n",
+                    skill.game_id
+                );
             } else {
-                perks_gen += &format!("{{PerkType.{game_id}, PathHelper.AssetsDirectory + \"\\\\Skills\\\\{}.png\"}},\n", skill.game_id);
+                perks_gen += &format!(
+                    "{{PerkType.{game_id}, PathHelper.AssetsDirectory + \"\\\\Skills\\\\{}.png\"}},\n",
+                    skill.game_id
+                );
             }
         }
     }
@@ -308,7 +385,14 @@ pub async fn generate_images(
     for line in perks_data.lines() {
         let splitted = line.split('=').collect::<Vec<&str>>();
         let game_id = splitted.first().unwrap().trim();
-        let id = splitted.last().unwrap().split(";").collect::<Vec<&str>>().first().unwrap().trim();
+        let id = splitted
+            .last()
+            .unwrap()
+            .split(";")
+            .collect::<Vec<&str>>()
+            .first()
+            .unwrap()
+            .trim();
         let id = id.parse::<i32>()?;
         if let Some(skill) = skills.iter().find(|s| s.id == id) {
             perks_data_gen += &format!("{{PerkType.{game_id}, \"{}\"}},\n", skill.game_id)

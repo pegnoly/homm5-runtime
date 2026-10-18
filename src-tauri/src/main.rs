@@ -8,6 +8,6 @@ async fn main() -> Result<(), Error> {
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
         .expect("Failed to install crypto provider");
-    
+
     homm5_runtime_lib::run().await
 }

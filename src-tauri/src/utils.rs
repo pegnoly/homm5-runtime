@@ -26,7 +26,7 @@ pub struct GlobalConfig {
     #[serde(skip)]
     pub session_configs_path: PathBuf,
     #[serde(skip)]
-    pub auth_path: PathBuf
+    pub auth_path: PathBuf,
 }
 
 impl GlobalConfig {
@@ -115,7 +115,7 @@ pub struct LocalAppManager {
     pub base_config: RwLock<GlobalConfig>,
     pub runtime_config: RwLock<RuntimeConfig>,
     pub modifiers_config: RwLock<ModifiersConfig>,
-    pub current_profile_data: RwLock<ProfileConfig>
+    pub current_profile_data: RwLock<ProfileConfig>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -133,5 +133,5 @@ pub struct MapFrontendModel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimelineMessage {
     pub timestamp: String,
-    pub message: String
+    pub message: String,
 }

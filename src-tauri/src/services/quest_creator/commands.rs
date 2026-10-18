@@ -1,25 +1,21 @@
 use std::path::PathBuf;
 
-use editor_tools::prelude::{CreateProgressPayload, CreateQuestPayload, GetProgressPayload, QuestGeneratorRepo, QuestModel, QuestProgressModel, QuestProgressType, SaveProgressPayload, UpdateQuestPayload};
+use editor_tools::prelude::{
+    CreateProgressPayload, CreateQuestPayload, GetProgressPayload, QuestGeneratorRepo, QuestModel,
+    QuestProgressModel, QuestProgressType, SaveProgressPayload, UpdateQuestPayload,
+};
 use map_modifier::quest::write_quest_text_file;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
-use crate::{
-    error::Error,
-    utils::LocalAppManager,
-};
+use crate::{error::Error, utils::LocalAppManager};
 
 #[tauri::command]
 pub async fn load_quests(
     app_manager: State<'_, LocalAppManager>,
     quests_repo: State<'_, QuestGeneratorRepo>,
 ) -> Result<Vec<QuestModel>, Error> {
-    let current_map_id = app_manager
-        .runtime_config
-        .read()
-        .await
-        .current_selected_map;
+    let current_map_id = app_manager.runtime_config.read().await.current_selected_map;
     Ok(quests_repo.load_quests(current_map_id).await?)
 }
 
@@ -39,11 +35,7 @@ pub async fn create_quest(
     script_name: String,
     name: String,
 ) -> Result<QuestModel, Error> {
-    let current_map_id = app_manager
-        .runtime_config
-        .read()
-        .await
-        .current_selected_map;
+    let current_map_id = app_manager.runtime_config.read().await.current_selected_map;
 
     Ok(quests_repo
         .create_quest(CreateQuestPayload {
@@ -61,11 +53,7 @@ pub async fn pick_quest_directory(
     app_manager: State<'_, LocalAppManager>,
     initial: bool,
 ) -> Result<(), ()> {
-    let current_map_id = app_manager
-        .runtime_config
-        .read()
-        .await
-        .current_selected_map;
+    let current_map_id = app_manager.runtime_config.read().await.current_selected_map;
 
     let profile = app_manager.current_profile_data.read().await;
     let map = profile
@@ -163,13 +151,24 @@ pub async fn load_quest_progress(
     quest_id: i32,
     number: i32,
 ) -> Result<Option<QuestProgressModel>, Error> {
-    if let Some(progress) = quests_repo.get_progress(GetProgressPayload { quest_id, number }).await? {
+    if let Some(progress) = quests_repo
+        .get_progress(GetProgressPayload { quest_id, number })
+        .await?
+    {
         Ok(Some(progress))
     } else {
         if number == 0 {
             Ok(None)
         } else {
-            Ok(Some(quests_repo.create_progress(CreateProgressPayload { quest_id, number, progress_type: QuestProgressType::Default(String::new()) }).await?))
+            Ok(Some(
+                quests_repo
+                    .create_progress(CreateProgressPayload {
+                        quest_id,
+                        number,
+                        progress_type: QuestProgressType::Default(String::new()),
+                    })
+                    .await?,
+            ))
         }
     }
 }
@@ -179,9 +178,15 @@ pub async fn create_quest_progress(
     quests_repo: State<'_, QuestGeneratorRepo>,
     quest_id: i32,
     number: i32,
-    progress_type: QuestProgressType
+    progress_type: QuestProgressType,
 ) -> Result<QuestProgressModel, Error> {
-    Ok(quests_repo.create_progress(CreateProgressPayload { quest_id, number, progress_type }).await?)
+    Ok(quests_repo
+        .create_progress(CreateProgressPayload {
+            quest_id,
+            number,
+            progress_type,
+        })
+        .await?)
 }
 
 #[tauri::command]
@@ -209,7 +214,9 @@ pub async fn save_quest_text(
 ) -> Result<(), ()> {
     let profile = app_manager.current_profile_data.read().await;
     let dir_relative_path = quest_directory.replace(profile.map_path.to_str().unwrap(), "");
-    let text_directory = profile.texts_path.join(format!("{}\\Texts\\", &dir_relative_path));
+    let text_directory = profile
+        .texts_path
+        .join(format!("{}\\Texts\\", &dir_relative_path));
     std::fs::create_dir_all(&text_directory).unwrap();
     let mut file = std::fs::File::create(text_directory.join(&text_name)).unwrap();
     write_quest_text_file(&mut file, text);

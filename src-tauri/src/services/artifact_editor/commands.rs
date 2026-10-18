@@ -1,23 +1,30 @@
-use std::{fs::File, io::Write};
-use homm5_scaner::prelude::{ArtifactClassType, ArtifactSlotType, GetArtifactsRequest, ScanerService, UpdateArtifactPayload};
+use crate::services::version_control::VersionControlService;
+use crate::{error::Error, utils::LocalAppManager};
+use homm5_scaner::prelude::{
+    ArtifactClassType, ArtifactSlotType, GetArtifactsRequest, ScanerService, UpdateArtifactPayload,
+};
 use homm5_types::art::{AdvMapArtifactShared, ArtifactObject, Table_DBArtifact_ArtifactEffect};
 use itertools::Itertools;
-use quick_xml::{Writer, events::{BytesDecl, Event}};
+use quick_xml::{
+    Writer,
+    events::{BytesDecl, Event},
+};
+use std::{fs::File, io::Write};
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 use zip::write::FileOptions;
-use crate::{error::Error, utils::LocalAppManager};
-use crate::services::version_control::VersionControlService;
 
 #[tauri::command]
 pub async fn update_artefact_attack(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: i32
+    value: i32,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_attack(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_attack(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -25,10 +32,12 @@ pub async fn update_artefact_defence(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: i32
+    value: i32,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_defence(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_defence(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -36,10 +45,12 @@ pub async fn update_artefact_spell_power(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: i32
+    value: i32,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_spell_power(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_spell_power(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -47,10 +58,12 @@ pub async fn update_artefact_knowledge(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: i32
+    value: i32,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_knowledge(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_knowledge(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -58,10 +71,12 @@ pub async fn update_artefact_luck(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: i32
+    value: i32,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_luck(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_luck(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -69,10 +84,12 @@ pub async fn update_artefact_morale(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: i32
+    value: i32,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_morale(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_morale(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -80,10 +97,12 @@ pub async fn update_artefact_cost(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: i32
+    value: i32,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_cost(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_cost(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -91,10 +110,12 @@ pub async fn update_artefact_class(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: ArtifactClassType
+    value: ArtifactClassType,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_class(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_class(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -102,10 +123,12 @@ pub async fn update_artefact_slot(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: ArtifactSlotType
+    value: ArtifactSlotType,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_slot(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_slot(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -120,7 +143,11 @@ pub async fn select_artefact_name_path(
         .set_directory(path.join("Text\\Game\\Artifacts\\NAF\\"))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
-            app.emit("artifact_name_path_selected", f.unwrap().to_string().replace(&path.to_str().unwrap(), "")).unwrap();
+            app.emit(
+                "artifact_name_path_selected",
+                f.unwrap().to_string().replace(&path.to_str().unwrap(), ""),
+            )
+            .unwrap();
         });
     Ok(())
 }
@@ -130,10 +157,12 @@ pub async fn update_artefact_name_path(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: String
+    value: String,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_name_txt(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_name_txt(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -148,7 +177,11 @@ pub async fn select_artefact_desc_path(
         .set_directory(path.join("Text\\Game\\Artifacts\\NAF\\"))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
-            app.emit("artifact_desc_path_selected", f.unwrap().to_string().replace(path.to_str().unwrap(), "")).unwrap();
+            app.emit(
+                "artifact_desc_path_selected",
+                f.unwrap().to_string().replace(path.to_str().unwrap(), ""),
+            )
+            .unwrap();
         });
     Ok(())
 }
@@ -158,16 +191,18 @@ pub async fn update_artefact_desc_path(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: String
+    value: String,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(value))
+        .await?)
 }
 
 #[tauri::command]
 pub async fn select_artefact_icon_path(
     app: AppHandle,
-    app_manager: State<'_, LocalAppManager>
+    app_manager: State<'_, LocalAppManager>,
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     let path = profile.map_path.clone();
@@ -176,7 +211,11 @@ pub async fn select_artefact_icon_path(
         .set_directory(path.join("Textures\\Icons\\Artifacts\\"))
         .set_can_create_directories(true)
         .pick_folder(move |f| {
-            app.emit("artifact_icon_path_selected", f.unwrap().to_string().replace(path.to_str().unwrap(), "")).unwrap();
+            app.emit(
+                "artifact_icon_path_selected",
+                f.unwrap().to_string().replace(path.to_str().unwrap(), ""),
+            )
+            .unwrap();
         });
     Ok(())
 }
@@ -188,7 +227,7 @@ pub async fn update_artefact_icon_path(
     version_control: State<'_, VersionControlService>,
     id: i32,
     value: String,
-    path: String
+    path: String,
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     let base_cfg = app_manager.base_config.read().await;
@@ -197,12 +236,16 @@ pub async fn update_artefact_icon_path(
         let icon_xdb = base_cfg.generic_icon_128.clone();
         let icon_dds = base_cfg.generic_icon_dds.clone();
         std::fs::copy(icon_xdb, &icon_xdb_path)?;
-        std::fs::copy(icon_dds, icon_xdb_path.to_str().unwrap().replace(".xdb", ".dds"))?;
+        std::fs::copy(
+            icon_dds,
+            icon_xdb_path.to_str().unwrap().replace(".xdb", ".dds"),
+        )?;
     }
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_icon_xdb(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_icon_xdb(value))
+        .await?)
 }
-
 
 #[tauri::command]
 pub async fn update_artefact_name(
@@ -211,7 +254,7 @@ pub async fn update_artefact_name(
     version_control: State<'_, VersionControlService>,
     id: i32,
     value: String,
-    path: String
+    path: String,
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     let path = profile.texts_path.join(path);
@@ -221,7 +264,9 @@ pub async fn update_artefact_name(
         file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
     }
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_name(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_name(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -231,7 +276,7 @@ pub async fn update_artefact_desc(
     version_control: State<'_, VersionControlService>,
     id: i32,
     value: String,
-    path: String
+    path: String,
 ) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     let path = profile.texts_path.join(path);
@@ -241,7 +286,9 @@ pub async fn update_artefact_desc(
         file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
     }
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_desc(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -249,10 +296,12 @@ pub async fn update_artefact_is_generatable(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: bool
+    value: bool,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_generatable(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_generatable(value))
+        .await?)
 }
 
 #[tauri::command]
@@ -260,39 +309,48 @@ pub async fn update_artefact_is_unique(
     scaner_service: State<'_, ScanerService>,
     version_control: State<'_, VersionControlService>,
     id: i32,
-    value: bool
+    value: bool,
 ) -> Result<(), Error> {
     version_control.updated_artifacts.insert(id);
-    Ok(scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_unique(value)).await?)
+    Ok(scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_unique(value))
+        .await?)
 }
 
 #[tauri::command]
 pub async fn update_artefact_texts_paths(
     scaner_service: State<'_, ScanerService>,
     id: i32,
-    value: String
+    value: String,
 ) -> Result<(), Error> {
     let name_txt = format!("{}/name.txt", &value.to_lowercase().replace("\\", "/"));
     let desc_txt = format!("{}/desc.txt", &value.to_lowercase().replace("\\", "/"));
-    scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_name_txt(name_txt)).await?;
-    scaner_service.update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(desc_txt)).await?;
+    scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_name_txt(name_txt))
+        .await?;
+    scaner_service
+        .update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(desc_txt))
+        .await?;
     Ok(())
 }
 
 #[tauri::command]
 pub async fn rebuild_artifacts_file(
     scaner_service: State<'_, ScanerService>,
-    app_manager: State<'_, LocalAppManager>
+    app_manager: State<'_, LocalAppManager>,
 ) -> Result<(), Error> {
     let profile_locked = app_manager.current_profile_data.read().await;
-    let artifacts = scaner_service.get_artifact_models(GetArtifactsRequest::Any).await?;
+    let artifacts = scaner_service
+        .get_artifact_models(GetArtifactsRequest::Any)
+        .await?;
     let table = Table_DBArtifact_ArtifactEffect {
-        objects: artifacts.into_iter().map(|art| {
-            ArtifactObject {
+        objects: artifacts
+            .into_iter()
+            .map(|art| ArtifactObject {
                 ID: art.game_id.clone(),
-                obj: AdvMapArtifactShared::from(art)
-            }
-        }).collect_vec()
+                obj: AdvMapArtifactShared::from(art),
+            })
+            .collect_vec(),
     };
     let universe_pak_path = profile_locked.game_path.join("data\\Universe_mod.pak");
     let temp_pak_path = profile_locked.game_path.join("data\\Universe_mod_temp.pak");
@@ -311,11 +369,16 @@ pub async fn rebuild_artifacts_file(
     let mut output: Vec<u8> = Vec::new();
     let mut writer = Writer::new_with_indent(&mut output, b' ', 4);
     writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
-    writer.create_element("Table_DBArtifact_ArtifactEffect").write_inner_content(|w| {
-        w.write_serializable("objects", &table).unwrap();
-        Ok(())
-    })?;
-    new_archive.start_file("GameMechanics/RefTables/Artifacts.xdb", FileOptions::default())?;
+    writer
+        .create_element("Table_DBArtifact_ArtifactEffect")
+        .write_inner_content(|w| {
+            w.write_serializable("objects", &table).unwrap();
+            Ok(())
+        })?;
+    new_archive.start_file(
+        "GameMechanics/RefTables/Artifacts.xdb",
+        FileOptions::default(),
+    )?;
     new_archive.write_all(&output)?;
     new_archive.finish()?;
     std::fs::rename(temp_pak_path, universe_pak_path)?;

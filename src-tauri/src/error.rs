@@ -38,13 +38,13 @@ pub enum Error {
     #[error(transparent)]
     GoogleApi(#[from] Box<google_api::error::Error>),
     #[error(transparent)]
-    Zip(#[from]zip::result::ZipError),
+    Zip(#[from] zip::result::ZipError),
     #[error(transparent)]
-    MapModifier(#[from]map_modifier::error::MapModifierError),
+    MapModifier(#[from] map_modifier::error::MapModifierError),
     #[error(transparent)]
-    Repack(#[from]homm5_repacker::RepackError),
+    Repack(#[from] homm5_repacker::RepackError),
     #[error(transparent)]
-    FrontendModel(ErrorFrontendModel)
+    FrontendModel(ErrorFrontendModel),
 }
 
 impl Serialize for Error {

@@ -1,23 +1,26 @@
+use crate::commands::{
+    apply_modifications, create_hero, execute_scan, generate_images, load_current_map, load_maps,
+    run_game, select_map, switch_profile,
+};
+use crate::services::creature_editor::commands as creature_editor_commands;
+use crate::services::version_control::VersionControlService;
 use crate::{error::Error, profiles::ProfileConfig};
 use editor_tools::prelude::{
     BanksGeneratorRepo, DialogGeneratorRepo, FightGeneratorRepo, QuestGeneratorRepo,
     ReserveHeroCreatorRepo,
 };
+use google_api::service::GoogleApiService;
 use homm5_scaner::prelude::ScanerService;
 use services::dialog_generator::prelude::*;
 use services::quest_creator::prelude::*;
 use tokio::sync::RwLock;
-use google_api::service::GoogleApiService;
 use utils::{DataContainer, GlobalConfig, LocalAppManager, ModifiersConfig, RuntimeConfig};
-use crate::commands::{apply_modifications, create_hero, execute_scan, generate_images, load_current_map, load_maps, run_game, select_map, switch_profile};
-use crate::services::creature_editor::commands as creature_editor_commands;
-use crate::services::version_control::VersionControlService;
 
 mod commands;
 pub mod error;
+mod profiles;
 mod services;
 mod utils;
-mod profiles;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() -> Result<(), Error> {
@@ -35,10 +38,11 @@ pub async fn run() -> Result<(), Error> {
         std::fs::File::create(&db_path)?;
     }
 
-    let pool = sqlx::SqlitePool::connect(db_path.to_str().unwrap())
-        .await?;
+    let pool = sqlx::SqlitePool::connect(db_path.to_str().unwrap()).await?;
 
-    let mut current_profile = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(cfg_path.join(format!("{}\\profile.json", &current_profile)))?)?;
+    let mut current_profile = serde_json::from_str::<ProfileConfig>(&std::fs::read_to_string(
+        cfg_path.join(format!("{}\\profile.json", &current_profile)),
+    )?)?;
     current_profile.map_path = current_profile.game_path.join(&current_profile.map_path);
     current_profile.texts_path = current_profile.game_path.join(&current_profile.texts_path);
     for data in current_profile.repackers.values_mut() {
@@ -50,7 +54,7 @@ pub async fn run() -> Result<(), Error> {
         map.xdb = current_profile.game_path.join(map.xdb.clone());
         map.data_path = current_profile.game_path.join(map.data_path.clone());
     }
-    
+
     let quest_generator_repo = QuestGeneratorRepo::new(pool.clone());
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
     let fight_generator_repo = FightGeneratorRepo::new(pool.clone());
@@ -64,13 +68,15 @@ pub async fn run() -> Result<(), Error> {
         .plugin(tauri_plugin_dialog::init())
         .manage(BanksGeneratorRepo::new(
             pool.clone(),
-            current_profile.map_path.join("scripts\\advmap\\Banks\\Data\\")
+            current_profile
+                .map_path
+                .join("scripts\\advmap\\Banks\\Data\\"),
         ))
         .manage(LocalAppManager {
             base_config: RwLock::new(global_config),
             runtime_config: RwLock::new(runtime_config),
             modifiers_config: RwLock::new(modifiers_config),
-            current_profile_data: RwLock::new(current_profile)
+            current_profile_data: RwLock::new(current_profile),
         })
         .manage(quest_generator_repo)
         .manage(dialog_generator_repo)
@@ -145,12 +151,11 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::load_artifact_models,
             services::fight_generator::commands::load_creature_models,
             services::fight_generator::commands::load_abilities_models,
-            services::fight_generator::commands::load_spells_models,
             services::fight_generator::commands::pick_hero_lua_generation_directory,
             services::fight_generator::commands::init_new_asset,
-            services::fight_generator::commands::load_all_assets,
             services::fight_generator::commands::load_asset,
             services::fight_generator::commands::delete_asset,
+            services::fight_generator::commands::load_all_assets,
             services::fight_generator::commands::try_load_artifacts_data_for_asset,
             services::fight_generator::commands::create_artifacts_data_for_asset,
             services::fight_generator::commands::update_artifacts_base_cost,
@@ -161,7 +166,6 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::remove_optional_artifact,
             services::fight_generator::commands::load_stacks_ids,
             services::fight_generator::commands::create_stack,
-            services::fight_generator::commands::load_stack,
             services::fight_generator::commands::delete_stack,
             services::fight_generator::commands::update_stack_data,
             services::fight_generator::commands::update_stack_base_powers,
@@ -172,20 +176,9 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::update_stack_tiers,
             services::fight_generator::commands::update_stack_rules,
             services::fight_generator::commands::generate_current_hero_script,
-            services::fight_generator::commands::load_stats_generation_elements,
-            services::fight_generator::commands::add_stat_generation_element,
-            services::fight_generator::commands::remove_stat_generation_element,
-            services::fight_generator::commands::update_stat_generation_element_priority,
-            services::fight_generator::commands::update_stat_generation_element_rule,
-            services::fight_generator::commands::update_stat_generation_params,
             services::fight_generator::commands::get_average_creatures_count,
             services::fight_generator::commands::get_average_concrete_creatures_count,
             services::fight_generator::commands::get_average_artifacts_cost,
-            services::fight_generator::commands::create_sheet_for_existing_asset,
-            services::fight_generator::commands::pull_from_sheet,
-            services::fight_generator::commands::push_to_sheet,
-            services::fight_generator::commands::add_artifacts_data_to_asset_sheet,
-            services::fight_generator::commands::pull_artifacts_data_from_sheet,
             //
             services::creature_generator::commands::save_generation_session,
             services::creature_generator::commands::generate_creatures,

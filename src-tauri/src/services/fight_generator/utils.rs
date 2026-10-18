@@ -1,13 +1,21 @@
-use std::collections::HashMap;
-use editor_tools::prelude::{AssetArmySlotModel, AssetArtifactsModel, AssetUpdateType, CalculationRule, DifficultyMappedValue, DifficultyType, OptionalArtifacts, RequiredArtifacts, SelectionType, StackGenerationRule, StackStatsRuleModel, StatParam, StatSelectionRule};
-use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, Town, TownExtended};
+use crate::services::version_control::VersionControlService;
+use editor_tools::prelude::{
+    AssetArmySlotModel, AssetArtifactsModel, AssetUpdateType, CalculationRule,
+    DifficultyMappedValue, DifficultyType, FightGeneratorRepo, OptionalArtifacts,
+    RequiredArtifacts, SelectionType, StackGenerationRule, StackStatsRuleModel, StatParam,
+    StatSelectionRule,
+};
+use google_api::error::Error;
+use google_api::prelude::ValueRange;
+use google_api::utils::{FromSheetsData, IntoSheetsData};
+use homm5_scaner::prelude::{
+    ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town, TownExtended,
+};
 use itertools::Itertools;
 use regex::Regex;
 use serde_json::Value;
+use std::collections::HashMap;
 use strum::IntoEnumIterator;
-use google_api::prelude::ValueRange;
-use google_api::utils::{FromSheetsData, IntoSheetsData};
-use google_api::error::Error;
 
 pub trait IntoSheetValidatedValue {
     fn to_sheet_validated_value(&self) -> String;
@@ -51,12 +59,15 @@ impl IntoSheetValidatedValue for Town {
 
 pub struct FightAssetArmySheetConverter<'a> {
     sheet_name: &'a String,
-    creatures_data: &'a Vec<CreatureDBModel>
+    creatures_data: &'a Vec<CreatureDBModel>,
 }
 
 impl<'a> FightAssetArmySheetConverter<'a> {
     pub fn new(sheet_name: &String, creatures_data: &Vec<CreatureDBModel>) -> Self {
-        Self { sheet_name, creatures_data }
+        Self {
+            sheet_name,
+            creatures_data,
+        }
     }
 }
 
@@ -76,7 +87,7 @@ impl IntoSheetValidatedValue for SelectionType {
     fn to_sheet_validated_value(&self) -> String {
         match self {
             SelectionType::Manual => "Specific unit [1]".to_string(),
-            SelectionType::TierSlotBased => "Tier-slot based [0]".to_string()
+            SelectionType::TierSlotBased => "Tier-slot based [0]".to_string(),
         }
     }
 }
@@ -85,7 +96,7 @@ impl IntoSheetValidatedValue for AssetUpdateType {
     fn to_sheet_validated_value(&self) -> String {
         match self {
             AssetUpdateType::Static => "Static [0]".to_string(),
-            AssetUpdateType::Dynamic => "Dynamic [1]".to_string()
+            AssetUpdateType::Dynamic => "Dynamic [1]".to_string(),
         }
     }
 }
@@ -121,15 +132,15 @@ impl IntoSheetValidatedValue for (StatSelectionRule, StatParam) {
 pub struct AssetArmySlotSheetWrapper<'a> {
     slot: &'a AssetArmySlotModel,
     sheet_name: &'a str,
-    creatures_data: &'a Vec<CreatureDBModel>
+    creatures_data: &'a Vec<CreatureDBModel>,
 }
 
-impl<'a> AssetArmySlotSheetWrapper<'a>  {
+impl<'a> AssetArmySlotSheetWrapper<'a> {
     pub fn new(slot: &AssetArmySlotModel) -> Self {
         Self {
             slot,
             sheet_name: "",
-            creatures_data: &[]
+            creatures_data: &[],
         }
     }
     fn get_column(&self) -> &'a str {
@@ -141,19 +152,40 @@ impl<'a> AssetArmySlotSheetWrapper<'a>  {
             4 => "F",
             5 => "G",
             6 => "H",
-            _=> unreachable!()
+            _ => unreachable!(),
         }
     }
     fn convert_stack_base_power(&self, difficulty: DifficultyType) -> Value {
         if self.slot.calculation_type == CalculationRule::Raw {
-            Value::Number(self.slot.specific_count.data.get(&difficulty).unwrap_or(&0).into())
+            Value::Number(
+                self.slot
+                    .specific_count
+                    .data
+                    .get(&difficulty)
+                    .unwrap_or(&0)
+                    .into(),
+            )
         } else {
-            Value::Number(self.slot.base_powers.data.get(&difficulty).unwrap_or(&0).into())
+            Value::Number(
+                self.slot
+                    .base_powers
+                    .data
+                    .get(&difficulty)
+                    .unwrap_or(&0)
+                    .into(),
+            )
         }
     }
 
     fn convert_stack_power_grow(&self, difficulty: DifficultyType) -> Value {
-        Value::Number(self.slot.powers_grow.data.get(&difficulty).unwrap_or(&0).into())
+        Value::Number(
+            self.slot
+                .powers_grow
+                .data
+                .get(&difficulty)
+                .unwrap_or(&0)
+                .into(),
+        )
     }
 }
 impl<'a> Into<ValueRange> for AssetArmySlotSheetWrapper<'a> {
@@ -163,8 +195,12 @@ impl<'a> Into<ValueRange> for AssetArmySlotSheetWrapper<'a> {
         result.range = Some(format!("{}!{}2:{}24", self.sheet_name, col, col));
         result.major_dimension = Some("COLUMNS".to_string());
         let mut values = vec![];
-        values.push(Value::String(self.slot.calculation_type.to_sheet_validated_value()));
-        values.push(Value::String(self.slot.update_type.to_sheet_validated_value()));
+        values.push(Value::String(
+            self.slot.calculation_type.to_sheet_validated_value(),
+        ));
+        values.push(Value::String(
+            self.slot.update_type.to_sheet_validated_value(),
+        ));
         values.push(self.convert_stack_base_power(DifficultyType::Easy));
         values.push(self.convert_stack_base_power(DifficultyType::Medium));
         values.push(self.convert_stack_base_power(DifficultyType::Hard));
@@ -176,43 +212,84 @@ impl<'a> Into<ValueRange> for AssetArmySlotSheetWrapper<'a> {
         values.push(self.convert_stack_power_grow(DifficultyType::Hard));
         values.push(self.convert_stack_power_grow(DifficultyType::Heroic));
         values.push(Value::String(String::new()));
-        values.push(Value::String(self.slot.selection_type.to_sheet_validated_value()));
+        values.push(Value::String(
+            self.slot.selection_type.to_sheet_validated_value(),
+        ));
         values.push(Value::String(String::new()));
         values.push(Value::String(String::new()));
         values.push(if self.slot.selection_type == SelectionType::Manual {
-                Value::String(String::new())
-            } else {
-                Value::String(self.slot.towns.towns.iter().map(|t| t.to_sheet_validated_value()).collect_vec().join(","))
-            });
+            Value::String(String::new())
+        } else {
+            Value::String(
+                self.slot
+                    .towns
+                    .towns
+                    .iter()
+                    .map(|t| t.to_sheet_validated_value())
+                    .collect_vec()
+                    .join(","),
+            )
+        });
         values.push(if self.slot.selection_type == SelectionType::Manual {
-                Value::String(String::new())
-            } else {
-                Value::String(self.slot.tiers.tiers.iter().map(|t| format!("Tier {} [{}]", t, *t - 1)).collect_vec().join(","))
-            });
+            Value::String(String::new())
+        } else {
+            Value::String(
+                self.slot
+                    .tiers
+                    .tiers
+                    .iter()
+                    .map(|t| format!("Tier {} [{}]", t, *t - 1))
+                    .collect_vec()
+                    .join(","),
+            )
+        });
         values.push(if self.slot.selection_type == SelectionType::Manual {
-                Value::String(String::new())
-            } else {
-                Value::String(self.slot.rules.rules.iter().map(|r| r.to_sheet_validated_value()).collect_vec().join(","))
-            });
+            Value::String(String::new())
+        } else {
+            Value::String(
+                self.slot
+                    .rules
+                    .rules
+                    .iter()
+                    .map(|r| r.to_sheet_validated_value())
+                    .collect_vec()
+                    .join(","),
+            )
+        });
         values.push(if self.slot.selection_type == SelectionType::Manual {
-                Value::String(String::new())
+            Value::String(String::new())
+        } else {
+            if let Some(rules) = self.slot.stat_rules {
+                Value::String(
+                    rules
+                        .params
+                        .iter()
+                        .map(|p| (rules.rule, *p).into())
+                        .collect_vec()
+                        .join(","),
+                )
             } else {
-                if let Some(rules) = self.slot.stat_rules {
-                    Value::String(rules.params.iter().map(|p| (rules.rule, *p).into()).collect_vec().join(","))
-                } else {
-                    Value::String(String::new())
-                }
-            });
+                Value::String(String::new())
+            }
+        });
         values.push(Value::String(String::new()));
         values.push(Value::String(String::new()));
         values.push(if self.slot.selection_type == SelectionType::Manual {
-                Value::String(self.slot.specific_creatures.ids.iter().map(|c| {
-                    let creature = self.creatures_data.iter().find(|m| m.id == *c).unwrap();
-                    format!("{} [{}]", creature.name, c)
-                }).collect_vec().join(","))
-            } else {
-                Value::String(String::new())
-            });
+            Value::String(
+                self.slot
+                    .specific_creatures
+                    .ids
+                    .iter()
+                    .map(|c| {
+                        let creature = self.creatures_data.iter().find(|m| m.id == *c).unwrap();
+                        format!("{} [{}]", creature.name, c)
+                    })
+                    .collect_vec()
+                    .join(","),
+            )
+        } else {
+            Value::String(String::new())
+        });
         result.values = Some(vec![values]);
         result
     }
@@ -222,7 +299,8 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
     type Error = crate::Error;
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
         let inner_number_regex = Regex::new(r"\[(\d+)]").unwrap();
-        let data = value.values
+        let data = value
+            .values
             .and_then(|v| v.first())
             .ok_or_else(|| Error::UndefinedValue("Army slot sheet data".to_string()))?;
 
@@ -230,130 +308,223 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
         slot.calculation_type = data
             .first()
             .and_then(|v| match v {
-                Value::String(s) => if let Some(caps) = inner_number_regex.captures(s) {
-                    Some(CalculationRule::from_repr(caps[1].parse().unwrap()).unwrap())
-                } else {
-                    None
-                },
-                _=> None
+                Value::String(s) => {
+                    if let Some(caps) = inner_number_regex.captures(s) {
+                        Some(CalculationRule::from_repr(caps[1].parse().unwrap()).unwrap())
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
             })
             .ok_or_else(|| Error::UndefinedValue("Army slot calc type".to_string()))?;
         slot.update_type = data
             .get(1)
             .and_then(|v| match v {
-                Value::String(s) => if let Some(caps) = inner_number_regex.captures(s) {
-                    Some(AssetUpdateType::from_repr(caps[1].parse().unwrap()).unwrap())
-                } else {
-                    None
-                },
-                _=> None
+                Value::String(s) => {
+                    if let Some(caps) = inner_number_regex.captures(s) {
+                        Some(AssetUpdateType::from_repr(caps[1].parse().unwrap()).unwrap())
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
             })
             .ok_or_else(|| Error::UndefinedValue("Army slot update type".to_string()))?;
         slot.selection_type = data
             .get(13)
             .and_then(|v| match v {
-                Value::String(s) => if let Some(caps) = inner_number_regex.captures(s) {
-                    Some(SelectionType::from_repr(caps[1].parse().unwrap()).unwrap())
-                } else {
-                    None
-                },
-                _=> None
+                Value::String(s) => {
+                    if let Some(caps) = inner_number_regex.captures(s) {
+                        Some(SelectionType::from_repr(caps[1].parse().unwrap()).unwrap())
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
             })
             .ok_or_else(|| Error::UndefinedValue("Army slot selection type".to_string()))?;
         if slot.selection_type == SelectionType::Manual {
             slot.base_powers = DifficultyMappedValue::default();
             slot.specific_count = DifficultyMappedValue {
                 data: HashMap::from([
-                    (DifficultyType::Easy, data.get(2).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot specific count easy diff".to_string()))?),
-                    (DifficultyType::Medium, data.get(3).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot specific count medium diff".to_string()))?),
-                    (DifficultyType::Hard, data.get(4).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot specific count hard diff".to_string()))?),
-                    (DifficultyType::Heroic, data.get(5).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot specific count heroic diff".to_string()))?)
-                ])
+                    (
+                        DifficultyType::Easy,
+                        data.get(2)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue(
+                                    "Army slot specific count easy diff".to_string(),
+                                )
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Medium,
+                        data.get(3)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue(
+                                    "Army slot specific count medium diff".to_string(),
+                                )
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Hard,
+                        data.get(4)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue(
+                                    "Army slot specific count hard diff".to_string(),
+                                )
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Heroic,
+                        data.get(5)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue(
+                                    "Army slot specific count heroic diff".to_string(),
+                                )
+                            })?,
+                    ),
+                ]),
             };
             slot.specific_creatures.ids = data
                 .last()
                 .and_then(|v| match v {
-                    Value::String(s) => {
-                        Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
-                            Some(caps[1].parse().unwrap())
-                        } else {
-                            None
-                        }).collect_vec())
-                    },
-                    _=> None
+                    Value::String(s) => Some(
+                        s.split(",")
+                            .filter_map(|c| {
+                                if let Some(caps) = inner_number_regex.captures(c) {
+                                    Some(caps[1].parse().unwrap())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect_vec(),
+                    ),
+                    _ => None,
                 })
                 .ok_or_else(|| Error::UndefinedValue("Army slot creatures ids".to_string()))?;
         } else {
             slot.specific_count = DifficultyMappedValue::default();
             slot.base_powers = DifficultyMappedValue {
                 data: HashMap::from([
-                    (DifficultyType::Easy, data.get(2).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers easy diff".to_string()))?),
-                    (DifficultyType::Medium, data.get(3).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers medium diff".to_string()))?),
-                    (DifficultyType::Hard, data.get(4).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers hard diff".to_string()))?),
-                    (DifficultyType::Heroic, data.get(5).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers heroic diff".to_string()))?)
-                ])
+                    (
+                        DifficultyType::Easy,
+                        data.get(2)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue("Army slot base powers easy diff".to_string())
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Medium,
+                        data.get(3)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue(
+                                    "Army slot base powers medium diff".to_string(),
+                                )
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Hard,
+                        data.get(4)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue("Army slot base powers hard diff".to_string())
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Heroic,
+                        data.get(5)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue(
+                                    "Army slot base powers heroic diff".to_string(),
+                                )
+                            })?,
+                    ),
+                ]),
             };
             slot.towns.towns = data
                 .get(16)
                 .and_then(|v| match v {
-                    Value::String(s) => {
-                        Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
-                            Some(TownExtended::from_repr(caps[1].parse().unwrap()).unwrap())
-                        } else {
-                            None
-                        }).collect_vec())
-                    },
-                    _=> None
+                    Value::String(s) => Some(
+                        s.split(",")
+                            .filter_map(|c| {
+                                if let Some(caps) = inner_number_regex.captures(c) {
+                                    Some(TownExtended::from_repr(caps[1].parse().unwrap()).unwrap())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect_vec(),
+                    ),
+                    _ => None,
                 })
                 .ok_or_else(|| Error::UndefinedValue("Army slot towns".to_string()))?;
             slot.tiers.tiers = data
                 .get(17)
                 .and_then(|v| match v {
-                    Value::String(s) => {
-                        Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
-                            Some(caps[1].parse().unwrap())
-                        } else {
-                            None
-                        }).collect_vec())
-                    },
-                    _=> None
+                    Value::String(s) => Some(
+                        s.split(",")
+                            .filter_map(|c| {
+                                if let Some(caps) = inner_number_regex.captures(c) {
+                                    Some(caps[1].parse().unwrap())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect_vec(),
+                    ),
+                    _ => None,
                 })
                 .ok_or_else(|| Error::UndefinedValue("Army slot tiers".to_string()))?;
             slot.rules.rules = data
                 .get(18)
                 .and_then(|v| match v {
-                    Value::String(s) => {
-                        Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
-                            Some(StackGenerationRule::from_repr(caps[1].parse().unwrap()).unwrap())
-                        } else {
-                            None
-                        }).collect_vec())
-                    },
-                    _=> None
+                    Value::String(s) => Some(
+                        s.split(",")
+                            .filter_map(|c| {
+                                if let Some(caps) = inner_number_regex.captures(c) {
+                                    Some(
+                                        StackGenerationRule::from_repr(caps[1].parse().unwrap())
+                                            .unwrap(),
+                                    )
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect_vec(),
+                    ),
+                    _ => None,
                 })
                 .ok_or_else(|| Error::UndefinedValue("Army slot rules".to_string()))?;
             slot.stat_rules.rules = data
@@ -363,26 +534,62 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                         if s.is_empty() {
                             None
                         } else {
-                            Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
-                                match caps[1].parse::<i32>().unwrap() {
-                                    0 => Some(StackStatsRuleModel { param: StatParam::Hitpoints, rule: StatSelectionRule::MinBy }),
-                                    1 => Some(StackStatsRuleModel { param: StatParam::Hitpoints, rule: StatSelectionRule::MaxBy }),
-                                    2 => Some(StackStatsRuleModel { param: StatParam::Initiative, rule: StatSelectionRule::MinBy }),
-                                    3 => Some(StackStatsRuleModel { param: StatParam::Initiative, rule: StatSelectionRule::MaxBy }),
-                                    4 => Some(StackStatsRuleModel { param: StatParam::Speed, rule: StatSelectionRule::MinBy }),
-                                    5 => Some(StackStatsRuleModel { param: StatParam::Speed, rule: StatSelectionRule::MaxBy }),
-                                    6 => Some(StackStatsRuleModel { param: StatParam::Attack, rule: StatSelectionRule::MinBy }),
-                                    7 => Some(StackStatsRuleModel { param: StatParam::Attack, rule: StatSelectionRule::MaxBy }),
-                                    8 => Some(StackStatsRuleModel { param: StatParam::Defence, rule: StatSelectionRule::MinBy }),
-                                    9 => Some(StackStatsRuleModel { param: StatParam::Defence, rule: StatSelectionRule::MaxBy }),
-                                    _=> None
-                                }
-                            } else {
-                                None
-                            }).collect_vec())
+                            Some(
+                                s.split(",")
+                                    .filter_map(|c| {
+                                        if let Some(caps) = inner_number_regex.captures(c) {
+                                            match caps[1].parse::<i32>().unwrap() {
+                                                0 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Hitpoints,
+                                                    rule: StatSelectionRule::MinBy,
+                                                }),
+                                                1 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Hitpoints,
+                                                    rule: StatSelectionRule::MaxBy,
+                                                }),
+                                                2 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Initiative,
+                                                    rule: StatSelectionRule::MinBy,
+                                                }),
+                                                3 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Initiative,
+                                                    rule: StatSelectionRule::MaxBy,
+                                                }),
+                                                4 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Speed,
+                                                    rule: StatSelectionRule::MinBy,
+                                                }),
+                                                5 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Speed,
+                                                    rule: StatSelectionRule::MaxBy,
+                                                }),
+                                                6 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Attack,
+                                                    rule: StatSelectionRule::MinBy,
+                                                }),
+                                                7 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Attack,
+                                                    rule: StatSelectionRule::MaxBy,
+                                                }),
+                                                8 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Defence,
+                                                    rule: StatSelectionRule::MinBy,
+                                                }),
+                                                9 => Some(StackStatsRuleModel {
+                                                    param: StatParam::Defence,
+                                                    rule: StatSelectionRule::MaxBy,
+                                                }),
+                                                _ => None,
+                                            }
+                                        } else {
+                                            None
+                                        }
+                                    })
+                                    .collect_vec(),
+                            )
                         }
-                    },
-                    _=> None
+                    }
+                    _ => None,
                 })
                 .ok_or_else(|| Error::UndefinedValue("Army slot stats rules".to_string()))?;
         };
@@ -391,30 +598,62 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
         } else {
             DifficultyMappedValue {
                 data: HashMap::from([
-                    (DifficultyType::Easy, data.get(8).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers easy diff".to_string()))?),
-                    (DifficultyType::Medium, data.get(9).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers medium diff".to_string()))?),
-                    (DifficultyType::Hard, data.get(10).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers hard diff".to_string()))?),
-                    (DifficultyType::Heroic, data.get(11).and_then(|v| match v {
-                        Value::String(s) => Some(s.parse().unwrap()),
-                        _=> None
-                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers heroic diff".to_string()))?)
-                ])
+                    (
+                        DifficultyType::Easy,
+                        data.get(8)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue("Army slot base powers easy diff".to_string())
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Medium,
+                        data.get(9)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue(
+                                    "Army slot base powers medium diff".to_string(),
+                                )
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Hard,
+                        data.get(10)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue("Army slot base powers hard diff".to_string())
+                            })?,
+                    ),
+                    (
+                        DifficultyType::Heroic,
+                        data.get(11)
+                            .and_then(|v| match v {
+                                Value::String(s) => Some(s.parse().unwrap()),
+                                _ => None,
+                            })
+                            .ok_or_else(|| {
+                                Error::UndefinedValue(
+                                    "Army slot base powers heroic diff".to_string(),
+                                )
+                            })?,
+                    ),
+                ]),
             }
         };
 
         Ok(AssetArmySlotSheetWrapper {
             slot: &slot,
             sheet_name: "",
-            creatures_data: &[]
+            creatures_data: &[],
         })
     }
 }
@@ -422,7 +661,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
 pub struct FightAssetArtifactsDataWrapper<'a> {
     data: &'a AssetArtifactsModel,
     sheet_name: &'a str,
-    artifacts_data: &'a Vec<ArtifactDBModel>
+    artifacts_data: &'a Vec<ArtifactDBModel>,
 }
 
 pub struct FightAssetArtifactsValueWrapper<'a> {
@@ -430,13 +669,19 @@ pub struct FightAssetArtifactsValueWrapper<'a> {
     sheet_name: &'a str,
 }
 
-pub struct FightAssetArtifactsDataSheetConverter<'a> {}
+pub struct FightAssetArtifactsDataSheetConverter {}
 
-impl<'a> IntoSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter<'a> {}
-impl<'a> FromSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter<'a> {}
+impl IntoSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter {}
+impl FromSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter {}
 
-impl<'a> IntoSheetsData<FightAssetArtifactsValueWrapper<'_>> for FightAssetArtifactsDataSheetConverter<'a> {}
-impl<'a> FromSheetsData<FightAssetArtifactsValueWrapper<'_>> for FightAssetArtifactsDataSheetConverter<'a> {}
+impl<'a> IntoSheetsData<FightAssetArtifactsValueWrapper<'_>>
+    for FightAssetArtifactsDataSheetConverter
+{
+}
+impl<'a> FromSheetsData<FightAssetArtifactsValueWrapper<'_>>
+    for FightAssetArtifactsDataSheetConverter
+{
+}
 
 impl<'a> Into<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
     fn into(self) -> ValueRange {
@@ -444,18 +689,32 @@ impl<'a> Into<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
         result.range = Some(format!("{}!B27:B37", self.sheet_name));
         result.major_dimension = Some("COLUMNS".to_string());
         let mut values = vec![];
-        values.push(Value::String(self.data.required.ids.iter().map(|a| {
-            let art = self.artifacts_data.iter().find(|m| m.id == *a).unwrap();
-            format!("{} [{}]", art.name, art.id)
-        }).collect_vec().join(",")));
+        values.push(Value::String(
+            self.data
+                .required
+                .ids
+                .iter()
+                .map(|a| {
+                    let art = self.artifacts_data.iter().find(|m| m.id == *a).unwrap();
+                    format!("{} [{}]", art.name, art.id)
+                })
+                .collect_vec()
+                .join(","),
+        ));
         values.push(Value::String(String::new()));
-        ArtifactSlotType::iter().filter(|a| a != ArtifactSlotType::Inventory)
+        ArtifactSlotType::iter()
+            .filter(|a| a != ArtifactSlotType::Inventory)
             .for_each(|a| {
                 if let Some(arts) = self.data.optional.values.get(&a) {
-                    values.push(Value::String(arts.iter().map(|i| {
-                        let art = self.artifacts_data.iter().find(|d| d.id == *i).unwrap();
-                        format!("{} [{}]", art.name, art.id)
-                    }).collect_vec().join(",")));
+                    values.push(Value::String(
+                        arts.iter()
+                            .map(|i| {
+                                let art = self.artifacts_data.iter().find(|d| d.id == *i).unwrap();
+                                format!("{} [{}]", art.name, art.id)
+                            })
+                            .collect_vec()
+                            .join(","),
+                    ));
                 } else {
                     values.push(Value::String(String::new()));
                 }
@@ -469,7 +728,8 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
     type Error = crate::Error;
 
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
-        let data = value.values
+        let data = value
+            .values
             .and_then(|v| v.first())
             .ok_or_else(|| Error::UndefinedValue("Fight artifacts data".to_string()))?;
         let inner_number_regex = Regex::new(r"\[(\d+)]").unwrap();
@@ -480,47 +740,69 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                 id: -1,
                 asset_id: -1,
                 required: RequiredArtifacts {
-                    ids: data.first()
+                    ids: data
+                        .first()
                         .and_then(|v| match v {
                             Value::String(s) => {
                                 if s.is_empty() {
                                     Some(vec![])
                                 } else {
-                                    Some(s.split(",").filter_map(|a| if let Some(caps) = inner_number_regex.captures(a) {
-                                        Some(caps[1].parse().unwrap())
-                                    } else {
-                                        None
-                                    }).collect_vec())
+                                    Some(
+                                        s.split(",")
+                                            .filter_map(|a| {
+                                                if let Some(caps) = inner_number_regex.captures(a) {
+                                                    Some(caps[1].parse().unwrap())
+                                                } else {
+                                                    None
+                                                }
+                                            })
+                                            .collect_vec(),
+                                    )
                                 }
-                            },
-                            _=> None
+                            }
+                            _ => None,
                         })
-                        .ok_or_else(|| Error::UndefinedValue("Artifacts asset required ids".to_string()))?,
+                        .ok_or_else(|| {
+                            Error::UndefinedValue("Artifacts asset required ids".to_string())
+                        })?,
                 },
                 optional: OptionalArtifacts {
                     values: HashMap::from_iter(
-                        ArtifactSlotType::iter().filter( | a| a != ArtifactSlotType::Inventory)
-                            .filter_map(|a| if let Some(v) = data.get(2 + (a as i32)) {
-                                match v {
-                                    Value::String(s) => {
-                                        if s.is_empty() {
-                                            Some((a, vec![]))
-                                        } else {
-                                            Some((a, s.split(",").filter_map(|i| if let Some(caps) = inner_number_regex.captures(i) {
-                                                Some(caps[1].parse().unwrap())
+                        ArtifactSlotType::iter()
+                            .filter(|a| a != ArtifactSlotType::Inventory)
+                            .filter_map(|a| {
+                                if let Some(v) = data.get(2 + (a as i32)) {
+                                    match v {
+                                        Value::String(s) => {
+                                            if s.is_empty() {
+                                                Some((a, vec![]))
                                             } else {
-                                                None
-                                            }).collect_vec()))
+                                                Some((
+                                                    a,
+                                                    s.split(",")
+                                                        .filter_map(|i| {
+                                                            if let Some(caps) =
+                                                                inner_number_regex.captures(i)
+                                                            {
+                                                                Some(caps[1].parse().unwrap())
+                                                            } else {
+                                                                None
+                                                            }
+                                                        })
+                                                        .collect_vec(),
+                                                ))
+                                            }
                                         }
-                                    },
-                                    _=> None
+                                        _ => None,
+                                    }
+                                } else {
+                                    None
                                 }
-                            } else {
-                                None
-                            }))
+                            }),
+                    ),
                 },
                 ..Default::default()
-            }
+            },
         };
         Ok(model)
     }
@@ -534,21 +816,25 @@ impl<'a> Into<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
         let mut values = vec![];
 
         DifficultyType::iter().for_each(|d| {
-            values.push(Value::String(if let Some(data) = self.data.base_powers.data.get(&d) {
-                data.to_string()
-            } else {
-                "0".to_string()
-            }));
+            values.push(Value::String(
+                if let Some(data) = self.data.base_powers.data.get(&d) {
+                    data.to_string()
+                } else {
+                    "0".to_string()
+                },
+            ));
         });
 
         values.push(Value::String(String::new()));
 
         DifficultyType::iter().for_each(|d| {
-            values.push(Value::String(if let Some(data) = self.data.powers_grow.data.get(&d) {
-                data.to_string()
-            } else {
-                "0".to_string()
-            }));
+            values.push(Value::String(
+                if let Some(data) = self.data.powers_grow.data.get(&d) {
+                    data.to_string()
+                } else {
+                    "0".to_string()
+                },
+            ));
         });
 
         result.values = Some(vec![values]);
@@ -560,7 +846,8 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
     type Error = crate::Error;
 
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
-        let data = value.values
+        let data = value
+            .values
             .and_then(|v| v.first())
             .ok_or_else(|| Error::UndefinedValue("Fight artifacts values".to_string()))?;
 
@@ -569,47 +856,127 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
             data: &AssetArtifactsModel {
                 base_powers: DifficultyMappedValue {
                     data: HashMap::from([
-                        (DifficultyType::Easy, data.first().and_then(|v| match v {
-                            Value::String(s) => Some(s.parse().unwrap_or(0)),
-                            _=> None
-                        }).ok_or_else(|| Error::UndefinedValue("Artifacts base powers easy diff".to_string()))?),
-                        (DifficultyType::Medium, data.get(1).and_then(|v| match v {
-                            Value::String(s) => Some(s.parse().unwrap_or(0)),
-                            _=> None
-                        }).ok_or_else(|| Error::UndefinedValue("Artifacts base powers medium diff".to_string()))?),
-                        (DifficultyType::Hard, data.get(2).and_then(|v| match v {
-                            Value::String(s) => Some(s.parse().unwrap_or(0)),
-                            _=> None
-                        }).ok_or_else(|| Error::UndefinedValue("Artifacts base powers hard diff".to_string()))?),
-                        (DifficultyType::Heroic, data.get(3).and_then(|v| match v {
-                            Value::String(s) => Some(s.parse().unwrap_or(0)),
-                            _=> None
-                        }).ok_or_else(|| Error::UndefinedValue("Artifacts base powers heroic diff".to_string()))?),
-                    ])
+                        (
+                            DifficultyType::Easy,
+                            data.first()
+                                .and_then(|v| match v {
+                                    Value::String(s) => Some(s.parse().unwrap_or(0)),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    Error::UndefinedValue(
+                                        "Artifacts base powers easy diff".to_string(),
+                                    )
+                                })?,
+                        ),
+                        (
+                            DifficultyType::Medium,
+                            data.get(1)
+                                .and_then(|v| match v {
+                                    Value::String(s) => Some(s.parse().unwrap_or(0)),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    Error::UndefinedValue(
+                                        "Artifacts base powers medium diff".to_string(),
+                                    )
+                                })?,
+                        ),
+                        (
+                            DifficultyType::Hard,
+                            data.get(2)
+                                .and_then(|v| match v {
+                                    Value::String(s) => Some(s.parse().unwrap_or(0)),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    Error::UndefinedValue(
+                                        "Artifacts base powers hard diff".to_string(),
+                                    )
+                                })?,
+                        ),
+                        (
+                            DifficultyType::Heroic,
+                            data.get(3)
+                                .and_then(|v| match v {
+                                    Value::String(s) => Some(s.parse().unwrap_or(0)),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    Error::UndefinedValue(
+                                        "Artifacts base powers heroic diff".to_string(),
+                                    )
+                                })?,
+                        ),
+                    ]),
                 },
                 powers_grow: DifficultyMappedValue {
                     data: HashMap::from([
-                        (DifficultyType::Easy, data.get(5).and_then(|v| match v {
-                            Value::String(s) => Some(s.parse().unwrap_or(0)),
-                            _=> None
-                        }).ok_or_else(|| Error::UndefinedValue("Artifacts power grow easy diff".to_string()))?),
-                        (DifficultyType::Medium, data.get(6).and_then(|v| match v {
-                            Value::String(s) => Some(s.parse().unwrap_or(0)),
-                            _=> None
-                        }).ok_or_else(|| Error::UndefinedValue("Artifacts power grow medium diff".to_string()))?),
-                        (DifficultyType::Hard, data.get(7).and_then(|v| match v {
-                            Value::String(s) => Some(s.parse().unwrap_or(0)),
-                            _=> None
-                        }).ok_or_else(|| Error::UndefinedValue("Artifacts power grow hard diff".to_string()))?),
-                        (DifficultyType::Heroic, data.get(8).and_then(|v| match v {
-                            Value::String(s) => Some(s.parse().unwrap_or(0)),
-                            _=> None
-                        }).ok_or_else(|| Error::UndefinedValue("Artifacts power grow heroic diff".to_string()))?),
-                    ])
+                        (
+                            DifficultyType::Easy,
+                            data.get(5)
+                                .and_then(|v| match v {
+                                    Value::String(s) => Some(s.parse().unwrap_or(0)),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    Error::UndefinedValue(
+                                        "Artifacts power grow easy diff".to_string(),
+                                    )
+                                })?,
+                        ),
+                        (
+                            DifficultyType::Medium,
+                            data.get(6)
+                                .and_then(|v| match v {
+                                    Value::String(s) => Some(s.parse().unwrap_or(0)),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    Error::UndefinedValue(
+                                        "Artifacts power grow medium diff".to_string(),
+                                    )
+                                })?,
+                        ),
+                        (
+                            DifficultyType::Hard,
+                            data.get(7)
+                                .and_then(|v| match v {
+                                    Value::String(s) => Some(s.parse().unwrap_or(0)),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    Error::UndefinedValue(
+                                        "Artifacts power grow hard diff".to_string(),
+                                    )
+                                })?,
+                        ),
+                        (
+                            DifficultyType::Heroic,
+                            data.get(8)
+                                .and_then(|v| match v {
+                                    Value::String(s) => Some(s.parse().unwrap_or(0)),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    Error::UndefinedValue(
+                                        "Artifacts power grow heroic diff".to_string(),
+                                    )
+                                })?,
+                        ),
+                    ]),
                 },
                 ..Default::default()
-            }
+            },
         };
         Ok(model)
     }
+}
+
+pub async fn commit_updated_fights(
+    version_control: &VersionControlService,
+    scaner_service: &ScanerService,
+    fight_generator_repo: &FightGeneratorRepo,
+) {
+    todo!()
 }
