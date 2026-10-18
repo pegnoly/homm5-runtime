@@ -2,7 +2,7 @@
 
 use sea_orm::{FromJsonQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumString};
+use strum_macros::{Display, EnumString, FromRepr};
 
 #[derive(
     Debug,
@@ -89,57 +89,59 @@ impl From<i32> for Town {
     Serialize,
     Deserialize,
     Display,
+    FromRepr
 )]
+#[repr(i32)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum TownExtended {
     #[sea_orm(string_value = "TOWN_NO_TYPE")]
     #[serde(rename = "TOWN_NO_TYPE")]
     #[strum(serialize = "TOWN_NO_TYPE")]
-    TownNoType,
+    TownNoType = -1,
     #[sea_orm(string_value = "TOWN_HEAVEN")]
     #[serde(rename = "TOWN_HEAVEN")]
     #[strum(serialize = "TOWN_HEAVEN")]
-    TownHeaven,
+    TownHeaven = 0,
     #[sea_orm(string_value = "TOWN_INFERNO")]
     #[serde(rename = "TOWN_INFERNO")]
     #[strum(serialize = "TOWN_INFERNO")]
-    TownInferno,
+    TownInferno = 1,
     #[sea_orm(string_value = "TOWN_NECROMANCY")]
     #[serde(rename = "TOWN_NECROMANCY")]
     #[strum(serialize = "TOWN_NECROMANCY")]
-    TownNecromancy,
+    TownNecromancy = 2,
     #[sea_orm(string_value = "TOWN_DUNGEON")]
     #[serde(rename = "TOWN_DUNGEON")]
     #[strum(serialize = "TOWN_DUNGEON")]
-    TownDungeon,
+    TownDungeon = 4,
     #[sea_orm(string_value = "TOWN_PRESERVE")]
     #[serde(rename = "TOWN_PRESERVE")]
     #[strum(serialize = "TOWN_PRESERVE")]
-    TownPreserve,
+    TownPreserve = 3,
     #[sea_orm(string_value = "TOWN_ACADEMY")]
     #[serde(rename = "TOWN_ACADEMY")]
     #[strum(serialize = "TOWN_ACADEMY")]
-    TownAcademy,
+    TownAcademy = 5,
     #[sea_orm(string_value = "TOWN_FORTRESS")]
     #[serde(rename = "TOWN_FORTRESS")]
     #[strum(serialize = "TOWN_FORTRESS")]
-    TownFortress,
+    TownFortress = 6,
     #[sea_orm(string_value = "TOWN_STRONGHOLD")]
     #[serde(rename = "TOWN_STRONGHOLD")]
     #[strum(serialize = "TOWN_STRONGHOLD")]
-    TownStronghold,
+    TownStronghold = 7,
     #[sea_orm(string_value = "TOWN_BASTION")]
     #[serde(rename = "TOWN_BASTION")]
     #[strum(serialize = "TOWN_BASTION")]
-    TownBastion,
+    TownBastion = 8,
     #[sea_orm(string_value = "TOWN_SANCTUARY")]
     #[serde(rename = "TOWN_SANCTUARY")]
     #[strum(serialize = "TOWN_SANCTUARY")]
-    TownSanctuary,
+    TownSanctuary = 9,
     #[sea_orm(string_value = "TOWN_RENEGADES")]
     #[serde(rename = "TOWN_RENEGADES")]
     #[strum(serialize = "TOWN_RENEGADES")]
-    TownRenegades
+    TownRenegades = 10
 }
 
 impl From<Town> for TownExtended {

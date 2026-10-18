@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use sea_orm::{FromJsonQueryResult, Iterable, prelude::*};
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{Display, EnumString, FromRepr};
 
 #[derive(
     Debug,
@@ -49,12 +49,16 @@ pub enum DifficultyType {
     Serialize,
     Deserialize,
     Display,
+    Default,
+    FromRepr
 )]
+#[repr(i32)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum AssetUpdateType {
     #[sea_orm(string_value = "STATIC")]
     #[serde(rename = "STATIC")]
     #[strum(serialize = "STATIC")]
+    #[default]
     Static,
     #[sea_orm(string_value = "DYNAMIC")]
     #[serde(rename = "DYNAMIC")]
@@ -63,13 +67,14 @@ pub enum AssetUpdateType {
 }
 
 #[derive(
-    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize,
+    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Default
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum StatParam {
     #[sea_orm(string_value = "INITIATIVE")]
     #[serde(rename = "INITIATIVE")]
     #[strum(serialize = "INITIATIVE")]
+    #[default]
     Initiative,
     #[sea_orm(string_value = "SPEED")]
     #[serde(rename = "SPEED")]
@@ -90,13 +95,14 @@ pub enum StatParam {
 }
 
 #[derive(
-    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize,
+    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Default
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum StatSelectionRule {
     #[sea_orm(string_value = "MAXBY")]
     #[serde(rename = "MAXBY")]
     #[strum(serialize = "MAXBY")]
+    #[default]
     MaxBy,
     #[sea_orm(string_value = "MINBY")]
     #[serde(rename = "MINBY")]

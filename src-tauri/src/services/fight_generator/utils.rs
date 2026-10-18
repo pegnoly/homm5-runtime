@@ -1,375 +1,13 @@
 use std::collections::HashMap;
-
-use editor_tools::prelude::{
-    ArmyGenerationRuleParam, ArmyGenerationStatParam, ArmyGenerationStatRule, ArmySlotGenerationRule, ArmySlotStackCountGenerationMode, ArmySlotStackUnitGenerationMode, ArmyStatGenerationModel, AssetArmySlotModel, AssetArtifactsModel, AssetGenerationType, CreatureIds, CreatureTiers, CreatureTowns, DifficultyMappedValue, DifficultyType, OptionalArtifacts, RequiredArtifacts
-};
+use editor_tools::prelude::{AssetArmySlotModel, AssetArtifactsModel, AssetUpdateType, CalculationRule, DifficultyMappedValue, DifficultyType, OptionalArtifacts, RequiredArtifacts, SelectionType, StackGenerationRule, StackStatsRuleModel, StatParam, StatSelectionRule};
 use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, Town, TownExtended};
 use itertools::Itertools;
-use serde_json::Number;
+use regex::Regex;
+use serde_json::Value;
 use strum::IntoEnumIterator;
-use uuid::Uuid;
 use google_api::prelude::ValueRange;
-use google_api::utils::{FromSheetValueRange, IntoSheetsData};
+use google_api::utils::{FromSheetsData, IntoSheetsData};
 use google_api::error::Error;
-
-pub struct SheetToArmyAssetsConverter {
-    asset_id: Uuid, // creatures_data: &'a Vec<CreatureDBModel>
-}
-
-impl SheetToArmyAssetsConverter {
-    pub fn new(asset_id: Uuid) -> Self {
-        SheetToArmyAssetsConverter { asset_id }
-    }
-}
-
-impl FromSheetValueRange<ValueRange> for SheetToArmyAssetsConverter {
-    type Output = Vec<AssetArmySlotModel>;
-
-    fn convert_from_sheets_data(
-        &self,
-        values: ValueRange,
-    ) -> Result<Self::Output, Error> {
-        let mut stacks = vec![];
-        if let Some(values) = values.values {
-            for (index, data) in values.iter().enumerate() {
-                // first element is a count generation rule
-                let count_rule = if let Some(count_rule_data) = data.first() {
-                    match count_rule_data {
-                        serde_json::Value::String(data) => match data.as_str() {
-                            "Power based [0]" => Ok(ArmySlotStackCountGenerationMode::PowerBased),
-                            "Raw [1]" => Ok(ArmySlotStackCountGenerationMode::Raw),
-                            _ => Err(Error::UndefinedValue(
-                                "Sheet data conversion: stack count rule".to_string(),
-                            )),
-                        },
-                        _ => Err(Error::UndefinedValue(
-                            "Sheet data conversion: stack count rule".to_string(),
-                        )),
-                    }
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: stack count rule".to_string(),
-                    ))
-                }?;
-                // second is grow rule
-                let grow_rule = if let Some(grow_rule_data) = data.get(1) {
-                    match grow_rule_data {
-                        serde_json::Value::String(data) => match data.as_str() {
-                            "Static [0]" => Ok(AssetGenerationType::Static),
-                            "Dynamic [1]" => Ok(AssetGenerationType::Dynamic),
-                            _ => Err(Error::UndefinedValue(
-                                "Sheet data conversion: stack count rule".to_string(),
-                            )),
-                        },
-                        _ => Err(Error::UndefinedValue(
-                            "Sheet data conversion: stack count rule".to_string(),
-                        )),
-                    }
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: stack count rule".to_string(),
-                    ))
-                }?;
-
-                let base_counts_data = if let Some(base_counts) = data.get(2..6) {
-                    Ok(DifficultyMappedValue {
-                        data: HashMap::from([
-                            (
-                                DifficultyType::Easy,
-                                base_counts[0]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: base counts".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Medium,
-                                base_counts[1]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: base counts".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Hard,
-                                base_counts[2]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: base counts".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Heroic,
-                                base_counts[3]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: base counts".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                        ]),
-                    })
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: base counts".to_string(),
-                    ))
-                }?;
-
-                let grow_data = if let Some(grow_data) = data.get(8..12) {
-                    Ok(DifficultyMappedValue {
-                        data: HashMap::from([
-                            (
-                                DifficultyType::Easy,
-                                grow_data[0]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Medium,
-                                grow_data[1]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Hard,
-                                grow_data[2]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Heroic,
-                                grow_data[3]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                        ]),
-                    })
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: counts grow".to_string(),
-                    ))
-                }?;
-
-                let unit_generation_rule = if let Some(gen_rule_data) = data.get(13) {
-                    match gen_rule_data {
-                        serde_json::Value::String(data) => match data.as_str() {
-                            "Tier-slot based [0]" => {
-                                Ok(ArmySlotStackUnitGenerationMode::TierSlotBased)
-                            }
-                            "Specific unit [1]" => {
-                                Ok(ArmySlotStackUnitGenerationMode::ConcreteUnit)
-                            }
-                            _ => Err(Error::UndefinedValue(
-                                "Sheet data conversion: stack count rule".to_string(),
-                            )),
-                        },
-                        _ => Err(Error::UndefinedValue(
-                            "Sheet data conversion: unit generation rule".to_string(),
-                        )),
-                    }
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: unit generation rule".to_string(),
-                    ))
-                }?;
-
-                // println!("Unit generation rule: {}", unit_generation_rule);
-
-                let towns = if let Some(towns_data) = data.get(16) {
-                    match towns_data {
-                        serde_json::Value::String(data) => {
-                            if data.is_empty() {
-                                Ok(CreatureTowns { towns: vec![] })
-                            } else {
-                                let towns_strings_list = data.split(",").collect_vec();
-                                Ok(CreatureTowns {
-                                    towns: Vec::from_iter(towns_strings_list.iter().map(
-                                        |t| match *t {
-                                            "Haven [0]" => TownExtended::TownHeaven,
-                                            "Inferno [1]" => TownExtended::TownInferno,
-                                            "Necropolis [2]" => TownExtended::TownNecromancy,
-                                            "Preserve [3]" => TownExtended::TownPreserve,
-                                            "Dungeon [4]" => TownExtended::TownDungeon,
-                                            "Academy [5]" => TownExtended::TownAcademy,
-                                            "Fortress [6]" => TownExtended::TownFortress,
-                                            "Stronghold [7]" => TownExtended::TownStronghold,
-                                            "Bastion [8]" => TownExtended::TownBastion,
-                                            "Sanctuary [9]" => TownExtended::TownSanctuary,
-                                            "Renegades [10]" => TownExtended::TownRenegades,
-                                            "Neutral [-1]" => TownExtended::TownNoType,
-                                            _ => unreachable!(),
-                                        },
-                                    )),
-                                })
-                            }
-                        }
-                        _ => Err(Error::UndefinedValue(
-                            "Sheet data conversion: towns".to_string(),
-                        )),
-                    }
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: towns".to_string(),
-                    ))
-                }?;
-
-                let tiers = if let Some(tiers_data) = data.get(17) {
-                    match tiers_data {
-                        serde_json::Value::String(data) => {
-                            if data.is_empty() {
-                                Ok(CreatureTiers { tiers: vec![] })
-                            } else {
-                                let tiers_strings_list = data.split(",").collect_vec();
-                                Ok(CreatureTiers {
-                                    tiers: Vec::from_iter(tiers_strings_list.iter().map(
-                                        |t| match *t {
-                                            "Tier 1 [0]" => 1,
-                                            "Tier 2 [1]" => 2,
-                                            "Tier 3 [2]" => 3,
-                                            "Tier 4 [3]" => 4,
-                                            "Tier 5 [4]" => 5,
-                                            "Tier 6 [5]" => 6,
-                                            "Tier 7 [6]" => 7,
-                                            _ => unreachable!(),
-                                        },
-                                    )),
-                                })
-                            }
-                        }
-                        _ => Err(Error::UndefinedValue(
-                            "Sheet data conversion: tiers".to_string(),
-                        )),
-                    }
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: tiers".to_string(),
-                    ))
-                }?;
-
-                let params_rules = if let Some(params_rules_data) = data.get(18) {
-                    match params_rules_data {
-                        serde_json::Value::String(data) => {
-                            if data.is_empty() {
-                                Ok(ArmySlotGenerationRule { params: vec![] })
-                            } else {
-                                let params_strings_list = data.split(",").collect_vec();
-                                Ok(ArmySlotGenerationRule {
-                                    params: Vec::from_iter(params_strings_list.iter().map(|t| {
-                                        match *t {
-                                            "Only generatable [0]" => {
-                                                ArmyGenerationRuleParam::Generatable
-                                            }
-                                            "Only upgrade [1]" => {
-                                                ArmyGenerationRuleParam::UpgradeOnly
-                                            }
-                                            "Only shooter [2]" => ArmyGenerationRuleParam::Shooter,
-                                            "Only caster [3]" => ArmyGenerationRuleParam::Caster,
-                                            _ => unreachable!(),
-                                        }
-                                    })),
-                                })
-                            }
-                        }
-                        _ => Err(Error::UndefinedValue(
-                            "Sheet data conversion: params rules".to_string(),
-                        )),
-                    }
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: params rules".to_string(),
-                    ))
-                }?;
-
-                let concrete_creatures = if let Some(creatures_data) = data.get(22) {
-                    match creatures_data {
-                        serde_json::Value::String(data) => {
-                            if data.is_empty() {
-                                Ok(CreatureIds { ids: vec![] })
-                            } else {
-                                let creatures_strings_list = data.split(",").collect_vec();
-                                Ok(CreatureIds {
-                                    ids: Vec::from_iter(
-                                        creatures_strings_list
-                                            .iter()
-                                            .filter_map(|c| {
-                                                let parts: Vec<&str> = c.split('[').collect();
-                                                if parts.len() > 1 {
-                                                    parts[1].split(']').next()
-                                                } else {
-                                                    None
-                                                }
-                                            })
-                                            .collect_vec()
-                                            .iter()
-                                            .filter_map(|c| c.parse::<i32>().ok()),
-                                    ),
-                                })
-                            }
-                        }
-                        _ => Err(Error::UndefinedValue(
-                            "Sheet data conversion: concrete creatures".to_string(),
-                        )),
-                    }
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: concrete creatures".to_string(),
-                    ))
-                }?;
-
-                let stack = AssetArmySlotModel {
-                    asset_id: self.asset_id,
-                    id: 0,
-                    number: index as i32,
-                    type_generation_mode: unit_generation_rule,
-                    count_generation_mode: count_rule.clone(),
-                    power_based_generation_type: grow_rule,
-                    base_powers: if count_rule == ArmySlotStackCountGenerationMode::PowerBased {
-                        base_counts_data.clone()
-                    } else {
-                        DifficultyMappedValue {
-                            data: HashMap::from_iter(DifficultyType::iter().map(|d| (d, 0))),
-                        }
-                    },
-                    powers_grow: grow_data,
-                    towns,
-                    tiers,
-                    generation_rule: params_rules,
-                    concrete_creatures,
-                    concrete_count: if count_rule == ArmySlotStackCountGenerationMode::Raw {
-                        base_counts_data
-                    } else {
-                        DifficultyMappedValue {
-                            data: HashMap::from_iter(DifficultyType::iter().map(|d| (d, 0))),
-                        }
-                    },
-                };
-                stacks.push(stack);
-            }
-        };
-        Ok(stacks)
-    }
-}
-
-pub struct ArmySlotsConverter<'a> {
-    pub sheet_name: &'a String,
-    pub creatures_data: &'a Vec<CreatureDBModel>,
-    pub stats_elements_data: &'a Vec<ArmyStatGenerationModel>,
-}
 
 pub trait IntoSheetValidatedValue {
     fn to_sheet_validated_value(&self) -> String;
@@ -411,638 +49,567 @@ impl IntoSheetValidatedValue for Town {
     }
 }
 
-impl IntoSheetValidatedValue for Vec<&ArmyStatGenerationModel> {
-    fn to_sheet_validated_value(&self) -> String {
-        self.iter()
-            .map(|model| {
-                model
-                    .stats
-                    .values
-                    .iter()
-                    .map(|value| match value {
-                        ArmyGenerationStatParam::Initiative => {
-                            if model.rule == ArmyGenerationStatRule::MaxBy {
-                                String::from("MaxBy initiative [3]")
-                            } else {
-                                String::from("MinBy initiative [2]")
-                            }
-                        }
-                        ArmyGenerationStatParam::Speed => {
-                            if model.rule == ArmyGenerationStatRule::MaxBy {
-                                String::from("MaxBy speed [5]")
-                            } else {
-                                String::from("MinBy speed [4]")
-                            }
-                        }
-                        ArmyGenerationStatParam::Hitpoints => {
-                            if model.rule == ArmyGenerationStatRule::MaxBy {
-                                String::from("MaxBy hp [1]")
-                            } else {
-                                String::from("MinBy hp [0]")
-                            }
-                        }
-                        ArmyGenerationStatParam::Attack => {
-                            if model.rule == ArmyGenerationStatRule::MaxBy {
-                                String::from("MaxBy attack [7]")
-                            } else {
-                                String::from("MinBy attack [6]")
-                            }
-                        }
-                        ArmyGenerationStatParam::Defence => {
-                            if model.rule == ArmyGenerationStatRule::MaxBy {
-                                String::from("MaxBy defence [9]")
-                            } else {
-                                String::from("MinBy defence [8]")
-                            }
-                        }
-                    })
-                    .join(",")
-            })
-            .join(",")
+pub struct FightAssetArmySheetConverter<'a> {
+    sheet_name: &'a String,
+    creatures_data: &'a Vec<CreatureDBModel>
+}
+
+impl<'a> FightAssetArmySheetConverter<'a> {
+    pub fn new(sheet_name: &String, creatures_data: &Vec<CreatureDBModel>) -> Self {
+        Self { sheet_name, creatures_data }
     }
 }
 
-impl IntoSheetValidatedValue for ArmyGenerationRuleParam {
+impl<'a> IntoSheetsData<AssetArmySlotSheetWrapper<'_>> for FightAssetArmySheetConverter<'a> {}
+impl<'a> FromSheetsData<AssetArmySlotSheetWrapper<'_>> for FightAssetArmySheetConverter<'a> {}
+
+impl IntoSheetValidatedValue for CalculationRule {
     fn to_sheet_validated_value(&self) -> String {
         match self {
-            ArmyGenerationRuleParam::UpgradeOnly => String::from("Only upgrade [1]"),
-            ArmyGenerationRuleParam::Generatable => String::from("Only generatable [0]"),
-            ArmyGenerationRuleParam::Shooter => String::from("Only shooter [2]"),
-            ArmyGenerationRuleParam::Caster => String::from("Only caster [3]"),
+            CalculationRule::Raw => "Raw [1]".to_string(),
+            CalculationRule::PowerBased => "Power based [0]".to_string(),
         }
     }
 }
 
-impl IntoSheetsData<ValueRange> for ArmySlotsConverter<'_> {
-    type Input = Vec<AssetArmySlotModel>;
-
-    fn convert_into_sheets_data(
-        &self,
-        source: Vec<AssetArmySlotModel>,
-    ) -> Result<ValueRange, Error> {
-        let mut data: Vec<Vec<serde_json::Value>> = vec![];
-        for army_slot in &source {
-            let mut values = vec![];
-            values.push(match army_slot.count_generation_mode {
-                ArmySlotStackCountGenerationMode::PowerBased => {
-                    serde_json::Value::String(String::from("Power based [0]"))
-                }
-                ArmySlotStackCountGenerationMode::Raw => {
-                    serde_json::Value::String(String::from("Raw [1]"))
-                }
-            });
-            values.push(match army_slot.power_based_generation_type {
-                AssetGenerationType::Dynamic => {
-                    serde_json::Value::String(String::from("Dynamic [1]"))
-                }
-                AssetGenerationType::Static => {
-                    serde_json::Value::String(String::from("Static [0]"))
-                }
-            });
-
-            if army_slot.count_generation_mode == ArmySlotStackCountGenerationMode::PowerBased {
-                // base powers data
-                if let Some(data) = army_slot.base_powers.data.get(&DifficultyType::Easy) {
-                    values.push(serde_json::Value::Number(
-                        Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                            "Base powers of easy difficulty".to_string(),
-                        ))?,
-                    ));
-                }
-
-                if let Some(data) = army_slot.base_powers.data.get(&DifficultyType::Medium) {
-                    values.push(serde_json::Value::Number(
-                        Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                            "Base powers of medium difficulty".to_string(),
-                        ))?,
-                    ));
-                }
-
-                if let Some(data) = army_slot.base_powers.data.get(&DifficultyType::Hard) {
-                    values.push(serde_json::Value::Number(
-                        Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                            "Base powers of hard difficulty".to_string(),
-                        ))?,
-                    ));
-                }
-
-                if let Some(data) = army_slot.base_powers.data.get(&DifficultyType::Heroic) {
-                    values.push(serde_json::Value::Number(
-                        Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                            "Base powers of heroic difficulty".to_string(),
-                        ))?,
-                    ));
-                }
-            } else {
-                if let Some(data) = army_slot.concrete_count.data.get(&DifficultyType::Easy) {
-                    values.push(serde_json::Value::Number(
-                        Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                            "Base powers of easy difficulty".to_string(),
-                        ))?,
-                    ));
-                }
-
-                if let Some(data) = army_slot.concrete_count.data.get(&DifficultyType::Medium) {
-                    values.push(serde_json::Value::Number(
-                        Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                            "Base powers of medium difficulty".to_string(),
-                        ))?,
-                    ));
-                }
-
-                if let Some(data) = army_slot.concrete_count.data.get(&DifficultyType::Hard) {
-                    values.push(serde_json::Value::Number(
-                        Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                            "Base powers of hard difficulty".to_string(),
-                        ))?,
-                    ));
-                }
-
-                if let Some(data) = army_slot.concrete_count.data.get(&DifficultyType::Heroic) {
-                    values.push(serde_json::Value::Number(
-                        Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                            "Base powers of heroic difficulty".to_string(),
-                        ))?,
-                    ));
-                }
-            }
-
-            // 2 empty cells between base powers and grow
-            values.push(serde_json::Value::String(String::with_capacity(0)));
-            values.push(serde_json::Value::String(String::with_capacity(0)));
-
-            if let Some(data) = army_slot.powers_grow.data.get(&DifficultyType::Easy) {
-                values.push(serde_json::Value::Number(
-                    Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                        "Powers grow of easy difficulty".to_string(),
-                    ))?,
-                ));
-            }
-
-            if let Some(data) = army_slot.powers_grow.data.get(&DifficultyType::Medium) {
-                values.push(serde_json::Value::Number(
-                    Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                        "Powers grow of medium difficulty".to_string(),
-                    ))?,
-                ));
-            }
-
-            if let Some(data) = army_slot.powers_grow.data.get(&DifficultyType::Hard) {
-                values.push(serde_json::Value::Number(
-                    Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                        "Powers grow of hard difficulty".to_string(),
-                    ))?,
-                ));
-            }
-
-            if let Some(data) = army_slot.powers_grow.data.get(&DifficultyType::Heroic) {
-                values.push(serde_json::Value::Number(
-                    Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                        "Powers grow of heroic difficulty".to_string(),
-                    ))?,
-                ));
-            }
-
-            values.push(serde_json::Value::String(String::from("")));
-
-            values.push(match army_slot.type_generation_mode {
-                ArmySlotStackUnitGenerationMode::TierSlotBased => {
-                    serde_json::Value::String(String::from("Tier-slot based [0]"))
-                }
-                ArmySlotStackUnitGenerationMode::ConcreteUnit => {
-                    serde_json::Value::String(String::from("Specific unit [1]"))
-                }
-            });
-
-            values.push(serde_json::Value::String(String::with_capacity(0)));
-            values.push(serde_json::Value::String(String::with_capacity(0)));
-
-            if !army_slot.towns.towns.is_empty() {
-                values.push(serde_json::Value::String(
-                    army_slot
-                        .towns
-                        .towns
-                        .iter()
-                        .map(|t| t.to_sheet_validated_value())
-                        .join(","),
-                ));
-            } else {
-                values.push(serde_json::Value::String(String::with_capacity(0)));
-            }
-
-            if !army_slot.tiers.tiers.is_empty() {
-                values.push(serde_json::Value::String(
-                    army_slot
-                        .tiers
-                        .tiers
-                        .iter()
-                        .map(|t| format!("Tier {} [{}]", t, t - 1))
-                        .join(","),
-                ));
-            } else {
-                values.push(serde_json::Value::String(String::with_capacity(0)));
-            }
-
-            if !army_slot.generation_rule.params.is_empty() {
-                values.push(serde_json::Value::String(
-                    army_slot
-                        .generation_rule
-                        .params
-                        .iter()
-                        .map(|r| r.to_sheet_validated_value())
-                        .join(","),
-                ));
-            } else {
-                values.push(serde_json::Value::String(String::with_capacity(0)));
-            }
-
-            let stat_elements = self
-                .stats_elements_data
-                .iter()
-                .filter(|m| m.stack_id == army_slot.id)
-                .collect_vec();
-            values.push(serde_json::Value::String(
-                stat_elements.to_sheet_validated_value(),
-            ));
-
-            values.push(serde_json::Value::String(String::with_capacity(0)));
-            values.push(serde_json::Value::String(String::with_capacity(0)));
-
-            if !army_slot.concrete_creatures.ids.is_empty() {
-                values.push(serde_json::Value::String(
-                    army_slot
-                        .concrete_creatures
-                        .ids
-                        .iter()
-                        .map(|id| {
-                            let model = self.creatures_data.iter().find(|m| m.id == *id).unwrap();
-                            format!(
-                                "{} [{}]",
-                                if let Some(inner_name) = &model.inner_name {
-                                    if !inner_name.is_empty() {
-                                        let mut updated_name = inner_name.clone();
-                                        updated_name.drain(3..).collect::<String>()
-                                    } else {
-                                        let mut updated_name = model.name.clone();
-                                        updated_name.drain(3..).collect()
-                                    }
-                                } else {
-                                    let mut updated_name = model.name.clone();
-                                    updated_name.drain(3..).collect()
-                                },
-                                id
-                            )
-                        })
-                        .join(","),
-                ));
-            } else {
-                values.push(serde_json::Value::String(String::with_capacity(0)));
-            }
-
-            data.push(values);
+impl IntoSheetValidatedValue for SelectionType {
+    fn to_sheet_validated_value(&self) -> String {
+        match self {
+            SelectionType::Manual => "Specific unit [1]".to_string(),
+            SelectionType::TierSlotBased => "Tier-slot based [0]".to_string()
         }
-        Ok(ValueRange {
-            major_dimension: Some(String::from("COLUMNS")),
-            range: Some(format!(
-                "{}!B2:{}",
-                self.sheet_name,
-                match source.len() {
-                    1 => "B24",
-                    2 => "C24",
-                    3 => "D24",
-                    4 => "E24",
-                    5 => "F24",
-                    6 => "G24",
-                    7 => "H24",
-                    _ => unreachable!(),
+    }
+}
+
+impl IntoSheetValidatedValue for AssetUpdateType {
+    fn to_sheet_validated_value(&self) -> String {
+        match self {
+            AssetUpdateType::Static => "Static [0]".to_string(),
+            AssetUpdateType::Dynamic => "Dynamic [1]".to_string()
+        }
+    }
+}
+
+impl IntoSheetValidatedValue for StackGenerationRule {
+    fn to_sheet_validated_value(&self) -> String {
+        match self {
+            StackGenerationRule::UpgradeOnly => "Only upgrade [1]".to_string(),
+            StackGenerationRule::Generatable => "Only generatable [0]".to_string(),
+            StackGenerationRule::Shooter => "Only shooter [2]".to_string(),
+            StackGenerationRule::Caster => "Only caster [3]".to_string(),
+        }
+    }
+}
+
+impl IntoSheetValidatedValue for (StatSelectionRule, StatParam) {
+    fn to_sheet_validated_value(&self) -> String {
+        match (self.0, self.1) {
+            (StatSelectionRule::MinBy, StatParam::Hitpoints) => "MinBy hp [0]".to_string(),
+            (StatSelectionRule::MaxBy, StatParam::Hitpoints) => "MaxBy hp [1]".to_string(),
+            (StatSelectionRule::MaxBy, StatParam::Initiative) => "MaxBy initiative [3]".to_string(),
+            (StatSelectionRule::MaxBy, StatParam::Speed) => "MaxBy speed [5]".to_string(),
+            (StatSelectionRule::MaxBy, StatParam::Attack) => "MaxBy attack [7]".to_string(),
+            (StatSelectionRule::MaxBy, StatParam::Defence) => "MaxBy defence [9]".to_string(),
+            (StatSelectionRule::MinBy, StatParam::Initiative) => "MinBy initiative [2]".to_string(),
+            (StatSelectionRule::MinBy, StatParam::Speed) => "MinBy speed [4]".to_string(),
+            (StatSelectionRule::MinBy, StatParam::Attack) => "MinBy attack [6]".to_string(),
+            (StatSelectionRule::MinBy, StatParam::Defence) => "MinBy defence [8]".to_string(),
+        }
+    }
+}
+
+pub struct AssetArmySlotSheetWrapper<'a> {
+    slot: &'a AssetArmySlotModel,
+    sheet_name: &'a str,
+    creatures_data: &'a Vec<CreatureDBModel>
+}
+
+impl<'a> AssetArmySlotSheetWrapper<'a>  {
+    pub fn new(slot: &AssetArmySlotModel) -> Self {
+        Self {
+            slot,
+            sheet_name: "",
+            creatures_data: &[]
+        }
+    }
+    fn get_column(&self) -> &'a str {
+        match self.slot.number {
+            0 => "B",
+            1 => "C",
+            2 => "D",
+            3 => "E",
+            4 => "F",
+            5 => "G",
+            6 => "H",
+            _=> unreachable!()
+        }
+    }
+    fn convert_stack_base_power(&self, difficulty: DifficultyType) -> Value {
+        if self.slot.calculation_type == CalculationRule::Raw {
+            Value::Number(self.slot.specific_count.data.get(&difficulty).unwrap_or(&0).into())
+        } else {
+            Value::Number(self.slot.base_powers.data.get(&difficulty).unwrap_or(&0).into())
+        }
+    }
+
+    fn convert_stack_power_grow(&self, difficulty: DifficultyType) -> Value {
+        Value::Number(self.slot.powers_grow.data.get(&difficulty).unwrap_or(&0).into())
+    }
+}
+impl<'a> Into<ValueRange> for AssetArmySlotSheetWrapper<'a> {
+    fn into(self) -> ValueRange {
+        let mut result = ValueRange::default();
+        let col = self.get_column();
+        result.range = Some(format!("{}!{}2:{}24", self.sheet_name, col, col));
+        result.major_dimension = Some("COLUMNS".to_string());
+        let mut values = vec![];
+        values.push(Value::String(self.slot.calculation_type.to_sheet_validated_value()));
+        values.push(Value::String(self.slot.update_type.to_sheet_validated_value()));
+        values.push(self.convert_stack_base_power(DifficultyType::Easy));
+        values.push(self.convert_stack_base_power(DifficultyType::Medium));
+        values.push(self.convert_stack_base_power(DifficultyType::Hard));
+        values.push(self.convert_stack_base_power(DifficultyType::Heroic));
+        values.push(Value::String(String::new()));
+        values.push(Value::String(String::new()));
+        values.push(self.convert_stack_power_grow(DifficultyType::Easy));
+        values.push(self.convert_stack_power_grow(DifficultyType::Medium));
+        values.push(self.convert_stack_power_grow(DifficultyType::Hard));
+        values.push(self.convert_stack_power_grow(DifficultyType::Heroic));
+        values.push(Value::String(String::new()));
+        values.push(Value::String(self.slot.selection_type.to_sheet_validated_value()));
+        values.push(Value::String(String::new()));
+        values.push(Value::String(String::new()));
+        values.push(if self.slot.selection_type == SelectionType::Manual {
+                Value::String(String::new())
+            } else {
+                Value::String(self.slot.towns.towns.iter().map(|t| t.to_sheet_validated_value()).collect_vec().join(","))
+            });
+        values.push(if self.slot.selection_type == SelectionType::Manual {
+                Value::String(String::new())
+            } else {
+                Value::String(self.slot.tiers.tiers.iter().map(|t| format!("Tier {} [{}]", t, *t - 1)).collect_vec().join(","))
+            });
+        values.push(if self.slot.selection_type == SelectionType::Manual {
+                Value::String(String::new())
+            } else {
+                Value::String(self.slot.rules.rules.iter().map(|r| r.to_sheet_validated_value()).collect_vec().join(","))
+            });
+        values.push(if self.slot.selection_type == SelectionType::Manual {
+                Value::String(String::new())
+            } else {
+                if let Some(rules) = self.slot.stat_rules {
+                    Value::String(rules.params.iter().map(|p| (rules.rule, *p).into()).collect_vec().join(","))
+                } else {
+                    Value::String(String::new())
                 }
-            )),
-            values: Some(data),
+            });
+        values.push(Value::String(String::new()));
+        values.push(Value::String(String::new()));
+        values.push(if self.slot.selection_type == SelectionType::Manual {
+                Value::String(self.slot.specific_creatures.ids.iter().map(|c| {
+                    let creature = self.creatures_data.iter().find(|m| m.id == *c).unwrap();
+                    format!("{} [{}]", creature.name, c)
+                }).collect_vec().join(","))
+            } else {
+                Value::String(String::new())
+            });
+        result.values = Some(vec![values]);
+        result
+    }
+}
+
+impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
+    type Error = crate::Error;
+    fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
+        let inner_number_regex = Regex::new(r"\[(\d+)]").unwrap();
+        let data = value.values
+            .and_then(|v| v.first())
+            .ok_or_else(|| Error::UndefinedValue("Army slot sheet data".to_string()))?;
+
+        let mut slot = AssetArmySlotModel::default();
+        slot.calculation_type = data
+            .first()
+            .and_then(|v| match v {
+                Value::String(s) => if let Some(caps) = inner_number_regex.captures(s) {
+                    Some(CalculationRule::from_repr(caps[1].parse().unwrap()).unwrap())
+                } else {
+                    None
+                },
+                _=> None
+            })
+            .ok_or_else(|| Error::UndefinedValue("Army slot calc type".to_string()))?;
+        slot.update_type = data
+            .get(1)
+            .and_then(|v| match v {
+                Value::String(s) => if let Some(caps) = inner_number_regex.captures(s) {
+                    Some(AssetUpdateType::from_repr(caps[1].parse().unwrap()).unwrap())
+                } else {
+                    None
+                },
+                _=> None
+            })
+            .ok_or_else(|| Error::UndefinedValue("Army slot update type".to_string()))?;
+        slot.selection_type = data
+            .get(13)
+            .and_then(|v| match v {
+                Value::String(s) => if let Some(caps) = inner_number_regex.captures(s) {
+                    Some(SelectionType::from_repr(caps[1].parse().unwrap()).unwrap())
+                } else {
+                    None
+                },
+                _=> None
+            })
+            .ok_or_else(|| Error::UndefinedValue("Army slot selection type".to_string()))?;
+        if slot.selection_type == SelectionType::Manual {
+            slot.base_powers = DifficultyMappedValue::default();
+            slot.specific_count = DifficultyMappedValue {
+                data: HashMap::from([
+                    (DifficultyType::Easy, data.get(2).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot specific count easy diff".to_string()))?),
+                    (DifficultyType::Medium, data.get(3).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot specific count medium diff".to_string()))?),
+                    (DifficultyType::Hard, data.get(4).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot specific count hard diff".to_string()))?),
+                    (DifficultyType::Heroic, data.get(5).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot specific count heroic diff".to_string()))?)
+                ])
+            };
+            slot.specific_creatures.ids = data
+                .last()
+                .and_then(|v| match v {
+                    Value::String(s) => {
+                        Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
+                            Some(caps[1].parse().unwrap())
+                        } else {
+                            None
+                        }).collect_vec())
+                    },
+                    _=> None
+                })
+                .ok_or_else(|| Error::UndefinedValue("Army slot creatures ids".to_string()))?;
+        } else {
+            slot.specific_count = DifficultyMappedValue::default();
+            slot.base_powers = DifficultyMappedValue {
+                data: HashMap::from([
+                    (DifficultyType::Easy, data.get(2).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers easy diff".to_string()))?),
+                    (DifficultyType::Medium, data.get(3).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers medium diff".to_string()))?),
+                    (DifficultyType::Hard, data.get(4).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers hard diff".to_string()))?),
+                    (DifficultyType::Heroic, data.get(5).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers heroic diff".to_string()))?)
+                ])
+            };
+            slot.towns.towns = data
+                .get(16)
+                .and_then(|v| match v {
+                    Value::String(s) => {
+                        Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
+                            Some(TownExtended::from_repr(caps[1].parse().unwrap()).unwrap())
+                        } else {
+                            None
+                        }).collect_vec())
+                    },
+                    _=> None
+                })
+                .ok_or_else(|| Error::UndefinedValue("Army slot towns".to_string()))?;
+            slot.tiers.tiers = data
+                .get(17)
+                .and_then(|v| match v {
+                    Value::String(s) => {
+                        Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
+                            Some(caps[1].parse().unwrap())
+                        } else {
+                            None
+                        }).collect_vec())
+                    },
+                    _=> None
+                })
+                .ok_or_else(|| Error::UndefinedValue("Army slot tiers".to_string()))?;
+            slot.rules.rules = data
+                .get(18)
+                .and_then(|v| match v {
+                    Value::String(s) => {
+                        Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
+                            Some(StackGenerationRule::from_repr(caps[1].parse().unwrap()).unwrap())
+                        } else {
+                            None
+                        }).collect_vec())
+                    },
+                    _=> None
+                })
+                .ok_or_else(|| Error::UndefinedValue("Army slot rules".to_string()))?;
+            slot.stat_rules.rules = data
+                .get(19)
+                .and_then(|v| match v {
+                    Value::String(s) => {
+                        if s.is_empty() {
+                            None
+                        } else {
+                            Some(s.split(",").filter_map(|c| if let Some(caps) = inner_number_regex.captures(c) {
+                                match caps[1].parse::<i32>().unwrap() {
+                                    0 => Some(StackStatsRuleModel { param: StatParam::Hitpoints, rule: StatSelectionRule::MinBy }),
+                                    1 => Some(StackStatsRuleModel { param: StatParam::Hitpoints, rule: StatSelectionRule::MaxBy }),
+                                    2 => Some(StackStatsRuleModel { param: StatParam::Initiative, rule: StatSelectionRule::MinBy }),
+                                    3 => Some(StackStatsRuleModel { param: StatParam::Initiative, rule: StatSelectionRule::MaxBy }),
+                                    4 => Some(StackStatsRuleModel { param: StatParam::Speed, rule: StatSelectionRule::MinBy }),
+                                    5 => Some(StackStatsRuleModel { param: StatParam::Speed, rule: StatSelectionRule::MaxBy }),
+                                    6 => Some(StackStatsRuleModel { param: StatParam::Attack, rule: StatSelectionRule::MinBy }),
+                                    7 => Some(StackStatsRuleModel { param: StatParam::Attack, rule: StatSelectionRule::MaxBy }),
+                                    8 => Some(StackStatsRuleModel { param: StatParam::Defence, rule: StatSelectionRule::MinBy }),
+                                    9 => Some(StackStatsRuleModel { param: StatParam::Defence, rule: StatSelectionRule::MaxBy }),
+                                    _=> None
+                                }
+                            } else {
+                                None
+                            }).collect_vec())
+                        }
+                    },
+                    _=> None
+                })
+                .ok_or_else(|| Error::UndefinedValue("Army slot stats rules".to_string()))?;
+        };
+        slot.powers_grow = if slot.update_type == AssetUpdateType::Static {
+            DifficultyMappedValue::default()
+        } else {
+            DifficultyMappedValue {
+                data: HashMap::from([
+                    (DifficultyType::Easy, data.get(8).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers easy diff".to_string()))?),
+                    (DifficultyType::Medium, data.get(9).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers medium diff".to_string()))?),
+                    (DifficultyType::Hard, data.get(10).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers hard diff".to_string()))?),
+                    (DifficultyType::Heroic, data.get(11).and_then(|v| match v {
+                        Value::String(s) => Some(s.parse().unwrap()),
+                        _=> None
+                    }).ok_or_else(|| Error::UndefinedValue("Army slot base powers heroic diff".to_string()))?)
+                ])
+            }
+        };
+
+        Ok(AssetArmySlotSheetWrapper {
+            slot: &slot,
+            sheet_name: "",
+            creatures_data: &[]
         })
     }
 }
 
-pub struct ArtifactsAssetConverter<'a> {
-    pub sheet_name: &'a String,
-    pub artifacts_data: &'a Vec<ArtifactDBModel>,
+pub struct FightAssetArtifactsDataWrapper<'a> {
+    data: &'a AssetArtifactsModel,
+    sheet_name: &'a str,
+    artifacts_data: &'a Vec<ArtifactDBModel>
 }
 
-impl IntoSheetsData<ValueRange> for ArtifactsAssetConverter<'_> {
-    type Input = AssetArtifactsModel; 
+pub struct FightAssetArtifactsValueWrapper<'a> {
+    data: &'a AssetArtifactsModel,
+    sheet_name: &'a str,
+}
 
-    fn convert_into_sheets_data(&self, source: AssetArtifactsModel) -> Result<ValueRange, Error> {
-        let mut ids_data: Vec<serde_json::Value> = vec![];
-        ids_data.push(serde_json::Value::String(source.required.ids.iter()
-            .map(|id| {
-                let art = self.artifacts_data.iter().find(|art| art.id == *id).unwrap();
-                let mut updated_name = art.name.clone();
-                let updated_name = updated_name.drain(3..).collect::<String>();
-                format!("{updated_name} [{id}]")
-            })
-            .join(",")));
+pub struct FightAssetArtifactsDataSheetConverter<'a> {}
 
-        ids_data.push(serde_json::Value::String(String::with_capacity(0)));
+impl<'a> IntoSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter<'a> {}
+impl<'a> FromSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter<'a> {}
 
-        ArtifactSlotType::iter()
-            .filter(|slot| *slot != ArtifactSlotType::Inventory)
-            .for_each(|slot| {
-                ids_data.push(serde_json::Value::String(self.artifacts_data.iter()
-                    .filter(|art| source.optional.values.get(&slot).unwrap_or(&vec![]).contains(&art.id))
-                    .map(|art| {
-                        let mut updated_name = art.name.clone();
-                        let updated_name = updated_name.drain(3..).collect::<String>();
-                        format!("{} [{}]", updated_name, art.id)
-                    })
-                    .join(",")
-                ));
+impl<'a> IntoSheetsData<FightAssetArtifactsValueWrapper<'_>> for FightAssetArtifactsDataSheetConverter<'a> {}
+impl<'a> FromSheetsData<FightAssetArtifactsValueWrapper<'_>> for FightAssetArtifactsDataSheetConverter<'a> {}
+
+impl<'a> Into<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
+    fn into(self) -> ValueRange {
+        let mut result = ValueRange::default();
+        result.range = Some(format!("{}!B27:B37", self.sheet_name));
+        result.major_dimension = Some("COLUMNS".to_string());
+        let mut values = vec![];
+        values.push(Value::String(self.data.required.ids.iter().map(|a| {
+            let art = self.artifacts_data.iter().find(|m| m.id == *a).unwrap();
+            format!("{} [{}]", art.name, art.id)
+        }).collect_vec().join(",")));
+        values.push(Value::String(String::new()));
+        ArtifactSlotType::iter().filter(|a| a != ArtifactSlotType::Inventory)
+            .for_each(|a| {
+                if let Some(arts) = self.data.optional.values.get(&a) {
+                    values.push(Value::String(arts.iter().map(|i| {
+                        let art = self.artifacts_data.iter().find(|d| d.id == *i).unwrap();
+                        format!("{} [{}]", art.name, art.id)
+                    }).collect_vec().join(",")));
+                } else {
+                    values.push(Value::String(String::new()));
+                }
             });
-        
-        let mut costs_data: Vec<serde_json::Value> = vec![];
-
-        costs_data.push(serde_json::Value::String(String::with_capacity(0)));
-        costs_data.push(serde_json::Value::String(String::with_capacity(0)));
-        
-        if let Some(data) = source.base_powers.data.get(&DifficultyType::Easy) {
-            costs_data.push(serde_json::Value::Number(
-                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                    "Powers grow of easy difficulty".to_string(),
-                ))?,
-            ));
-        }
-
-        if let Some(data) = source.base_powers.data.get(&DifficultyType::Medium) {
-            costs_data.push(serde_json::Value::Number(
-                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                    "Powers grow of medium difficulty".to_string(),
-                ))?,
-            ));
-        }
-
-        if let Some(data) = source.base_powers.data.get(&DifficultyType::Hard) {
-            costs_data.push(serde_json::Value::Number(
-                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                    "Powers grow of hard difficulty".to_string(),
-                ))?,
-            ));
-        }
-
-        if let Some(data) = source.base_powers.data.get(&DifficultyType::Heroic) {
-            costs_data.push(serde_json::Value::Number(
-                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                    "Powers grow of heroic difficulty".to_string(),
-                ))?,
-            ));
-        }
-
-        costs_data.push(serde_json::Value::String(String::with_capacity(0)));
-
-        if let Some(data) = source.powers_grow.data.get(&DifficultyType::Easy) {
-            costs_data.push(serde_json::Value::Number(
-                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                    "Powers grow of easy difficulty".to_string(),
-                ))?,
-            ));
-        }
-
-        if let Some(data) = source.powers_grow.data.get(&DifficultyType::Medium) {
-            costs_data.push(serde_json::Value::Number(
-                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                    "Powers grow of medium difficulty".to_string(),
-                ))?,
-            ));
-        }
-
-        if let Some(data) = source.powers_grow.data.get(&DifficultyType::Hard) {
-            costs_data.push(serde_json::Value::Number(
-                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                    "Powers grow of hard difficulty".to_string(),
-                ))?,
-            ));
-        }
-
-        if let Some(data) = source.powers_grow.data.get(&DifficultyType::Heroic) {
-            costs_data.push(serde_json::Value::Number(
-                Number::from_i128(*data as i128).ok_or(Error::UndefinedValue(
-                    "Powers grow of heroic difficulty".to_string(),
-                ))?,
-            ));
-        }
-
-        let values = ValueRange {
-            major_dimension: Some("COLUMNS".to_string()),
-            range: Some(format!("{}!B27:D37", self.sheet_name)),
-            values: Some(vec![ids_data, vec![
-                serde_json::Value::String(String::with_capacity(0)),
-                serde_json::Value::String(String::with_capacity(0)),
-                serde_json::Value::String(String::from("Easy level base value")),
-                serde_json::Value::String(String::from("Medium level base value")),
-                serde_json::Value::String(String::from("Hard level base value")),
-                serde_json::Value::String(String::from("Heroic level base value")),
-                serde_json::Value::String(String::with_capacity(0)),
-                serde_json::Value::String(String::from("Easy level value grow")),
-                serde_json::Value::String(String::from("Medium level value grow")),
-                serde_json::Value::String(String::from("Hard level value grow")),
-                serde_json::Value::String(String::from("Heroic level value grow")),
-            ],
-            costs_data
-            ])
-        };
-
-        // println!("Values generated: {:#?}", &values);
-        Ok(values)
+        result.values = Some(vec![values]);
+        result
     }
 }
 
-pub struct SheetToArtifactAssetConverter;
+impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
+    type Error = crate::Error;
 
-#[derive(Default)]
-pub struct ArtifactsFromSheetConvertedModel {
-    pub required: RequiredArtifacts,
-    pub optional: OptionalArtifacts,
-    pub values: DifficultyMappedValue,
-    pub grow: DifficultyMappedValue
-}
-
-impl FromSheetValueRange<ValueRange> for SheetToArtifactAssetConverter {
-    type Output = ArtifactsFromSheetConvertedModel;
-
-    fn convert_from_sheets_data(&self, values: ValueRange) -> Result<ArtifactsFromSheetConvertedModel, Error> {
-        println!("Converting form values: {:#?}", &values);
-        let mut model = ArtifactsFromSheetConvertedModel::default();
-        if let Some(values) = values.values {
-            if let Some(data) = values.first() {
-                let required_artifacts = if let Some(required_artifacts_data) = data.first() {
-                    match required_artifacts_data {
-                        serde_json::Value::String(data) => {
-                            if data.is_empty() {
-                                Ok(RequiredArtifacts { ids: vec![] })
-                            } else {
-                                let artifacts_strings_list = data.split(",").collect_vec();
-                                Ok(RequiredArtifacts {
-                                    ids: Vec::from_iter(
-                                        artifacts_strings_list
-                                            .iter()
-                                            .filter_map(|c| {
-                                                let parts: Vec<&str> = c.split('[').collect();
-                                                if parts.len() > 1 {
-                                                    parts[1].split(']').next()
-                                                } else {
-                                                    None
-                                                }
-                                            })
-                                            .collect_vec()
-                                            .iter()
-                                            .filter_map(|c| c.parse::<i32>().ok()),
-                                    ),
-                                })
-                            }
-                        },
-                        _ => Ok(RequiredArtifacts { ids: vec![] })
-                    }
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: required artifacts".to_string(),
-                    ))
-                }?;
-
-                model.required = required_artifacts;
-
-                let optional_artifacts_data = &data[2..];
-
-                let optional_artifacts = if !optional_artifacts_data.is_empty() {
-                    OptionalArtifacts {
-                        values: HashMap::from_iter(
-                            optional_artifacts_data.iter().enumerate()
-                                .filter_map(|(index, value)| {
-                                    let data = match value {
-                                        serde_json::Value::String(s) => s,
-                                        _ => return None,
-                                    };
-                                    let numbers = data
-                                        .split(',')
-                                        .filter_map(|c| {
-                                            let parts: Vec<&str> = c.split('[').collect();
-                                            if parts.len() > 1 {
-                                                parts[1].split(']').next()
+    fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
+        let data = value.values
+            .and_then(|v| v.first())
+            .ok_or_else(|| Error::UndefinedValue("Fight artifacts data".to_string()))?;
+        let inner_number_regex = Regex::new(r"\[(\d+)]").unwrap();
+        let model = FightAssetArtifactsDataWrapper {
+            artifacts_data: &[],
+            sheet_name: "",
+            data: &AssetArtifactsModel {
+                id: -1,
+                asset_id: -1,
+                required: RequiredArtifacts {
+                    ids: data.first()
+                        .and_then(|v| match v {
+                            Value::String(s) => {
+                                if s.is_empty() {
+                                    Some(vec![])
+                                } else {
+                                    Some(s.split(",").filter_map(|a| if let Some(caps) = inner_number_regex.captures(a) {
+                                        Some(caps[1].parse().unwrap())
+                                    } else {
+                                        None
+                                    }).collect_vec())
+                                }
+                            },
+                            _=> None
+                        })
+                        .ok_or_else(|| Error::UndefinedValue("Artifacts asset required ids".to_string()))?,
+                },
+                optional: OptionalArtifacts {
+                    values: HashMap::from_iter(
+                        ArtifactSlotType::iter().filter( | a| a != ArtifactSlotType::Inventory)
+                            .filter_map(|a| if let Some(v) = data.get(2 + (a as i32)) {
+                                match v {
+                                    Value::String(s) => {
+                                        if s.is_empty() {
+                                            Some((a, vec![]))
+                                        } else {
+                                            Some((a, s.split(",").filter_map(|i| if let Some(caps) = inner_number_regex.captures(i) {
+                                                Some(caps[1].parse().unwrap())
                                             } else {
                                                 None
-                                            }
-                                        })
-                                        .collect_vec()
-                                        .iter()
-                                        .filter_map(|c| c.parse::<i32>().ok())
-                                        .collect_vec();
-                                    Some((ArtifactSlotType::from_repr(index).unwrap(), numbers))
-                                })
-                        )
-                    }
-                } else {
-                    println!("No optional arts");
-                    OptionalArtifacts { values: HashMap::from_iter(ArtifactSlotType::iter().map(|a| (a, vec![]))) }
-                };
-
-                model.optional = optional_artifacts;
+                                            }).collect_vec()))
+                                        }
+                                    },
+                                    _=> None
+                                }
+                            } else {
+                                None
+                            }))
+                },
+                ..Default::default()
             }
-            if let Some(powers_data) = values.last() {
-                let base_powers = if let Some(base_data) = powers_data.get(2..6) {
-                    Ok(DifficultyMappedValue {
-                        data: HashMap::from([
-                            (
-                                DifficultyType::Easy,
-                                base_data[0]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Medium,
-                                base_data[1]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Hard,
-                                base_data[2]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Heroic,
-                                base_data[3]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                        ]),
-                    })
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: counts grow".to_string(),
-                    ))
-                }?;
-
-                let powers_grow = if let Some(grow_data) = powers_data.get(7..11) {
-                    Ok(DifficultyMappedValue {
-                        data: HashMap::from([
-                            (
-                                DifficultyType::Easy,
-                                grow_data[0]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Medium,
-                                grow_data[1]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Hard,
-                                grow_data[2]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                            (
-                                DifficultyType::Heroic,
-                                grow_data[3]
-                                    .as_str()
-                                    .ok_or(Error::UndefinedValue(
-                                        "Sheet data conversion: counts grow".to_string(),
-                                    ))?
-                                    .parse()?,
-                            ),
-                        ]),
-                    })
-                } else {
-                    Err(Error::UndefinedValue(
-                        "Sheet data conversion: counts grow".to_string(),
-                    ))
-                }?;
-
-                model.values = base_powers;
-                model.grow = powers_grow;
-            }
-        }
+        };
         Ok(model)
     }
 }
 
+impl<'a> Into<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
+    fn into(self) -> ValueRange {
+        let mut result = ValueRange::default();
+        result.range = Some(format!("{}!D29:D37", self.sheet_name));
+        result.major_dimension = Some("COLUMNS".to_string());
+        let mut values = vec![];
+
+        DifficultyType::iter().for_each(|d| {
+            values.push(Value::String(if let Some(data) = self.data.base_powers.data.get(&d) {
+                data.to_string()
+            } else {
+                "0".to_string()
+            }));
+        });
+
+        values.push(Value::String(String::new()));
+
+        DifficultyType::iter().for_each(|d| {
+            values.push(Value::String(if let Some(data) = self.data.powers_grow.data.get(&d) {
+                data.to_string()
+            } else {
+                "0".to_string()
+            }));
+        });
+
+        result.values = Some(vec![values]);
+        result
+    }
+}
+
+impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
+    type Error = crate::Error;
+
+    fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
+        let data = value.values
+            .and_then(|v| v.first())
+            .ok_or_else(|| Error::UndefinedValue("Fight artifacts values".to_string()))?;
+
+        let model = FightAssetArtifactsValueWrapper {
+            sheet_name: "",
+            data: &AssetArtifactsModel {
+                base_powers: DifficultyMappedValue {
+                    data: HashMap::from([
+                        (DifficultyType::Easy, data.first().and_then(|v| match v {
+                            Value::String(s) => Some(s.parse().unwrap_or(0)),
+                            _=> None
+                        }).ok_or_else(|| Error::UndefinedValue("Artifacts base powers easy diff".to_string()))?),
+                        (DifficultyType::Medium, data.get(1).and_then(|v| match v {
+                            Value::String(s) => Some(s.parse().unwrap_or(0)),
+                            _=> None
+                        }).ok_or_else(|| Error::UndefinedValue("Artifacts base powers medium diff".to_string()))?),
+                        (DifficultyType::Hard, data.get(2).and_then(|v| match v {
+                            Value::String(s) => Some(s.parse().unwrap_or(0)),
+                            _=> None
+                        }).ok_or_else(|| Error::UndefinedValue("Artifacts base powers hard diff".to_string()))?),
+                        (DifficultyType::Heroic, data.get(3).and_then(|v| match v {
+                            Value::String(s) => Some(s.parse().unwrap_or(0)),
+                            _=> None
+                        }).ok_or_else(|| Error::UndefinedValue("Artifacts base powers heroic diff".to_string()))?),
+                    ])
+                },
+                powers_grow: DifficultyMappedValue {
+                    data: HashMap::from([
+                        (DifficultyType::Easy, data.get(5).and_then(|v| match v {
+                            Value::String(s) => Some(s.parse().unwrap_or(0)),
+                            _=> None
+                        }).ok_or_else(|| Error::UndefinedValue("Artifacts power grow easy diff".to_string()))?),
+                        (DifficultyType::Medium, data.get(6).and_then(|v| match v {
+                            Value::String(s) => Some(s.parse().unwrap_or(0)),
+                            _=> None
+                        }).ok_or_else(|| Error::UndefinedValue("Artifacts power grow medium diff".to_string()))?),
+                        (DifficultyType::Hard, data.get(7).and_then(|v| match v {
+                            Value::String(s) => Some(s.parse().unwrap_or(0)),
+                            _=> None
+                        }).ok_or_else(|| Error::UndefinedValue("Artifacts power grow hard diff".to_string()))?),
+                        (DifficultyType::Heroic, data.get(8).and_then(|v| match v {
+                            Value::String(s) => Some(s.parse().unwrap_or(0)),
+                            _=> None
+                        }).ok_or_else(|| Error::UndefinedValue("Artifacts power grow heroic diff".to_string()))?),
+                    ])
+                },
+                ..Default::default()
+            }
+        };
+        Ok(model)
+    }
+}

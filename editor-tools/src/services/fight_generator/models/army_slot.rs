@@ -3,9 +3,9 @@ use homm5_scaner::prelude::TownExtended;
 use sea_orm::{FromJsonQueryResult, FromQueryResult, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::str;
-use strum::{Display, EnumString};
+use strum::{Display, EnumString, FromRepr};
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize, Default)]
 #[sea_orm(table_name = "generated_army_slots")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -33,17 +33,17 @@ pub struct ArmySlotId {
     pub id: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]
 pub struct CreatureTowns {
     pub towns: Vec<TownExtended>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]
 pub struct CreatureTiers {
     pub tiers: Vec<i32>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]
 pub struct CreatureIds {
     pub ids: Vec<i32>,
 }
@@ -59,12 +59,16 @@ pub struct CreatureIds {
     Serialize,
     Deserialize,
     Display,
+    Default,
+    FromRepr,
 )]
+#[repr(i32)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum SelectionType {
     #[sea_orm(string_value = "MANUAL")]
     #[serde(rename = "MANUAL")]
     #[strum(serialize = "MANUAL")]
+    #[default]
     Manual,
     #[sea_orm(string_value = "TIER_SLOT_BASED")]
     #[serde(rename = "TIER_SLOT_BASED")]
@@ -77,18 +81,22 @@ pub enum SelectionType {
     DeriveActiveEnum,
     EnumIter,
     EnumString,
+    FromRepr,
     PartialEq,
     Eq,
     Clone,
     Serialize,
     Deserialize,
     Display,
+    Default
 )]
+#[repr(i32)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum CalculationRule {
     #[sea_orm(string_value = "RAW")]
     #[serde(rename = "RAW")]
     #[strum(serialize = "RAW")]
+    #[default]
     Raw,
     #[sea_orm(string_value = "POWER_BASED")]
     #[serde(rename = "POWER_BASED")]
@@ -97,45 +105,46 @@ pub enum CalculationRule {
 }
 
 #[derive(
-    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize,
+    Debug, DeriveActiveEnum, EnumIter, EnumString, PartialEq, Eq, Clone, Serialize, Deserialize, Default, FromRepr
 )]
+#[repr(i32)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
 pub enum StackGenerationRule {
     #[sea_orm(string_value = "UPGRADE_ONLY")]
     #[serde(rename = "UPGRADE_ONLY")]
     #[strum(serialize = "UPGRADE_ONLY")]
-    UpgradeOnly,
+    #[default]
+    UpgradeOnly = 1,
     #[sea_orm(string_value = "GENERATABLE")]
     #[serde(rename = "GENERATABLE")]
     #[strum(serialize = "GENERATABLE")]
-    Generatable,
+    Generatable = 0,
     #[sea_orm(string_value = "SHOOTER")]
     #[serde(rename = "SHOOTER")]
     #[strum(serialize = "SHOOTER")]
-    Shooter,
+    Shooter = 2,
     #[sea_orm(string_value = "CASTER")]
     #[serde(rename = "CASTER")]
     #[strum(serialize = "CASTER")]
-    Caster,
+    Caster = 3,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]
 pub struct StackGenerationRules {
     pub rules: Vec<StackGenerationRule>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]
+pub struct StackStatsRules {
+    pub rules: Vec<StackStatsRuleModel>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq, Default)]
 pub struct StackStatsRuleModel {
-    pub id: i32,
-    pub priority: i32,
-    pub params: Vec<StatParam>,
+    pub param: StatParam,
     pub rule: StatSelectionRule
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
-pub struct StackStatsRules {
-    pub rules: Vec<StackStatsRuleModel>
-}
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
