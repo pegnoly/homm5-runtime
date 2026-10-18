@@ -1,8 +1,14 @@
 use homm5_scaner::prelude::{ArtifactSlotType, TownExtended};
-use crate::prelude::{DifficultyMappedValue, OptionalArtifacts, RequiredArtifacts, StackGenerationRule, StatParam, StatSelectionRule};
-use crate::services::fight_generator::models::army_slot::{CalculationRule, SelectionType, StackStatsRuleModel, StackStatsRules};
+use crate::prelude::{DifficultyMappedValue, OptionalArtifacts, RequiredArtifacts, StackGenerationRule};
+use crate::services::fight_generator::models::army_slot::{CalculationRule, SelectionType, StackStatsRuleModel};
 use crate::services::fight_generator::models::common::AssetUpdateType;
 use super::prelude::DifficultyType;
+
+pub enum GetAssetsRequest {
+    All,
+    OfMission(i32),
+    OfIds(Vec<i32>)
+}
 
 pub struct InitFightAssetPayload {
     pub app_name: String,
@@ -116,48 +122,9 @@ pub struct UpdateGenerationRulesPayload {
     pub rules: Vec<StackGenerationRule>,
 }
 
-pub struct AddStatSelectionRulePayload {
+pub struct UpdateStatRulesPayload {
     pub stack_id: i32,
-    pub rule: StackStatsRuleModel,
-}
-
-pub struct UpdateStatParamsPayload {
-    pub element_id: i32,
-    pub params: Vec<StatParam>,
-}
-
-#[derive(Default)]
-pub struct UpdateGenerationStatElementPayload {
-    pub stack_id: i32,
-    pub element_id: i32,
-    pub rule: Option<StatSelectionRule>,
-    pub priority: Option<i32>,
-    pub stats: Option<Vec<StatParam>>,
-}
-
-impl UpdateGenerationStatElementPayload {
-    pub fn new(stack_id: i32, element_id: i32) -> Self {
-        UpdateGenerationStatElementPayload {
-            stack_id,
-            element_id,
-            ..Default::default()
-        }
-    }
-
-    pub fn with_rule(mut self, rule: StatSelectionRule) -> Self {
-        self.rule = Some(rule);
-        self
-    }
-
-    pub fn with_priority(mut self, priority: i32) -> Self {
-        self.priority = Some(priority);
-        self
-    }
-
-    pub fn with_stats(mut self, stats: Vec<StatParam>) -> Self {
-        self.stats = Some(stats);
-        self
-    }
+    pub rules: Vec<StackStatsRuleModel>
 }
 
 #[derive(Default)]

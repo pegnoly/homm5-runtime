@@ -10,7 +10,7 @@ use super::{
         AddRequiredArtifactPayload, AddStackPayload,
         InitAssetArtifactsDataPayload, RemoveRequiredArtifactPayload,
         UpdateArtifactsGenerationTypePayload, UpdateDifficultyBasedPowerPayload,
-        UpdateGenerationRulesPayload, UpdateGenerationStatElementPayload,
+        UpdateGenerationRulesPayload
     },
 };
 use crate::{
@@ -21,14 +21,9 @@ use crate::{
     services::fight_generator::models::army_slot::{CreatureIds, CreatureTiers, CreatureTowns},
 };
 use itertools::Itertools;
-use sea_orm::{
-    ActiveModelTrait,
-    ActiveValue::Set,
-    ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, PaginatorTrait,
-    QueryFilter, SqlxSqlitePoolConnection,
-    sqlx::SqlitePool,
-};
-use crate::prelude::{AddStatSelectionRulePayload, UpdateStackSpecificCreaturesPayload};
+use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, PaginatorTrait, QueryFilter, SqlxSqlitePoolConnection, sqlx::SqlitePool, Condition};
+use sea_orm::prelude::Expr;
+use crate::prelude::{GetAssetsRequest, UpdateStackSpecificCreaturesPayload, UpdateStatRulesPayload};
 use crate::services::fight_generator::models::army_slot::{StackGenerationRules, StackStatsRules};
 
 pub struct FightGeneratorRepo {
@@ -42,14 +37,18 @@ impl FightGeneratorRepo {
         }
     }
 
-    pub async fn get_all_assets(
+    pub async fn get_assets(
         &self,
-        mission_id: i32,
+        request: GetAssetsRequest
     ) -> Result<Vec<asset::Model>, EditorToolsError> {
-        Ok(asset::Entity::find()
-            .filter(asset::Column::MissionId.eq(mission_id))
-            .all(&self.db)
-            .await?)
+        let condition = Condition::all()
+            .add_option(match request {
+                GetAssetsRequest::All => None,
+                GetAssetsRequest::OfMission(m) => Some(Expr::col(asset::Column::MissionId).eq(m)),
+                GetAssetsRequest::OfIds(ids) => Some(Expr::col(asset::Column::Id).is_in(ids))
+            });
+
+        Ok(asset::Entity::find().filter(condition).all(&self.db).await?)
     }
 
     pub async fn get_asset(&self, id: i32) -> Result<Option<asset::Model>, EditorToolsError> {
@@ -498,55 +497,15 @@ impl FightGeneratorRepo {
         }
     }
 
-    pub async fn add_stat_generation_element(
+    pub async fn update_stat_rules(
         &self,
-        payload: AddStatSelectionRulePayload,
+        payload: UpdateStatRulesPayload
     ) -> Result<Option<i32>, EditorToolsError> {
         if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
             let asset_id = existing_model.asset_id;
             let mut model_to_update = existing_model.into_active_model();
-            let mut existing_rules = model_to_update.stat_rules.take().unwrap();
-            existing_rules.rules.push(payload.rule);
-            model_to_update.stat_rules = Set(existing_rules);
-            Ok(Some(asset_id))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn delete_stat_generation_element(&self, stack_id: i32, element_id: i32) -> Result<Option<i32>, EditorToolsError> {
-        if let Some(existing_model) = army_slot::Entity::find_by_id(stack_id).one(&self.db).await? {
-            let asset_id = existing_model.asset_id;
-            let mut model_to_update = existing_model.into_active_model();
-            let mut existing_rules = model_to_update.stat_rules.take().unwrap();
-            existing_rules.rules.retain(|r| r.id == element_id);
-            model_to_update.stat_rules = Set(existing_rules);
-            Ok(Some(asset_id))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn update_stat_generation_element(
-        &self,
-        payload: UpdateGenerationStatElementPayload,
-    ) -> Result<Option<i32>, EditorToolsError> {
-        if let Some(existing_model) = army_slot::Entity::find_by_id(payload.stack_id).one(&self.db).await? {
-            let asset_id = existing_model.asset_id;
-            let mut model_to_update = existing_model.into_active_model();
-            let mut existing_rules = model_to_update.stat_rules.take().unwrap();
-            if let Some(rule_to_update) = existing_rules.rules.iter_mut().find(|r| r.id == payload.element_id) {
-                if let Some(priority) = payload.priority {
-                    rule_to_update.priority = priority;
-                }
-                if let Some(rule) = payload.rule {
-                    rule_to_update.rule = rule;
-                }
-                if let Some(stats) = payload.stats {
-                    rule_to_update.params = stats;
-                }
-            }
-            model_to_update.stat_rules = Set(existing_rules);
+            model_to_update.stat_rules = Set(StackStatsRules {rules: payload.rules});
+            model_to_update.update(&self.db).await?;
             Ok(Some(asset_id))
         } else {
             Ok(None)
