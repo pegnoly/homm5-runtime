@@ -9,6 +9,7 @@ use google_api::utils::{FromSheetsData, IntoSheetsData};
 use homm5_scaner::prelude::ScanerService;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use strum::Display;
 use tauri::State;
 use tokio::sync::Mutex;
@@ -31,7 +32,7 @@ pub struct VersionControlCommit {
 }
 
 pub struct VersionControlService {
-    google_api: &'static GoogleApiService,
+    google_api: Arc<GoogleApiService>,
     pub updated_creatures: DashSet<i32>,
     pub updated_artifacts: DashSet<i32>,
     pub updated_fights: DashSet<i32>,
@@ -39,7 +40,7 @@ pub struct VersionControlService {
 }
 
 impl VersionControlService {
-    pub fn new(google_api_service: &'static GoogleApiService) -> Self {
+    pub fn new(google_api_service: Arc<GoogleApiService>) -> Self {
         Self {
             google_api: google_api_service,
             updated_creatures: DashSet::new(),

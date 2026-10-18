@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::commands::{
     apply_modifications, create_hero, execute_scan, generate_images, load_current_map, load_maps,
     run_game, select_map, switch_profile,
@@ -59,10 +60,10 @@ pub async fn run() -> Result<(), Error> {
     let dialog_generator_repo = DialogGeneratorRepo::new(pool.clone());
     let fight_generator_repo = FightGeneratorRepo::new(pool.clone());
     let reserve_hero_creator_repo = ReserveHeroCreatorRepo::new(pool.clone());
-    let google_api = GoogleApiService::new(&global_config.auth_path)
+    let google_api = Arc::new(GoogleApiService::new(&global_config.auth_path)
         .await
-        .unwrap();
-    let version_control = VersionControlService::new(&google_api);
+        .unwrap());
+    let version_control = VersionControlService::new(Arc::clone(&google_api));
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -126,27 +127,27 @@ pub async fn run() -> Result<(), Error> {
             save_dialog_variant,
             generate_dialog,
             //banks
-            services::banks_configurator::commands::get_all_banks,
-            services::banks_configurator::commands::load_bank,
-            services::banks_configurator::commands::load_difficulty,
-            services::banks_configurator::commands::update_bank_difficulty_chance,
-            services::banks_configurator::commands::create_bank_variant,
-            services::banks_configurator::commands::update_bank_recharges_count,
-            services::banks_configurator::commands::update_bank_recharge_timer,
-            services::banks_configurator::commands::update_bank_morale_loss,
-            services::banks_configurator::commands::update_bank_luck_loss,
-            services::banks_configurator::commands::load_bank_variant,
-            services::banks_configurator::commands::load_bank_variants,
-            services::banks_configurator::commands::update_bank_variant_label,
-            services::banks_configurator::commands::update_bank_variant_difficulty,
-            services::banks_configurator::commands::create_creature_slot,
-            services::banks_configurator::commands::load_creature_slots_ids,
-            services::banks_configurator::commands::load_creature_slot,
-            services::banks_configurator::commands::update_creature_slot_base_power,
-            services::banks_configurator::commands::update_creature_slot_power_grow,
-            services::banks_configurator::commands::update_creature_slot_tier,
-            services::banks_configurator::commands::update_creature_slot_town,
-            services::banks_configurator::commands::generate_banks_script,
+            // services::banks_configurator::commands::get_all_banks,
+            // services::banks_configurator::commands::load_bank,
+            // services::banks_configurator::commands::load_difficulty,
+            // services::banks_configurator::commands::update_bank_difficulty_chance,
+            // services::banks_configurator::commands::create_bank_variant,
+            // services::banks_configurator::commands::update_bank_recharges_count,
+            // services::banks_configurator::commands::update_bank_recharge_timer,
+            // services::banks_configurator::commands::update_bank_morale_loss,
+            // services::banks_configurator::commands::update_bank_luck_loss,
+            // services::banks_configurator::commands::load_bank_variant,
+            // services::banks_configurator::commands::load_bank_variants,
+            // services::banks_configurator::commands::update_bank_variant_label,
+            // services::banks_configurator::commands::update_bank_variant_difficulty,
+            // services::banks_configurator::commands::create_creature_slot,
+            // services::banks_configurator::commands::load_creature_slots_ids,
+            // services::banks_configurator::commands::load_creature_slot,
+            // services::banks_configurator::commands::update_creature_slot_base_power,
+            // services::banks_configurator::commands::update_creature_slot_power_grow,
+            // services::banks_configurator::commands::update_creature_slot_tier,
+            // services::banks_configurator::commands::update_creature_slot_town,
+            // services::banks_configurator::commands::generate_banks_script,
             // hero generator
             services::fight_generator::commands::load_artifact_models,
             services::fight_generator::commands::load_creature_models,
@@ -180,10 +181,10 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::get_average_concrete_creatures_count,
             services::fight_generator::commands::get_average_artifacts_cost,
             //
-            services::creature_generator::commands::save_generation_session,
-            services::creature_generator::commands::generate_creatures,
-            services::creature_generator::commands::pick_session_file,
-            services::creature_generator::commands::load_session,
+            // services::creature_generator::commands::save_generation_session,
+            // services::creature_generator::commands::generate_creatures,
+            // services::creature_generator::commands::pick_session_file,
+            // services::creature_generator::commands::load_session,
             //
             services::reserve_hero_creator::commands::load_heroes_data,
             services::reserve_hero_creator::commands::load_heroes,
