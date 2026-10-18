@@ -24,6 +24,6 @@ pub struct ProfileConfig {
 
 impl ProfileConfig {
     pub fn get_map_spreadsheet_id(&self, map_id: i32) -> String {
-        self.maps.get(map_id).unwrap().spreadsheet_id
+        self.maps.iter().find(|m| m.id == map_id).unwrap().fights_spreadsheet_id.clone()
     }
 }

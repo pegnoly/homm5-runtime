@@ -536,7 +536,7 @@ impl IntoSheetsData<CreatureModelSheetWrapper> for CreaturesSheetsConverter {}
 
 pub async fn push_creatures_data(
     app_manager: &LocalAppManager,
-    version_control: &VersionControlService,
+    version_control: &mut VersionControlService,
     scaner_service: &ScanerService,
 ) -> Result<Vec<i32>, crate::error::Error> {
     let profile = app_manager.current_profile_data.read().await;
@@ -556,9 +556,9 @@ pub async fn push_creatures_data(
             "Can't find sheet data for creatures version control".to_string(),
         ))?;
     version_control
-        .push_many(
+        .commit_many(
             &sheet_data.spreadsheet_id,
-            updated_models,
+            updated_models.iter().map(|c| CreatureModelSheetWrapper(c.clone())).collect_vec(),
             CreaturesSheetsConverter {},
         )
         .await?;

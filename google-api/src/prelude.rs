@@ -1,1 +1,1 @@
-pub use google_sheets4::api::ValueRange;
+pub use google_sheets4::api::{ValueRange, BatchUpdateValuesRequest};

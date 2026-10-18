@@ -1,21 +1,15 @@
 use crate::services::version_control::VersionControlService;
-use editor_tools::prelude::{
-    AssetArmySlotModel, AssetArtifactsModel, AssetUpdateType, CalculationRule,
-    DifficultyMappedValue, DifficultyType, FightGeneratorRepo, OptionalArtifacts,
-    RequiredArtifacts, SelectionType, StackGenerationRule, StackStatsRuleModel, StatParam,
-    StatSelectionRule,
-};
-use google_api::error::Error;
+use editor_tools::prelude::{AssetArmySlotModel, AssetArtifactsModel, AssetUpdateType, CalculationRule, DifficultyMappedValue, DifficultyType, FightGeneratorRepo, GetAssetsRequest, OptionalArtifacts, RequiredArtifacts, SelectionType, StackGenerationRule, StackStatsRuleModel, StatParam, StatSelectionRule};
 use google_api::prelude::ValueRange;
 use google_api::utils::{FromSheetsData, IntoSheetsData};
-use homm5_scaner::prelude::{
-    ArtifactDBModel, ArtifactSlotType, CreatureDBModel, ScanerService, Town, TownExtended,
-};
+use homm5_scaner::prelude::{ArtifactDBModel, ArtifactSlotType, CreatureDBModel, GetArtifactsRequest, GetCreaturesRequest, ScanerService, Town, TownExtended};
 use itertools::Itertools;
 use regex::Regex;
 use serde_json::Value;
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
+use crate::error::Error;
+use crate::utils::LocalAppManager;
 
 pub trait IntoSheetValidatedValue {
     fn to_sheet_validated_value(&self) -> String;
@@ -57,22 +51,10 @@ impl IntoSheetValidatedValue for Town {
     }
 }
 
-pub struct FightAssetArmySheetConverter<'a> {
-    sheet_name: &'a String,
-    creatures_data: &'a Vec<CreatureDBModel>,
-}
+pub struct FightAssetArmySheetConverter;
 
-impl<'a> FightAssetArmySheetConverter<'a> {
-    pub fn new(sheet_name: &String, creatures_data: &Vec<CreatureDBModel>) -> Self {
-        Self {
-            sheet_name,
-            creatures_data,
-        }
-    }
-}
-
-impl<'a> IntoSheetsData<AssetArmySlotSheetWrapper<'_>> for FightAssetArmySheetConverter<'a> {}
-impl<'a> FromSheetsData<AssetArmySlotSheetWrapper<'_>> for FightAssetArmySheetConverter<'a> {}
+impl IntoSheetsData<AssetArmySlotSheetWrapper<'_>> for FightAssetArmySheetConverter {}
+impl FromSheetsData<AssetArmySlotSheetWrapper<'_>> for FightAssetArmySheetConverter {}
 
 impl IntoSheetValidatedValue for CalculationRule {
     fn to_sheet_validated_value(&self) -> String {
@@ -114,7 +96,7 @@ impl IntoSheetValidatedValue for StackGenerationRule {
 
 impl IntoSheetValidatedValue for (StatSelectionRule, StatParam) {
     fn to_sheet_validated_value(&self) -> String {
-        match (self.0, self.1) {
+        match (&self.0, &self.1) {
             (StatSelectionRule::MinBy, StatParam::Hitpoints) => "MinBy hp [0]".to_string(),
             (StatSelectionRule::MaxBy, StatParam::Hitpoints) => "MaxBy hp [1]".to_string(),
             (StatSelectionRule::MaxBy, StatParam::Initiative) => "MaxBy initiative [3]".to_string(),
@@ -130,17 +112,17 @@ impl IntoSheetValidatedValue for (StatSelectionRule, StatParam) {
 }
 
 pub struct AssetArmySlotSheetWrapper<'a> {
-    slot: &'a AssetArmySlotModel,
+    slot: AssetArmySlotModel,
     sheet_name: &'a str,
-    creatures_data: &'a Vec<CreatureDBModel>,
+    creatures_data: &'a [CreatureDBModel],
 }
 
 impl<'a> AssetArmySlotSheetWrapper<'a> {
-    pub fn new(slot: &AssetArmySlotModel) -> Self {
+    pub fn new(slot: AssetArmySlotModel) -> Self {
         Self {
             slot,
             sheet_name: "",
-            creatures_data: &[],
+            creatures_data: &[]
         }
     }
     fn get_column(&self) -> &'a str {
@@ -162,8 +144,9 @@ impl<'a> AssetArmySlotSheetWrapper<'a> {
                     .specific_count
                     .data
                     .get(&difficulty)
-                    .unwrap_or(&0)
-                    .into(),
+                    .copied()
+                    .unwrap_or(0)
+                    .into()
             )
         } else {
             Value::Number(
@@ -171,7 +154,8 @@ impl<'a> AssetArmySlotSheetWrapper<'a> {
                     .base_powers
                     .data
                     .get(&difficulty)
-                    .unwrap_or(&0)
+                    .copied()
+                    .unwrap_or(0)
                     .into(),
             )
         }
@@ -183,7 +167,8 @@ impl<'a> AssetArmySlotSheetWrapper<'a> {
                 .powers_grow
                 .data
                 .get(&difficulty)
-                .unwrap_or(&0)
+                .copied()
+                .unwrap_or(0)
                 .into(),
         )
     }
@@ -259,18 +244,13 @@ impl<'a> Into<ValueRange> for AssetArmySlotSheetWrapper<'a> {
         values.push(if self.slot.selection_type == SelectionType::Manual {
             Value::String(String::new())
         } else {
-            if let Some(rules) = self.slot.stat_rules {
-                Value::String(
-                    rules
-                        .params
-                        .iter()
-                        .map(|p| (rules.rule, *p).into())
-                        .collect_vec()
-                        .join(","),
-                )
-            } else {
-                Value::String(String::new())
-            }
+            Value::String(
+                self.slot.stat_rules.rules
+                    .iter()
+                    .map(|p| (p.rule.clone(), p.param.clone()).to_sheet_validated_value())
+                    .collect_vec()
+                    .join(","),
+            )
         });
         values.push(Value::String(String::new()));
         values.push(Value::String(String::new()));
@@ -296,13 +276,13 @@ impl<'a> Into<ValueRange> for AssetArmySlotSheetWrapper<'a> {
 }
 
 impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
-    type Error = crate::Error;
+    type Error = Error;
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
         let inner_number_regex = Regex::new(r"\[(\d+)]").unwrap();
         let data = value
             .values
-            .and_then(|v| v.first())
-            .ok_or_else(|| Error::UndefinedValue("Army slot sheet data".to_string()))?;
+            .and_then(|v| v.first().cloned())
+            .ok_or_else(|| Error::UndefinedData("Army slot sheet data".to_string()))?;
 
         let mut slot = AssetArmySlotModel::default();
         slot.calculation_type = data
@@ -317,7 +297,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                 }
                 _ => None,
             })
-            .ok_or_else(|| Error::UndefinedValue("Army slot calc type".to_string()))?;
+            .ok_or_else(|| Error::UndefinedData("Army slot calc type".to_string()))?;
         slot.update_type = data
             .get(1)
             .and_then(|v| match v {
@@ -330,7 +310,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                 }
                 _ => None,
             })
-            .ok_or_else(|| Error::UndefinedValue("Army slot update type".to_string()))?;
+            .ok_or_else(|| Error::UndefinedData("Army slot update type".to_string()))?;
         slot.selection_type = data
             .get(13)
             .and_then(|v| match v {
@@ -343,7 +323,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                 }
                 _ => None,
             })
-            .ok_or_else(|| Error::UndefinedValue("Army slot selection type".to_string()))?;
+            .ok_or_else(|| Error::UndefinedData("Army slot selection type".to_string()))?;
         if slot.selection_type == SelectionType::Manual {
             slot.base_powers = DifficultyMappedValue::default();
             slot.specific_count = DifficultyMappedValue {
@@ -356,7 +336,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue(
+                                Error::UndefinedData(
                                     "Army slot specific count easy diff".to_string(),
                                 )
                             })?,
@@ -369,7 +349,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue(
+                                Error::UndefinedData(
                                     "Army slot specific count medium diff".to_string(),
                                 )
                             })?,
@@ -382,7 +362,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue(
+                                Error::UndefinedData(
                                     "Army slot specific count hard diff".to_string(),
                                 )
                             })?,
@@ -395,7 +375,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue(
+                                Error::UndefinedData(
                                     "Army slot specific count heroic diff".to_string(),
                                 )
                             })?,
@@ -418,7 +398,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     ),
                     _ => None,
                 })
-                .ok_or_else(|| Error::UndefinedValue("Army slot creatures ids".to_string()))?;
+                .ok_or_else(|| Error::UndefinedData("Army slot creatures ids".to_string()))?;
         } else {
             slot.specific_count = DifficultyMappedValue::default();
             slot.base_powers = DifficultyMappedValue {
@@ -431,7 +411,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue("Army slot base powers easy diff".to_string())
+                                Error::UndefinedData("Army slot base powers easy diff".to_string())
                             })?,
                     ),
                     (
@@ -442,7 +422,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue(
+                                Error::UndefinedData(
                                     "Army slot base powers medium diff".to_string(),
                                 )
                             })?,
@@ -455,7 +435,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue("Army slot base powers hard diff".to_string())
+                                Error::UndefinedData("Army slot base powers hard diff".to_string())
                             })?,
                     ),
                     (
@@ -466,7 +446,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue(
+                                Error::UndefinedData(
                                     "Army slot base powers heroic diff".to_string(),
                                 )
                             })?,
@@ -489,7 +469,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     ),
                     _ => None,
                 })
-                .ok_or_else(|| Error::UndefinedValue("Army slot towns".to_string()))?;
+                .ok_or_else(|| Error::UndefinedData("Army slot towns".to_string()))?;
             slot.tiers.tiers = data
                 .get(17)
                 .and_then(|v| match v {
@@ -506,7 +486,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     ),
                     _ => None,
                 })
-                .ok_or_else(|| Error::UndefinedValue("Army slot tiers".to_string()))?;
+                .ok_or_else(|| Error::UndefinedData("Army slot tiers".to_string()))?;
             slot.rules.rules = data
                 .get(18)
                 .and_then(|v| match v {
@@ -526,7 +506,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     ),
                     _ => None,
                 })
-                .ok_or_else(|| Error::UndefinedValue("Army slot rules".to_string()))?;
+                .ok_or_else(|| Error::UndefinedData("Army slot rules".to_string()))?;
             slot.stat_rules.rules = data
                 .get(19)
                 .and_then(|v| match v {
@@ -591,7 +571,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     }
                     _ => None,
                 })
-                .ok_or_else(|| Error::UndefinedValue("Army slot stats rules".to_string()))?;
+                .ok_or_else(|| Error::UndefinedData("Army slot stats rules".to_string()))?;
         };
         slot.powers_grow = if slot.update_type == AssetUpdateType::Static {
             DifficultyMappedValue::default()
@@ -606,7 +586,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue("Army slot base powers easy diff".to_string())
+                                Error::UndefinedData("Army slot base powers easy diff".to_string())
                             })?,
                     ),
                     (
@@ -617,7 +597,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue(
+                                Error::UndefinedData(
                                     "Army slot base powers medium diff".to_string(),
                                 )
                             })?,
@@ -630,7 +610,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue("Army slot base powers hard diff".to_string())
+                                Error::UndefinedData("Army slot base powers hard diff".to_string())
                             })?,
                     ),
                     (
@@ -641,7 +621,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                                 _ => None,
                             })
                             .ok_or_else(|| {
-                                Error::UndefinedValue(
+                                Error::UndefinedData(
                                     "Army slot base powers heroic diff".to_string(),
                                 )
                             })?,
@@ -650,26 +630,23 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
             }
         };
 
-        Ok(AssetArmySlotSheetWrapper {
-            slot: &slot,
-            sheet_name: "",
-            creatures_data: &[],
-        })
+        Ok(AssetArmySlotSheetWrapper::new(slot))
     }
 }
 
 pub struct FightAssetArtifactsDataWrapper<'a> {
-    data: &'a AssetArtifactsModel,
+    data: AssetArtifactsModel,
     sheet_name: &'a str,
-    artifacts_data: &'a Vec<ArtifactDBModel>,
+    artifacts_data: &'a [ArtifactDBModel],
 }
 
 pub struct FightAssetArtifactsValueWrapper<'a> {
-    data: &'a AssetArtifactsModel,
+    data: AssetArtifactsModel,
     sheet_name: &'a str,
 }
 
-pub struct FightAssetArtifactsDataSheetConverter {}
+#[derive(Clone, Copy)]
+pub struct FightAssetArtifactsDataSheetConverter;
 
 impl IntoSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter {}
 impl FromSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter {}
@@ -703,7 +680,7 @@ impl<'a> Into<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
         ));
         values.push(Value::String(String::new()));
         ArtifactSlotType::iter()
-            .filter(|a| a != ArtifactSlotType::Inventory)
+            .filter(|a| *a != ArtifactSlotType::Inventory)
             .for_each(|a| {
                 if let Some(arts) = self.data.optional.values.get(&a) {
                     values.push(Value::String(
@@ -730,13 +707,13 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
         let data = value
             .values
-            .and_then(|v| v.first())
-            .ok_or_else(|| Error::UndefinedValue("Fight artifacts data".to_string()))?;
+            .and_then(|v| v.first().cloned())
+            .ok_or_else(|| Error::UndefinedData("Fight artifacts data".to_string()))?;
         let inner_number_regex = Regex::new(r"\[(\d+)]").unwrap();
         let model = FightAssetArtifactsDataWrapper {
             artifacts_data: &[],
             sheet_name: "",
-            data: &AssetArtifactsModel {
+            data: AssetArtifactsModel {
                 id: -1,
                 asset_id: -1,
                 required: RequiredArtifacts {
@@ -763,15 +740,15 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                             _ => None,
                         })
                         .ok_or_else(|| {
-                            Error::UndefinedValue("Artifacts asset required ids".to_string())
+                            Error::UndefinedData("Artifacts asset required ids".to_string())
                         })?,
                 },
                 optional: OptionalArtifacts {
                     values: HashMap::from_iter(
                         ArtifactSlotType::iter()
-                            .filter(|a| a != ArtifactSlotType::Inventory)
+                            .filter(|a| *a != ArtifactSlotType::Inventory)
                             .filter_map(|a| {
-                                if let Some(v) = data.get(2 + (a as i32)) {
+                                if let Some(v) = data.get(2 + (a.clone() as usize)) {
                                     match v {
                                         Value::String(s) => {
                                             if s.is_empty() {
@@ -801,7 +778,9 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                             }),
                     ),
                 },
-                ..Default::default()
+                powers_grow: DifficultyMappedValue::default(),
+                base_powers: DifficultyMappedValue::default(),
+                update_type: AssetUpdateType::default()
             },
         };
         Ok(model)
@@ -843,17 +822,17 @@ impl<'a> Into<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
 }
 
 impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
-    type Error = crate::Error;
+    type Error = Error;
 
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
         let data = value
             .values
-            .and_then(|v| v.first())
-            .ok_or_else(|| Error::UndefinedValue("Fight artifacts values".to_string()))?;
+            .and_then(|v| v.first().cloned())
+            .ok_or_else(|| Error::UndefinedData("Fight artifacts values".to_string()))?;
 
         let model = FightAssetArtifactsValueWrapper {
             sheet_name: "",
-            data: &AssetArtifactsModel {
+            data: AssetArtifactsModel {
                 base_powers: DifficultyMappedValue {
                     data: HashMap::from([
                         (
@@ -864,7 +843,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                                     _ => None,
                                 })
                                 .ok_or_else(|| {
-                                    Error::UndefinedValue(
+                                    Error::UndefinedData(
                                         "Artifacts base powers easy diff".to_string(),
                                     )
                                 })?,
@@ -877,7 +856,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                                     _ => None,
                                 })
                                 .ok_or_else(|| {
-                                    Error::UndefinedValue(
+                                    Error::UndefinedData(
                                         "Artifacts base powers medium diff".to_string(),
                                     )
                                 })?,
@@ -890,7 +869,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                                     _ => None,
                                 })
                                 .ok_or_else(|| {
-                                    Error::UndefinedValue(
+                                    Error::UndefinedData(
                                         "Artifacts base powers hard diff".to_string(),
                                     )
                                 })?,
@@ -903,7 +882,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                                     _ => None,
                                 })
                                 .ok_or_else(|| {
-                                    Error::UndefinedValue(
+                                    Error::UndefinedData(
                                         "Artifacts base powers heroic diff".to_string(),
                                     )
                                 })?,
@@ -920,7 +899,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                                     _ => None,
                                 })
                                 .ok_or_else(|| {
-                                    Error::UndefinedValue(
+                                    Error::UndefinedData(
                                         "Artifacts power grow easy diff".to_string(),
                                     )
                                 })?,
@@ -933,7 +912,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                                     _ => None,
                                 })
                                 .ok_or_else(|| {
-                                    Error::UndefinedValue(
+                                    Error::UndefinedData(
                                         "Artifacts power grow medium diff".to_string(),
                                     )
                                 })?,
@@ -946,7 +925,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                                     _ => None,
                                 })
                                 .ok_or_else(|| {
-                                    Error::UndefinedValue(
+                                    Error::UndefinedData(
                                         "Artifacts power grow hard diff".to_string(),
                                     )
                                 })?,
@@ -959,14 +938,18 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                                     _ => None,
                                 })
                                 .ok_or_else(|| {
-                                    Error::UndefinedValue(
+                                    Error::UndefinedData(
                                         "Artifacts power grow heroic diff".to_string(),
                                     )
                                 })?,
                         ),
                     ]),
                 },
-                ..Default::default()
+                id: -1,
+                asset_id: -1,
+                update_type: AssetUpdateType::default(),
+                required: RequiredArtifacts::default(),
+                optional: OptionalArtifacts::default()
             },
         };
         Ok(model)
@@ -974,9 +957,46 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
 }
 
 pub async fn commit_updated_fights(
-    version_control: &VersionControlService,
+    version_control: &mut VersionControlService,
     scaner_service: &ScanerService,
+    app_manager: &LocalAppManager,
     fight_generator_repo: &FightGeneratorRepo,
-) {
-    todo!()
+) -> Result<(), crate::Error> {
+    let creatures = scaner_service.get_creature_models(GetCreaturesRequest::NonDefault).await?;
+    let artifacts = scaner_service.get_artifact_models(GetArtifactsRequest::Any).await?;
+    let profile = app_manager.current_profile_data.read().await;
+    let sheet_ids: HashMap<i32, String> = HashMap::from_iter(profile.maps.iter().map(|m| (m.id, m.fights_spreadsheet_id.clone())));
+    let assets = fight_generator_repo
+        .get_assets(GetAssetsRequest::OfIds(version_control.updated_fights.iter().map(|i| *i).collect())).await?;
+    let mut commit_data: HashMap<String, Vec<i32>> = HashMap::new();
+    for asset in assets {
+        let sheet_id = sheet_ids.get(&asset.mission_id).unwrap();
+        if !commit_data.contains_key(sheet_id) {
+            commit_data.insert(sheet_id.clone(),vec![]);
+        }
+        let stacks = fight_generator_repo.get_stacks(asset.id).await?;
+        let converter = FightAssetArmySheetConverter {};
+        let stacks_wrappers = stacks.iter().map(|s| AssetArmySlotSheetWrapper {
+            slot: s.clone(),
+            sheet_name: &asset.table_name,
+            creatures_data: &creatures,
+        }).collect_vec();
+
+        version_control.commit_many(sheet_id, stacks_wrappers, converter).await?;
+
+        if let Some(artifacts_model) = fight_generator_repo.get_artifacts_model(asset.id).await? {
+            let converter = FightAssetArtifactsDataSheetConverter {};
+            version_control.commit_single(sheet_id, FightAssetArtifactsDataWrapper {
+                data: artifacts_model.clone(),
+                sheet_name: &asset.table_name,
+                artifacts_data: &artifacts
+            }, converter).await?;
+            version_control.commit_single(sheet_id, FightAssetArtifactsValueWrapper {
+                data: artifacts_model,
+                sheet_name: &asset.table_name,
+            }, converter).await?;
+        }
+    }
+
+    Ok(())
 }

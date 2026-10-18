@@ -1,7 +1,7 @@
 pub mod artifact_editor;
-pub mod banks_configurator;
+// pub mod banks_configurator;
 pub mod creature_editor;
-pub mod creature_generator;
+// pub mod creature_generator;
 pub mod dialog_generator;
 pub mod fight_generator;
 pub mod map_editor;

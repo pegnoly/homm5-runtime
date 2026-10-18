@@ -87,7 +87,7 @@ pub async fn init_new_asset(
             version_control.updated_fights.insert(asset.id);
             Ok(asset)
         }
-        Err(e) => e.into(),
+        Err(e) => Err(Error::EditorTools(e))
     }
 }
 
@@ -180,7 +180,7 @@ pub async fn create_artifacts_data_for_asset(
             version_control.updated_fights.insert(asset.id);
             Ok(model)
         }
-        Err(e) => e.into(),
+        Err(e) => Err(Error::EditorTools(e))
     }
 }
 
@@ -240,7 +240,7 @@ pub async fn add_required_artifact(
             version_control.updated_fights.insert(asset_id);
             Ok(())
         }
-        Err(e) => e.into(),
+        Err(e) => Err(Error::EditorTools(e))
     }
 }
 
@@ -262,7 +262,7 @@ pub async fn remove_required_artifact(
             version_control.updated_fights.remove(&asset_id);
             Ok(())
         }
-        Err(e) => e.into(),
+        Err(e) => Err(Error::EditorTools(e))
     }
 }
 
@@ -286,7 +286,7 @@ pub async fn add_optional_artifact(
             version_control.updated_fights.insert(asset_id);
             Ok(())
         }
-        Err(e) => e.into(),
+        Err(e) => Err(Error::EditorTools(e))
     }
 }
 
@@ -310,7 +310,7 @@ pub async fn remove_optional_artifact(
             version_control.updated_fights.insert(asset_id);
             Ok(())
         }
-        Err(e) => e.into(),
+        Err(e) => Err(Error::EditorTools(e))
     }
 }
 
@@ -342,7 +342,7 @@ pub async fn create_stack(
             version_control.updated_fights.insert(asset_id);
             Ok(stack_id)
         }
-        Err(e) => e.into(),
+        Err(e) => Err(Error::EditorTools(e))
     }
 }
 

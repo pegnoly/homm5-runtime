@@ -37,7 +37,7 @@ pub async fn update_bank_recharges_count(
 pub async fn update_bank_recharge_timer(
     bank_service: State<'_, BanksGeneratorRepo>,
     id: i32,
-    timer: i32
+    timer: i32,
 ) -> Result<i32, Error> {
     let payload = UpdateBankPayload::new(id).with_recharge_timer(timer);
     bank_service.update_bank(payload).await?;

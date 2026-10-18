@@ -189,9 +189,9 @@ impl TryFrom<ValueRange> for FromSheetArtifactUpdateWrapper {
 impl IntoSheetsData<ArtifactModelSheetWrapper> for ArtifactsSheetsConverter {}
 impl FromSheetsData<FromSheetArtifactUpdateWrapper> for ArtifactsSheetsConverter {}
 
-pub async fn push_artifacts_data(
+pub async fn commit_artifacts_data(
     app_manager: &LocalAppManager,
-    version_control: &VersionControlService,
+    version_control: &mut VersionControlService,
     scaner_service: &ScanerService,
 ) -> Result<Vec<i32>, crate::error::Error> {
     let profile = app_manager.current_profile_data.read().await;
@@ -211,9 +211,9 @@ pub async fn push_artifacts_data(
             "Can't find sheet data for artifacts version control".to_string(),
         ))?;
     version_control
-        .push_many(
+        .commit_many(
             &sheet_data.spreadsheet_id,
-            updated_models,
+            updated_models.iter().map(|m| ArtifactModelSheetWrapper(m.clone())).collect(),
             ArtifactsSheetsConverter {},
         )
         .await?;
