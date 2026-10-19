@@ -86,7 +86,7 @@ pub async fn run() -> Result<(), Error> {
         .manage(ScanerService::new(pool.clone()))
         .manage(data_container)
         .manage(google_api)
-        .manage(version_control)
+        .manage(tokio::sync::Mutex::new(version_control))
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             execute_scan,

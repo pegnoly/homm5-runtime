@@ -7,6 +7,7 @@ use itertools::Itertools;
 use regex::Regex;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::sync::Arc;
 use strum::IntoEnumIterator;
 use crate::error::Error;
 use crate::utils::LocalAppManager;
@@ -961,7 +962,7 @@ pub async fn commit_updated_fights(
     scaner_service: &ScanerService,
     app_manager: &LocalAppManager,
     fight_generator_repo: &FightGeneratorRepo,
-) -> Result<(), crate::Error> {
+) -> Result<(), Error> {
     let creatures = scaner_service.get_creature_models(GetCreaturesRequest::NonDefault).await?;
     let artifacts = scaner_service.get_artifact_models(GetArtifactsRequest::Any).await?;
     let profile = app_manager.current_profile_data.read().await;

@@ -21,6 +21,7 @@ use std::{collections::HashMap, io::Write, path::PathBuf};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
+use tokio::sync::Mutex;
 
 #[tauri::command]
 pub async fn load_all_assets(
@@ -61,7 +62,7 @@ pub async fn init_new_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     google_api: State<'_, Arc<GoogleApiService>>,
     app_manager: State<'_, LocalAppManager>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     name: String,
     path: String,
     table_name: String,
@@ -85,6 +86,7 @@ pub async fn init_new_asset(
     };
     match fight_generator_repo.init_new_asset(payload).await {
         Ok(asset) => {
+            let version_control = version_control.lock().await;
             version_control.updated_fights.insert(asset.id);
             Ok(asset)
         }
@@ -153,7 +155,7 @@ pub async fn create_artifacts_data_for_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     google_api: State<'_, Arc<GoogleApiService>>,
     app_manager: State<'_, LocalAppManager>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     asset_id: i32,
     generation_type: AssetUpdateType,
 ) -> Result<AssetArtifactsModel, Error> {
@@ -178,6 +180,7 @@ pub async fn create_artifacts_data_for_asset(
         .await
     {
         Ok(model) => {
+            let version_control = version_control.lock().await;
             version_control.updated_fights.insert(asset.id);
             Ok(model)
         }
@@ -188,7 +191,7 @@ pub async fn create_artifacts_data_for_asset(
 #[tauri::command]
 pub async fn update_artifacts_base_cost(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     asset_id: i32,
     difficulty: DifficultyType,
     value: i32,
@@ -200,6 +203,7 @@ pub async fn update_artifacts_base_cost(
             value,
         })
         .await?;
+    let version_control = version_control.lock().await;
     version_control.updated_fights.insert(asset_id);
     Ok(value)
 }
@@ -207,7 +211,7 @@ pub async fn update_artifacts_base_cost(
 #[tauri::command]
 pub async fn update_artifacts_cost_grow(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     asset_id: i32,
     difficulty: DifficultyType,
     value: i32,
@@ -219,6 +223,7 @@ pub async fn update_artifacts_cost_grow(
             value,
         })
         .await?;
+    let version_control = version_control.lock().await;
     version_control.updated_fights.insert(asset_id);
     Ok(value)
 }
@@ -226,7 +231,7 @@ pub async fn update_artifacts_cost_grow(
 #[tauri::command]
 pub async fn add_required_artifact(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     asset_id: i32,
     artifact_id: i32,
 ) -> Result<(), Error> {
@@ -238,6 +243,7 @@ pub async fn add_required_artifact(
         .await
     {
         Ok(_) => {
+            let version_control = version_control.lock().await;
             version_control.updated_fights.insert(asset_id);
             Ok(())
         }
@@ -248,7 +254,7 @@ pub async fn add_required_artifact(
 #[tauri::command]
 pub async fn remove_required_artifact(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     asset_id: i32,
     artifact_id: i32,
 ) -> Result<(), Error> {
@@ -260,6 +266,7 @@ pub async fn remove_required_artifact(
         .await
     {
         Ok(_) => {
+            let version_control = version_control.lock().await;
             version_control.updated_fights.remove(&asset_id);
             Ok(())
         }
@@ -270,7 +277,7 @@ pub async fn remove_required_artifact(
 #[tauri::command]
 pub async fn add_optional_artifact(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     asset_id: i32,
     slot: ArtifactSlotType,
     artifact_id: i32,
@@ -284,6 +291,7 @@ pub async fn add_optional_artifact(
         .await
     {
         Ok(_) => {
+            let version_control = version_control.lock().await;
             version_control.updated_fights.insert(asset_id);
             Ok(())
         }
@@ -294,7 +302,7 @@ pub async fn add_optional_artifact(
 #[tauri::command]
 pub async fn remove_optional_artifact(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     asset_id: i32,
     slot: ArtifactSlotType,
     artifact_id: i32,
@@ -308,6 +316,7 @@ pub async fn remove_optional_artifact(
         .await
     {
         Ok(_) => {
+            let version_control = version_control.lock().await;
             version_control.updated_fights.insert(asset_id);
             Ok(())
         }
@@ -326,7 +335,7 @@ pub async fn load_stacks_ids(
 #[tauri::command]
 pub async fn create_stack(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     asset_id: i32,
     selection_type: SelectionType,
     calculation_rule: CalculationRule,
@@ -340,6 +349,7 @@ pub async fn create_stack(
     };
     match fight_generator_repo.add_stack(payload).await {
         Ok(stack_id) => {
+            let version_control = version_control.lock().await;
             version_control.updated_fights.insert(asset_id);
             Ok(stack_id)
         }
@@ -358,10 +368,11 @@ pub async fn load_stack(
 #[tauri::command]
 pub async fn delete_stack(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     stack_id: i32,
 ) -> Result<(), Error> {
     if let Some(asset_id) = fight_generator_repo.delete_stack(stack_id).await? {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(())
     } else {
@@ -372,7 +383,7 @@ pub async fn delete_stack(
 #[tauri::command]
 pub async fn update_stack_data(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     stack_id: i32,
     selection_type: SelectionType,
     calculation_rule: CalculationRule,
@@ -387,6 +398,7 @@ pub async fn update_stack_data(
         })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(())
     } else {
@@ -397,7 +409,7 @@ pub async fn update_stack_data(
 #[tauri::command]
 pub async fn update_stack_base_powers(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     container_id: i32,
     difficulty: DifficultyType,
     value: i32,
@@ -410,6 +422,7 @@ pub async fn update_stack_base_powers(
         })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(value)
     } else {
@@ -420,7 +433,7 @@ pub async fn update_stack_base_powers(
 #[tauri::command]
 pub async fn update_stack_powers_grow(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     container_id: i32,
     difficulty: DifficultyType,
     value: i32,
@@ -433,6 +446,7 @@ pub async fn update_stack_powers_grow(
         })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(value)
     } else {
@@ -443,7 +457,7 @@ pub async fn update_stack_powers_grow(
 #[tauri::command]
 pub async fn update_stack_specific_count(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     container_id: i32,
     difficulty: DifficultyType,
     value: i32,
@@ -456,6 +470,7 @@ pub async fn update_stack_specific_count(
         })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(value)
     } else {
@@ -466,7 +481,7 @@ pub async fn update_stack_specific_count(
 #[tauri::command]
 pub async fn update_stack_specific_creatures(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     stack_id: i32,
     creatures: Vec<i32>,
 ) -> Result<(), Error> {
@@ -477,6 +492,7 @@ pub async fn update_stack_specific_creatures(
         })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(())
     } else {
@@ -487,7 +503,7 @@ pub async fn update_stack_specific_creatures(
 #[tauri::command]
 pub async fn update_stack_towns(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     stack_id: i32,
     towns: Vec<TownExtended>,
 ) -> Result<(), Error> {
@@ -495,6 +511,7 @@ pub async fn update_stack_towns(
         .update_stack_towns(UpdateStackTownsPayload { stack_id, towns })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(())
     } else {
@@ -505,7 +522,7 @@ pub async fn update_stack_towns(
 #[tauri::command]
 pub async fn update_stack_tiers(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     stack_id: i32,
     tiers: Vec<i32>,
 ) -> Result<(), Error> {
@@ -513,6 +530,7 @@ pub async fn update_stack_tiers(
         .update_stack_tiers(UpdateStackTiersPayload { stack_id, tiers })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(())
     } else {
@@ -523,7 +541,7 @@ pub async fn update_stack_tiers(
 #[tauri::command]
 pub async fn update_stack_rules(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     stack_id: i32,
     rules: Vec<StackGenerationRule>,
 ) -> Result<(), Error> {
@@ -531,6 +549,7 @@ pub async fn update_stack_rules(
         .update_stack_rules(UpdateGenerationRulesPayload { stack_id, rules })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(())
     } else {
@@ -541,7 +560,7 @@ pub async fn update_stack_rules(
 #[tauri::command]
 pub async fn update_stack_stat_rules(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     stack_id: i32,
     rules: Vec<StackStatsRuleModel>,
 ) -> Result<(), Error> {
@@ -549,6 +568,7 @@ pub async fn update_stack_stat_rules(
         .update_stat_rules(UpdateStatRulesPayload { stack_id, rules })
         .await?
     {
+        let version_control = version_control.lock().await;
         version_control.updated_fights.insert(asset_id);
         Ok(())
     } else {

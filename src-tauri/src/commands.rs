@@ -1,17 +1,17 @@
 use std::io::Write;
 use std::path::PathBuf;
-
-use editor_tools::prelude::{QuestGeneratorRepo, QuestProgressType, ReserveHeroCreatorRepo};
+use editor_tools::prelude::{FightGeneratorRepo, QuestGeneratorRepo, QuestProgressType, ReserveHeroCreatorRepo};
 use homm5_repacker::Repacker;
 use homm5_scaner::prelude::{GetArtifactsRequest, GetCreaturesRequest, ScanerService, Town};
 use map_modifier::quest::{QuestBoilerplateHelper, QuestCreationRequest, QuestProgress};
 use map_modifier::{GenerateBoilerplate, MapData, ModifiersQueue};
 use runtime_main::RuntimeRunner;
 use tauri::State;
-
+use tokio::sync::Mutex;
 use crate::DataContainer;
 use crate::error::{Error, ErrorFrontendModel};
 use crate::profiles::ProfileConfig;
+use crate::services::version_control::{sync_data_with_sheets, VersionControlService};
 use crate::utils::{LocalAppManager, MapFrontendModel, RuntimeData};
 
 #[tauri::command]
@@ -35,7 +35,12 @@ pub async fn execute_scan(
 }
 
 #[tauri::command]
-pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), Error> {
+pub async fn run_game(
+    app_manager: State<'_, LocalAppManager>,
+    version_control: State<'_, Mutex<VersionControlService>>,
+    scaner_service: State<'_, ScanerService>,
+    fight_generator_repo: State<'_, FightGeneratorRepo>
+) -> Result<(), Error> {
     let profile = app_manager.current_profile_data.read().await;
     let mut runtime_runner =
         RuntimeRunner::new(profile.game_path.join("bin\\").join(&profile.exe_name));
@@ -52,6 +57,8 @@ pub async fn run_game(app_manager: State<'_, LocalAppManager>) -> Result<(), Err
             })
         })?
     }
+    let mut version_control_locked = version_control.lock().await;
+    sync_data_with_sheets(&app_manager, &mut version_control_locked, &scaner_service, &fight_generator_repo).await?;
     runtime_runner.run();
     Ok(())
 }

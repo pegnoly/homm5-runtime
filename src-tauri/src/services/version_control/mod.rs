@@ -11,9 +11,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use strum::Display;
-use tauri::State;
-use tokio::sync::Mutex;
+use editor_tools::prelude::FightGeneratorRepo;
 use google_api::prelude::ValueRange;
+use crate::services::fight_generator::utils::commit_updated_fights;
 
 #[derive(Debug, Serialize, Deserialize, Display, Eq, PartialEq, Hash)]
 pub enum VersionControlContent {
@@ -123,7 +123,7 @@ impl VersionControlService {
         }
     }
 
-    pub async fn push(&mut self) -> Result<(), Error> {
+    pub async fn push(&self) -> Result<(), Error> {
         for (sheet, data) in &self.requests {
             self.google_api.upload_to_sheet_bulk(sheet, data.clone()).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
         }
@@ -131,11 +131,11 @@ impl VersionControlService {
     }
 }
 
-#[tauri::command]
 pub async fn sync_data_with_sheets(
-    app_manager: State<'_, LocalAppManager>,
-    version_control: State<'_, Mutex<VersionControlService>>,
-    scaner_service: State<'_, ScanerService>,
+    app_manager: &LocalAppManager,
+    version_control: &mut VersionControlService,
+    scaner_service: &ScanerService,
+    fight_generator_repo: &FightGeneratorRepo
 ) -> Result<TimelineMessage, Error> {
     let base_config = app_manager.base_config.read().await;
     let mut commit = VersionControlCommit {
@@ -145,19 +145,21 @@ pub async fn sync_data_with_sheets(
         content: HashMap::new(),
     };
 
-    let mut version_control_locked = version_control.lock().await;
-
-    if !version_control_locked.updated_artifacts.is_empty() {
+    if !version_control.updated_artifacts.is_empty() {
         let updated_ids =
-            commit_artifacts_data(&app_manager, &mut version_control_locked, &scaner_service).await?;
+            commit_artifacts_data(app_manager, version_control, scaner_service).await?;
         commit
             .content
             .insert(VersionControlContent::Artifacts, updated_ids);
     }
 
-    if !version_control_locked.updated_creatures.is_empty() {}
+    if !version_control.updated_creatures.is_empty() {}
 
-    version_control_locked.push().await?;
+    if !version_control.updated_fights.is_empty() {
+        commit_updated_fights(version_control, scaner_service, app_manager, fight_generator_repo).await?;
+    }
+
+    version_control.push().await?;
     
     Ok(TimelineMessage {
         timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
