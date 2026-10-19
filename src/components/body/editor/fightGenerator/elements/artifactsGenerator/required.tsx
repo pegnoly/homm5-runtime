@@ -1,6 +1,8 @@
 import { useState } from "react";
 import useGameDataStore from "../../../../../../stores/GameDataStore";
-import { useCurrentArtifactsActions, useCurrentArtifactsAssetId, useRequiredArtifacts } from "./store";
+import {
+    FightAssetArtifactsStore
+} from "./store";
 import { useMutation } from "@tanstack/react-query";
 import { FightGeneratorApi } from "../../api";
 import { ActionIcon, ComboboxItem, Group, List, OptionsFilter, Select, Text } from "@mantine/core";
@@ -19,9 +21,9 @@ export type RemoveRequiredArtifactPayload = {
 
 function RequiredArtifactsList() {
     const artifacts = useGameDataStore(state => state.artifacts);
-    const artifactsAssetId = useCurrentArtifactsAssetId();
-    const actions = useCurrentArtifactsActions();
-    const requiredArtifacts = useRequiredArtifacts();
+    const artifactsAssetId = FightAssetArtifactsStore.useAssetId();
+    const actions = FightAssetArtifactsStore.useActions();
+    const requiredArtifacts = FightAssetArtifactsStore.useRequired();
 
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -58,7 +60,7 @@ function RequiredArtifactsList() {
     };
 
     return <div style={{display: 'flex', flexDirection: 'column', justifyItems: 'start', paddingLeft: '10%', overflow: 'auto'}}>
-        <Text style={{fontSize: 15, color: 'darkorchid', fontWeight: 'bold', fontStretch: 'expanded'}}>Required artifacts</Text>
+        <Text style={{fontSize: 15, color: 'darkorchid', fontWeight: 'bold', fontStretch: 'expanded'}}>Обязательные артефакты</Text>
         <Group>
             <Select 
                 size="xs"

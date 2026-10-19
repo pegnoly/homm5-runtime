@@ -10,7 +10,6 @@ type Actions = {
     removeRequiredArtifact: (value: number) => void,
     addOptionalArtifact: (slot: ArtifactSlotType, value: number) => void,
     removeOptionalArtifact: (slot: ArtifactSlotType, value: number) => void,
-    updateSheetId: (value: number) => void
 }
 
 type Store = {
@@ -19,20 +18,18 @@ type Store = {
     basePowers: DifficultyMappedValue | undefined,
     powersGrow: DifficultyMappedValue | undefined,
     required: RequiredArtifacts | undefined,
-    optional: OptionalArtifacts | undefined, 
-    sheetId: number | null | undefined,
+    optional: OptionalArtifacts | undefined,
 
     actions: Actions
 }
 
-const useCurrentArtifactsAssetStore = create<Store>((set, get) => ({
+const store = create<Store>((set, get) => ({
     id: undefined,
     generationType: undefined,
     basePowers: undefined,
     powersGrow: undefined,
     required: undefined,
     optional: undefined,
-    sheetId: undefined,
 
     actions: {
         loadAsset(value) {
@@ -43,8 +40,7 @@ const useCurrentArtifactsAssetStore = create<Store>((set, get) => ({
                     basePowers: undefined,
                     powersGrow: undefined,
                     required: undefined,
-                    optional: undefined,
-                    sheetId: undefined
+                    optional: undefined
                 });
             } else {
                 set({
@@ -53,8 +49,7 @@ const useCurrentArtifactsAssetStore = create<Store>((set, get) => ({
                     basePowers: value.base_powers,
                     powersGrow: value.powers_grow,
                     required: value.required,
-                    optional: value.optional,
-                    sheetId: value.sheet_id
+                    optional: value.optional
                 });
             }
         },
@@ -81,18 +76,16 @@ const useCurrentArtifactsAssetStore = create<Store>((set, get) => ({
             const currentValues = get().optional?.values;
             currentValues![slot] = currentValues![slot].filter(art => art != value);
             set({optional: {values: currentValues!}});
-        },
-        updateSheetId(value) {
-            set({sheetId: value});
-        },
+        }
     }
 }));
 
-export const useCurrentArtifactsActions = () => useCurrentArtifactsAssetStore(state => state.actions);
-export const useCurrentArtifactsAssetId = () => useCurrentArtifactsAssetStore(state => state.id);
-export const useArtifactsGenerationType = () => useCurrentArtifactsAssetStore(state => state.generationType);
-export const useArtifactsBasePowers = () => useCurrentArtifactsAssetStore(state => state.basePowers);
-export const useArtifactsPowerGrow = () => useCurrentArtifactsAssetStore(state => state.powersGrow);
-export const useRequiredArtifacts = () => useCurrentArtifactsAssetStore(state => state.required);
-export const useOptionalArtifacts = () => useCurrentArtifactsAssetStore(state => state.optional);
-export const useArtifactsSheetId = () => useCurrentArtifactsAssetStore(state => state.sheetId);
+export namespace FightAssetArtifactsStore {
+    export const useActions = () => store(state => state.actions);
+    export const useAssetId = () => store(state => state.id);
+    export const useGenerationType = () => store(state => state.generationType);
+    export const useBasePowers = () => store(state => state.basePowers);
+    export const usePowersGrow = () => store(state => state.powersGrow);
+    export const useRequired = () => store(state => state.required);
+    export const useOptional = () => store(state => state.optional);
+}

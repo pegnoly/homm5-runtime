@@ -3,7 +3,9 @@ import { useState } from "react";
 import ArtifactListItem from "./item";
 import useGameDataStore from "../../../../../../stores/GameDataStore";
 import { ActionIcon, ComboboxItem, Group, List, OptionsFilter, SegmentedControl, Select, Text } from "@mantine/core";
-import { useCurrentArtifactsActions, useCurrentArtifactsAssetId, useOptionalArtifacts } from "./store";
+import {
+    FightAssetArtifactsStore
+} from "./store";
 import { useMutation } from "@tanstack/react-query";
 import { FightGeneratorApi } from "../../api";
 import { IconPlus } from "@tabler/icons-react";
@@ -23,9 +25,9 @@ export type RemoveOptionalArtifactPayload = {
 function OptionalArtifactsList() {
     const artifacts = useGameDataStore((state) => state.artifacts);
 
-    const artifactsAssetId = useCurrentArtifactsAssetId();
-    const optionalArtifacts = useOptionalArtifacts();
-    const actions = useCurrentArtifactsActions();
+    const artifactsAssetId = FightAssetArtifactsStore.useAssetId();
+    const optionalArtifacts = FightAssetArtifactsStore.useOptional();
+    const actions = FightAssetArtifactsStore.useActions();
 
     const [slot, setSlot] = useState<ArtifactSlotType>(ArtifactSlotType.Primary);
     const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -63,7 +65,7 @@ function OptionalArtifactsList() {
     };
 
     return <div style={{display: 'flex', flexDirection: 'column', paddingLeft: '5%'}}>
-        <Text style={{fontSize: 15, color: 'darkorchid', fontWeight: 'bold', fontStretch: 'expanded'}}>Optional artifacts</Text>
+        <Text style={{fontSize: 15, color: 'darkorchid', fontWeight: 'bold', fontStretch: 'expanded'}}>Опциональные артефакты</Text>
         <div style={{width: '100%', height: '100%'}}>
             <div style={{display: 'flex', flexDirection: 'row', gap: '5%'}}>
                 <SegmentedControl
@@ -75,16 +77,15 @@ function OptionalArtifactsList() {
                     }}
                     orientation="vertical"
                     data={[
-                        {value: ArtifactSlotType.Chest, label: "Chest"},
-                        {value: ArtifactSlotType.Neck, label: "Neck"},
-                        {value: ArtifactSlotType.Miscslot1, label: "Pocket"},
-                        {value: ArtifactSlotType.Head, label: "Head"},
-                        {value: ArtifactSlotType.Primary, label: "Primary"},
-                        {value: ArtifactSlotType.Secondary, label: "Secondary"},
-                        {value: ArtifactSlotType.Shoulders, label: "Shoulders"},
-                        {value: ArtifactSlotType.Feet, label: "Feet"},
-                        {value: ArtifactSlotType.Finger, label: "Finger"},
-                        {value: ArtifactSlotType.Inventory, label: "Inventory"},
+                        {value: ArtifactSlotType.Chest, label: "Доспех"},
+                        {value: ArtifactSlotType.Neck, label: "Шея"},
+                        {value: ArtifactSlotType.Miscslot1, label: "Карман"},
+                        {value: ArtifactSlotType.Head, label: "Шлем"},
+                        {value: ArtifactSlotType.Primary, label: "Оружие"},
+                        {value: ArtifactSlotType.Secondary, label: "Щит"},
+                        {value: ArtifactSlotType.Shoulders, label: "Плащ"},
+                        {value: ArtifactSlotType.Feet, label: "Поножи"},
+                        {value: ArtifactSlotType.Finger, label: "Кольцо"}
                     ]}
                 />
                 <div style={{display: 'flex', flexDirection: 'column', justifyItems: 'self-start'}}>
@@ -100,7 +101,11 @@ function OptionalArtifactsList() {
                                 value: art.id.toString(), label: art.name
                             }))}
                         />
-                        <ActionIcon disabled={!selectedId} onClick={() => addMutation.mutate({assetId: artifactsAssetId!, slot: slot, artifactId: selectedId!})}>
+                        <ActionIcon
+                            radius={0}
+                            bg="green"
+                            disabled={!selectedId}
+                            onClick={() => addMutation.mutate({assetId: artifactsAssetId!, slot: slot, artifactId: selectedId!})}>
                             <IconPlus/>
                         </ActionIcon>
                     </Group>

@@ -58,8 +58,8 @@ function FightAssetStackStatsData() {
                 <StackStatsCreator/>
             </PopoverDropdown>
         </Popover>
-        <List>{statsRules?.rules!.map((m) => (
-            <Group justify="space-between" pt={2} maw={200}>
+        <List>{statsRules?.rules!.map((m, i) => (
+            <Group key={i} justify="space-between" pt={2} maw={200}>
                 <Text>{m.rule}</Text>
                 <Text>{m.param}</Text>
                 <ActionIcon bg="red" radius={0} onClick={() => {
@@ -111,8 +111,8 @@ function StackStatsCreator() {
 
     return (
         <>
-            <List>{unusedRules.map((r) => (
-                <Group justify="space-between" pt={2}>
+            <List>{unusedRules.map((r, i) => (
+                <Group key={i} justify="space-between" pt={2}>
                     <Text>{r.rule}</Text>
                     <Text>{r.param}</Text>
                     <ActionIcon radius={0} bg="green" onClick={() => addRuleMutation.mutate({

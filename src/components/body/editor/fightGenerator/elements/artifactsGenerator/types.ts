@@ -34,6 +34,5 @@ export type FightAssetArtifactsModel = {
     base_powers: DifficultyMappedValue,
     powers_grow: DifficultyMappedValue,
     required: RequiredArtifacts,
-    optional: OptionalArtifacts,
-    sheet_id: number | null
+    optional: OptionalArtifacts
 }

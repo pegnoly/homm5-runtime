@@ -151,7 +151,7 @@ pub async fn try_load_artifacts_data_for_asset(
 #[tauri::command]
 pub async fn create_artifacts_data_for_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    google_api: State<'_, GoogleApiService>,
+    google_api: State<'_, Arc<GoogleApiService>>,
     app_manager: State<'_, LocalAppManager>,
     version_control: State<'_, VersionControlService>,
     asset_id: i32,

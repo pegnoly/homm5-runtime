@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { EditablePropertyWrapperProps } from "@/components/common/editableProperty";
-import { useOptionalArtifacts } from "../store";
+import { FightAssetArtifactsStore } from "../store";
 import { ArtifactSlotType } from "../types";
 
 function AverageArtifactsCostTooltip({children} : EditablePropertyWrapperProps) {
@@ -26,12 +26,12 @@ function useAverageArtifactsCost(artifacts: Record<ArtifactSlotType, number[]>) 
 }
 
 function AverageArtifactsCostTooltipRenderer({children} : {children: ReactNode}) {
-    const artifacts = useOptionalArtifacts();
+    const artifacts = FightAssetArtifactsStore.useOptional();
     
     const { data } = useAverageArtifactsCost(artifacts?.values!);
 
     return (
-        <Tooltip label={`Current average artifacts cost is ${data}`}>
+        <Tooltip label={`Среднее велью выбранных артефактов - ${data}`}>
             {children}
         </Tooltip> 
     )            
