@@ -4,13 +4,12 @@ import FightAssetStackSelector from './stackSelector';
 import { invoke } from '@tauri-apps/api/core';
 import FightAssetStackCreator from './stackCreator';
 import FightAssetFocusedStack from './focusedStack';
-import { UUID } from 'crypto';
 import { ActionIcon, Tooltip } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { FightGeneratorApi } from '../../api';
 
-function FightAssetStackGenerator({assetId}: {assetId: UUID}) {
+function FightAssetStackGenerator({assetId}: {assetId: number}) {
     const [stacksIds, setStacksIds] = useState<number []>([]);
     const [selectedStack, setSelectedStack] = useState<number | undefined>(undefined);
 
@@ -47,7 +46,7 @@ function FightAssetStackGenerator({assetId}: {assetId: UUID}) {
                         disabled={stacksIds.length >= 7}
                         stackCreatedCallback={onStackCreated}
                     />
-                    <Tooltip label="Use to delete selected stack">
+                    <Tooltip label="Удалить текущий стек">
                         <ActionIcon bg="red" onClick={() => deleteStackMutation.mutate(selectedStack!)} disabled={selectedStack == undefined}>
                             <IconX/>
                         </ActionIcon>

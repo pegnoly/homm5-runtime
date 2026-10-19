@@ -1,6 +1,6 @@
 import styles from '../styles.module.css';
 import FightAssetStackCountsData from './countsData';
-import { useCurrentStackActions } from './store';
+import { FightStackGeneratorStore } from './store';
 import FightAssetStackParamsData from './generationParams';
 import { useQuery } from '@tanstack/react-query';
 import { FightGeneratorApi } from '../../api';
@@ -32,14 +32,12 @@ function useStackQuery(stackId: number) {
 }
 
 function StackLoader({stackId}: {stackId: number}) {
-    const currentStackActions = useCurrentStackActions();
-
-    console.log("StackId: ", stackId);
-
+    console.log("Loading stack with id ", stackId)
+    const actions = FightStackGeneratorStore.useActions();
     const { data } = useStackQuery(stackId);
-
+    console.log("Data ",  data)
     if (data != undefined) {
-        currentStackActions.loadAsset(data!)
+        actions.loadAsset(data!)
     }
 
     return null;

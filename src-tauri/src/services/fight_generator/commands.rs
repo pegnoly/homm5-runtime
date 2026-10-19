@@ -18,6 +18,7 @@ use crate::services::version_control::VersionControlService;
 use google_api::service::GoogleApiService;
 use itertools::Itertools;
 use std::{collections::HashMap, io::Write, path::PathBuf};
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -58,7 +59,7 @@ pub async fn pick_hero_lua_generation_directory(
 #[tauri::command]
 pub async fn init_new_asset(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
-    google_api: State<'_, GoogleApiService>,
+    google_api: State<'_, Arc<GoogleApiService>>,
     app_manager: State<'_, LocalAppManager>,
     version_control: State<'_, VersionControlService>,
     name: String,
@@ -440,7 +441,7 @@ pub async fn update_stack_powers_grow(
 }
 
 #[tauri::command]
-pub async fn update_stack_concrete_count(
+pub async fn update_stack_specific_count(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     version_control: State<'_, VersionControlService>,
     container_id: i32,
@@ -463,7 +464,7 @@ pub async fn update_stack_concrete_count(
 }
 
 #[tauri::command]
-pub async fn update_stack_concrete_creatures(
+pub async fn update_stack_specific_creatures(
     fight_generator_repo: State<'_, FightGeneratorRepo>,
     version_control: State<'_, VersionControlService>,
     stack_id: i32,

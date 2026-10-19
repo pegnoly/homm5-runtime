@@ -1,6 +1,8 @@
-import {useConcreteCreatures, useCurrentStackActions, useCurrentStackId, useTypeGenerationMode} from "../store";
+import {
+    FightStackGeneratorStore,
+} from "../store";
 import styles from '../../styles.module.css'
-import {StackUnitGenerationType} from "../types";
+import { SelectionType } from "../types";
 import TiersSelector from "./tiersSelector";
 import TownSelector from "./townSelector";
 import AssetStackRuleSelector from "./ruleSelector";
@@ -30,15 +32,15 @@ enum ParamsSelectionMode {
 }
 
 function FightAssetStackParamsData() {
-    const unitGenerationMode = useTypeGenerationMode();
-    const currentStackId = useCurrentStackId();
+    const selectionType = FightStackGeneratorStore.useSelectionType();
+    const id = FightStackGeneratorStore.useCurrentId();
 
     return (
     <div className={styles.stack_params_panel}>
         {
-            currentStackId == undefined ? null :
+            id == undefined ? null :
             (
-                unitGenerationMode == StackUnitGenerationType.TierSlotBased ?
+                selectionType == SelectionType.TierSlotBased ?
                 <TierSlotBasedGenerationData/> :
                 <SpecificUnitsSelection/>
             )
@@ -48,11 +50,11 @@ function FightAssetStackParamsData() {
 }
 
 function TierSlotBasedGenerationData() {
-    const currentStackId = useCurrentStackId();
+    const id = FightStackGeneratorStore.useCurrentId();
     return (
         <>
         {
-            currentStackId != undefined ?
+            id != undefined ?
             <div style={{width: '100%', display: 'flex', flexDirection: 'row'}}>
                 <div 
                 style={{
@@ -61,7 +63,7 @@ function TierSlotBasedGenerationData() {
                     <Accordion defaultValue={ParamsSelectionMode.Towns}>
                         <AccordionItem key={0} value={ParamsSelectionMode.Towns}>
                             <AccordionControl>
-                                Towns selection
+                                Выбор городов юнитов
                             </AccordionControl>
                             <AccordionPanel>
                                 <TownSelector/>
@@ -69,7 +71,7 @@ function TierSlotBasedGenerationData() {
                         </AccordionItem>
                         <AccordionItem key={1} value={ParamsSelectionMode.Tiers}>
                             <AccordionControl>
-                                Tiers selection
+                                Выбор уровней юнитов
                             </AccordionControl>
                             <AccordionPanel>
                                 <TiersSelector/>
@@ -77,7 +79,7 @@ function TierSlotBasedGenerationData() {
                         </AccordionItem>
                         <AccordionItem key={2} value={ParamsSelectionMode.Rules}>
                             <AccordionControl>
-                                Rules selection
+                                Выбор правил генерации
                             </AccordionControl>
                             <AccordionPanel>
                                 <AssetStackRuleSelector/>
@@ -120,7 +122,7 @@ function SpecificCreatureTownSelector(params: {
     <Select
         searchable
         size="sm"
-        label="Select specific creature town"
+        label="Выберите город юнитов"
         value={params.currentTown}
         onChange={(value) => params.townSelectedCallback(value as TownTypeExtended)}
         data={[
@@ -147,7 +149,7 @@ function SpecificCreatureTierSelector(params: {
 }) {
     return (
     <Select
-        label="Select specific creature tier"
+        label="Выберите уровень юнитов"
         value={params.currentTier?.toString()}
         onChange={(value) => params.tierSelectedCallback(parseInt(value!))}
         data={[
@@ -172,9 +174,9 @@ function CreatureSelector(params: {
     town: TownTypeExtended | null,
     tier: number | null
 }) {
-    const currentStackId = useCurrentStackId();
-    const concreteCreatures = useConcreteCreatures();
-    const actions = useCurrentStackActions();
+    const id = FightStackGeneratorStore.useCurrentId();
+    const specificCreatures = FightStackGeneratorStore.useSpecificCreatures();
+    const actions = FightStackGeneratorStore.useActions();
     const creatures = useGameDataStore(state => state.creatures);
 
     const mutation = useMutation({
@@ -182,7 +184,7 @@ function CreatureSelector(params: {
             return FightGeneratorApi.updateStackConcreteCreatures(payload)
         },
         onSuccess(_data, variables, _context) {
-            actions.setConcreteCreatures(variables.creatures);
+            actions.setSpecificCreatures(variables.creatures);
         },
     });
 
@@ -197,11 +199,11 @@ function CreatureSelector(params: {
     <MultiSelect
         radius={0}
         pr="sm"
-        onChange={(values) => mutation.mutate({stackId: currentStackId!, creatures: values.map(v => parseInt(v))})}
+        onChange={(values) => mutation.mutate({stackId: id!, creatures: values.map(v => parseInt(v))})}
         disabled={!params.town || !params.tier || mutation.isPending}
         // searchable
         filter={optionsFilter}
-        value={creatures.filter(i => concreteCreatures?.ids.includes(i.id)).map(i => i.id.toString())}
+        value={creatures.filter(i => specificCreatures?.ids.includes(i.id)).map(i => i.id.toString())}
         data={creatures.map(c => ({
             value: c.id.toString(), label: c.inner_name ? c.inner_name : c.name
         }))}

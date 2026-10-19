@@ -1,45 +1,13 @@
-import { Button, LoadingOverlay, Stack, Text } from "@mantine/core";
-import { useFightAssetId, useFightAssetName } from "./store";
+import { Button, Stack, Text } from "@mantine/core";
+import { FightAssetStore } from "./store";
 import { invoke } from "@tauri-apps/api/core";
-import { useCurrentStackActions, useCurrentStackId } from "./elements/stacksGenerator/store";
-import { FightAssetStackModel } from "./elements/stacksGenerator/types";
-import { useState } from "react";
-import { FightAssetArtifactsModel } from "./elements/artifactsGenerator/types";
-import { useCurrentArtifactsActions } from "./elements/artifactsGenerator/store";
 
 function FightGeneratorGlobals() {
-    const actions = useCurrentStackActions();
-    const assetId = useFightAssetId();
-    const assetName = useFightAssetName();
-    const stackId = useCurrentStackId();
-    const artifactsActions = useCurrentArtifactsActions();
-
-    const [onSync, setOnSync] = useState<boolean>(false);
+    const assetId = FightAssetStore.useAssetId();
+    const assetName = FightAssetStore.useAssetName();
 
     async function startGeneration() {
         await invoke("generate_current_hero_script", {assetId: assetId});
-    }
-
-    async function pullFromSheet() {
-        setOnSync(true);
-        const stackData = await invoke<FightAssetStackModel[]>("pull_from_sheet", {assetId: assetId})
-        const artifactsData = await invoke<FightAssetArtifactsModel | null>("pull_artifacts_data_from_sheet", {assetId: assetId});
-        setOnSync(false);
-        if (stackId != undefined) {
-            const updatedCurrentStack = stackData.find(s => s.id == stackId)!;
-            actions.loadAsset(updatedCurrentStack);
-        }
-        if (artifactsData != null) {
-            artifactsActions.loadAsset(artifactsData);
-        }
-    }
-
-    async function pushToSheet() {
-        setOnSync(true);
-        await invoke("push_to_sheet", {assetId: assetId})
-            .then(() => {
-                setOnSync(false);
-            })
     }
 
     return (
@@ -53,11 +21,6 @@ function FightGeneratorGlobals() {
             </div>
         }
         <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>
-        <>
-            <LoadingOverlay visible={onSync}/>
-            <Button onClick={pullFromSheet} radius={0} size="xs" disabled={assetId == undefined}>Pull asset from sheet</Button>
-            <Button onClick={pushToSheet} radius={0} size="xs" disabled={assetId == undefined}>Push asset to sheet</Button>
-        </>
     </Stack>
     )
 }

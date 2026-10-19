@@ -1,7 +1,14 @@
 import { useDisclosure } from "@mantine/hooks";
 import { AssetGenerationType } from "../../types";
-import { useCountGenerationMode, useCurrentStackActions, useCurrentStackId, usePowerBasetGenerationType, useTypeGenerationMode } from "./store";
-import { countGenerationTypeNames, StackCountGenerationType, StackUnitGenerationType, unitGenerationTypeNames } from "./types";
+import {
+    FightStackGeneratorStore
+} from "./store";
+import {
+    CalculationType,
+    SelectionType,
+    unicCalculationTypeNames,
+    unitSelectionTypeNames
+} from "./types";
 import { ActionIcon, Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, Select, Stack, Text, Tooltip } from "@mantine/core";
 import { IconEdit } from "@tabler/icons-react";
 import { useState } from "react";
@@ -9,80 +16,74 @@ import { useMutation } from "@tanstack/react-query";
 import { FightGeneratorApi } from "../../api";
 
 function FightAssetCurrentStackData() {
-    const currentStackId = useCurrentStackId();
-    const typeGenerationMode = useTypeGenerationMode();
-    const countGenerationMode = useCountGenerationMode();
-    const powerBasedGenerationMode = usePowerBasetGenerationType();
+    const id = FightStackGeneratorStore.useCurrentId();
+    const selectionType = FightStackGeneratorStore.useSelectionType();
+    const calculationType = FightStackGeneratorStore.useCalculationType();
+    const updateType = FightStackGeneratorStore.useUpdateType();
 
     return <>
     {
-        currentStackId != undefined ?
+        id != undefined ?
         <div style={{display: 'flex', flexDirection: 'row', gap: 10}}>
-            <DataDisplayer unitGenerationType={typeGenerationMode!} countGenerationType={countGenerationMode!} countGenerationMode={powerBasedGenerationMode!}/>
-            <DataUpdater unitGenerationType={typeGenerationMode!} countGenerationType={countGenerationMode!} countGenerationMode={powerBasedGenerationMode!}/>
+            <DataDisplayer selection={selectionType!} calculation={calculationType!} update={updateType!}/>
+            <DataUpdater selection={selectionType!} calculation={calculationType!} update={updateType!}/>
         </div> :
         null
     }
     </>
 }
 
-function DataDisplayer({unitGenerationType, countGenerationType, countGenerationMode}: {
-    unitGenerationType: StackUnitGenerationType,
-    countGenerationType: StackCountGenerationType,
-    countGenerationMode: AssetGenerationType
+function DataDisplayer({selection, calculation, update}: {
+    selection: SelectionType,
+    calculation: CalculationType,
+    update: AssetGenerationType
 }) {
 
     return <div style={{display: 'flex'}}>
         <Text style={{fontFamily: 'cursive', fontSize: 14, fontWeight: 'bolder', fontStretch: 'expanded'}}>
             <span>
-                {` unit generation -`}
+                {` Тип выбора -`}
             </span>
             <span style={{color: 'green'}}>
-                {` ${unitGenerationTypeNames.get(unitGenerationType!)}`}
+                {` ${unitSelectionTypeNames.get(selection!)}`}
             </span>
             <span style={{color: 'black'}}>
                 <br></br>
-                {`count generation -`}
+                {`рассчет численности -`}
             </span>
             <span style={{color: 'green'}}>
-                {` ${countGenerationTypeNames.get(countGenerationType!)}`}
+                {` ${unicCalculationTypeNames.get(calculation!)}`}
                 <br></br>
             </span>
-            {
-                countGenerationType == StackCountGenerationType.PowerBased ?
-                <>
-                    <span style={{color: 'black'}}>
-                        {`power generation - `}
-                    </span>
-                    <span style={{color: 'green'}}>
-                        {countGenerationMode == AssetGenerationType.Static ? "Static" : "Dynamic"}
-                    </span>
-                </> :
-                null
-            }
+            <span style={{color: 'black'}}>
+                {`прирост - `}
+            </span>
+            <span style={{color: 'green'}}>
+                {update == AssetGenerationType.Static ? "Нет" : "Да"}
+            </span>
         </Text>
     </div>
 }
 
 export type UpdateStackDataPayload = {
     stackId: number,
-    unitGenerationType: StackUnitGenerationType,
-    countGenerationType: StackCountGenerationType,
-    countGenerationMode: AssetGenerationType
+    selectionRule: SelectionType,
+    calculationRule: CalculationType,
+    updateType: AssetGenerationType
 }
 
-function DataUpdater({unitGenerationType, countGenerationType, countGenerationMode}: {
-    unitGenerationType: StackUnitGenerationType,
-    countGenerationType: StackCountGenerationType,
-    countGenerationMode: AssetGenerationType
+function DataUpdater({selection, calculation, update}: {
+    selection: SelectionType,
+    calculation: CalculationType,
+    update: AssetGenerationType
 }) {
     const [opened, {open, close}] = useDisclosure(false);
-    const [selectedUnitGenerationType, setSelectedUnitGenerationType] = useState<StackUnitGenerationType | null>(unitGenerationType);
-    const [selectedCountGenerationType, setSelectedCountGenerationType] = useState<StackCountGenerationType | null>(countGenerationType);
-    const [selectedType, setSelectedType] = useState<AssetGenerationType | null>(countGenerationMode);
+    const [selectionType, setSelectionType] = useState<SelectionType | null>(selection);
+    const [calculationType, setCalculationType] = useState<CalculationType | null>(calculation);
+    const [updateType, setUpdateType] = useState<AssetGenerationType | null>(update);
 
-    const id = useCurrentStackId();
-    const actions = useCurrentStackActions();
+    const id = FightStackGeneratorStore.useCurrentId();
+    const actions = FightStackGeneratorStore.useActions();
 
     const mutation = useMutation({
         mutationFn: async(payload: UpdateStackDataPayload) => {
@@ -96,7 +97,7 @@ function DataUpdater({unitGenerationType, countGenerationType, countGenerationMo
 
     return (
     <>
-        <Tooltip label="Use to update generation rules">
+        <Tooltip label="Используйте, чтобы обновить правила генерации">
             <ActionIcon radius={0} onClick={open}>
                 <IconEdit/>
             </ActionIcon>
@@ -105,53 +106,53 @@ function DataUpdater({unitGenerationType, countGenerationType, countGenerationMo
             <ModalOverlay/>
             <ModalContent>
                 <ModalHeader>
-                    <ModalTitle>Stack data update</ModalTitle>
+                    <ModalTitle>Обновление логики генерации стека</ModalTitle>
                     <ModalCloseButton/>
                 </ModalHeader>
                 <ModalBody>
                     <Stack>
                         <Select
-                            value={selectedUnitGenerationType}
-                            onChange={(value) => setSelectedUnitGenerationType(value as StackUnitGenerationType)}
-                            placeholder="Generation mode of stack unit type"
-                            label="Select mode"
+                            value={selectionType}
+                            onChange={(value) => setSelectionType(value as SelectionType)}
+                            placeholder="Тип выбора юнитов в стеке"
+                            label="Укажите нужный тип"
                             data={[
-                                {label: "Generate concrete units in stack", value: StackUnitGenerationType.ConcreteUnit},
-                                {label: "Generate unit from given towns and tiers", value: StackUnitGenerationType.TierSlotBased}
+                                {label: "Выбор конкретных юнитов вручную", value: SelectionType.Manual},
+                                {label: "Генерация случайных из указанных городов и уровней", value: SelectionType.TierSlotBased}
                             ]}
                         />
                         <Select
-                            value={selectedCountGenerationType}
-                            onChange={(value) => setSelectedCountGenerationType(value as StackCountGenerationType)}
-                            placeholder="Generation mode of stack unit count type"
-                            label="Select mode"
+                            value={calculationType}
+                            onChange={(value) => setCalculationType(value as CalculationType)}
+                            placeholder="Тип определения численности отряда"
+                            label="Укажите нужный тип"
                             data={[
-                                {label: "Use raw values for unit count", value: StackCountGenerationType.Raw},
-                                {label: "Generate counts using unit's power", value: StackCountGenerationType.PowerBased}
+                                {label: "Конкретное число юнитов", value: CalculationType.Raw},
+                                {label: "Генерация на основе силы юнитов", value: CalculationType.PowerBased}
                             ]}
                         />
                         <Select
                             // disabled={!selectedCountGenerationType || selectedCountGenerationType == StackCountGenerationType.Raw}
-                            value={selectedType} 
-                            onChange={(value) => setSelectedType(value as AssetGenerationType)} 
-                            placeholder="Define does this stack have dynamic generation or not"
-                            label="Define generation"
+                            value={updateType}
+                            onChange={(value) => setUpdateType(value as AssetGenerationType)}
+                            placeholder="Тип увеличения силы отряда"
+                            label="Укажите нужный тип"
                             data={[
-                                {label: "Static(stack doesn't grow over time)", value: AssetGenerationType.Static},
-                                {label: "Dynamic(stack grows over time)", value: AssetGenerationType.Dynamic}
+                                {label: "Статический(отряд не растет со временем)", value: AssetGenerationType.Static},
+                                {label: "Динамический(отряд растет со временем)", value: AssetGenerationType.Dynamic}
                             ]}
                         />
                     </Stack>
                     <Group justify="end">
                         <Button 
-                            disabled={!selectedCountGenerationType || !selectedUnitGenerationType || !selectedType} 
+                            disabled={!selectionType || !calculationType || !updateType}
                             onClick={() => mutation.mutate({
                                 stackId: id!, 
-                                countGenerationType: selectedCountGenerationType!,
-                                unitGenerationType: selectedUnitGenerationType!,
-                                countGenerationMode: selectedType!
+                                selectionRule: selectionType!,
+                                calculationRule: calculationType!,
+                                updateType: updateType!
                             })}
-                        >Create</Button>
+                        >Обновить</Button>
                     </Group>
                 </ModalBody>
             </ModalContent>

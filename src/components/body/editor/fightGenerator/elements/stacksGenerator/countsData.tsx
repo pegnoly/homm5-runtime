@@ -2,81 +2,81 @@ import { AssetGenerationType } from '../../types';
 import DifficultyValues from '../common/difficultyValues';
 import styles from '../styles.module.css';
 import FightAssetCurrentStackData from './data';
-import { useBasePowers, useConcreteCounts, useCountGenerationMode, useCurrentStackActions, useCurrentStackId, usePowerBasetGenerationType, usePowersGrow, useTypeGenerationMode } from './store';
-import ConcreteCreaturesTooltip from './tooltips/concreteCreaturesTooltip';
+import {
+    FightStackGeneratorStore
+} from './store';
 import AverageTownsTiersTooltip from './tooltips/towsTiersTooltip';
-import { StackCountGenerationType, StackUnitGenerationType } from './types';
+import { CalculationType, SelectionType } from './types';
+import SpecificCreaturesTooltip from "./tooltips/concreteCreaturesTooltip";
 
 function FightAssetStackCountsData() {
-    const countGenerationType = useCountGenerationMode();
+    const calculationType = FightStackGeneratorStore.useCalculationType();
     return (
     <div className={styles.stack_counts_panel}>
         <div style={{display: 'flex', flexDirection: 'row', gap: '5%'}}>
             <FightAssetCurrentStackData/>
         </div>
         {
-            countGenerationType == StackCountGenerationType.PowerBased ?
+            calculationType == CalculationType.PowerBased ?
             <PowerBasedSelector/> :
-            <ConcreteCountSelector/>
+            <SpecificCountSelector/>
         }
     </div> 
     )
 }
 
-export default FightAssetStackCountsData;
-
-function ConcreteCountSelector() {
-    const currentStackId = useCurrentStackId();
-    const concreteCounts = useConcreteCounts();
-    const actions = useCurrentStackActions();
+function SpecificCountSelector() {
+    const id = FightStackGeneratorStore.useCurrentId();
+    const specificCounts = FightStackGeneratorStore.useSpecificCounts();
+    const actions = FightStackGeneratorStore.useActions();
 
     return <div style={{display: 'flex', justifyContent: 'space-around'}}>
         {
-            currentStackId == undefined ? null :
+            id == undefined ? null :
             <DifficultyValues
-                name="Stack concrete counts"
-                tauriFunction="update_stack_concrete_count"
-                containerId={currentStackId!}
-                updateCallback={actions.setConcreteCounts}
-                values={concreteCounts!}
+                name="Конкретные числа юнитов"
+                tauriFunction="update_stack_specific_count"
+                containerId={id!}
+                updateCallback={actions.setSpecificCounts}
+                values={specificCounts!}
             />
         }
     </div>
 }
 
 function PowerBasedSelector() {
-    const currentStackId = useCurrentStackId();
-    const generationType = usePowerBasetGenerationType();
-    const basePowers = useBasePowers();
-    const powersGrow = usePowersGrow();
-    const actions = useCurrentStackActions();
-    const typeGenerationMode = useTypeGenerationMode()
+    const id = FightStackGeneratorStore.useCurrentId();
+    const updateType = FightStackGeneratorStore.useUpdateType();
+    const basePowers = FightStackGeneratorStore.useBasePowers();
+    const powersGrow = FightStackGeneratorStore.usePowersGrow();
+    const actions = FightStackGeneratorStore.useActions();
+    const selectionType = FightStackGeneratorStore.useSelectionType()
 
     return <div style={{display: 'flex', width: '100%', flexDirection: 'row', justifyContent: 'space-between'}}>
     {
-        currentStackId == undefined ? null :
+        id == undefined ? null :
         (
-            typeGenerationMode == StackUnitGenerationType.TierSlotBased ?
+            selectionType == SelectionType.TierSlotBased ?
             <>
                 <div style={{width: '50%', display: 'flex'}}>
                     <DifficultyValues
-                        name="Stack base powers"
+                        name="Базовая сила отряда"
                         tauriFunction="update_stack_base_powers"
                         values={basePowers!}
                         updateCallback={actions.setBasePowers}
-                        containerId={currentStackId!}
+                        containerId={id!}
                         tooltipComponent={{component: AverageTownsTiersTooltip}}
                     />
                 </div>
                 {
-                    generationType == AssetGenerationType.Dynamic ?
+                    updateType == AssetGenerationType.Dynamic ?
                     <div style={{width: '50%', display: 'flex'}}>
                         <DifficultyValues
-                            name="Stack powers grow"
+                            name="Прирост силы отряда"
                             tauriFunction="update_stack_powers_grow"
                             values={powersGrow!}
                             updateCallback={actions.setPowersGrow}
-                            containerId={currentStackId!}
+                            containerId={id!}
                             tooltipComponent={{component: AverageTownsTiersTooltip}}
                         />
                     </div> :
@@ -86,24 +86,24 @@ function PowerBasedSelector() {
             <>
                 <div style={{width: '50%', display: 'flex'}}>
                     <DifficultyValues
-                        name="Stack base powers"
-                        tauriFunction="update_stack_base_powers"
+                        name="Базовая численность отряда"
+                        tauriFunction="update_stack_specific_count"
                         values={basePowers!}
-                        updateCallback={actions.setBasePowers}
-                        containerId={currentStackId!}
-                        tooltipComponent={{component: ConcreteCreaturesTooltip}}
+                        updateCallback={actions.setSpecificCounts}
+                        containerId={id!}
+                        tooltipComponent={{component: SpecificCreaturesTooltip}}
                     />
                 </div>
                 {
-                    generationType == AssetGenerationType.Dynamic ?
+                    updateType == AssetGenerationType.Dynamic ?
                     <div style={{width: '50%', display: 'flex'}}>
                         <DifficultyValues
-                            name="Stack powers grow"
+                            name="Прирост численности отряда"
                             tauriFunction="update_stack_powers_grow"
                             values={powersGrow!}
                             updateCallback={actions.setPowersGrow}
-                            containerId={currentStackId!}
-                            tooltipComponent={{component: ConcreteCreaturesTooltip}}
+                            containerId={id!}
+                            tooltipComponent={{component: SpecificCreaturesTooltip}}
                         />
                     </div> :
                     null
@@ -113,3 +113,5 @@ function PowerBasedSelector() {
     }
     </div>
 }
+
+export default FightAssetStackCountsData;

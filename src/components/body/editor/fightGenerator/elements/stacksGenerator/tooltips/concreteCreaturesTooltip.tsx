@@ -3,16 +3,16 @@ import { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { EditablePropertyWrapperProps } from "@/components/common/editableProperty";
-import { useConcreteCreatures, useCountGenerationMode } from "../store";
-import { StackCountGenerationType } from "../types";
+import { FightStackGeneratorStore } from "../store";
+import {CalculationType} from "@/components/body/editor/fightGenerator/elements/stacksGenerator/types.ts";
 
-function ConcreteCreaturesTooltip({children, value} : EditablePropertyWrapperProps) {
-    const generationMode = useCountGenerationMode();
+function SpecificCreaturesTooltip({children, value} : EditablePropertyWrapperProps) {
+    const calculationType = FightStackGeneratorStore.useCalculationType();
 
     return (
     <>
     {
-        generationMode == StackCountGenerationType.Raw ?
+        calculationType == CalculationType.Raw ?
         children :
         <ConcreteCreaturesTooltipRenderer power={value as string}>
             {children}
@@ -32,15 +32,15 @@ function useAverageConcreteCreaturesCounts(creatures: number[], power: string) {
 }
 
 function ConcreteCreaturesTooltipRenderer({children, power} : {children: ReactNode, power: string}) {
-    const creatures = useConcreteCreatures();
+    const creatures = FightStackGeneratorStore.useSpecificCreatures();
 
     const { data } = useAverageConcreteCreaturesCounts(creatures?.ids!, power);
 
     return (
-        <Tooltip label={`Average creatures for given power is ${data}`}>
+        <Tooltip label={`Среднее число существ для текущих значений - ${data}`}>
             {children}
         </Tooltip> 
     )            
 }
 
-export default ConcreteCreaturesTooltip;
+export default SpecificCreaturesTooltip;

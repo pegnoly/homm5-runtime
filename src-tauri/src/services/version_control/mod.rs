@@ -94,9 +94,9 @@ impl VersionControlService {
             .read_from_sheet(spreadsheet_id, sheet_id, range)
             .await
             .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-        Ok(converter
+        converter
             .from_single(data)
-            .map_err(|e| Error::GoogleApi(Box::new(e)))?)
+            .map_err(|e| Error::GoogleApi(Box::new(e)))
     }
 
     pub async fn pull_many<D: TryFrom<ValueRange>, C: FromSheetsData<D>>(
@@ -125,7 +125,7 @@ impl VersionControlService {
 
     pub async fn push(&mut self) -> Result<(), Error> {
         for (sheet, data) in &self.requests {
-            self.google_api.upload_to_sheet_bulk(&sheet, data.clone()).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
+            self.google_api.upload_to_sheet_bulk(sheet, data.clone()).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
         }
         Ok(())
     }

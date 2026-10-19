@@ -1,21 +1,20 @@
-import { UUID } from "crypto"
 import { create } from "zustand"
 
 type Actions = {
-    setCurrentAssetId: (value: UUID) => void,
+    setCurrentAssetId: (value: number) => void,
     setCurrentAssetName: (value: string) => void,
 
     unloadAsset: () => void
 }
 
 type Store = {
-    assetId: UUID | undefined,
+    assetId: number | undefined,
     assetName: string | undefined,
 
     actions: Actions
 }
 
-const fightAssetStore = create<Store>((set) => ({
+const store = create<Store>((set) => ({
     assetId: undefined,
     assetName: undefined,
 
@@ -35,6 +34,8 @@ const fightAssetStore = create<Store>((set) => ({
     }
 }));
 
-export const useFightAssetActions = () => fightAssetStore(state => state.actions);
-export const useFightAssetName = () => fightAssetStore(state => state.assetName);
-export const useFightAssetId = () => fightAssetStore(state => state.assetId);
+export namespace FightAssetStore {
+    export const useActions = () => store(state => state.actions);
+    export const useAssetName = () => store(state => state.assetName);
+    export const useAssetId = () => store(state => state.assetId);
+}

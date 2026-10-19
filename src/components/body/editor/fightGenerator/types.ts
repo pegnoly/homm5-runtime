@@ -1,14 +1,11 @@
-import { UUID } from "crypto";
-
 export type FightAssetSimple = {
-    id: UUID,
-    name: string,
-    sheet_id: number | null
+    id: number,
+    name: string
 }
 
 export enum AssetGenerationType {
-    Static = "GENERATION_TYPE_STATIC",
-    Dynamic = "GENERATION_TYPE_DYNAMIC"
+    Static = "STATIC",
+    Dynamic = "DYNAMIC"
 }
 
 export enum DifficultyType {

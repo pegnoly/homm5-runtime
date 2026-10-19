@@ -1,5 +1,5 @@
 import { MultiSelect } from "@mantine/core";
-import { useCurrentStackActions, useCurrentStackId, useCurrentStackTiers } from "../store";
+import { FightStackGeneratorStore } from "../store";
 import { useMutation } from "@tanstack/react-query";
 import { FightGeneratorApi } from "../../../api";
 
@@ -9,9 +9,9 @@ export type UpdateTiersPayload = {
 }
 
 function TiersSelector() {
-    const currentStackId = useCurrentStackId();
-    const tiers = useCurrentStackTiers();
-    const actions = useCurrentStackActions();
+    const id = FightStackGeneratorStore.useCurrentId();
+    const tiers = FightStackGeneratorStore.useTiers();
+    const actions = FightStackGeneratorStore.useActions();
 
     const mutation = useMutation({
         mutationFn: async(payload: UpdateTiersPayload) => {
@@ -27,10 +27,10 @@ function TiersSelector() {
             radius={0}
             miw={100}
             size="xs"
-            label="Select tiers"
+            label="Укажите уровни существ"
             value={tiers!.tiers.map(v => v.toString())}
             onChange={(value) => {
-                mutation.mutate({stackId: currentStackId!, tiers: value.map(t => parseInt(t))})
+                mutation.mutate({stackId: id!, tiers: value.map(t => parseInt(t))})
             }}
             data={[
                 {value: "1", label: "Tier 1"},

@@ -25,7 +25,7 @@ function FightAssetCreator({onCreated}: {
             .then((value) => {
                 onCreated(value);
                 actions.addItem({
-                    message: `${name} added to sheets successfully`,
+                    message: `${name} успешно загружен в таблицу`,
                     timestamp: GetCurrentTimestamp()
                 });
                 actions.changeActivity(true);
@@ -46,31 +46,31 @@ function FightAssetCreator({onCreated}: {
     }
 
     return <div style={{position: 'sticky'}}>
-        <Button radius={0} onClick={open}>Create asset</Button>
+        <Button radius={0} onClick={open}>Создать ассет боя</Button>
         <ModalRoot centered opened={opened} onClose={close}>
             <ModalOverlay/>
             <ModalContent>
                 <ModalHeader>
-                    <ModalTitle>Fight asset creation</ModalTitle>
+                    <ModalTitle>Создание ассета</ModalTitle>
                     <ModalCloseButton/>
                 </ModalHeader>
                 <ModalBody>
                     <Stack>
                         <Button 
                             onClick={() => invoke("pick_hero_lua_generation_directory")}
-                        >Pick directory to generate script</Button>
+                        >Выберите папку для генерации скрипта</Button>
                         <Tooltip label={directory}>
                             <Text lineClamp={1}>{directory}</Text>
                         </Tooltip>
                         <TextInput 
-                            label="Asset name" 
-                            placeholder="Enter name" 
+                            label="Имя ассета"
+                            placeholder="Актуально только для программы"
                             value={name!} 
                             onChange={(e) => setName(e.target.value)}
                         />
                         <TextInput 
-                            label="Name of lua table for generated code" 
-                            placeholder="Enter lua table name" 
+                            label="Имя таблицы"
+                            placeholder="Такое будет иметь Lua-класс и гугл-таблица"
                             value={tableName!} 
                             onChange={(e) => setTableName(e.target.value)}
                         />
@@ -78,7 +78,7 @@ function FightAssetCreator({onCreated}: {
                             <Button 
                                 disabled={!directory || !name || !tableName} 
                                 onClick={create}
-                            >Create</Button>
+                            >Создать</Button>
                         </Group>
                     </Stack>
                 </ModalBody>

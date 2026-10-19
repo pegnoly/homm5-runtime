@@ -1,82 +1,82 @@
 import { create } from "zustand"
 import {AssetGenerationType, DifficultyMappedValue, TownTypeExtended} from "../../types"
-import { ArmyGenerationStatElement, CreatureIds, CreatureTiers, CreatureTowns, FightAssetStackModel, StackCountGenerationType, StackGenerationParam, StackGenerationRules, StackUnitGenerationType, StatGenerationRule, StatGenerationType } from "./types"
+import {
+    CalculationType,
+    CreatureIds,
+    CreatureTiers,
+    CreatureTowns,
+    FightAssetStackModel,
+    SelectionType,
+    StackGenerationParam,
+    StackGenerationRules,
+    StackStatsRules,
+    StatRuleModel
+} from "./types"
 import { UpdateStackDataPayload } from "./data"
 
 type Actions = {
     loadAsset: (value: FightAssetStackModel) => void,
-    loadStatsParams: (value: ArmyGenerationStatElement[]) => void,
     updateBaseData: (value: UpdateStackDataPayload) => void,
     setBasePowers: (value: DifficultyMappedValue) => void,
     setPowersGrow: (value: DifficultyMappedValue) => void,
-    setConcreteCounts: (value: DifficultyMappedValue) => void,
+    setSpecificCounts: (value: DifficultyMappedValue) => void,
     setTowns: (value: TownTypeExtended []) => void
     setTiers: (value: number []) => void,
-    setConcreteCreatures: (value: number []) => void,
+    setSpecificCreatures: (value: number []) => void,
     setRules: (value: StackGenerationParam []) => void,
-    addStatParam: (value: ArmyGenerationStatElement) => void,
-    removeStatParam: (value: number) => void,
-    setCurrentStatParamElement: (value: number) => void,
-    updateStatParamElementStats: (elementId: number, value: StatGenerationType []) => void,
-    updateStatParamElementRule: (elementId: number, value: StatGenerationRule) => void,
-    updateStatParamElementPriority: (elementId: number, value: number) => void
+    setStatsRules: (value: StatRuleModel []) => void
 }
 
 type Store = {
     id: number | undefined,
-    typeGenerationMode: StackUnitGenerationType | undefined,
-    countGenerationMode: StackCountGenerationType | undefined,
-    powerBasedGenerationType: AssetGenerationType | undefined,
+    selectionType: SelectionType | undefined,
+    calculationType: CalculationType | undefined,
+    updateType: AssetGenerationType | undefined,
     basePowers: DifficultyMappedValue | undefined,
     powersGrow: DifficultyMappedValue | undefined,
     towns: CreatureTowns | undefined,
     tiers: CreatureTiers | undefined,
-    concreteCreatures: CreatureIds | undefined,
-    concreteCount: DifficultyMappedValue | undefined,
+    specificCreatures: CreatureIds | undefined,
+    specificCount: DifficultyMappedValue | undefined,
     rules: StackGenerationRules | undefined,
-    statParams: ArmyGenerationStatElement [] | undefined,
-    currentStatParamElement: number | undefined,
+    statRules: StackStatsRules | undefined,
 
     actions: Actions
 }
 
-const useCurrentStackAssetStore = create<Store>((set, get) => ({
+const store = create<Store>((set, get) => ({
     id: undefined,
-    typeGenerationMode: undefined,
-    countGenerationMode: undefined,
-    powerBasedGenerationType: undefined,
+    selectionType: undefined,
+    calculationType: undefined,
+    updateType: undefined,
     basePowers: undefined,
     powersGrow: undefined,
     towns: undefined,
     tiers: undefined,
-    generationRule: undefined,
-    concreteCreatures: undefined,
-    concreteCount: undefined,
+    specificCreatures: undefined,
+    specificCount: undefined,
     rules: undefined,
-    statParams: undefined,
-    currentStatParamElement: undefined,
+    statRules: undefined,
 
     actions: {
         loadAsset(value) {
             set({
                 id: value.id,
-                typeGenerationMode: value.type_generation_mode,
-                countGenerationMode: value.count_generation_mode,
-                powerBasedGenerationType: value.power_based_generation_type,
+                selectionType: value.selection_type,
+                calculationType: value.calculation_type,
+                updateType: value.update_type,
                 basePowers: value.base_powers,
                 powersGrow: value.powers_grow,
                 towns: value.towns,
                 tiers: value.tiers,
-                concreteCreatures: value.concrete_creatures,
-                concreteCount: value.concrete_count,
-                rules: value.generation_rule
+                specificCreatures: value.specific_creatures,
+                specificCount: value.specific_count,
+                rules: value.rules,
+                statRules: value.stat_rules
             })
         },
-        loadStatsParams(value) {
-            set({statParams: value});
-        },
         updateBaseData(value) {
-            set({typeGenerationMode: value.unitGenerationType, countGenerationMode: value.countGenerationType, powerBasedGenerationType: value.countGenerationMode});
+            set({selectionType: value.selectionType, calculationType: value.calculationType, updateType: value.updateType});
         },
         setBasePowers(value) {
             set({basePowers: value});
@@ -84,8 +84,8 @@ const useCurrentStackAssetStore = create<Store>((set, get) => ({
         setPowersGrow(value) {
             set({powersGrow: value});
         },
-        setConcreteCounts(value) {
-            set({concreteCount: value});
+        setSpecificCounts(value) {
+            set({specificCount: value});
         },
         setTowns(value) {
             set({towns: {...get().towns, towns: value}})
@@ -93,68 +93,30 @@ const useCurrentStackAssetStore = create<Store>((set, get) => ({
         setTiers(value) {
             set({tiers: {...get().tiers, tiers: value}})
         },
-        setConcreteCreatures(value) {
-            set({concreteCreatures: {...get().concreteCreatures, ids: value}});
+        setSpecificCreatures(value) {
+            set({specificCreatures: {...get().specificCreatures, ids: value}});
         },
         setRules(value) {
-            set({rules: {...get().rules, params: value}})
+            set({rules: {...get().rules, rules: value}})
         },
-        addStatParam(value) {
-            set({statParams: [...get().statParams!, value]})
-        },
-        removeStatParam(value) {
-            set({statParams: get().statParams?.filter(s => s.id != value)});
-        },
-        setCurrentStatParamElement(value) {
-            set({currentStatParamElement: value});
-        },
-        updateStatParamElementStats(elementId, value) {
-            const updatedElements = get().statParams?.map(s => {
-                if (s.id == elementId) {
-                    s.stats = {...s.stats, values: value};
-                    return s;
-                } else {
-                    return s;
-                }
-            });
-            set({statParams: updatedElements});
-        },
-        updateStatParamElementRule(elementId, value) {
-            const updatedElements = get().statParams?.map(s => {
-                if (s.id == elementId) {
-                    s.rule = value;
-                    return s;
-                } else {
-                    return s;
-                }
-            });
-            set({statParams: updatedElements});
-        },
-        updateStatParamElementPriority(elementId, value) {
-            const updatedElements = get().statParams?.map(s => {
-                if (s.id == elementId) {
-                    s.priority = value;
-                    return s;
-                } else {
-                    return s;
-                }
-            });
-            set({statParams: updatedElements});
-        },
+        setStatsRules(value) {
+            set({statRules: {...get().statRules, rules: value}})
+        }
     }
 }));
 
-export const useCurrentStackActions = () => useCurrentStackAssetStore(state => state.actions);
-export const useCurrentStackId = () => useCurrentStackAssetStore(state => state.id);
-export const useTypeGenerationMode = () => useCurrentStackAssetStore(state => state.typeGenerationMode);
-export const useCountGenerationMode = () => useCurrentStackAssetStore(state => state.countGenerationMode);
-export const useBasePowers = () => useCurrentStackAssetStore(state => state.basePowers);
-export const usePowersGrow = () => useCurrentStackAssetStore(state => state.powersGrow);
-export const usePowerBasetGenerationType = () => useCurrentStackAssetStore(state => state.powerBasedGenerationType);
-export const useConcreteCounts = () => useCurrentStackAssetStore(state => state.concreteCount);
-export const useCurrentStackTowns = () => useCurrentStackAssetStore(state => state.towns);
-export const useCurrentStackTiers = () => useCurrentStackAssetStore(state => state.tiers);
-export const useConcreteCreatures = () => useCurrentStackAssetStore(state => state.concreteCreatures);
-export const useCurrentStackRules = () => useCurrentStackAssetStore(state => state.rules);
-export const useStatParams = () => useCurrentStackAssetStore(state => state.statParams);
-export const useCurrentStatParamElement = () => useCurrentStackAssetStore(state => state.currentStatParamElement);
+export namespace FightStackGeneratorStore {
+    export const useActions = () => store(state => state.actions);
+    export const useCurrentId = () => store(state => state.id);
+    export const useSelectionType = () => store(state => state.selectionType);
+    export const useCalculationType = () => store(state => state.calculationType);
+    export const useUpdateType = () => store(state => state.updateType);
+    export const useTowns = () => store(state => state.towns);
+    export const useTiers = () => store(state => state.tiers);
+    export const useSpecificCreatures = () => store(state => state.specificCreatures);
+    export const useSpecificCounts = () => store(state => state.specificCount);
+    export const useBasePowers = () => store(state => state.basePowers);
+    export const usePowersGrow = () => store(state => state.powersGrow);
+    export const useGenerationRules = () => store(state => state.rules);
+    export const useStatsRules = () => store(state => state.statRules);
+}

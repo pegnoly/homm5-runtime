@@ -3,17 +3,17 @@ import { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { invoke } from "@tauri-apps/api/core";
 import { EditablePropertyWrapperProps } from "@/components/common/editableProperty";
-import { useCountGenerationMode, useCurrentStackTiers, useCurrentStackTowns } from "../store";
-import { StackCountGenerationType } from "../types";
+import { FightStackGeneratorStore } from "../store";
+import { CalculationType } from "../types";
 import { TownTypeExtended } from "../../../types";
 
 function AverageTownsTiersTooltip({children, value} : EditablePropertyWrapperProps) {
-    const generationMode = useCountGenerationMode();
+    const calculationType = FightStackGeneratorStore.useCalculationType();
 
     return (
     <>
     {
-        generationMode == StackCountGenerationType.Raw ?
+        calculationType == CalculationType.Raw ?
         children :
         <AverageTownsTiersTooltipRenderer power={value as string}>
             {children}
@@ -33,13 +33,13 @@ function useAverageTownsTiersCounts(towns: TownTypeExtended[], tiers: number[], 
 }
 
 function AverageTownsTiersTooltipRenderer({children, power} : {children: ReactNode, power: string}) {
-    const towns = useCurrentStackTowns();
-    const tiers = useCurrentStackTiers();
+    const towns = FightStackGeneratorStore.useTowns();
+    const tiers = FightStackGeneratorStore.useTiers();
 
     const { data } = useAverageTownsTiersCounts(towns?.towns!, tiers?.tiers!, power);
 
     return (
-        <Tooltip label={`Average creatures for given power is ${data}`}>
+        <Tooltip label={`Среднее число существ - ${data}`}>
             {children}
         </Tooltip> 
     )            

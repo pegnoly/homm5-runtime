@@ -1,6 +1,6 @@
 import {useMutation} from "@tanstack/react-query";
 import {TownTypeExtended} from "../../../types";
-import {useCurrentStackActions, useCurrentStackId, useCurrentStackTowns} from "../store";
+import { FightStackGeneratorStore } from "../store";
 import {FightGeneratorApi} from "../../../api";
 import {MultiSelect} from "@mantine/core";
 
@@ -10,9 +10,9 @@ export type UpdateTownsPayload = {
 }
 
 function TownSelector() {
-    const currentStackId = useCurrentStackId();
-    const towns = useCurrentStackTowns();
-    const actions = useCurrentStackActions();
+    const id = FightStackGeneratorStore.useCurrentId();
+    const towns = FightStackGeneratorStore.useTowns();
+    const actions = FightStackGeneratorStore.useActions();
 
     const mutation = useMutation({
         mutationFn: async(payload: UpdateTownsPayload) => {
@@ -32,7 +32,7 @@ function TownSelector() {
             label="Select towns"
             value={towns?.towns}
             onChange={(value) => {
-                mutation.mutate({stackId: currentStackId!, towns: value.map(v => v as TownTypeExtended)});
+                mutation.mutate({stackId: id!, towns: value.map(v => v as TownTypeExtended)});
             }}
             data={[
                 {value: TownTypeExtended.TownAcademy, label: "Academy"},
