@@ -177,6 +177,7 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::update_stack_towns,
             services::fight_generator::commands::update_stack_tiers,
             services::fight_generator::commands::update_stack_rules,
+            services::fight_generator::commands::update_stack_stat_rules,
             services::fight_generator::commands::generate_current_hero_script,
             services::fight_generator::commands::get_average_creatures_count,
             services::fight_generator::commands::get_average_concrete_creatures_count,
