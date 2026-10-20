@@ -113,18 +113,23 @@ impl FightGeneratorRepo {
         &self,
         payload: InitAssetArtifactsDataPayload,
     ) -> Result<artifacts::Model, EditorToolsError> {
-        let model_to_insert = artifacts::ActiveModel {
-            id: Default::default(),
-            asset_id: Set(payload.asset_id),
-            update_type: Set(payload.update_type.clone()),
-            base_powers: Set(DifficultyMappedValue::default()),
-            powers_grow: Set(DifficultyMappedValue::default()),
-            required: Set(RequiredArtifacts::default()),
-            optional: Set(OptionalArtifacts::default()),
-        };
+        if let Some(asset) = asset::Entity::find_by_id(payload.asset_id).one(&self.db).await? {
+            let model_to_insert = artifacts::ActiveModel {
+                id: Default::default(),
+                asset_id: Set(payload.asset_id),
+                update_type: Set(payload.update_type.clone()),
+                base_powers: Set(DifficultyMappedValue::default()),
+                powers_grow: Set(DifficultyMappedValue::default()),
+                required: Set(RequiredArtifacts::default()),
+                optional: Set(OptionalArtifacts::default()),
+                sheet_name: Set(asset.table_name.clone()),
+            };
 
-        let model = model_to_insert.insert(&self.db).await?;
-        Ok(model)
+            let model = model_to_insert.insert(&self.db).await?;
+            Ok(model)   
+        } else { 
+            Err(EditorToolsError::Default)
+        }
     }
 
     pub async fn update_artifacts_generation_type(
@@ -285,28 +290,33 @@ impl FightGeneratorRepo {
     }
 
     pub async fn add_stack(&self, payload: AddStackPayload) -> Result<i32, EditorToolsError> {
-        let stacks_count = army_slot::Entity::find()
-            .filter(army_slot::Column::AssetId.eq(payload.asset_id))
-            .count(&self.db)
-            .await?;
-        let model_to_insert = army_slot::ActiveModel {
-            asset_id: Set(payload.asset_id),
-            selection_type: Set(payload.selection_rule),
-            calculation_type: Set(payload.calculation_rule),
-            update_type: Set(payload.update_type),
-            base_powers: Set(DifficultyMappedValue::default()),
-            powers_grow: Set(DifficultyMappedValue::default()),
-            towns: Set(CreatureTowns { towns: vec![] }),
-            tiers: Set(CreatureTiers { tiers: vec![] }),
-            rules: Set(StackGenerationRules { rules: vec![] }),
-            specific_creatures: Set(CreatureIds { ids: vec![] }),
-            specific_count: Set(DifficultyMappedValue::default()),
-            number: Set(stacks_count as i32),
-            stat_rules: Set(StackStatsRules { rules: vec![] }),
-            ..Default::default()
-        };
-        let inserted_model = model_to_insert.insert(&self.db).await?;
-        Ok(inserted_model.id)
+        if let Some(asset) = asset::Entity::find_by_id(payload.asset_id).one(&self.db).await? {
+            let stacks_count = army_slot::Entity::find()
+                .filter(army_slot::Column::AssetId.eq(payload.asset_id))
+                .count(&self.db)
+                .await?;
+            let model_to_insert = army_slot::ActiveModel {
+                asset_id: Set(payload.asset_id),
+                selection_type: Set(payload.selection_rule),
+                calculation_type: Set(payload.calculation_rule),
+                update_type: Set(payload.update_type),
+                base_powers: Set(DifficultyMappedValue::default()),
+                powers_grow: Set(DifficultyMappedValue::default()),
+                towns: Set(CreatureTowns { towns: vec![] }),
+                tiers: Set(CreatureTiers { tiers: vec![] }),
+                rules: Set(StackGenerationRules { rules: vec![] }),
+                specific_creatures: Set(CreatureIds { ids: vec![] }),
+                specific_count: Set(DifficultyMappedValue::default()),
+                number: Set(stacks_count as i32),
+                stat_rules: Set(StackStatsRules { rules: vec![] }),
+                sheet_name: Set(asset.table_name.clone()),
+                ..Default::default()
+            };
+            let inserted_model = model_to_insert.insert(&self.db).await?;
+            Ok(inserted_model.id)   
+        } else {
+            Err(EditorToolsError::Default)
+        }
     }
 
     pub async fn get_stack(

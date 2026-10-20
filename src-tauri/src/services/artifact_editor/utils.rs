@@ -1,4 +1,4 @@
-use crate::services::version_control::{VersionControlContent, VersionControlService};
+use crate::services::version_control::{VersionControlService, VersionControlSimpleType};
 use crate::utils::LocalAppManager;
 use google_api::error::Error;
 use google_api::prelude::ValueRange;
@@ -13,6 +13,8 @@ use std::str::FromStr;
 
 pub struct ArtifactsSheetsConverter;
 pub struct ArtifactModelSheetWrapper(ArtifactDBModel);
+
+#[allow(clippy::from_over_into)]
 impl Into<ValueRange> for ArtifactModelSheetWrapper {
     fn into(self) -> ValueRange {
         let model = self.0;
@@ -103,7 +105,7 @@ impl TryFrom<ValueRange> for FromSheetArtifactUpdateWrapper {
             slot: data
                 .get(3)
                 .and_then(|v| match v {
-                    Value::String(s) => Some(ArtifactSlotType::from_str(&s).unwrap()),
+                    Value::String(s) => Some(ArtifactSlotType::from_str(s).unwrap()),
                     _ => None,
                 })
                 .ok_or_else(|| {
@@ -112,7 +114,7 @@ impl TryFrom<ValueRange> for FromSheetArtifactUpdateWrapper {
             class: data
                 .get(4)
                 .and_then(|v| match v {
-                    Value::String(s) => Some(ArtifactClassType::from_str(&s).unwrap()),
+                    Value::String(s) => Some(ArtifactClassType::from_str(s).unwrap()),
                     _ => None,
                 })
                 .ok_or_else(|| {
@@ -206,7 +208,7 @@ pub async fn commit_artifacts_data(
         .await?;
     let sheet_data = profile
         .global_sheets
-        .get(&VersionControlContent::Artifacts)
+        .get(&VersionControlSimpleType::Artifacts)
         .ok_or(crate::error::Error::UndefinedData(
             "Can't find sheet data for artifacts version control".to_string(),
         ))?;

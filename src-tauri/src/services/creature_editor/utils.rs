@@ -1,5 +1,5 @@
 use crate::services::fight_generator::utils::IntoSheetValidatedValue;
-use crate::services::version_control::{VersionControlContent, VersionControlService};
+use crate::services::version_control::{VersionControlContent, VersionControlService, VersionControlSimpleType};
 use crate::utils::LocalAppManager;
 use google_api::error::Error;
 use google_api::prelude::ValueRange;
@@ -551,7 +551,7 @@ pub async fn push_creatures_data(
         .await?;
     let sheet_data = profile
         .global_sheets
-        .get(&VersionControlContent::Artifacts)
+        .get(&VersionControlSimpleType::Creatures)
         .ok_or(crate::error::Error::UndefinedData(
             "Can't find sheet data for creatures version control".to_string(),
         ))?;

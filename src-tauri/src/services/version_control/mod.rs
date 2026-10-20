@@ -10,17 +10,26 @@ use homm5_scaner::prelude::ScanerService;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+use serde_json::Value;
 use strum::Display;
 use editor_tools::prelude::FightGeneratorRepo;
 use google_api::prelude::ValueRange;
 use crate::services::fight_generator::utils::commit_updated_fights;
 
 #[derive(Debug, Serialize, Deserialize, Display, Eq, PartialEq, Hash)]
-pub enum VersionControlContent {
+pub enum VersionControlSimpleType {
     Creatures,
     Artifacts,
     Speakers,
-    Fights,
+    Commits
+}
+
+#[derive(Debug, Serialize, Deserialize, Display)]
+pub enum VersionControlContent {
+    Creatures(Vec<i32>),
+    Artifacts(Vec<i32>),
+    Speakers(Vec<i32>),
+    Fights(HashMap<String, Vec<String>>),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -28,7 +37,23 @@ pub struct VersionControlCommit {
     pub created_at: DateTime<Utc>,
     pub author: String,
     pub pulled_by: Vec<String>,
-    pub content: HashMap<VersionControlContent, Vec<i32>>,
+    pub content: Vec<VersionControlContent>,
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<ValueRange> for VersionControlCommit {
+    fn into(self) -> ValueRange {
+        ValueRange {
+            major_dimension: Some("ROWS".to_string()),
+            values: Some(vec![vec![
+                Value::String(self.created_at.to_string()),
+                Value::String(self.author),
+                Value::String(String::new()),
+                Value::String(serde_json::to_string(&self.content).unwrap())
+            ]]),
+            ..Default::default()
+        }
+    }
 }
 
 pub struct VersionControlService {
@@ -123,12 +148,24 @@ impl VersionControlService {
         }
     }
 
-    pub async fn push(&self) -> Result<(), Error> {
+    pub async fn push(&mut self, commit: VersionControlCommit, app_manager: &LocalAppManager) -> Result<(), Error> {
         for (sheet, data) in &self.requests {
             self.google_api.upload_to_sheet_bulk(sheet, data.clone()).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
         }
+
+        let profile = app_manager.current_profile_data.read().await;
+        let sheet_data = profile.global_sheets.get(&VersionControlSimpleType::Commits).unwrap();
+        self.google_api.append_to_sheet(&sheet_data.spreadsheet_id, "commits", commit.into()).await
+            .map_err(|e| Error::GoogleApi(Box::new(e)))?;
+
         Ok(())
     }
+}
+
+pub fn get_sheet_name(value: &ValueRange) -> Result<String, Error> {
+    let range = value.range.as_ref()
+        .ok_or(Error::UndefinedData("ValueRange range".to_string()))?;
+    Ok(range.split('!').collect::<Vec<&str>>()[0].to_string())
 }
 
 pub async fn sync_data_with_sheets(
@@ -142,7 +179,7 @@ pub async fn sync_data_with_sheets(
         created_at: Utc::now(),
         author: base_config.author.clone(),
         pulled_by: vec![],
-        content: HashMap::new(),
+        content: vec![],
     };
 
     if !version_control.updated_artifacts.is_empty() {
@@ -150,19 +187,22 @@ pub async fn sync_data_with_sheets(
             commit_artifacts_data(app_manager, version_control, scaner_service).await?;
         commit
             .content
-            .insert(VersionControlContent::Artifacts, updated_ids);
+            .push(VersionControlContent::Artifacts(updated_ids));
     }
 
     if !version_control.updated_creatures.is_empty() {}
 
     if !version_control.updated_fights.is_empty() {
-        commit_updated_fights(version_control, scaner_service, app_manager, fight_generator_repo).await?;
+        let updated_data = commit_updated_fights(version_control, scaner_service, app_manager, fight_generator_repo).await?;
+        commit.content.push(VersionControlContent::Fights(updated_data));
     }
 
-    version_control.push().await?;
+    let message = format!("Commit created: {:#?}", &commit);
+
+    version_control.push(commit, app_manager).await?;
     
     Ok(TimelineMessage {
         timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
-        message: format!("Commit created: {:#?}", &commit),
+        message
     })
 }

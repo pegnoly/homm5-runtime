@@ -11,16 +11,18 @@ use quick_xml::{
 };
 use std::{fs::File, io::Write};
 use tauri::{AppHandle, Emitter, State};
+use tokio::sync::Mutex;
 use tauri_plugin_dialog::DialogExt;
 use zip::write::FileOptions;
 
 #[tauri::command]
 pub async fn update_artefact_attack(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_attack(value))
@@ -30,10 +32,11 @@ pub async fn update_artefact_attack(
 #[tauri::command]
 pub async fn update_artefact_defence(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_defence(value))
@@ -43,10 +46,11 @@ pub async fn update_artefact_defence(
 #[tauri::command]
 pub async fn update_artefact_spell_power(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_spell_power(value))
@@ -56,10 +60,11 @@ pub async fn update_artefact_spell_power(
 #[tauri::command]
 pub async fn update_artefact_knowledge(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_knowledge(value))
@@ -69,10 +74,11 @@ pub async fn update_artefact_knowledge(
 #[tauri::command]
 pub async fn update_artefact_luck(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_luck(value))
@@ -82,10 +88,11 @@ pub async fn update_artefact_luck(
 #[tauri::command]
 pub async fn update_artefact_morale(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_morale(value))
@@ -95,10 +102,11 @@ pub async fn update_artefact_morale(
 #[tauri::command]
 pub async fn update_artefact_cost(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_cost(value))
@@ -108,10 +116,11 @@ pub async fn update_artefact_cost(
 #[tauri::command]
 pub async fn update_artefact_class(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: ArtifactClassType,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_class(value))
@@ -121,10 +130,11 @@ pub async fn update_artefact_class(
 #[tauri::command]
 pub async fn update_artefact_slot(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: ArtifactSlotType,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_slot(value))
@@ -155,10 +165,11 @@ pub async fn select_artefact_name_path(
 #[tauri::command]
 pub async fn update_artefact_name_path(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_name_txt(value))
@@ -189,10 +200,11 @@ pub async fn select_artefact_desc_path(
 #[tauri::command]
 pub async fn update_artefact_desc_path(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_desc_txt(value))
@@ -224,7 +236,7 @@ pub async fn select_artefact_icon_path(
 pub async fn update_artefact_icon_path(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
     path: String,
@@ -241,6 +253,7 @@ pub async fn update_artefact_icon_path(
             icon_xdb_path.to_str().unwrap().replace(".xdb", ".dds"),
         )?;
     }
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_icon_xdb(value))
@@ -251,7 +264,7 @@ pub async fn update_artefact_icon_path(
 pub async fn update_artefact_name(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
     path: String,
@@ -263,6 +276,7 @@ pub async fn update_artefact_name(
     for utf16 in value.encode_utf16() {
         file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
     }
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_name(value))
@@ -273,7 +287,7 @@ pub async fn update_artefact_name(
 pub async fn update_artefact_desc(
     scaner_service: State<'_, ScanerService>,
     app_manager: State<'_, LocalAppManager>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
     path: String,
@@ -285,6 +299,7 @@ pub async fn update_artefact_desc(
     for utf16 in value.encode_utf16() {
         file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
     }
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_desc(value))
@@ -294,10 +309,11 @@ pub async fn update_artefact_desc(
 #[tauri::command]
 pub async fn update_artefact_is_generatable(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: bool,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_generatable(value))
@@ -307,10 +323,11 @@ pub async fn update_artefact_is_generatable(
 #[tauri::command]
 pub async fn update_artefact_is_unique(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: bool,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_artifacts.insert(id);
     Ok(scaner_service
         .update_artefact(UpdateArtifactPayload::new(id).with_unique(value))

@@ -12,6 +12,7 @@ pub struct Model {
     pub id: i32,
     pub number: i32,
     pub asset_id: i32,
+    pub sheet_name: String,
     pub selection_type: SelectionType,
     pub calculation_type: CalculationRule,
     pub update_type: AssetUpdateType,

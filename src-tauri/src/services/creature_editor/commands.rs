@@ -16,6 +16,7 @@ use quick_xml::{
     events::{BytesDecl, Event},
 };
 use tauri::State;
+use tokio::sync::Mutex;
 
 #[tauri::command]
 pub async fn load_creature(
@@ -28,10 +29,11 @@ pub async fn load_creature(
 #[tauri::command]
 pub async fn update_creature_attack(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_attack(value))
@@ -41,10 +43,11 @@ pub async fn update_creature_attack(
 #[tauri::command]
 pub async fn update_creature_defence(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_defence(value))
@@ -54,10 +57,11 @@ pub async fn update_creature_defence(
 #[tauri::command]
 pub async fn update_creature_min_damage(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_min_damage(value))
@@ -67,10 +71,11 @@ pub async fn update_creature_min_damage(
 #[tauri::command]
 pub async fn update_creature_max_damage(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_max_damage(value))
@@ -80,10 +85,11 @@ pub async fn update_creature_max_damage(
 #[tauri::command]
 pub async fn update_creature_initiative(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_initiative(value))
@@ -93,10 +99,11 @@ pub async fn update_creature_initiative(
 #[tauri::command]
 pub async fn update_creature_speed(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_speed(value))
@@ -106,10 +113,11 @@ pub async fn update_creature_speed(
 #[tauri::command]
 pub async fn update_creature_health(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_health(value))
@@ -119,10 +127,11 @@ pub async fn update_creature_health(
 #[tauri::command]
 pub async fn update_creature_exp(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_exp(value))
@@ -132,10 +141,11 @@ pub async fn update_creature_exp(
 #[tauri::command]
 pub async fn update_creature_tier(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_tier(value))
@@ -145,10 +155,11 @@ pub async fn update_creature_tier(
 #[tauri::command]
 pub async fn update_creature_power(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_power(value))
@@ -158,10 +169,11 @@ pub async fn update_creature_power(
 #[tauri::command]
 pub async fn update_creature_grow(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_health(value))
@@ -171,10 +183,11 @@ pub async fn update_creature_grow(
 #[tauri::command]
 pub async fn update_creature_size(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_size(value))
@@ -184,10 +197,11 @@ pub async fn update_creature_size(
 #[tauri::command]
 pub async fn update_creature_range(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_range(value))
@@ -197,10 +211,11 @@ pub async fn update_creature_range(
 #[tauri::command]
 pub async fn update_creature_shots(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: i32,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_shots(value))
@@ -210,10 +225,11 @@ pub async fn update_creature_shots(
 #[tauri::command]
 pub async fn update_creature_base_creature(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_base_creature(value))
@@ -223,10 +239,11 @@ pub async fn update_creature_base_creature(
 #[tauri::command]
 pub async fn update_creature_pair_creature(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_pair_creature(value))
@@ -236,10 +253,11 @@ pub async fn update_creature_pair_creature(
 #[tauri::command]
 pub async fn update_creature_upgrades(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: Vec<String>,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_upgrades(value))
@@ -249,10 +267,11 @@ pub async fn update_creature_upgrades(
 #[tauri::command]
 pub async fn update_creature_abilities(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: Vec<String>,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_abilities(value))
@@ -262,10 +281,11 @@ pub async fn update_creature_abilities(
 #[tauri::command]
 pub async fn update_creature_magic_element(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: MagicElementModel,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_magic_element(value))
@@ -275,10 +295,11 @@ pub async fn update_creature_magic_element(
 #[tauri::command]
 pub async fn update_creature_cost(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: ResourcesModel,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_cost(value))
@@ -288,10 +309,11 @@ pub async fn update_creature_cost(
 #[tauri::command]
 pub async fn update_creature_is_generatable(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: bool,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_generatable(value))
@@ -301,10 +323,11 @@ pub async fn update_creature_is_generatable(
 #[tauri::command]
 pub async fn update_creature_is_upgrade(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: bool,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_upgrade(value))
@@ -314,10 +337,11 @@ pub async fn update_creature_is_upgrade(
 #[tauri::command]
 pub async fn update_creature_is_flying(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: bool,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_flying(value))
@@ -327,10 +351,11 @@ pub async fn update_creature_is_flying(
 #[tauri::command]
 pub async fn remove_creature_spell(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service.remove_creature_spell(id, value).await?)
 }
@@ -338,11 +363,12 @@ pub async fn remove_creature_spell(
 #[tauri::command]
 pub async fn add_creature_spell(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     spell: String,
     mastery: Mastery,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .add_creature_spell(id, spell, mastery)
@@ -352,11 +378,12 @@ pub async fn add_creature_spell(
 #[tauri::command]
 pub async fn update_creature_spell(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     curr_spell: String,
     new_spell: SpellWithMasteryModel,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature_spell(id, curr_spell, new_spell)
@@ -366,10 +393,11 @@ pub async fn update_creature_spell(
 #[tauri::command]
 pub async fn update_creature_town(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: Town,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_town(value))
@@ -379,10 +407,11 @@ pub async fn update_creature_town(
 #[tauri::command]
 pub async fn update_creature_town_extended(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: TownExtended,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_town_extended(value))
@@ -392,10 +421,11 @@ pub async fn update_creature_town_extended(
 #[tauri::command]
 pub async fn update_creature_name(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_name(value))
@@ -405,10 +435,11 @@ pub async fn update_creature_name(
 #[tauri::command]
 pub async fn update_creature_desc(
     scaner_service: State<'_, ScanerService>,
-    version_control: State<'_, VersionControlService>,
+    version_control: State<'_, Mutex<VersionControlService>>,
     id: i32,
     value: String,
 ) -> Result<(), Error> {
+    let version_control = version_control.lock().await;
     version_control.updated_creatures.insert(id);
     Ok(scaner_service
         .update_creature(UpdateCreaturePayload::new(id).with_desc(value))

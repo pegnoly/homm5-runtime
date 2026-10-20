@@ -1,4 +1,4 @@
-use crate::services::version_control::VersionControlContent;
+use crate::services::version_control::VersionControlSimpleType;
 use crate::utils::RepackerPathsData;
 use map_modifier::Map;
 use serde::{Deserialize, Serialize};
@@ -19,7 +19,7 @@ pub struct ProfileConfig {
     pub texts_path: PathBuf,
     pub repackers: HashMap<String, RepackerPathsData>,
     pub maps: Vec<Map>,
-    pub global_sheets: HashMap<VersionControlContent, SheetEntity>,
+    pub global_sheets: HashMap<VersionControlSimpleType, SheetEntity>,
 }
 
 impl ProfileConfig {

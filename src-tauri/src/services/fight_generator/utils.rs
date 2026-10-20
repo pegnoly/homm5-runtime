@@ -1,4 +1,4 @@
-use crate::services::version_control::VersionControlService;
+use crate::services::version_control::{get_sheet_name, VersionControlService};
 use editor_tools::prelude::{AssetArmySlotModel, AssetArtifactsModel, AssetUpdateType, CalculationRule, DifficultyMappedValue, DifficultyType, FightGeneratorRepo, GetAssetsRequest, OptionalArtifacts, RequiredArtifacts, SelectionType, StackGenerationRule, StackStatsRuleModel, StatParam, StatSelectionRule};
 use google_api::prelude::ValueRange;
 use google_api::utils::{FromSheetsData, IntoSheetsData};
@@ -7,7 +7,6 @@ use itertools::Itertools;
 use regex::Regex;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::sync::Arc;
 use strum::IntoEnumIterator;
 use crate::error::Error;
 use crate::utils::LocalAppManager;
@@ -114,7 +113,7 @@ impl IntoSheetValidatedValue for (StatSelectionRule, StatParam) {
 
 pub struct AssetArmySlotSheetWrapper<'a> {
     slot: AssetArmySlotModel,
-    sheet_name: &'a str,
+    sheet_name: String,
     creatures_data: &'a [CreatureDBModel],
 }
 
@@ -122,7 +121,7 @@ impl<'a> AssetArmySlotSheetWrapper<'a> {
     pub fn new(slot: AssetArmySlotModel) -> Self {
         Self {
             slot,
-            sheet_name: "",
+            sheet_name: String::new(),
             creatures_data: &[]
         }
     }
@@ -174,6 +173,8 @@ impl<'a> AssetArmySlotSheetWrapper<'a> {
         )
     }
 }
+
+#[allow(clippy::from_over_into)]
 impl<'a> Into<ValueRange> for AssetArmySlotSheetWrapper<'a> {
     fn into(self) -> ValueRange {
         let mut result = ValueRange::default();
@@ -280,21 +281,19 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
     type Error = Error;
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
         let inner_number_regex = Regex::new(r"\[(\d+)]").unwrap();
+        let sheet_name = get_sheet_name(&value)?;
         let data = value
             .values
             .and_then(|v| v.first().cloned())
             .ok_or_else(|| Error::UndefinedData("Army slot sheet data".to_string()))?;
 
         let mut slot = AssetArmySlotModel::default();
+        slot.sheet_name = sheet_name;
         slot.calculation_type = data
             .first()
             .and_then(|v| match v {
                 Value::String(s) => {
-                    if let Some(caps) = inner_number_regex.captures(s) {
-                        Some(CalculationRule::from_repr(caps[1].parse().unwrap()).unwrap())
-                    } else {
-                        None
-                    }
+                    inner_number_regex.captures(s).map(|caps| CalculationRule::from_repr(caps[1].parse().unwrap()).unwrap())
                 }
                 _ => None,
             })
@@ -303,11 +302,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
             .get(1)
             .and_then(|v| match v {
                 Value::String(s) => {
-                    if let Some(caps) = inner_number_regex.captures(s) {
-                        Some(AssetUpdateType::from_repr(caps[1].parse().unwrap()).unwrap())
-                    } else {
-                        None
-                    }
+                    inner_number_regex.captures(s).map(|caps| AssetUpdateType::from_repr(caps[1].parse().unwrap()).unwrap())
                 }
                 _ => None,
             })
@@ -316,11 +311,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
             .get(13)
             .and_then(|v| match v {
                 Value::String(s) => {
-                    if let Some(caps) = inner_number_regex.captures(s) {
-                        Some(SelectionType::from_repr(caps[1].parse().unwrap()).unwrap())
-                    } else {
-                        None
-                    }
+                    inner_number_regex.captures(s).map(|caps| SelectionType::from_repr(caps[1].parse().unwrap()).unwrap())
                 }
                 _ => None,
             })
@@ -389,11 +380,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     Value::String(s) => Some(
                         s.split(",")
                             .filter_map(|c| {
-                                if let Some(caps) = inner_number_regex.captures(c) {
-                                    Some(caps[1].parse().unwrap())
-                                } else {
-                                    None
-                                }
+                                inner_number_regex.captures(c).map(|caps| caps[1].parse().unwrap())
                             })
                             .collect_vec(),
                     ),
@@ -460,11 +447,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     Value::String(s) => Some(
                         s.split(",")
                             .filter_map(|c| {
-                                if let Some(caps) = inner_number_regex.captures(c) {
-                                    Some(TownExtended::from_repr(caps[1].parse().unwrap()).unwrap())
-                                } else {
-                                    None
-                                }
+                                inner_number_regex.captures(c).map(|caps| TownExtended::from_repr(caps[1].parse().unwrap()).unwrap())
                             })
                             .collect_vec(),
                     ),
@@ -477,11 +460,7 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     Value::String(s) => Some(
                         s.split(",")
                             .filter_map(|c| {
-                                if let Some(caps) = inner_number_regex.captures(c) {
-                                    Some(caps[1].parse().unwrap())
-                                } else {
-                                    None
-                                }
+                                inner_number_regex.captures(c).map(|caps| caps[1].parse().unwrap())
                             })
                             .collect_vec(),
                     ),
@@ -494,14 +473,8 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     Value::String(s) => Some(
                         s.split(",")
                             .filter_map(|c| {
-                                if let Some(caps) = inner_number_regex.captures(c) {
-                                    Some(
-                                        StackGenerationRule::from_repr(caps[1].parse().unwrap())
-                                            .unwrap(),
-                                    )
-                                } else {
-                                    None
-                                }
+                                inner_number_regex.captures(c).map(|caps| StackGenerationRule::from_repr(caps[1].parse().unwrap())
+                                            .unwrap())
                             })
                             .collect_vec(),
                     ),
@@ -637,13 +610,13 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
 
 pub struct FightAssetArtifactsDataWrapper<'a> {
     data: AssetArtifactsModel,
-    sheet_name: &'a str,
+    sheet_name: String,
     artifacts_data: &'a [ArtifactDBModel],
 }
 
-pub struct FightAssetArtifactsValueWrapper<'a> {
+pub struct FightAssetArtifactsValueWrapper {
     data: AssetArtifactsModel,
-    sheet_name: &'a str,
+    sheet_name: String,
 }
 
 #[derive(Clone, Copy)]
@@ -652,15 +625,16 @@ pub struct FightAssetArtifactsDataSheetConverter;
 impl IntoSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter {}
 impl FromSheetsData<FightAssetArtifactsDataWrapper<'_>> for FightAssetArtifactsDataSheetConverter {}
 
-impl<'a> IntoSheetsData<FightAssetArtifactsValueWrapper<'_>>
+impl IntoSheetsData<FightAssetArtifactsValueWrapper>
     for FightAssetArtifactsDataSheetConverter
 {
 }
-impl<'a> FromSheetsData<FightAssetArtifactsValueWrapper<'_>>
+impl FromSheetsData<FightAssetArtifactsValueWrapper>
     for FightAssetArtifactsDataSheetConverter
 {
 }
 
+#[allow(clippy::from_over_into)]
 impl<'a> Into<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
     fn into(self) -> ValueRange {
         let mut result = ValueRange::default();
@@ -703,18 +677,18 @@ impl<'a> Into<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
 }
 
 impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
-    type Error = crate::Error;
+    type Error = Error;
 
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
+        let sheet_name = get_sheet_name(&value)?;
         let data = value
             .values
             .and_then(|v| v.first().cloned())
             .ok_or_else(|| Error::UndefinedData("Fight artifacts data".to_string()))?;
         let inner_number_regex = Regex::new(r"\[(\d+)]").unwrap();
         let model = FightAssetArtifactsDataWrapper {
-            artifacts_data: &[],
-            sheet_name: "",
             data: AssetArtifactsModel {
+                sheet_name: sheet_name.clone(),
                 id: -1,
                 asset_id: -1,
                 required: RequiredArtifacts {
@@ -728,11 +702,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                                     Some(
                                         s.split(",")
                                             .filter_map(|a| {
-                                                if let Some(caps) = inner_number_regex.captures(a) {
-                                                    Some(caps[1].parse().unwrap())
-                                                } else {
-                                                    None
-                                                }
+                                                inner_number_regex.captures(a).map(|caps| caps[1].parse().unwrap())
                                             })
                                             .collect_vec(),
                                     )
@@ -759,13 +729,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                                                     a,
                                                     s.split(",")
                                                         .filter_map(|i| {
-                                                            if let Some(caps) =
-                                                                inner_number_regex.captures(i)
-                                                            {
-                                                                Some(caps[1].parse().unwrap())
-                                                            } else {
-                                                                None
-                                                            }
+                                                            inner_number_regex.captures(i).map(|caps| caps[1].parse().unwrap())
                                                         })
                                                         .collect_vec(),
                                                 ))
@@ -783,12 +747,15 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                 base_powers: DifficultyMappedValue::default(),
                 update_type: AssetUpdateType::default()
             },
+            artifacts_data: &[],
+            sheet_name: sheet_name.clone()
         };
         Ok(model)
     }
 }
 
-impl<'a> Into<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
+#[allow(clippy::from_over_into)]
+impl Into<ValueRange> for FightAssetArtifactsValueWrapper {
     fn into(self) -> ValueRange {
         let mut result = ValueRange::default();
         result.range = Some(format!("{}!D29:D37", self.sheet_name));
@@ -822,18 +789,18 @@ impl<'a> Into<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
     }
 }
 
-impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
+impl TryFrom<ValueRange> for FightAssetArtifactsValueWrapper {
     type Error = Error;
 
     fn try_from(value: ValueRange) -> Result<Self, Self::Error> {
+        let sheet_name = get_sheet_name(&value)?;
         let data = value
             .values
             .and_then(|v| v.first().cloned())
             .ok_or_else(|| Error::UndefinedData("Fight artifacts values".to_string()))?;
-
         let model = FightAssetArtifactsValueWrapper {
-            sheet_name: "",
             data: AssetArtifactsModel {
+                sheet_name: sheet_name.clone(),
                 base_powers: DifficultyMappedValue {
                     data: HashMap::from([
                         (
@@ -952,6 +919,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsValueWrapper<'a> {
                 required: RequiredArtifacts::default(),
                 optional: OptionalArtifacts::default()
             },
+            sheet_name: sheet_name.clone()
         };
         Ok(model)
     }
@@ -962,24 +930,25 @@ pub async fn commit_updated_fights(
     scaner_service: &ScanerService,
     app_manager: &LocalAppManager,
     fight_generator_repo: &FightGeneratorRepo,
-) -> Result<(), Error> {
+) -> Result<HashMap<String, Vec<String>>, Error> {
     let creatures = scaner_service.get_creature_models(GetCreaturesRequest::NonDefault).await?;
     let artifacts = scaner_service.get_artifact_models(GetArtifactsRequest::Any).await?;
     let profile = app_manager.current_profile_data.read().await;
     let sheet_ids: HashMap<i32, String> = HashMap::from_iter(profile.maps.iter().map(|m| (m.id, m.fights_spreadsheet_id.clone())));
     let assets = fight_generator_repo
         .get_assets(GetAssetsRequest::OfIds(version_control.updated_fights.iter().map(|i| *i).collect())).await?;
-    let mut commit_data: HashMap<String, Vec<i32>> = HashMap::new();
+    let mut commit_data: HashMap<String, Vec<String>> = HashMap::new();
     for asset in assets {
         let sheet_id = sheet_ids.get(&asset.mission_id).unwrap();
         if !commit_data.contains_key(sheet_id) {
             commit_data.insert(sheet_id.clone(),vec![]);
         }
+        commit_data.get_mut(sheet_id).unwrap().push(asset.table_name.clone());
         let stacks = fight_generator_repo.get_stacks(asset.id).await?;
         let converter = FightAssetArmySheetConverter {};
         let stacks_wrappers = stacks.iter().map(|s| AssetArmySlotSheetWrapper {
             slot: s.clone(),
-            sheet_name: &asset.table_name,
+            sheet_name: asset.table_name.clone(),
             creatures_data: &creatures,
         }).collect_vec();
 
@@ -989,15 +958,17 @@ pub async fn commit_updated_fights(
             let converter = FightAssetArtifactsDataSheetConverter {};
             version_control.commit_single(sheet_id, FightAssetArtifactsDataWrapper {
                 data: artifacts_model.clone(),
-                sheet_name: &asset.table_name,
+                sheet_name: asset.table_name.clone(),
                 artifacts_data: &artifacts
             }, converter).await?;
             version_control.commit_single(sheet_id, FightAssetArtifactsValueWrapper {
                 data: artifacts_model,
-                sheet_name: &asset.table_name,
+                sheet_name: asset.table_name,
             }, converter).await?;
         }
     }
 
-    Ok(())
+    Ok(commit_data)
 }
+
+pub async fn pull_fights(){}

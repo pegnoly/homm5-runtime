@@ -11,6 +11,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub asset_id: i32,
+    pub sheet_name: String,
     pub update_type: AssetUpdateType,
     pub base_powers: DifficultyMappedValue,
     pub powers_grow: DifficultyMappedValue,

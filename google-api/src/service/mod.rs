@@ -185,6 +185,22 @@ impl GoogleApiService {
         Ok(())
     }
 
+    pub async fn append_to_sheet(
+        &self,
+        spreadsheet_id: &str,
+        sheet_name: &str,
+        value: ValueRange,
+    ) -> Result<(), Error> {
+        let hub_locked = self.sheets_hub.lock().await;
+        hub_locked
+            .spreadsheets()
+            .values_append(value.clone(), spreadsheet_id, &format!("{}!A1", sheet_name))
+            .value_input_option("USER_ENTERED")
+            .doit()
+            .await.map_err(|e| Error::Api(Box::new(e)))?;
+        Ok(())
+    }
+
     pub async fn read_from_sheet(
         &self,
         spreadsheet_id: &str,
