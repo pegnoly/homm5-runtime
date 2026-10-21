@@ -152,6 +152,7 @@ pub async fn run() -> Result<(), Error> {
             services::fight_generator::commands::load_artifact_models,
             services::fight_generator::commands::load_creature_models,
             services::fight_generator::commands::load_abilities_models,
+            services::fight_generator::commands::load_spells_models,
             services::fight_generator::commands::pick_hero_lua_generation_directory,
             services::fight_generator::commands::init_new_asset,
             services::fight_generator::commands::load_asset,
@@ -268,7 +269,9 @@ pub async fn run() -> Result<(), Error> {
             services::spell_editor::commands::save_spell_xdb,
             //
             services::map_editor::commands::pick_map_xdb_directory,
-            services::map_editor::commands::move_map_to_dir
+            services::map_editor::commands::move_map_to_dir,
+            //
+            services::version_control::commands::pull_data_from_sheets
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

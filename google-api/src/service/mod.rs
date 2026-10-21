@@ -13,7 +13,9 @@ use google_sheets4::{
 use google_sheets4::api::{BatchUpdateValuesRequest, Spreadsheet};
 use google_sheets4::hyper_rustls::HttpsConnector;
 use google_sheets4::hyper_util::client::legacy::connect::HttpConnector;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 mod types;
 
@@ -231,29 +233,47 @@ impl GoogleApiService {
     pub async fn read_many_from_sheet(
         &self,
         spreadsheet_id: &str,
-        sheet_id: i32,
-        ranges: Vec<&str>,
+        ranges: Vec<String>,
+        dimension: &str
     ) -> Result<Option<Vec<ValueRange>>, Error> {
         let hub_locked = self.sheets_hub.lock().await;
-        let response = hub_locked
-            .spreadsheets()
-            .get(spreadsheet_id)
-            .doit()
-            .await
-            .map_err(|e| Error::Api(Box::new(e)))?;
 
-        let sheet_name = self.get_sheet_name(&response.1, sheet_id).await?;
-
-        let data = hub_locked
+        let mut request = hub_locked
             .spreadsheets()
-            .values_batch_get(spreadsheet_id)
-            .add_ranges(&ranges.iter().map(|r| format!("{sheet_name}!{r}")).collect::<Vec<_>>().join(","))
-            .major_dimension("ROWS")
+            .values_batch_get(spreadsheet_id);
+
+        for range in &ranges {
+            request = request.add_ranges(range);
+        }
+
+        let data = request
+            .major_dimension(dimension)
             .doit()
             .await
             .map_err(|e| Error::Api(Box::new(e)))?;
 
         Ok(data.1.value_ranges)
+    }
+
+    pub async fn read_all_rows(
+        &self,
+        spreadsheet_id: &str,
+        sheet_name: &str,
+        column: &str
+    ) -> Result<Vec<Vec<Value>>, Error> {
+        let hub_locked = self.sheets_hub.lock().await;
+        let response = hub_locked
+            .spreadsheets()
+            .values_get(spreadsheet_id, &format!("{sheet_name}!A:{column}"))
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+
+        Ok(if let Some(data) = response.1.values {
+            data.into_iter().filter(|d| !d.is_empty()).collect_vec()
+        } else {
+            vec![]
+        })
     }
 
     pub async fn upload_validation_data(&self, spreadsheet_id: &str, data: ValueRange) -> Result<(), Error> {

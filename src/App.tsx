@@ -11,6 +11,7 @@ function App() {
     ]));
 
     useEffect(() => {
+        pullDataFromSheets();
         loadArtifactModels();
         loadCreatureModels();
         loadAbilityModels();
@@ -36,6 +37,11 @@ function App() {
         await invoke<SpellModel[]>("load_spells_models")
             .then((values) => setSpells(values));
     }
+
+    const pullDataFromSheets = async () => {
+        await invoke("pull_data_from_sheets");
+    }
+
 
     return (
         <>

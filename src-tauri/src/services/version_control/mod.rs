@@ -1,3 +1,5 @@
+pub mod commands;
+
 use crate::error::Error;
 use crate::services::artifact_editor::utils::commit_artifacts_data;
 use crate::utils::{LocalAppManager, TimelineMessage};
@@ -8,7 +10,7 @@ use google_api::service::GoogleApiService;
 use google_api::utils::{FromSheetsData, IntoSheetsData};
 use homm5_scaner::prelude::ScanerService;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use serde_json::Value;
 use strum::Display;
@@ -24,7 +26,7 @@ pub enum VersionControlSimpleType {
     Commits
 }
 
-#[derive(Debug, Serialize, Deserialize, Display)]
+#[derive(Debug, Serialize, Deserialize, Display, Clone)]
 pub enum VersionControlContent {
     Creatures(Vec<i32>),
     Artifacts(Vec<i32>),
@@ -32,12 +34,16 @@ pub enum VersionControlContent {
     Fights(HashMap<String, Vec<String>>),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VersionControlCommit {
     pub created_at: DateTime<Utc>,
     pub author: String,
-    pub pulled_by: Vec<String>,
     pub content: Vec<VersionControlContent>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VersionControlPullData {
+    pub fights: Vec<Vec<ValueRange>>
 }
 
 #[allow(clippy::from_over_into)]
@@ -48,8 +54,7 @@ impl Into<ValueRange> for VersionControlCommit {
             values: Some(vec![vec![
                 Value::String(self.created_at.to_string()),
                 Value::String(self.author),
-                Value::String(String::new()),
-                Value::String(serde_json::to_string(&self.content).unwrap())
+                Value::String(serde_json::to_string_pretty(&self.content).unwrap())
             ]]),
             ..Default::default()
         }
@@ -127,13 +132,12 @@ impl VersionControlService {
     pub async fn pull_many<D: TryFrom<ValueRange>, C: FromSheetsData<D>>(
         &self,
         spreadsheet_id: &str,
-        sheet_id: i32,
-        ranges: Vec<&str>,
+        ranges: Vec<String>,
         converter: C,
     ) -> Result<Vec<D>, Error> {
         let data = self
             .google_api
-            .read_many_from_sheet(spreadsheet_id, sheet_id, ranges)
+            .read_many_from_sheet(spreadsheet_id, ranges, "COLUMNS")
             .await
             .map_err(|e| Error::GoogleApi(Box::new(e)))?;
 
@@ -155,10 +159,71 @@ impl VersionControlService {
 
         let profile = app_manager.current_profile_data.read().await;
         let sheet_data = profile.global_sheets.get(&VersionControlSimpleType::Commits).unwrap();
-        self.google_api.append_to_sheet(&sheet_data.spreadsheet_id, "commits", commit.into()).await
-            .map_err(|e| Error::GoogleApi(Box::new(e)))?;
+        for collaborator in &profile.collaborators {
+            self.google_api.append_to_sheet(&sheet_data.spreadsheet_id, collaborator, commit.clone().into()).await
+                .map_err(|e| Error::GoogleApi(Box::new(e)))?;
+        }
 
         Ok(())
+    }
+
+    pub async fn pull(&self, app_manager: &LocalAppManager) -> Result<VersionControlPullData, Error> {
+        let profile = app_manager.current_profile_data.read().await;
+        let global_config = app_manager.base_config.read().await;
+        let commits_sheet_model = profile.global_sheets.get(&VersionControlSimpleType::Commits).unwrap();
+        let commits_data = self.google_api.read_all_rows(
+            &commits_sheet_model.spreadsheet_id,
+            &global_config.author,
+            "C"
+        ).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
+
+        println!("Commits data pulled: {:#?}", &commits_data);
+
+        let mut updated_fights: HashMap<String, HashSet<String>> = HashMap::new();
+
+        for row in commits_data {
+            let commit = row.last()
+                .ok_or(Error::UndefinedData("Commit".to_string()))?;
+            match commit {
+                Value::String(data) => {
+                    let content = serde_json::from_str::<Vec<VersionControlContent>>(data)?;
+                    for element in content {
+                        match element {
+                            VersionControlContent::Fights(fights_data) => {
+                                for (mission_sheet, fight_sheets) in &fights_data {
+                                    if let Some(mission_data) = updated_fights.get_mut(mission_sheet) {
+                                        mission_data.extend(fight_sheets.clone());
+                                    } else {
+                                        updated_fights.insert(mission_sheet.clone(), fight_sheets.iter().cloned().collect());
+                                    }
+                                }
+                            },
+                            _=> unimplemented!()
+                        }
+                    }
+                },
+                _=> unimplemented!()
+            }
+        }
+
+        println!("Updated fights: {:#?}", &updated_fights);
+
+        let mut pull_data = VersionControlPullData { fights: vec![] };
+
+        for (sheet, names) in &updated_fights {
+            if let Some(mission_fight_data) = self.google_api.read_many_from_sheet(sheet, names.iter().map(|n| [
+                format!("{}!B2:H24", n),
+                format!("{}!B27:B37", n),
+                format!("{}!D29:D37", n)
+            ]).flatten().collect(), "COLUMNS").await
+                .map_err(|e| Error::GoogleApi(Box::new(e)))? {
+                pull_data.fights.push(mission_fight_data);
+            }
+        }
+
+        println!("Pull data: {:#?}", &pull_data);
+
+        Ok(pull_data)
     }
 }
 
@@ -178,7 +243,6 @@ pub async fn sync_data_with_sheets(
     let mut commit = VersionControlCommit {
         created_at: Utc::now(),
         author: base_config.author.clone(),
-        pulled_by: vec![],
         content: vec![],
     };
 
@@ -197,12 +261,10 @@ pub async fn sync_data_with_sheets(
         commit.content.push(VersionControlContent::Fights(updated_data));
     }
 
-    let message = format!("Commit created: {:#?}", &commit);
-
     version_control.push(commit, app_manager).await?;
     
     Ok(TimelineMessage {
         timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
-        message
+        message: "Коммит успешно создан".to_string(),
     })
 }

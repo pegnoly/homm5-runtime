@@ -111,6 +111,7 @@ impl IntoSheetValidatedValue for (StatSelectionRule, StatParam) {
     }
 }
 
+#[derive(Debug)]
 pub struct AssetArmySlotSheetWrapper<'a> {
     slot: AssetArmySlotModel,
     sheet_name: String,
