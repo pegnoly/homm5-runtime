@@ -1,4 +1,4 @@
-use crate::services::version_control::{get_sheet_name, VersionControlService};
+use crate::services::version_control::{get_sheet_name, VersionControlPullData, VersionControlService};
 use editor_tools::prelude::{AssetArmySlotModel, AssetArtifactsModel, AssetUpdateType, CalculationRule, DifficultyMappedValue, DifficultyType, FightGeneratorRepo, GetAssetsRequest, OptionalArtifacts, RequiredArtifacts, SelectionType, StackGenerationRule, StackStatsRuleModel, StatParam, StatSelectionRule};
 use google_api::prelude::ValueRange;
 use google_api::utils::{FromSheetsData, IntoSheetsData};
@@ -750,28 +750,23 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                 optional: OptionalArtifacts { values: HashMap::from_iter(
                         ArtifactSlotType::iter()
                             .filter(|a| *a != ArtifactSlotType::Inventory)
-                            .filter_map(|a| {
-                                if let Some(v) = data.get(2 + (a.clone() as usize)) {
-                                    match v {
-                                        Value::String(s) => {
-                                            if s.is_empty() {
-                                                Some((a, vec![]))
-                                            } else {
-                                                Some((
-                                                    a,
-                                                    s.split(",")
-                                                        .filter_map(|i| {
-                                                            inner_number_regex.captures(i).map(|caps| caps[1].parse().unwrap())
-                                                        })
-                                                        .collect_vec(),
-                                                ))
-                                            }
-                                        }
-                                        _ => Some((a, vec![])),
-                                    }
-                                } else {
-                                    Some((a, vec![]))
-                                }
+                            .map(|a| {
+                                let result = data
+                                    .get(2 + (a.clone() as usize))
+                                    .map(|v| match v {
+                                        Value::String(s) if !s.is_empty() => s
+                                            .split(",")
+                                            .filter_map(|i| {
+                                                inner_number_regex
+                                                    .captures(i)
+                                                    .map(|caps| caps[1].parse().unwrap())
+                                            })
+                                            .collect_vec(),
+                                        _ => vec![],
+                                    })
+                                    .unwrap_or_default();
+
+                                (a, result)
                             })
                     ), },
                 powers_grow: DifficultyMappedValue::default(),
@@ -1002,4 +997,48 @@ pub async fn commit_updated_fights(
     Ok(commit_data)
 }
 
-pub async fn pull_fights(){}
+pub async fn manage_pulled_fights(fight_generator_repo: &FightGeneratorRepo, pulled_data: &VersionControlPullData) -> Result<(), Error> {
+    for chunk in &pulled_data.fights {
+        let mut stack_count = 1;
+        let stacks_chunk = chunk.first().unwrap();
+        for stack_data in stacks_chunk.values.clone().unwrap() {
+            let column = match stack_count {
+                1 => "B",
+                2 => "C",
+                3 => "D",
+                4 => "E",
+                5 => "F",
+                6 => "G",
+                7 => "H",
+                _=> unreachable!()
+            };
+            let mut stack = AssetArmySlotSheetWrapper::try_from(ValueRange {
+                values: Some(vec![stack_data.clone()]),
+                major_dimension: Some("COLUMNS".to_string()),
+                range: Some(format!("{}!{}2:{}24", stacks_chunk.range.as_ref().unwrap().split("!").collect_vec()[0], column, column))
+            })?;
+            stack.slot.number = stack_count - 1;
+            fight_generator_repo.update_stack_from_sheet(stack.slot).await?;
+            stack_count += 1;
+        }
+
+        if let Some(arts_data) = chunk.get(1) && arts_data.values.clone().is_some() {
+            let arts_data = FightAssetArtifactsDataWrapper::try_from(arts_data.clone())?;
+            let arts_values = FightAssetArtifactsValueWrapper::try_from(chunk.get(2).unwrap().clone())?;
+
+            let model = AssetArtifactsModel {
+                optional: arts_data.data.optional,
+                required: arts_data.data.required,
+                powers_grow: arts_values.data.powers_grow,
+                base_powers: arts_values.data.base_powers,
+                update_type: arts_data.data.update_type,
+                sheet_name: arts_data.data.sheet_name,
+                id: -1,
+                asset_id: -1
+            };
+            fight_generator_repo.update_artifact_asset_from_sheet(model).await?;
+        }
+    }
+
+    Ok(())
+}

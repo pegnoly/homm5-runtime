@@ -17,7 +17,7 @@ use serde_json::Value;
 use strum::Display;
 use editor_tools::prelude::{AssetArtifactsModel, FightGeneratorRepo};
 use google_api::prelude::ValueRange;
-use crate::services::fight_generator::utils::{commit_updated_fights, AssetArmySlotSheetWrapper, FightAssetArtifactsDataWrapper, FightAssetArtifactsValueWrapper};
+use crate::services::fight_generator::utils::{commit_updated_fights, manage_pulled_fights, pull_fights, AssetArmySlotSheetWrapper, FightAssetArtifactsDataWrapper, FightAssetArtifactsValueWrapper};
 
 #[derive(Debug, Serialize, Deserialize, Display, Eq, PartialEq, Hash)]
 pub enum VersionControlSimpleType {
@@ -293,50 +293,7 @@ pub async fn manage_pulled_data(
     fight_generator_repo: &FightGeneratorRepo,
     pulled_data: &VersionControlPullData,
 ) -> Result<(), Error> {
-    for chunk in &pulled_data.fights {
-        let mut stack_count = 1;
-        let stacks_chunk = chunk.first().unwrap();
-        for stack_data in stacks_chunk.values.clone().unwrap() {
-            let column = match stack_count {
-                1 => "B",
-                2 => "C",
-                3 => "D",
-                4 => "E",
-                5 => "F",
-                6 => "G",
-                7 => "H",
-                _=> unreachable!()
-            };
-            let mut stack = AssetArmySlotSheetWrapper::try_from(ValueRange {
-                values: Some(vec![stack_data.clone()]),
-                major_dimension: Some("COLUMNS".to_string()),
-                range: Some(format!("{}!{}2:{}24", stacks_chunk.range.as_ref().unwrap().split("!").collect_vec()[0], column, column))
-            })?;
-            stack.slot.number = stack_count - 1;
-            fight_generator_repo.update_stack_from_sheet(stack.slot).await?;
-            stack_count += 1;
-        }
-
-        if let Some(arts_data) = chunk.get(1) {
-            if arts_data.values.clone().is_some() {
-                let arts_data = FightAssetArtifactsDataWrapper::try_from(arts_data.clone())?;
-                let arts_values = FightAssetArtifactsValueWrapper::try_from(chunk.get(2).unwrap().clone())?;
-
-                let model = AssetArtifactsModel {
-                    optional: arts_data.data.optional,
-                    required: arts_data.data.required,
-                    powers_grow: arts_values.data.powers_grow,
-                    base_powers: arts_values.data.base_powers,
-                    update_type: arts_data.data.update_type,
-                    sheet_name: arts_data.data.sheet_name,
-                    id: -1,
-                    asset_id: -1
-                };
-                fight_generator_repo.update_artifact_asset_from_sheet(model).await?;
-            }
-        }
-    }
-
+    manage_pulled_fights(fight_generator_repo, pulled_data).await?;
     version_control.clear_sheet_stored_data(app_manager).await?;
     Ok(())
 }
