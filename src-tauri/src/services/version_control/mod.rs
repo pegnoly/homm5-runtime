@@ -12,12 +12,11 @@ use homm5_scaner::prelude::ScanerService;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use itertools::Itertools;
 use serde_json::Value;
 use strum::Display;
-use editor_tools::prelude::{AssetArtifactsModel, FightGeneratorRepo};
+use editor_tools::prelude::FightGeneratorRepo;
 use google_api::prelude::ValueRange;
-use crate::services::fight_generator::utils::{commit_updated_fights, manage_pulled_fights, pull_fights, AssetArmySlotSheetWrapper, FightAssetArtifactsDataWrapper, FightAssetArtifactsValueWrapper};
+use crate::services::fight_generator::utils::{commit_updated_fights, manage_pulled_fights};
 
 #[derive(Debug, Serialize, Deserialize, Display, Eq, PartialEq, Hash)]
 pub enum VersionControlSimpleType {
