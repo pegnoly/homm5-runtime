@@ -15,7 +15,7 @@ use std::sync::Arc;
 use itertools::Itertools;
 use serde_json::Value;
 use strum::Display;
-use editor_tools::prelude::FightGeneratorRepo;
+use editor_tools::prelude::{AssetArtifactsModel, FightGeneratorRepo};
 use google_api::prelude::ValueRange;
 use crate::services::fight_generator::utils::{commit_updated_fights, AssetArmySlotSheetWrapper, FightAssetArtifactsDataWrapper, FightAssetArtifactsValueWrapper};
 
@@ -275,8 +275,10 @@ pub async fn sync_data_with_sheets(
         commit.content.push(VersionControlContent::Fights(updated_data));
     }
 
-    version_control.push(commit, app_manager).await?;
-    version_control.clear_local_stored_data().await?;
+    if !commit.content.is_empty() {
+        version_control.push(commit, app_manager).await?;
+        version_control.clear_local_stored_data().await?;
+    }
 
     Ok(TimelineMessage {
         timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
@@ -316,10 +318,21 @@ pub async fn manage_pulled_data(
         }
 
         if let Some(arts_data) = chunk.get(1) {
-            println!("Arts data chunk: {:?}", arts_data);
-            if let Some(values) = arts_data.values.clone() {
+            if arts_data.values.clone().is_some() {
                 let arts_data = FightAssetArtifactsDataWrapper::try_from(arts_data.clone())?;
                 let arts_values = FightAssetArtifactsValueWrapper::try_from(chunk.get(2).unwrap().clone())?;
+
+                let model = AssetArtifactsModel {
+                    optional: arts_data.data.optional,
+                    required: arts_data.data.required,
+                    powers_grow: arts_values.data.powers_grow,
+                    base_powers: arts_values.data.base_powers,
+                    update_type: arts_data.data.update_type,
+                    sheet_name: arts_data.data.sheet_name,
+                    id: -1,
+                    asset_id: -1
+                };
+                fight_generator_repo.update_artifact_asset_from_sheet(model).await?;
             }
         }
     }

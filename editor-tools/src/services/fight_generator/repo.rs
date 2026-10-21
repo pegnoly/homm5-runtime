@@ -23,7 +23,7 @@ use crate::{
 use itertools::Itertools;
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, ModelTrait, PaginatorTrait, QueryFilter, SqlxSqlitePoolConnection, sqlx::SqlitePool, Condition};
 use sea_orm::prelude::Expr;
-use crate::prelude::{GetAssetsRequest, UpdateStackSpecificCreaturesPayload, UpdateStatRulesPayload};
+use crate::prelude::{AssetArtifactsModel, GetAssetsRequest, UpdateStackSpecificCreaturesPayload, UpdateStatRulesPayload};
 use crate::services::fight_generator::models::army_slot::{StackGenerationRules, StackStatsRules};
 
 pub struct FightGeneratorRepo {
@@ -538,7 +538,7 @@ impl FightGeneratorRepo {
             .filter(army_slot::Column::Number.eq(stack.number))
             .one(&self.db)
             .await? {
-            
+
             let mut model_to_update = existing_model.into_active_model();
             model_to_update.update_type = Set(stack.update_type);
             model_to_update.base_powers = Set(stack.base_powers);
@@ -571,6 +571,40 @@ impl FightGeneratorRepo {
                     rules: Set(stack.rules),
                     calculation_type: Set(stack.calculation_type),
                     selection_type: Set(stack.selection_type),
+                    ..Default::default()
+                };
+                model_to_insert.insert(&self.db).await?;
+                Ok(())
+            } else {
+                Err(EditorToolsError::Default)
+            }
+        }
+    }
+
+    pub async fn update_artifact_asset_from_sheet(&self, artifacts: AssetArtifactsModel) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = artifacts::Entity::find()
+            .filter(artifacts::Column::SheetName.eq(artifacts.sheet_name.clone())).one(&self.db).await? {
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.base_powers = Set(artifacts.base_powers);
+            model_to_update.powers_grow = Set(artifacts.powers_grow);
+            model_to_update.update_type = Set(artifacts.update_type);
+            model_to_update.optional = Set(artifacts.optional);
+            model_to_update.required = Set(artifacts.required);
+            model_to_update.update(&self.db).await?;
+            Ok(())
+        } else {
+            if let Some(asset) = asset::Entity::find()
+                .filter(asset::Column::TableName.eq(artifacts.sheet_name))
+                .one(&self.db).await? {
+
+                let model_to_insert = artifacts::ActiveModel {
+                    asset_id: Set(asset.id),
+                    sheet_name: Set(asset.table_name),
+                    update_type: Set(artifacts.update_type),
+                    base_powers: Set(artifacts.base_powers),
+                    powers_grow: Set(artifacts.powers_grow),
+                    required: Set(artifacts.required),
+                    optional: Set(artifacts.optional),
                     ..Default::default()
                 };
                 model_to_insert.insert(&self.db).await?;

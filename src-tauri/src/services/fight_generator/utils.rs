@@ -640,14 +640,14 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
 
 #[derive(Debug)]
 pub struct FightAssetArtifactsDataWrapper<'a> {
-    data: AssetArtifactsModel,
+    pub data: AssetArtifactsModel,
     sheet_name: String,
     artifacts_data: &'a [ArtifactDBModel],
 }
 
 #[derive(Debug)]
 pub struct FightAssetArtifactsValueWrapper {
-    data: AssetArtifactsModel,
+    pub data: AssetArtifactsModel,
     sheet_name: String,
 }
 
@@ -726,7 +726,7 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                 required: RequiredArtifacts {
                     ids: data
                         .first()
-                        .and_then(|v| match v {
+                        .map(|v| match v {
                             Value::String(s) => {
                                 if s.is_empty() {
                                     Some(vec![])
@@ -740,14 +740,14 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                                     )
                                 }
                             }
-                            _ => None,
+                            _ => Some(vec![]),
                         })
+                        .unwrap_or(Some(vec![]))
                         .ok_or_else(|| {
                             Error::UndefinedData("Artifacts asset required ids".to_string())
                         })?,
                 },
-                optional: OptionalArtifacts {
-                    values: HashMap::from_iter(
+                optional: OptionalArtifacts { values: HashMap::from_iter(
                         ArtifactSlotType::iter()
                             .filter(|a| *a != ArtifactSlotType::Inventory)
                             .filter_map(|a| {
@@ -767,14 +767,13 @@ impl<'a> TryFrom<ValueRange> for FightAssetArtifactsDataWrapper<'a> {
                                                 ))
                                             }
                                         }
-                                        _ => None,
+                                        _ => Some((a, vec![])),
                                     }
                                 } else {
-                                    None
+                                    Some((a, vec![]))
                                 }
-                            }),
-                    ),
-                },
+                            })
+                    ), },
                 powers_grow: DifficultyMappedValue::default(),
                 base_powers: DifficultyMappedValue::default(),
                 update_type: AssetUpdateType::default()
