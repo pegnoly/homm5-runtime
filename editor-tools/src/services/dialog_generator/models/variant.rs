@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "dialog_variants")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
-    pub dialog_id: i32,
+    pub id: Uuid,
+    pub dialog_id: Uuid,
     pub step: i32,
     pub label: String,
     pub speaker_ids: VariantSpeakerIds,
@@ -16,7 +16,7 @@ pub struct Model {
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 pub struct VariantSpeakerIds {
-    pub ids: Vec<i32>
+    pub ids: Vec<Uuid>
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
