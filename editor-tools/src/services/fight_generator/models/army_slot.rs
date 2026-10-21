@@ -70,11 +70,11 @@ pub enum SelectionType {
     #[serde(rename = "MANUAL")]
     #[strum(serialize = "MANUAL")]
     #[default]
-    Manual,
+    Manual = 1,
     #[sea_orm(string_value = "TIER_SLOT_BASED")]
     #[serde(rename = "TIER_SLOT_BASED")]
     #[strum(serialize = "TIER_SLOT_BASED")]
-    TierSlotBased,
+    TierSlotBased = 0,
 }
 
 #[derive(
@@ -98,11 +98,11 @@ pub enum CalculationRule {
     #[serde(rename = "RAW")]
     #[strum(serialize = "RAW")]
     #[default]
-    Raw,
+    Raw = 1,
     #[sea_orm(string_value = "POWER_BASED")]
     #[serde(rename = "POWER_BASED")]
     #[strum(serialize = "POWER_BASED")]
-    PowerBased,
+    PowerBased = 0,
 }
 
 #[derive(

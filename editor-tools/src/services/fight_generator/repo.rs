@@ -531,4 +531,53 @@ impl FightGeneratorRepo {
             .count(&self.db)
             .await?)
     }
+
+    pub async fn update_stack_from_sheet(&self, stack: AssetArmySlotModel) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = army_slot::Entity::find()
+            .filter(army_slot::Column::SheetName.eq(stack.sheet_name.clone()))
+            .filter(army_slot::Column::Number.eq(stack.number))
+            .one(&self.db)
+            .await? {
+            
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.update_type = Set(stack.update_type);
+            model_to_update.base_powers = Set(stack.base_powers);
+            model_to_update.powers_grow = Set(stack.powers_grow);
+            model_to_update.rules = Set(stack.rules);
+            model_to_update.selection_type = Set(stack.selection_type);
+            model_to_update.stat_rules = Set(stack.stat_rules);
+            model_to_update.calculation_type = Set(stack.calculation_type);
+            model_to_update.tiers = Set(stack.tiers);
+            model_to_update.towns = Set(stack.towns);
+            model_to_update.specific_count = Set(stack.specific_count);
+            model_to_update.specific_creatures = Set(stack.specific_creatures);
+            model_to_update.update(&self.db).await?;
+            Ok(())
+        } else {
+            if let Some(asset) = asset::Entity::find().filter(asset::Column::TableName.eq(stack.sheet_name))
+                .one(&self.db).await? {
+                let model_to_insert = army_slot::ActiveModel {
+                    asset_id: Set(asset.id),
+                    sheet_name: Set(asset.table_name),
+                    number: Set(stack.number),
+                    update_type: Set(stack.update_type),
+                    base_powers: Set(stack.base_powers),
+                    powers_grow: Set(stack.powers_grow),
+                    specific_creatures: Set(stack.specific_creatures),
+                    towns: Set(stack.towns),
+                    tiers: Set(stack.tiers),
+                    stat_rules: Set(stack.stat_rules),
+                    specific_count: Set(stack.specific_count),
+                    rules: Set(stack.rules),
+                    calculation_type: Set(stack.calculation_type),
+                    selection_type: Set(stack.selection_type),
+                    ..Default::default()
+                };
+                model_to_insert.insert(&self.db).await?;
+                Ok(())
+            } else {
+                Err(EditorToolsError::Default)
+            }
+        }
+    }
 }

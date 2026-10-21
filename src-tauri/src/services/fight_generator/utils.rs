@@ -113,7 +113,7 @@ impl IntoSheetValidatedValue for (StatSelectionRule, StatParam) {
 
 #[derive(Debug)]
 pub struct AssetArmySlotSheetWrapper<'a> {
-    slot: AssetArmySlotModel,
+    pub slot: AssetArmySlotModel,
     sheet_name: String,
     creatures_data: &'a [CreatureDBModel],
 }
@@ -377,17 +377,24 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
             };
             slot.specific_creatures.ids = data
                 .last()
-                .and_then(|v| match v {
-                    Value::String(s) => Some(
-                        s.split(",")
-                            .filter_map(|c| {
-                                inner_number_regex.captures(c).map(|caps| caps[1].parse().unwrap())
-                            })
-                            .collect_vec(),
-                    ),
-                    _ => None,
+                .map(|v| match v {
+                    Value::String(s) => {
+                        if s.is_empty() {
+                            Some(vec![])
+                        } else {
+                            Some(
+                                s.split(",")
+                                    .filter_map(|c| {
+                                        inner_number_regex.captures(c).map(|caps| caps[1].parse().unwrap())
+                                    })
+                                    .collect_vec(),
+                            )
+                        }
+                    },
+                    _ => Some(vec![]),
                 })
-                .ok_or_else(|| Error::UndefinedData("Army slot creatures ids".to_string()))?;
+                .unwrap_or(Some(vec![]))
+                .ok_or_else(|| Error::UndefinedData("Army slot specific creatures".to_string()))?;
         } else {
             slot.specific_count = DifficultyMappedValue::default();
             slot.base_powers = DifficultyMappedValue {
@@ -444,50 +451,71 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
             };
             slot.towns.towns = data
                 .get(16)
-                .and_then(|v| match v {
-                    Value::String(s) => Some(
-                        s.split(",")
-                            .filter_map(|c| {
-                                inner_number_regex.captures(c).map(|caps| TownExtended::from_repr(caps[1].parse().unwrap()).unwrap())
-                            })
-                            .collect_vec(),
-                    ),
-                    _ => None,
+                .map(|v| match v {
+                    Value::String(s) => {
+                        if s.is_empty() {
+                            Some(vec![])
+                        } else {
+                            Some(
+                                s.split(",")
+                                    .filter_map(|c| {
+                                        inner_number_regex.captures(c).map(|caps| TownExtended::from_repr(caps[1].parse().unwrap()).unwrap())
+                                    })
+                                    .collect_vec(),
+                            )
+                        }
+                    },
+                    _ => Some(vec![]),
                 })
+                .unwrap_or(Some(vec![]))
                 .ok_or_else(|| Error::UndefinedData("Army slot towns".to_string()))?;
             slot.tiers.tiers = data
                 .get(17)
-                .and_then(|v| match v {
-                    Value::String(s) => Some(
-                        s.split(",")
-                            .filter_map(|c| {
-                                inner_number_regex.captures(c).map(|caps| caps[1].parse().unwrap())
-                            })
-                            .collect_vec(),
-                    ),
+                .map(|v| match v {
+                    Value::String(s) => {
+                        if s.is_empty() {
+                            Some(vec![])
+                        } else {
+                            Some(
+                                s.split(",")
+                                    .filter_map(|c| {
+                                        inner_number_regex.captures(c).map(|caps| caps[1].parse().unwrap())
+                                    })
+                                    .collect_vec(),
+                            )
+                        }
+                    },
                     _ => None,
                 })
+                .unwrap_or(Some(vec![]))
                 .ok_or_else(|| Error::UndefinedData("Army slot tiers".to_string()))?;
             slot.rules.rules = data
                 .get(18)
-                .and_then(|v| match v {
-                    Value::String(s) => Some(
-                        s.split(",")
-                            .filter_map(|c| {
-                                inner_number_regex.captures(c).map(|caps| StackGenerationRule::from_repr(caps[1].parse().unwrap())
-                                            .unwrap())
-                            })
-                            .collect_vec(),
-                    ),
-                    _ => None,
-                })
-                .ok_or_else(|| Error::UndefinedData("Army slot rules".to_string()))?;
-            slot.stat_rules.rules = data
-                .get(19)
-                .and_then(|v| match v {
+                .map(|v| match v {
                     Value::String(s) => {
                         if s.is_empty() {
-                            None
+                            Some(vec![])
+                        } else {
+                            Some(
+                                s.split(",")
+                                    .filter_map(|c| {
+                                        inner_number_regex.captures(c).map(|caps| StackGenerationRule::from_repr(caps[1].parse().unwrap())
+                                            .unwrap())
+                                    })
+                                    .collect_vec(),
+                            )
+                        }
+                    },
+                    _ => None,
+                })
+                .unwrap_or(Some(vec![]))
+                .ok_or_else(|| Error::UndefinedData("Army slot generation rules".to_string()))?;
+            slot.stat_rules.rules = data
+                .get(19)
+                .map(|v| match v {
+                    Value::String(s) => {
+                        if s.is_empty() {
+                            Some(vec![])
                         } else {
                             Some(
                                 s.split(",")
@@ -546,7 +574,8 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
                     }
                     _ => None,
                 })
-                .ok_or_else(|| Error::UndefinedData("Army slot stats rules".to_string()))?;
+                .unwrap_or(Some(vec![]))
+                .ok_or_else(|| Error::UndefinedData("Army slot stat rules".to_string()))?;
         };
         slot.powers_grow = if slot.update_type == AssetUpdateType::Static {
             DifficultyMappedValue::default()

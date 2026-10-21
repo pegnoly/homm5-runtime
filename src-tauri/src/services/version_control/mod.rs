@@ -305,11 +305,13 @@ pub async fn manage_pulled_data(
                 7 => "H",
                 _=> unreachable!()
             };
-            let stack = AssetArmySlotSheetWrapper::try_from(ValueRange {
+            let mut stack = AssetArmySlotSheetWrapper::try_from(ValueRange {
                 values: Some(vec![stack_data.clone()]),
                 major_dimension: Some("COLUMNS".to_string()),
                 range: Some(format!("{}!{}2:{}24", stacks_chunk.range.as_ref().unwrap().split("!").collect_vec()[0], column, column))
             })?;
+            stack.slot.number = stack_count - 1;
+            fight_generator_repo.update_stack_from_sheet(stack.slot).await?;
             stack_count += 1;
         }
 
