@@ -10,7 +10,7 @@ use google_sheets4::{
     Sheets,
     api::{DimensionProperties, RowData, ValueRange}
 };
-use google_sheets4::api::{BatchUpdateValuesRequest, Spreadsheet};
+use google_sheets4::api::{BatchUpdateValuesRequest, ClearValuesRequest, Spreadsheet};
 use google_sheets4::hyper_rustls::HttpsConnector;
 use google_sheets4::hyper_util::client::legacy::connect::HttpConnector;
 use itertools::Itertools;
@@ -274,6 +274,24 @@ impl GoogleApiService {
         } else {
             vec![]
         })
+    }
+
+    pub async fn clear_all_rows(
+        &self,
+        spreadsheet_id: &str,
+        sheet_name: &str,
+        column: &str
+    ) -> Result<(), Error> {
+        let hub_locked = self.sheets_hub.lock().await;
+
+        hub_locked
+            .spreadsheets()
+            .values_clear(ClearValuesRequest::default(), spreadsheet_id, &format!("{sheet_name}!A:{column}"))
+            .doit()
+            .await
+            .map_err(|e| Error::Api(Box::new(e)))?;
+
+        Ok(())
     }
 
     pub async fn upload_validation_data(&self, spreadsheet_id: &str, data: ValueRange) -> Result<(), Error> {

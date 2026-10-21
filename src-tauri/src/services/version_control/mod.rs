@@ -12,11 +12,12 @@ use homm5_scaner::prelude::ScanerService;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use itertools::Itertools;
 use serde_json::Value;
 use strum::Display;
 use editor_tools::prelude::FightGeneratorRepo;
 use google_api::prelude::ValueRange;
-use crate::services::fight_generator::utils::commit_updated_fights;
+use crate::services::fight_generator::utils::{commit_updated_fights, AssetArmySlotSheetWrapper, FightAssetArtifactsDataWrapper, FightAssetArtifactsValueWrapper};
 
 #[derive(Debug, Serialize, Deserialize, Display, Eq, PartialEq, Hash)]
 pub enum VersionControlSimpleType {
@@ -54,7 +55,7 @@ impl Into<ValueRange> for VersionControlCommit {
             values: Some(vec![vec![
                 Value::String(self.created_at.to_string()),
                 Value::String(self.author),
-                Value::String(serde_json::to_string_pretty(&self.content).unwrap())
+                Value::String(serde_json::to_string(&self.content).unwrap())
             ]]),
             ..Default::default()
         }
@@ -177,8 +178,6 @@ impl VersionControlService {
             "C"
         ).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
 
-        println!("Commits data pulled: {:#?}", &commits_data);
-
         let mut updated_fights: HashMap<String, HashSet<String>> = HashMap::new();
 
         for row in commits_data {
@@ -206,24 +205,39 @@ impl VersionControlService {
             }
         }
 
-        println!("Updated fights: {:#?}", &updated_fights);
-
         let mut pull_data = VersionControlPullData { fights: vec![] };
 
         for (sheet, names) in &updated_fights {
-            if let Some(mission_fight_data) = self.google_api.read_many_from_sheet(sheet, names.iter().map(|n| [
+            if let Some(mission_fight_data) = self.google_api.read_many_from_sheet(sheet, names.iter().flat_map(|n| [
                 format!("{}!B2:H24", n),
                 format!("{}!B27:B37", n),
                 format!("{}!D29:D37", n)
-            ]).flatten().collect(), "COLUMNS").await
+            ]).collect(), "COLUMNS").await
                 .map_err(|e| Error::GoogleApi(Box::new(e)))? {
                 pull_data.fights.push(mission_fight_data);
             }
         }
 
-        println!("Pull data: {:#?}", &pull_data);
-
         Ok(pull_data)
+    }
+
+    pub async fn clear_local_stored_data(&mut self) -> Result<(), Error> {
+        self.requests.clear();
+        self.updated_fights.clear();
+        self.updated_creatures.clear();
+        self.updated_artifacts.clear();
+        Ok(())
+    }
+
+    pub async fn clear_sheet_stored_data(&mut self, app_manager: &LocalAppManager) -> Result<(), Error> {
+        let global_config = app_manager.base_config.read().await;
+        let profile = app_manager.current_profile_data.read().await;
+        let commits_sheet_model = profile.global_sheets.get(&VersionControlSimpleType::Commits).unwrap();
+        self.google_api
+            .clear_all_rows(&commits_sheet_model.spreadsheet_id, &global_config.author, "C")
+            .await
+            .map_err(|e| Error::GoogleApi(Box::new(e)))?;
+        Ok(())
     }
 }
 
@@ -262,9 +276,52 @@ pub async fn sync_data_with_sheets(
     }
 
     version_control.push(commit, app_manager).await?;
-    
+    version_control.clear_local_stored_data().await?;
+
     Ok(TimelineMessage {
         timestamp: Local::now().format("%d:%m:%Y - %H:%M").to_string(),
         message: "Коммит успешно создан".to_string(),
     })
+}
+
+pub async fn manage_pulled_data(
+    version_control: &mut VersionControlService,
+    app_manager: &LocalAppManager,
+    scaner_service: &ScanerService,
+    fight_generator_repo: &FightGeneratorRepo,
+    pulled_data: &VersionControlPullData,
+) -> Result<(), Error> {
+    for chunk in &pulled_data.fights {
+        let mut stack_count = 1;
+        let stacks_chunk = chunk.first().unwrap();
+        for stack_data in stacks_chunk.values.clone().unwrap() {
+            let column = match stack_count {
+                1 => "B",
+                2 => "C",
+                3 => "D",
+                4 => "E",
+                5 => "F",
+                6 => "G",
+                7 => "H",
+                _=> unreachable!()
+            };
+            let stack = AssetArmySlotSheetWrapper::try_from(ValueRange {
+                values: Some(vec![stack_data.clone()]),
+                major_dimension: Some("COLUMNS".to_string()),
+                range: Some(format!("{}!{}2:{}24", stacks_chunk.range.as_ref().unwrap().split("!").collect_vec()[0], column, column))
+            })?;
+            stack_count += 1;
+        }
+
+        if let Some(arts_data) = chunk.get(1) {
+            println!("Arts data chunk: {:?}", arts_data);
+            if let Some(values) = arts_data.values.clone() {
+                let arts_data = FightAssetArtifactsDataWrapper::try_from(arts_data.clone())?;
+                let arts_values = FightAssetArtifactsValueWrapper::try_from(chunk.get(2).unwrap().clone())?;
+            }
+        }
+    }
+
+    version_control.clear_sheet_stored_data(app_manager).await?;
+    Ok(())
 }

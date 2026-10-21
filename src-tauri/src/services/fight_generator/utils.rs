@@ -609,12 +609,14 @@ impl<'a> TryFrom<ValueRange> for AssetArmySlotSheetWrapper<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct FightAssetArtifactsDataWrapper<'a> {
     data: AssetArtifactsModel,
     sheet_name: String,
     artifacts_data: &'a [ArtifactDBModel],
 }
 
+#[derive(Debug)]
 pub struct FightAssetArtifactsValueWrapper {
     data: AssetArtifactsModel,
     sheet_name: String,
