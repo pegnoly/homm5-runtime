@@ -13,7 +13,7 @@ function DialogGeneratorGlobals() {
                 disabled={currentDialogId == undefined}
                 radius={0}
             >
-                Generate current dialog
+                Сгенерировать текущий диалог
             </Button>
         </Stack>
     )

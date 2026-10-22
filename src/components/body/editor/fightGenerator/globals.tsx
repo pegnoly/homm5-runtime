@@ -14,13 +14,13 @@ function FightGeneratorGlobals() {
     <Stack>
         {
             assetName == undefined ?
-            <Text c="red" style={{fontSize: 14}}>Asset not selected</Text> :
+            <Text c="red" style={{fontSize: 14}}>Нет активного ассета</Text> :
             <div style={{display: 'flex', flexDirection: 'row'}}>
-                <Text style={{fontWeight: 'bold', fontSize: 14}} c="dark">Current asset: </Text>
+                <Text style={{fontWeight: 'bold', fontSize: 14}} c="dark">Активный ассет: </Text>
                 <Text style={{fontSize: 14}}>{assetName}</Text>
             </div>
         }
-        <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Generate script for asset</Button>
+        <Button onClick={startGeneration} radius={0} size="xs" disabled={assetId == undefined}>Сгенерировать скрипт</Button>
     </Stack>
     )
 }
