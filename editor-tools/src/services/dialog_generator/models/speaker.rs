@@ -34,7 +34,7 @@ pub enum SpeakerType {
 #[sea_orm(table_name = "speakers")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: Uuid,
     pub name: String,
     pub script_name: String,
     pub color: String,

@@ -2,7 +2,7 @@ use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait,
     IntoActiveModel, QueryFilter, SqlxSqlitePoolConnection, sqlx::SqlitePool,
 };
-
+use uuid::Uuid;
 use crate::{
     error::EditorToolsError,
     prelude::{
@@ -60,7 +60,6 @@ impl DialogGeneratorRepo {
             speakers_ids: Set(SpeakersIds {
                 ids: payload.speakers,
             }),
-            was_generated: Set(false),
             ..Default::default()
         };
         Ok(model_to_insert.insert(&self.db).await?)
@@ -81,7 +80,7 @@ impl DialogGeneratorRepo {
         Ok(model_to_insert.insert(&self.db).await?)
     }
 
-    pub async fn get_dialog(&self, id: i32) -> Result<Option<DialogModel>, EditorToolsError> {
+    pub async fn get_dialog(&self, id: Uuid) -> Result<Option<DialogModel>, EditorToolsError> {
         Ok(dialog::Entity::find_by_id(id).one(&self.db).await?)
     }
 
@@ -117,8 +116,8 @@ impl DialogGeneratorRepo {
 
     pub async fn update_dialog_speakers(
         &self,
-        id: i32,
-        speaker_id: i32,
+        id: Uuid,
+        speaker_id: Uuid,
     ) -> Result<(), EditorToolsError> {
         if let Some(existing_dialog) = dialog::Entity::find_by_id(id).one(&self.db).await? {
             let mut model_to_update = existing_dialog.clone().into_active_model();
@@ -162,7 +161,7 @@ impl DialogGeneratorRepo {
 
     pub async fn get_speakers_by_ids(
         &self,
-        ids: Vec<i32>,
+        ids: Vec<Uuid>,
     ) -> Result<Vec<SpeakerModel>, EditorToolsError> {
         Ok(speaker::Entity::find()
             .filter(speaker::Column::Id.is_in(ids))
@@ -172,20 +171,11 @@ impl DialogGeneratorRepo {
 
     pub async fn get_all_variants_for_dialog(
         &self,
-        id: i32,
+        id: Uuid,
     ) -> Result<Vec<DialogVariantModel>, EditorToolsError> {
         Ok(variant::Entity::find()
             .filter(variant::Column::DialogId.eq(id))
             .all(&self.db)
             .await?)
-    }
-
-    pub async fn set_dialog_was_generated(&self, id: i32) -> Result<(), EditorToolsError> {
-        if let Some(existing_dialog) = dialog::Entity::find_by_id(id).one(&self.db).await? {
-            let mut model_to_update = existing_dialog.into_active_model();
-            model_to_update.was_generated = Set(true);
-            model_to_update.update(&self.db).await?;
-        }
-        Ok(())
     }
 }
