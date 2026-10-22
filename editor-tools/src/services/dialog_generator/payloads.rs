@@ -1,4 +1,3 @@
-use uuid::Uuid;
 use crate::services::dialog_generator::models::speaker::SpeakerType;
 
 pub struct CreateDialogPayload {
@@ -6,7 +5,7 @@ pub struct CreateDialogPayload {
     pub name: String,
     pub script_name: String,
     pub directory: String,
-    pub speakers: Vec<Uuid>,
+    pub speakers: Vec<i32>,
 }
 
 pub struct CreateSpeakerPayload {
@@ -19,24 +18,24 @@ pub struct CreateSpeakerPayload {
 
 #[derive(Debug)]
 pub struct GetDialogVariantPayload {
-    pub dialog_id: Uuid,
+    pub dialog_id: i32,
     pub step: i32,
     pub label: String,
 }
 
 pub struct UpdateLabelsPayload {
-    pub dialog_id: Uuid,
+    pub dialog_id: i32,
     pub labels: Vec<String>,
 }
 
 pub struct CreateDialogVariantPayload {
-    pub dialog_id: Uuid,
+    pub dialog_id: i32,
     pub step: i32,
     pub label: String,
 }
 
 pub struct SaveVariantPayload {
-    pub id: Uuid,
+    pub id: i32,
     pub text: String,
-    pub speakers: Vec<Uuid>,
+    pub speakers: Vec<i32>,
 }

@@ -5,19 +5,20 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "dialogs")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: Uuid,
+    pub id: i32,
     pub mission_id: i32,
     pub name: String,
     pub script_name: String,
     pub directory: String,
     pub speakers_ids: SpeakersIds,
-    pub labels: Labels
+    pub labels: Labels,
+    pub was_generated: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
 
 pub struct SpeakersIds {
-    pub ids: Vec<Uuid>,
+    pub ids: Vec<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromJsonQueryResult, PartialEq, Eq)]
