@@ -622,7 +622,7 @@ pub async fn generate_current_hero_script(
         ))?;
         let mut script = format!(
             "
-while not (UNIT_COUNT_GENERATION_MODE_POWER_BASED and UNIT_COUNT_GENERATION_MODE_RAW and Iterator and GeneratedCombat) do
+while not (POWER_BASED and RAW and Iterator and GeneratedCombat) do
     sleep()
 end
 
@@ -674,7 +674,8 @@ end
                 army_generation_rules_script += &format!(
                     "\t\t[{stack_count}] = function ()
             local id = Random.FromTable({{{creatures_list}}})
-            local result = Creature(id)
+            ---@type Creature
+            local result = CREATURES_DATA[id]
             return result
         end,\n"
                 );
@@ -758,10 +759,12 @@ end
 
                     getter_function += &format!(
                         r#"
-                .{}(function(creature)
-                    {}
-                    return result
-                end)
+                    .{}(
+                    ---@param creature Creature
+                    function(creature)
+                        {}
+                        return result
+                    end)
             return id"#,
                         if stat_element.rule == StatSelectionRule::MaxBy {
                             "MaxBy"
@@ -782,14 +785,14 @@ end
         // artifacts script
         if let Some(artifacts_asset) = fight_generator_repo.get_artifacts_model(asset_id).await? {
             script += &format!(
-                "\trequired_artifacts = Iterator({{{}}}).Map(function(a) local result = Artifact(a) return result end).Collect(),\n",
+                "\trequired_artifacts = Iterator({{{}}}).Map(function(a) local result = ARTIFACTS_DATA[a] return result end).Collect(),\n",
                 artifacts_asset.required.ids.iter().join(",")
             );
             script += "\toptional_artifacts = {\n";
             for (slot, ids) in artifacts_asset.optional.values {
                 if !ids.is_empty() {
                     script += &format!(
-                        "\t\t[{}] = Iterator({{{}}}).Map(function(a) local result = Artifact(a) return result end).Collect(),\n",
+                        "\t\t[{}] = Iterator({{{}}}).Map(function(a) local result = ARTIFACTS_DATA[a] return result end).Collect(),\n",
                         &slot,
                         ids.iter().join(", ")
                     );
