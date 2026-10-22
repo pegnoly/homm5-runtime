@@ -1,4 +1,5 @@
 use std::{fs::File, io::Write, path::PathBuf};
+use convert_case::{Case, Casing};
 use editor_tools::prelude::QuestProgressType;
 use homm5_types::{common::FileRef, quest::Quest};
 use crate::error::MapModifierError;
@@ -202,39 +203,87 @@ impl GenerateBoilerplate for QuestCreationRequest {
         self.generate_progresses(&mut quest, &progresses_texts_dir.to_string_lossy().to_string(), &map_local_path)?;
 
         let script_path = self.path.join("script.lua");
-
+        let p_name = self.script_name.to_case(Case::Pascal);
         if !script_path.exists() {
         let script_boilerplate = format!("
-c{}m{}_{} = {{
-    name = \"{}\",
-    path = {{
-        main = \"{}\",
-        text = \"{}\",
-        dialog = \"{}\"
-    }},
+---@alias {}UpdateSource
 
-    Load = 
-    function()
-        while not Quest and Quest.Names do 
-            sleep()
-        end
-        Quest.Names[\"{}\"] = \"{}\"
-    end,
+---@class __{}StartContext: QuestStartContext
 
-    Init = 
-    function ()
+---@class __{}UpdateContext: QuestUpdateContext
+---@field source {}UpdateSource
+
+---@class __{}CompleteContext: QuestCompleteContext
+
+---@class __{}FailContext: QuestFailContext
+
+---@class __{}: QuestBase
+---@field Start: fun(self, context: __{}StartContext)
+---@field Update: fun(self, context: __{}UpdateContext)
+---@field Complete: fun(self, context: __{}CompleteContext)
+---@field Fail: fun(self, context: __{}FailContext)
+
+---@return __{}
+function __{}()
+    local _quest = QuestBase({{
+        id = \"{}\",
+        name_path = \"{}\",
+        text_path = \"{}\"
+    }}) --[[@as __{}]]
+
+    function _quest:Init()
 
     end
-}}", 
-            self.campaign_number, 
-            self.mission_number, 
-            self.script_name.to_lowercase(), 
+
+    ---@param context __{}StartContext
+    function _quest:Start(context)
+
+    end
+
+    ---@param context __{}UpdateContext
+    function _quest:Update(context)
+
+    end
+
+    ---@param context __{}CompleteContext
+    function _quest:Complete(context)
+
+    end
+
+    ---@param context __{}FailContext
+    function _quest:Fail(context)
+
+    end
+
+    return _quest
+end
+
+{} = __{}()
+
+__end_import()",
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
             self.script_name,
-            self.path.to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
+            self.path.join("name.txt").to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
             texts_path.to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
-            dialogs_path.to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/"),
-            self.script_name,
-            self.path.join("name.txt").to_str().unwrap().replace(&additional_data.unwrap().mod_path, "").replace("\\", "/")
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name,
+            &p_name
         );
 
             let mut script_file = File::create(self.path.join("script.lua"))?;

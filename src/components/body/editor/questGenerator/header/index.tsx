@@ -21,7 +21,6 @@ function QuestGeneratorHeader() {
 
     const { data } = useQuestsData(currentMapId!);
     if (data != undefined) {
-        console.log("Quests loaded: ", data)
         actions.loadQuests(data);
     }
 

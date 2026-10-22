@@ -38,7 +38,7 @@ function QuestCreator() {
     const [directory, setDirectory] = useState<string | undefined>(undefined);
 
     async function pickDirectory() {
-        invoke("pick_quest_directory", {initial: true})
+        await invoke("pick_quest_directory", {initial: true})
     }
 
     listen<string>("quest_directory_picked", (event) => {
@@ -59,29 +59,29 @@ function QuestCreator() {
 
     return (
     <>
-        <Button radius={0} onClick={open}>Create new quest</Button>
+        <Button radius={0} onClick={open}>Создать квест</Button>
         <ModalRoot opened={opened} onClose={close} centered>
             <ModalOverlay/>
             <ModalContent>
                 <ModalHeader>
-                    <ModalTitle>Quest creation</ModalTitle>
+                    <ModalTitle>Создание квеста</ModalTitle>
                     <ModalCloseButton/>
                 </ModalHeader>
                 <ModalBody>
                     <Stack>
                         <TextInput
-                            label="Quest name"
-                            placeholder="Enter name"
+                            label="Имя квеста"
+                            placeholder="Актуально только в программе"
                             value={name}
                             onChange={(e) => setName(e.currentTarget.value)}
                         />
                         <TextInput
-                            label="Quest script name"
-                            placeholder="Enter name"
+                            label="Скриптовое имя квеста"
+                            placeholder="Используйте CAPITAL_SNAKE_CASE"
                             value={scriptName}
                             onChange={(e) => setScriptName(e.currentTarget.value)}
                         />
-                        <Button radius={0} onClick={pickDirectory}>Pick directory of quest</Button>
+                        <Button radius={0} onClick={pickDirectory}>Выбрать папку квеста</Button>
                         <Tooltip label={directory}>
                             <Text lineClamp={1}>{directory}</Text>
                         </Tooltip>
@@ -90,7 +90,7 @@ function QuestCreator() {
                                 onClick={() => mutation.mutate({name: name!, scriptName: scriptName!, directory: directory!})} 
                                 radius={0} 
                                 type="submit"
-                            >Create</Button>
+                            >Создать</Button>
                         </Group>
                     </Stack>
                 </ModalBody>

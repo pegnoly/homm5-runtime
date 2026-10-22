@@ -118,7 +118,7 @@ function CurrentProgress() {
                     <Button
                         size="xl" radius={0}
                         onClick={() => createProgressMutation.mutate({ questId: currentQuestId!, number: 0, progressType: { type: "Default", data: "" }})}
-                    >Create initial progress</Button>
+                    >Создать нулевой прогресс</Button>
                 </div> :
                 <div
                     style={{
@@ -132,7 +132,7 @@ function CurrentProgress() {
                     <div style={{paddingLeft: '10%', paddingRight: '10%'}}>
                         <Stack>
                             <Group>
-                                <Text>{`Current progress: ${currentProgressNumber}`}</Text>
+                                <Text>{`Текущий прогресс: ${currentProgressNumber}`}</Text>
                                 <ButtonGroup>
                                     <Button
                                         size="xs"
@@ -140,18 +140,18 @@ function CurrentProgress() {
                                         radius={0}
                                         bg="cyan"
                                         onClick={() => actions.setCurrentProgressNumber(currentProgressNumber! - 1)}
-                                    >Previous progress</Button>
+                                    >Предыдущий</Button>
                                     <Button
                                         size="xs"
                                         radius={0}
                                         bg="grape"
                                         onClick={() => actions.setCurrentProgressNumber(currentProgressNumber! + 1)}
-                                    >Next progress</Button>
+                                    >Следующий</Button>
                                 </ButtonGroup>
                                 <SegmentedControl
                                     data={[
-                                        { value: ProgressType.Default, label: "Default"},
-                                        { value: ProgressType.OneOf, label: "OneOf"}
+                                        { value: ProgressType.Default, label: "Стандартный"},
+                                        { value: ProgressType.OneOf, label: "x из N"}
                                     ]}
                                     onChange={(e) => setCurrentProgressType(e as ProgressType)}
                                     value={currentProgressType?.toString()}>
@@ -161,7 +161,7 @@ function CurrentProgress() {
                                 }
                             </Group>
                             <Checkbox
-                                label="Concatenate with previous?"
+                                label="Отображать после выполнения?"
                                 labelPosition="left"
                                 checked={currentProgressConcatenate}
                                 onChange={(e) => actions.setCurrentProgressConcatenate(e.currentTarget.checked)}
@@ -173,7 +173,7 @@ function CurrentProgress() {
                                     disabled={currentProgressType == ProgressType.Default}
                                     onClick={() => insertTextAtCaret("[current_value]")}
                                 >
-                                    Add current oneof
+                                    Добавить метку текущего "x из N"
                                 </Button>
                                 <Button
                                     bg="cyan"
@@ -182,7 +182,7 @@ function CurrentProgress() {
                                     disabled={currentProgressType == ProgressType.Default}
                                     onClick={() => insertTextAtCaret("[values_count]")}
                                 >
-                                    Add max oneof
+                                    Добавить метку максимального "x из N"
                                 </Button>
                             </ButtonGroup>
                             <Textarea
@@ -201,7 +201,7 @@ function CurrentProgress() {
                             <Button
                                 radius={0}
                                 onClick={() => saveProgressMutation.mutate()}
-                            >Save progress</Button>
+                            >Сохранить прогресс</Button>
                         </Stack>
                     </div>
                 </div>
@@ -243,14 +243,14 @@ function OneOfProgressRenderer() {
             <NumberInput
                 size="xs"
                 radius={0}
-                label="Start value"
+                label="Начальное значение"
                 value={currentProgressOneOf!.start_value}
                 onChange={(e) => actions.setCurrentProgressOneOf({...currentProgressOneOf!, start_value: e as number})}
             />
             <NumberInput
                 size="xs"
                 radius={0}
-                label="Count"
+                label="Всего"
                 value={currentProgressOneOf!.count}
                 onChange={(e) => actions.setCurrentProgressOneOf({...currentProgressOneOf!, count: e as number})}
             />

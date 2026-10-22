@@ -36,13 +36,13 @@ function QuestDescription() {
             <Textarea
                 rows={10}
                 disabled={!editable}
-                label="Quest description"
+                label="Описание квеста"
                 value={desc}
                 onChange={(e) => setDesc(e.currentTarget.value)}
             />
             <Group justify="end">
                 <div hidden={editable}>
-                    <Button onClick={() => setEditable(true)} radius={0} size="xs">Edit desc</Button>
+                    <Button onClick={() => setEditable(true)} radius={0} size="xs">Редактировать</Button>
                 </div>
                 <div hidden={!editable}>
                     <Button 
@@ -52,7 +52,7 @@ function QuestDescription() {
                             setEditable(false);
                             mutation.mutate({desc: desc!, questId: currentId!});
                         }}
-                    >Save desc</Button>
+                    >Сохранить</Button>
                 </div>
             </Group>
         </>

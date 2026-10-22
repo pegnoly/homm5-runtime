@@ -16,12 +16,12 @@ function QuestGeneratorGlobals() {
             radius={0} 
             size="xs"
             onClick={addToQueue}
-        >Add quest to queue</Button>
+        >Добавить квест в очередь</Button>
         <Button
             radius={0}
             size="xs"
             onClick={() => invoke("apply_modifications")}
-        >Apply modifications
+        >Применить изменения к карте
         </Button>
     </Stack>
     )

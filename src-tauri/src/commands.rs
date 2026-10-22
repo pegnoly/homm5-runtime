@@ -57,8 +57,8 @@ pub async fn run_game(
             })
         })?
     }
-    let mut version_control_locked = version_control.lock().await;
-    sync_data_with_sheets(&app_manager, &mut version_control_locked, &scaner_service, &fight_generator_repo).await?;
+    // let mut version_control_locked = version_control.lock().await;
+    // sync_data_with_sheets(&app_manager, &mut version_control_locked, &scaner_service, &fight_generator_repo).await?;
     runtime_runner.run();
     Ok(())
 }

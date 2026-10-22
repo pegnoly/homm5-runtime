@@ -81,14 +81,14 @@ function QuestGeneratorDataBlock() {
         }}
     >
         <Stack>
-            <EditableProperty 
-                label="Quest name"
+            <EditableProperty
+                label="Имя квеста"
                 type="text"
                 initialValue={currentName!} 
                 onSave={(value) => updateNameMutation.mutate({questId: currentId!, name: value as string})}
             />
             <EditableProperty 
-                label="Quest script name"
+                label="Скриптовое имя квеста"
                 type="text"
                 initialValue={currentScriptName!} 
                 onSave={(value) => updateScriptNameMutation.mutate({questId: currentId!, scriptName: value as string})}
@@ -107,12 +107,12 @@ function QuestGeneratorDataBlock() {
             }
             <Group justify="space-between">
                 <Checkbox 
-                    label="Is active quest" 
+                    label="Изначально активный квест?"
                     checked={isActive}
                     onChange={(e) => updateIsActiveMutation.mutate({questId: currentId!, isActive: e.currentTarget.checked})}
                 />
                 <Checkbox 
-                    label="Is secondary quest"
+                    label="Второстепенный квест?"
                     checked={isSecondary}
                     onChange={(e) => updateIsSecondaryMutation.mutate({questId: currentId!, isSecondary: e.currentTarget.checked})}
                 />

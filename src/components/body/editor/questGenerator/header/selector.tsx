@@ -22,8 +22,8 @@ function QuestSelector() {
 
     return (
     <Select
-        label="Load existing quest for current map"
-        placeholder="Select quest"
+        label="Загрузить существующий квест активной карты"
+        placeholder="Выбрать"
         value={questId?.toString()}
         onChange={(value) => mutation.mutate(parseInt(value!))}
         data={quests?.map(q => ({

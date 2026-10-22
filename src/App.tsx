@@ -11,7 +11,7 @@ function App() {
     ]));
 
     useEffect(() => {
-        pullDataFromSheets();
+        // pullDataFromSheets();
         loadArtifactModels();
         loadCreatureModels();
         loadAbilityModels();
@@ -38,9 +38,9 @@ function App() {
             .then((values) => setSpells(values));
     }
 
-    const pullDataFromSheets = async () => {
-        await invoke("pull_data_from_sheets");
-    }
+    // const pullDataFromSheets = async () => {
+    //     await invoke("pull_data_from_sheets");
+    // }
 
 
     return (
