@@ -76,7 +76,7 @@ const store = create<Store>((set, get) => ({
             })
         },
         updateBaseData(value) {
-            set({selectionType: value.selectionType, calculationType: value.calculationType, updateType: value.updateType});
+            set({selectionType: value.selectionRule, calculationType: value.calculationRule, updateType: value.updateType});
         },
         setBasePowers(value) {
             set({basePowers: value});
