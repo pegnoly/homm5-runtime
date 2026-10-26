@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use std::{fs::File, io::Write, path::PathBuf};
+use std::io::Read;
 use convert_case::{Case, Casing};
 use editor_tools::prelude::{QuestProgressType, QuestUpdateSources};
 use homm5_types::{common::FileRef, quest::Quest};
@@ -245,11 +246,12 @@ impl GenerateBoilerplate for QuestCreationRequest {
         let script_path = self.path.join("script.lua");
         let p_name = self.script_name.to_case(Case::Pascal);
         if !script_path.exists() {
-        let script_boilerplate = format!("
-{}
+        let script_boilerplate = format!("---@GENERATED DO_NOT_REMOVE
+{}{}
+---@END_OF GENERATED
+
 ---@class __{}StartContext: QuestStartContext
 
-{}
 ---@class __{}CompleteContext: QuestCompleteContext
 
 ---@class __{}FailContext: QuestFailContext
@@ -299,8 +301,8 @@ end
 
 __end_import()",
             self.create_update_source_enum()?,
-            &p_name,
             self.create_update_source_context()?,
+            &p_name,
             &p_name,
             &p_name,
             &p_name,
@@ -324,6 +326,14 @@ __end_import()",
 
             let mut script_file = File::create(self.path.join("script.lua"))?;
             script_file.write_all(script_boilerplate.as_bytes())?;
+        } else {
+            let mut script_string = std::fs::read_to_string(self.path.join("script.lua"))?;
+            let (_, rest) = script_string.split_once("---@GENERATED DO_NOT_REMOVE").unwrap();
+            let (inner, _) = rest.split_once("---@END_OF GENERATED").unwrap();
+
+            script_string = script_string.replace(inner, &format!("{}{}\n", self.create_update_source_enum()?, self.create_update_source_context()?));
+            let mut script_file = File::create(self.path.join("script.lua"))?;
+            script_file.write_all(script_string.as_bytes())?;
         }
     
         Ok(quest)
