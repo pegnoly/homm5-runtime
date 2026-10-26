@@ -4,30 +4,30 @@ import {
     Button,
     Card,
     Group,
+    Select,
     Stack,
-    TagsInput,
     Text,
     TextInput,
     Tooltip
 } from "@mantine/core";
-import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconEdit, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { QuestGeneratorApi } from "../api";
 import { QuestGeneratorStore } from "../store";
-import { QuestUpdateSource } from "../types";
+import { QuestUpdateSource, QuestUpdateSourceVariable, QuestUpdateSourceVariableType } from "../types";
 
 export type AddQuestUpdateSourcePayload = {
     questId: number,
     source: string,
-    variables: string[],
+    variables: QuestUpdateSourceVariable[],
     comment: string
 }
 
 export type UpdateQuestUpdateSourcePayload = {
     questId: number,
     source: string,
-    variables: string[],
+    variables: QuestUpdateSourceVariable[],
     comment: string
 }
 
@@ -35,6 +35,20 @@ export type DeleteQuestUpdateSourcePayload = {
     questId: number,
     source: string
 }
+
+const VARIABLE_TYPE_LABELS: Record<QuestUpdateSourceVariableType, string> = {
+    string: "Строка",
+    number: "Число",
+    bool: "Логическое",
+    any: "Любое"
+}
+
+const VARIABLE_TYPE_OPTIONS = [
+    { value: "string", label: VARIABLE_TYPE_LABELS.string },
+    { value: "number", label: VARIABLE_TYPE_LABELS.number },
+    { value: "bool", label: VARIABLE_TYPE_LABELS.bool },
+    { value: "any", label: VARIABLE_TYPE_LABELS.any }
+]
 
 function QuestGeneratorUpdateSourcesBlock() {
     const currentId = QuestGeneratorStore.useQuestId();
@@ -84,7 +98,7 @@ function AddUpdateSourceForm({questId, sources}: {questId: number, sources: Ques
     const actions = QuestGeneratorStore.useActions();
 
     const [source, setSource] = useState<string>("");
-    const [variables, setVariables] = useState<string[]>([]);
+    const [variables, setVariables] = useState<QuestUpdateSourceVariable[]>([]);
     const [comment, setComment] = useState<string>("");
 
     const addMutation = useMutation({
@@ -117,13 +131,7 @@ function AddUpdateSourceForm({questId, sources}: {questId: number, sources: Ques
                 onChange={(e) => setSource(e.currentTarget.value)}
                 error={isDuplicate ? "Источник с таким названием уже добавлен" : undefined}
             />
-            <TagsInput
-                label="Переменные"
-                placeholder="Введите переменную и нажмите Enter"
-                value={variables}
-                onChange={setVariables}
-                clearable
-            />
+            <UpdateSourceVariablesEditor value={variables} onChange={setVariables}/>
             <TextInput
                 label="Комментарий"
                 placeholder="Комментарий к источнику"
@@ -153,7 +161,7 @@ function UpdateSourceItem({questId, item}: {questId: number, item: QuestUpdateSo
     const actions = QuestGeneratorStore.useActions();
 
     const [editing, setEditing] = useState<boolean>(false);
-    const [variables, setVariables] = useState<string[]>(item.variables);
+    const [variables, setVariables] = useState<QuestUpdateSourceVariable[]>(item.variables);
     const [comment, setComment] = useState<string>(item.comment);
 
     useEffect(() => {
@@ -190,13 +198,7 @@ function UpdateSourceItem({questId, item}: {questId: number, item: QuestUpdateSo
             editing ?
             <Stack gap="xs">
                 <TextInput label="Источник" value={item.source} disabled/>
-                <TagsInput
-                    label="Переменные"
-                    placeholder="Введите переменную и нажмите Enter"
-                    value={variables}
-                    onChange={setVariables}
-                    clearable
-                />
+                <UpdateSourceVariablesEditor value={variables} onChange={setVariables}/>
                 <TextInput
                     label="Комментарий"
                     value={comment}
@@ -249,7 +251,9 @@ function UpdateSourceItem({questId, item}: {questId: number, item: QuestUpdateSo
                     <Group gap={4}>
                         {
                             item.variables.map((variable, index) => (
-                                <Badge key={index} radius={0} size="sm">{variable}</Badge>
+                                <Badge key={index} radius={0} size="sm">
+                                    {`${variable.name}: ${VARIABLE_TYPE_LABELS[variable.type]}`}
+                                </Badge>
                             ))
                         }
                     </Group>
@@ -261,6 +265,99 @@ function UpdateSourceItem({questId, item}: {questId: number, item: QuestUpdateSo
             </Stack>
         }
     </Card>
+    )
+}
+
+function UpdateSourceVariablesEditor(
+    {value, onChange}: {
+        value: QuestUpdateSourceVariable[],
+        onChange: (value: QuestUpdateSourceVariable[]) => void
+    }
+) {
+    const [name, setName] = useState<string>("");
+    const [variableType, setVariableType] = useState<string | null>(null);
+
+    const trimmedName = name.trim();
+    const isEmpty = trimmedName.length == 0;
+    const isDuplicate = value.some(item => item.name == trimmedName);
+
+    function addVariable() {
+        if (isEmpty || isDuplicate) {
+            return;
+        }
+
+        onChange([
+            ...value,
+            {
+                name: trimmedName,
+                type: (variableType ?? "any") as QuestUpdateSourceVariableType
+            }
+        ]);
+        setName("");
+        setVariableType(null);
+    }
+
+    return (
+    <Stack gap={4}>
+        <Text size="sm" fw={500}>Переменные</Text>
+        <Group gap="xs" align="end" wrap="nowrap">
+            <TextInput
+                style={{flex: 1}}
+                size="xs"
+                placeholder="Имя переменной"
+                value={name}
+                error={isDuplicate ? "Переменная уже добавлена" : undefined}
+                onChange={(e) => setName(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                    if (e.key == "Enter") {
+                        addVariable();
+                    }
+                }}
+            />
+            <Select
+                size="xs"
+                w={140}
+                placeholder="Любое"
+                data={VARIABLE_TYPE_OPTIONS}
+                value={variableType}
+                onChange={setVariableType}
+                clearable
+            />
+            <ActionIcon
+                size="lg"
+                disabled={isEmpty || isDuplicate}
+                onClick={addVariable}
+            >
+                <IconPlus size={16}/>
+            </ActionIcon>
+        </Group>
+        {
+            value.length == 0 ? null :
+            <Group gap={4}>
+                {
+                    value.map((variable, index) => (
+                        <Badge
+                            key={index}
+                            radius={0}
+                            size="sm"
+                            rightSection={
+                                <ActionIcon
+                                    size="xs"
+                                    variant="transparent"
+                                    color="gray"
+                                    onClick={() => onChange(value.filter((_, i) => i != index))}
+                                >
+                                    <IconX size={12}/>
+                                </ActionIcon>
+                            }
+                        >
+                            {`${variable.name}: ${VARIABLE_TYPE_LABELS[variable.type]}`}
+                        </Badge>
+                    ))
+                }
+            </Group>
+        }
+    </Stack>
     )
 }
 

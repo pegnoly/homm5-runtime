@@ -17,10 +17,27 @@ pub struct Model {
     pub update_sources: QuestUpdateSources
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum QuestUpdateSourceVariableType {
+    String,
+    Number,
+    Bool,
+    #[default]
+    Any,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct QuestUpdateSourceVariable {
+    pub name: String,
+    #[serde(default, rename = "type")]
+    pub variable_type: QuestUpdateSourceVariableType,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct QuestUpdateSource {
     pub source: String,
-    pub variables: Vec<String>,
+    pub variables: Vec<QuestUpdateSourceVariable>,
     pub comment: String,
 }
 

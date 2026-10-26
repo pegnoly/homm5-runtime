@@ -1,4 +1,4 @@
-use crate::prelude::QuestProgressType;
+use crate::prelude::{QuestProgressType, QuestUpdateSourceVariable};
 
 pub struct CreateQuestPayload {
     pub mission_id: i32,
@@ -60,14 +60,14 @@ impl UpdateQuestPayload {
 pub struct AddQuestUpdateSourcePayload {
     pub quest_id: i32,
     pub source: String,
-    pub variables: Vec<String>,
+    pub variables: Vec<QuestUpdateSourceVariable>,
     pub comment: String,
 }
 
 pub struct UpdateQuestUpdateSourcePayload {
     pub quest_id: i32,
     pub source: String,
-    pub variables: Vec<String>,
+    pub variables: Vec<QuestUpdateSourceVariable>,
     pub comment: String,
 }
 

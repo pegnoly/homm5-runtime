@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use editor_tools::prelude::{
     AddQuestUpdateSourcePayload, CreateProgressPayload, CreateQuestPayload,
     DeleteQuestUpdateSourcePayload, GetProgressPayload, QuestGeneratorRepo, QuestModel,
-    QuestProgressModel, QuestProgressType, SaveProgressPayload, UpdateQuestPayload,
-    UpdateQuestUpdateSourcePayload,
+    QuestProgressModel, QuestProgressType, QuestUpdateSourceVariable, SaveProgressPayload,
+    UpdateQuestPayload, UpdateQuestUpdateSourcePayload,
 };
 use map_modifier::quest::write_quest_text_file;
 use tauri::{AppHandle, Emitter, State};
@@ -152,7 +152,7 @@ pub async fn add_quest_update_source(
     quests_repo: State<'_, QuestGeneratorRepo>,
     quest_id: i32,
     source: String,
-    variables: Vec<String>,
+    variables: Vec<QuestUpdateSourceVariable>,
     comment: String,
 ) -> Result<(), Error> {
     Ok(quests_repo
@@ -170,7 +170,7 @@ pub async fn update_quest_update_source(
     quests_repo: State<'_, QuestGeneratorRepo>,
     quest_id: i32,
     source: String,
-    variables: Vec<String>,
+    variables: Vec<QuestUpdateSourceVariable>,
     comment: String,
 ) -> Result<(), Error> {
     Ok(quests_repo

@@ -9,9 +9,16 @@ export type Quest = {
     update_sources: QuestUpdateSources
 }
 
+export type QuestUpdateSourceVariableType = "string" | "number" | "bool" | "any"
+
+export type QuestUpdateSourceVariable = {
+    name: string,
+    type: QuestUpdateSourceVariableType
+}
+
 export type QuestUpdateSource = {
     source: string,
-    variables: string[],
+    variables: QuestUpdateSourceVariable[],
     comment: string
 }
 
