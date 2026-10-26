@@ -1,14 +1,10 @@
+use itertools::Itertools;
 use std::{fs::File, io::Write, path::PathBuf};
 use convert_case::{Case, Casing};
-use editor_tools::prelude::QuestProgressType;
+use editor_tools::prelude::{QuestProgressType, QuestUpdateSources};
 use homm5_types::{common::FileRef, quest::Quest};
 use crate::error::MapModifierError;
 use crate::GenerateBoilerplate;
-
-pub fn test_convert(quest: Quest) {
-    let s = quick_xml::se::to_string(&quest).unwrap();
-    println!("Quest string is: {s}");
-}
 
 #[derive(Debug)]
 pub struct QuestProgress {
@@ -28,6 +24,7 @@ pub struct QuestCreationRequest {
     progresses: Vec<QuestProgress>,
     secondary: bool,
     initialy_active: bool,
+    update_sources: QuestUpdateSources
 }
 
 impl QuestCreationRequest {
@@ -64,6 +61,11 @@ impl QuestCreationRequest {
 
     pub fn initialy_active(mut self, is_active: bool) -> Self {
         self.initialy_active = is_active;
+        self
+    }
+
+    pub fn with_update_sources(mut self, update_sources: QuestUpdateSources) -> Self {
+        self.update_sources = update_sources;
         self
     }
 
@@ -151,6 +153,44 @@ impl QuestCreationRequest {
         quest.progress_comments_file_ref.items.as_mut().unwrap().push(FileRef {href: Some(local_file_name)});
         Ok(())
     }
+
+    fn create_update_source_enum(
+        &self,
+    ) -> Result<String, MapModifierError> {
+        let p_name = self.script_name.to_case(Case::Pascal);
+        let result = format!("
+---@enum {}UpdateSource
+{}UpdateSource = {{
+    {}
+}}
+", &p_name,
+&p_name,
+self.update_sources.sources.iter().enumerate()
+                     .map(|(index, source)| format!("{} = {},{}", &source.source, index + 1,
+                                                    if source.comment.is_empty() {
+                                                        String::new()
+                                                    } else {
+                                                        format!("-- {}", source.comment)
+                                                    }))
+            .collect::<Vec<String>>().join("\n")
+        );
+
+        Ok(result)
+    }
+
+    fn create_update_source_context(
+        &self,
+    ) -> Result<String, MapModifierError> {
+        let p_name = self.script_name.to_case(Case::Pascal);
+        let result = format!("
+---@class __{}UpdateContext: QuestUpdateContext
+---@field source {}UpdateSource
+{}
+", &p_name, &p_name, self.update_sources.sources.iter().flat_map(|v| &v.variables)
+.map(|v| format!("---@field {} {}", &v.name.to_case(Case::Snake).to_lowercase(), &v.variable_type.to_string().to_lowercase()))
+.collect_vec().join("\n"));
+        Ok(result)
+    }
 }
 
 pub struct QuestBoilerplateHelper {
@@ -206,22 +246,19 @@ impl GenerateBoilerplate for QuestCreationRequest {
         let p_name = self.script_name.to_case(Case::Pascal);
         if !script_path.exists() {
         let script_boilerplate = format!("
----@alias {}UpdateSource
-
+{}
 ---@class __{}StartContext: QuestStartContext
 
----@class __{}UpdateContext: QuestUpdateContext
----@field source {}UpdateSource
-
+{}
 ---@class __{}CompleteContext: QuestCompleteContext
 
 ---@class __{}FailContext: QuestFailContext
 
 ---@class __{}: QuestBase
----@field Start: fun(self, context: __{}StartContext)
----@field Update: fun(self, context: __{}UpdateContext)
----@field Complete: fun(self, context: __{}CompleteContext)
----@field Fail: fun(self, context: __{}FailContext)
+---@field Start fun(self, context: __{}StartContext)
+---@field Update fun(self, context: __{}UpdateContext)
+---@field Complete fun(self, context: __{}CompleteContext)
+---@field Fail fun(self, context: __{}FailContext)
 
 ---@return __{}
 function __{}()
@@ -261,10 +298,9 @@ end
 {} = __{}()
 
 __end_import()",
+            self.create_update_source_enum()?,
             &p_name,
-            &p_name,
-            &p_name,
-            &p_name,
+            self.create_update_source_context()?,
             &p_name,
             &p_name,
             &p_name,

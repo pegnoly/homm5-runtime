@@ -3,6 +3,7 @@ import styles from "../styles.module.css";
 import QuestGeneratorDataBlock from "./data";
 import QuestGeneratorProgressBlock from "./progress";
 import QuestGeneratorUpdateSourcesBlock from "./updateSources";
+import {QuestGeneratorStore} from "@/components/body/editor/questGenerator/store.ts";
 
 enum QuestGeneratorBodyTab {
     Data = "data",
@@ -10,7 +11,9 @@ enum QuestGeneratorBodyTab {
 }
 
 function QuestGeneratorBody() {
+    const currentQuestId = QuestGeneratorStore.useQuestId();
     return (
+        currentQuestId == undefined ? <h1 style={{position: 'absolute', top: '50%', left: '50%'}}>НЕТ АКТИВНОГО КВЕСТА</h1> :
     <div className={styles.body}>
         <div className={styles.body_layout}>
             <div className={styles.progresses_panel}>

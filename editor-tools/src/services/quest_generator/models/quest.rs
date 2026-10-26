@@ -1,6 +1,7 @@
 use sea_orm::FromJsonQueryResult;
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
+use strum::Display;
 
 #[derive(Debug, Clone, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "quests")]
@@ -17,7 +18,7 @@ pub struct Model {
     pub update_sources: QuestUpdateSources
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, Display)]
 #[serde(rename_all = "lowercase")]
 pub enum QuestUpdateSourceVariableType {
     String,
@@ -34,14 +35,14 @@ pub struct QuestUpdateSourceVariable {
     pub variable_type: QuestUpdateSourceVariableType,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct QuestUpdateSource {
     pub source: String,
     pub variables: Vec<QuestUpdateSourceVariable>,
     pub comment: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, FromJsonQueryResult)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, FromJsonQueryResult, Default)]
 pub struct QuestUpdateSources {
     pub sources: Vec<QuestUpdateSource>,
 }

@@ -2864,6 +2864,7 @@ dependencies = [
  "convert_case 0.12.0",
  "editor-tools",
  "homm5-types",
+ "itertools 0.14.0",
  "lazy_static",
  "quick-xml 0.37.5",
  "serde",

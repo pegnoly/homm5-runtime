@@ -168,7 +168,8 @@ pub async fn apply_modifications(
         )
         .with_mission_data(map.campaign, map.mission)
         .secondary(model.is_secondary)
-        .initialy_active(model.is_active);
+        .initialy_active(model.is_active)
+        .with_update_sources(model.update_sources.clone());
 
         let quest = request.generate(Some(&QuestBoilerplateHelper {
             mod_path: map_path.to_string_lossy().to_string().clone(),
