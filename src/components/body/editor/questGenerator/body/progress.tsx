@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 import {
-    useCurrentProgressId, useCurrentProgressIsConcatenate, useCurrentProgressNumber,
-    useCurrentProgressOneOf, useCurrentProgressText, useCurrentQuestId, useQuestsActions
+    QuestGeneratorStore
 } from "../store"
 import { QuestGeneratorApi } from "../api";
 import {
@@ -35,7 +34,7 @@ enum ProgressType {
 }
 
 function QuestGeneratorProgressBlock() {
-    const currentQuestId = useCurrentQuestId();
+    const currentQuestId = QuestGeneratorStore.useQuestId();
     return (
     <>
         <CurrentProgress/>
@@ -49,13 +48,13 @@ function QuestGeneratorProgressBlock() {
 }
 
 function CurrentProgress() {
-    const currentQuestId = useCurrentQuestId();
-    const currentProgressId = useCurrentProgressId();
-    const currentProgressText = useCurrentProgressText();
-    const currentProgressOneOf = useCurrentProgressOneOf();
-    const currentProgressConcatenate = useCurrentProgressIsConcatenate();
-    const currentProgressNumber = useCurrentProgressNumber();
-    const actions = useQuestsActions();
+    const currentQuestId = QuestGeneratorStore.useQuestId();
+    const currentProgressId = QuestGeneratorStore.useProgressId();
+    const currentProgressText = QuestGeneratorStore.useProgressText();
+    const currentProgressOneOf = QuestGeneratorStore.useProgressOneOf();
+    const currentProgressConcatenate = QuestGeneratorStore.useProgressIsConcatenate();
+    const currentProgressNumber = QuestGeneratorStore.useProgressNumber();
+    const actions = QuestGeneratorStore.useActions();
 
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -219,9 +218,9 @@ function useProgress(questId: number, progressNumber: number) {
 }
 
 function ProgressLoader() {
-    const currentQuestId = useCurrentQuestId();
-    const currentProgressNumber = useCurrentProgressNumber();
-    const actions = useQuestsActions();
+    const currentQuestId = QuestGeneratorStore.useQuestId();
+    const currentProgressNumber = QuestGeneratorStore.useProgressNumber();
+    const actions = QuestGeneratorStore.useActions();
 
     const { data } = useProgress(currentQuestId!, currentProgressNumber!);
     if (data != undefined) {
@@ -234,8 +233,8 @@ function ProgressLoader() {
 }
 
 function OneOfProgressRenderer() {
-    const currentProgressOneOf = useCurrentProgressOneOf();
-    const actions = useQuestsActions();
+    const currentProgressOneOf = QuestGeneratorStore.useProgressOneOf();
+    const actions = QuestGeneratorStore.useActions();
 
     return (
     <>

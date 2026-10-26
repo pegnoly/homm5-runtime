@@ -3,6 +3,11 @@ import { Quest, QuestProgress } from "./types";
 import { CreateQuestPayload } from "./header/creator";
 import { UpdateQuestPayloadBase } from "./body/data";
 import {CreateQuestProgressPayload, SaveQuestProgressPayload} from "./body/progress";
+import {
+    AddQuestUpdateSourcePayload,
+    DeleteQuestUpdateSourcePayload,
+    UpdateQuestUpdateSourcePayload
+} from "./body/updateSources";
 
 export class QuestGeneratorApi {
     static async loadQuests(): Promise<Quest[]> {
@@ -51,5 +56,17 @@ export class QuestGeneratorApi {
 
     static async saveProgress(payload: SaveQuestProgressPayload): Promise<void> {
         return invoke("save_progress", payload);
+    }
+
+    static async addUpdateSource(payload: AddQuestUpdateSourcePayload): Promise<void> {
+        return invoke("add_quest_update_source", payload);
+    }
+
+    static async updateUpdateSource(payload: UpdateQuestUpdateSourcePayload): Promise<void> {
+        return invoke("update_quest_update_source", payload);
+    }
+
+    static async deleteUpdateSource(payload: DeleteQuestUpdateSourcePayload): Promise<void> {
+        return invoke("delete_quest_update_source", payload);
     }
 }

@@ -1,8 +1,10 @@
 use std::path::PathBuf;
 
 use editor_tools::prelude::{
-    CreateProgressPayload, CreateQuestPayload, GetProgressPayload, QuestGeneratorRepo, QuestModel,
+    AddQuestUpdateSourcePayload, CreateProgressPayload, CreateQuestPayload,
+    DeleteQuestUpdateSourcePayload, GetProgressPayload, QuestGeneratorRepo, QuestModel,
     QuestProgressModel, QuestProgressType, SaveProgressPayload, UpdateQuestPayload,
+    UpdateQuestUpdateSourcePayload,
 };
 use map_modifier::quest::write_quest_text_file;
 use tauri::{AppHandle, Emitter, State};
@@ -142,6 +144,53 @@ pub async fn update_is_active(
 ) -> Result<(), Error> {
     Ok(quests_repo
         .update_quest(UpdateQuestPayload::new(quest_id).with_active(is_active))
+        .await?)
+}
+
+#[tauri::command]
+pub async fn add_quest_update_source(
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
+    source: String,
+    variables: Vec<String>,
+    comment: String,
+) -> Result<(), Error> {
+    Ok(quests_repo
+        .add_update_source(AddQuestUpdateSourcePayload {
+            quest_id,
+            source,
+            variables,
+            comment,
+        })
+        .await?)
+}
+
+#[tauri::command]
+pub async fn update_quest_update_source(
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
+    source: String,
+    variables: Vec<String>,
+    comment: String,
+) -> Result<(), Error> {
+    Ok(quests_repo
+        .update_update_source(UpdateQuestUpdateSourcePayload {
+            quest_id,
+            source,
+            variables,
+            comment,
+        })
+        .await?)
+}
+
+#[tauri::command]
+pub async fn delete_quest_update_source(
+    quests_repo: State<'_, QuestGeneratorRepo>,
+    quest_id: i32,
+    source: String,
+) -> Result<(), Error> {
+    Ok(quests_repo
+        .delete_update_source(DeleteQuestUpdateSourcePayload { quest_id, source })
         .await?)
 }
 

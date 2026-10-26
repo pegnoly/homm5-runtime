@@ -112,6 +112,9 @@ pub async fn run() -> Result<(), Error> {
             update_quest_desc,
             update_is_secondary,
             update_is_active,
+            add_quest_update_source,
+            update_quest_update_source,
+            delete_quest_update_source,
             save_quest_text,
             add_quest_to_queue,
             // dialog commands

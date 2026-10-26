@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import {OneOfQuestProgress, Quest, QuestProgress} from "./types"
+import {OneOfQuestProgress, Quest, QuestProgress, QuestUpdateSource, QuestUpdateSources} from "./types"
 
 type Actions = {
     loadQuests: (value: Quest []) => void,
@@ -15,6 +15,10 @@ type Actions = {
     setCurrentQuestDesc: (value: string) => void,
     setCurrentQuestIsActive: (value: boolean) => void,
     setCurrentQuestIsSecondary: (value: boolean) => void,
+    setCurrentQuestUpdateSources: (value: QuestUpdateSource[]) => void,
+    addCurrentQuestUpdateSource: (value: QuestUpdateSource) => void,
+    updateCurrentQuestUpdateSource: (source: string, value: QuestUpdateSource) => void,
+    deleteCurrentQuestUpdateSource: (source: string) => void,
 
     setCurrentProgressNumber: (value: number) => void,
     setCurrentProgressId: (value: number) => void,
@@ -33,6 +37,7 @@ type Store = {
     currentQuestDirectory: string | undefined,
     currentQuestIsSecondary: boolean | undefined,
     currentQuestIsActive: boolean | undefined,
+    currentQuestUpdateSources: QuestUpdateSources | undefined,
 
     currentProgressNumber: number | undefined,
     currentProgressId: number | undefined,
@@ -43,7 +48,7 @@ type Store = {
     actions: Actions
 }
 
-const questGeneratorStore = create<Store>((set) => ({
+const store = create<Store>((set) => ({
     quests: undefined,
     
     currentQuestId: undefined,
@@ -53,6 +58,7 @@ const questGeneratorStore = create<Store>((set) => ({
     currentQuestDirectory: undefined,
     currentQuestIsActive: undefined,
     currentQuestIsSecondary: undefined,
+    currentQuestUpdateSources: undefined,
 
     currentProgressNumber: undefined,
     currentProgressId: undefined,
@@ -65,7 +71,6 @@ const questGeneratorStore = create<Store>((set) => ({
             set({quests: value});
         },
         loadCurrentQuest(value) {
-            console.log("Loading ", value)
             set({
                 currentQuestId: value.id,
                 currentQuestName: value.name,
@@ -73,7 +78,8 @@ const questGeneratorStore = create<Store>((set) => ({
                 currentQuestScriptName: value.script_name,
                 currentQuestIsActive: value.is_active,
                 currentQuestIsSecondary: value.is_secondary,
-                currentQuestDirectory: value.directory
+                currentQuestDirectory: value.directory,
+                currentQuestUpdateSources: value.update_sources
             })
         },
         resetCurrentProgress() {
@@ -128,21 +134,52 @@ const questGeneratorStore = create<Store>((set) => ({
         },
         setCurrentProgressOneOf(value) {
             set({currentProgressOneOf: value});
+        },
+        setCurrentQuestUpdateSources(value) {
+            set({currentQuestUpdateSources: { sources: value }})
+        },
+        addCurrentQuestUpdateSource(value) {
+            set(state => ({
+                currentQuestUpdateSources: {
+                    sources: [...(state.currentQuestUpdateSources?.sources ?? []), value]
+                }
+            }))
+        },
+        updateCurrentQuestUpdateSource(source, value) {
+            set(state => ({
+                currentQuestUpdateSources: {
+                    sources: (state.currentQuestUpdateSources?.sources ?? []).map(item =>
+                        item.source == source ? value : item
+                    )
+                }
+            }))
+        },
+        deleteCurrentQuestUpdateSource(source) {
+            set(state => ({
+                currentQuestUpdateSources: {
+                    sources: (state.currentQuestUpdateSources?.sources ?? []).filter(
+                        item => item.source != source
+                    )
+                }
+            }))
         }
     }
 }));
 
-export const useQuests = () => questGeneratorStore(state => state.quests);
-export const useQuestsActions = () => questGeneratorStore(state => state.actions);
-export const useCurrentQuestId = () => questGeneratorStore(state => state.currentQuestId);
-export const useCurrentQuestName = () => questGeneratorStore(state => state.currentQuestName);
-export const useCurrentQuestScriptName = () => questGeneratorStore(state => state.currentQuestScriptName);
-export const useCurrentQuestDesc = () => questGeneratorStore(state => state.currentQuestDesc);
-export const useCurrentQuestDirectory = () => questGeneratorStore(state => state.currentQuestDirectory);
-export const useCurrentQuestIsActive = () => questGeneratorStore(state => state.currentQuestIsActive);
-export const useCurrentQuestIsSecondary = () => questGeneratorStore(state => state.currentQuestIsSecondary);
-export const useCurrentProgressNumber = () => questGeneratorStore(state => state.currentProgressNumber);
-export const useCurrentProgressId = () => questGeneratorStore(state => state.currentProgressId);
-export const useCurrentProgressText = () => questGeneratorStore(state => state.currentProgressText);
-export const useCurrentProgressIsConcatenate = () => questGeneratorStore(state => state.currentProgressIsConcatenate);
-export const useCurrentProgressOneOf = () => questGeneratorStore(state => state.currentProgressOneOf);
+export namespace QuestGeneratorStore {
+    export const useQuests = () => store(state => state.quests);
+    export const useActions = () => store(state => state.actions);
+    export const useQuestId = () => store(state => state.currentQuestId);
+    export const useQuestName = () => store(state => state.currentQuestName);
+    export const useQuestScriptName = () => store(state => state.currentQuestScriptName);
+    export const useQuestDesc = () => store(state => state.currentQuestDesc);
+    export const useQuestDirectory = () => store(state => state.currentQuestDirectory);
+    export const useQuestIsActive = () => store(state => state.currentQuestIsActive);
+    export const useQuestIsSecondary = () => store(state => state.currentQuestIsSecondary);
+    export const useQuestUpdateSources = () => store(state => state.currentQuestUpdateSources);
+    export const useProgressNumber = () => store(state => state.currentProgressNumber);
+    export const useProgressId = () => store(state => state.currentProgressId);
+    export const useProgressText = () => store(state => state.currentProgressText);
+    export const useProgressIsConcatenate = () => store(state => state.currentProgressIsConcatenate);
+    export const useProgressOneOf = () => store(state => state.currentProgressOneOf);
+}

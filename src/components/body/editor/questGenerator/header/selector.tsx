@@ -1,12 +1,12 @@
 import { Select } from "@mantine/core";
-import { useCurrentQuestId, useQuests, useQuestsActions } from "../store";
+import { QuestGeneratorStore } from "../store";
 import { useMutation } from "@tanstack/react-query";
 import { QuestGeneratorApi } from "../api";
 
 function QuestSelector() {
-    const quests = useQuests();
-    const questId = useCurrentQuestId();
-    const actions = useQuestsActions();
+    const quests = QuestGeneratorStore.useQuests();
+    const questId = QuestGeneratorStore.useQuestId();
+    const actions = QuestGeneratorStore.useActions();
 
     const mutation = useMutation({
         mutationFn: async(id: number) => {

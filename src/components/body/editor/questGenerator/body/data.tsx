@@ -1,6 +1,8 @@
 import { ActionIcon, Checkbox, Group, Stack, Text, Tooltip } from "@mantine/core"
 import EditableProperty from "../../../../common/editableProperty"
-import { useCurrentQuestDesc, useCurrentQuestDirectory, useCurrentQuestId, useCurrentQuestIsActive, useCurrentQuestIsSecondary, useCurrentQuestName, useCurrentQuestScriptName, useQuestsActions } from "../store"
+import {
+    QuestGeneratorStore
+} from "../store"
 import { useMutation } from "@tanstack/react-query"
 import { QuestGeneratorApi } from "../api"
 import { IconEdit } from "@tabler/icons-react"
@@ -13,14 +15,14 @@ export type UpdateQuestPayloadBase = {
 }
 
 function QuestGeneratorDataBlock() {
-    const currentId = useCurrentQuestId();
-    const currentName = useCurrentQuestName();
-    const currentScriptName = useCurrentQuestScriptName();
-    const currentDesc = useCurrentQuestDesc();
-    const currentDirectory = useCurrentQuestDirectory();
-    const isActive = useCurrentQuestIsActive();
-    const isSecondary = useCurrentQuestIsSecondary();
-    const actions = useQuestsActions();
+    const currentId = QuestGeneratorStore.useQuestId();
+    const currentName = QuestGeneratorStore.useQuestName();
+    const currentScriptName = QuestGeneratorStore.useQuestScriptName();
+    const currentDesc = QuestGeneratorStore.useQuestDesc();
+    const currentDirectory = QuestGeneratorStore.useQuestDirectory();
+    const isActive = QuestGeneratorStore.useQuestIsActive();
+    const isSecondary = QuestGeneratorStore.useQuestIsSecondary();
+    const actions = QuestGeneratorStore.useActions();
 
     async function tryUpdateDirectory() {
         await invoke("pick_quest_directory", {initial: false})

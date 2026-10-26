@@ -1,9 +1,9 @@
 import { Button, Stack } from "@mantine/core";
-import { useCurrentQuestId } from "./store";
+import { QuestGeneratorStore } from "./store";
 import { invoke } from "@tauri-apps/api/core";
 
 function QuestGeneratorGlobals() {
-    const currentId = useCurrentQuestId();
+    const currentId = QuestGeneratorStore.useQuestId();
 
     async function addToQueue() {
         await invoke("add_quest_to_queue", {questId: currentId!})

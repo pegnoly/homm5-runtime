@@ -1,3 +1,4 @@
+use sea_orm::FromJsonQueryResult;
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +14,19 @@ pub struct Model {
     pub desc: String,
     pub is_active: bool,
     pub is_secondary: bool,
+    pub update_sources: QuestUpdateSources
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct QuestUpdateSource {
+    pub source: String,
+    pub variables: Vec<String>,
+    pub comment: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, FromJsonQueryResult)]
+pub struct QuestUpdateSources {
+    pub sources: Vec<QuestUpdateSource>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

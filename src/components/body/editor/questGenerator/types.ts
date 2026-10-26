@@ -5,7 +5,18 @@ export type Quest = {
     desc: string,
     script_name: string,
     is_active: boolean,
-    is_secondary: boolean
+    is_secondary: boolean,
+    update_sources: QuestUpdateSources
+}
+
+export type QuestUpdateSource = {
+    source: string,
+    variables: string[],
+    comment: string
+}
+
+export type QuestUpdateSources = {
+    sources: QuestUpdateSource[]
 }
 
 export type OneOfQuestProgress = {

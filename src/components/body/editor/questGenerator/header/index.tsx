@@ -3,8 +3,8 @@ import styles from "../styles.module.css";
 import QuestCreator from "./creator";
 import QuestSelector from "./selector";
 import { QuestGeneratorApi } from "../api";
-import { useQuestsActions } from "../store";
-import { useCurrentMapId } from "../../../../../stores/common";
+import { QuestGeneratorStore } from "../store";
+import { useCurrentMapId } from "@/stores/common.ts";
 
 function useQuestsData(mapId: number) {
     return useQuery({
@@ -17,7 +17,7 @@ function useQuestsData(mapId: number) {
 
 function QuestGeneratorHeader() {
     const currentMapId = useCurrentMapId(); // weird but i need this now for compability
-    const actions = useQuestsActions();
+    const actions = QuestGeneratorStore.useActions();
 
     const { data } = useQuestsData(currentMapId!);
     if (data != undefined) {

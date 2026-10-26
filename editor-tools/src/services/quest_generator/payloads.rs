@@ -57,6 +57,25 @@ impl UpdateQuestPayload {
     }
 }
 
+pub struct AddQuestUpdateSourcePayload {
+    pub quest_id: i32,
+    pub source: String,
+    pub variables: Vec<String>,
+    pub comment: String,
+}
+
+pub struct UpdateQuestUpdateSourcePayload {
+    pub quest_id: i32,
+    pub source: String,
+    pub variables: Vec<String>,
+    pub comment: String,
+}
+
+pub struct DeleteQuestUpdateSourcePayload {
+    pub quest_id: i32,
+    pub source: String,
+}
+
 pub struct GetProgressPayload {
     pub quest_id: i32,
     pub number: i32,

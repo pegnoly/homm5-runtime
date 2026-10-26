@@ -8,12 +8,15 @@ use crate::{
     services::quest_generator::{
         models::{progress, quest},
         payloads::{
-            CreateQuestPayload, GetProgressPayload, SaveProgressPayload, UpdateQuestPayload,
+            AddQuestUpdateSourcePayload, CreateQuestPayload, DeleteQuestUpdateSourcePayload,
+            GetProgressPayload, SaveProgressPayload, UpdateQuestPayload,
+            UpdateQuestUpdateSourcePayload,
         },
         prelude::{QuestModel, QuestProgressModel},
     },
 };
 use crate::prelude::{CreateProgressPayload, QuestProgressType};
+use crate::services::quest_generator::models::quest::{QuestUpdateSource, QuestUpdateSources};
 
 pub struct QuestGeneratorRepo {
     db: DatabaseConnection,
@@ -49,6 +52,7 @@ impl QuestGeneratorRepo {
             desc: Set(String::new()),
             is_active: Set(false),
             is_secondary: Set(false),
+            update_sources: Set(QuestUpdateSources { sources: vec![] }),
             ..Default::default()
         };
         Ok(model_to_insert.insert(&self.db).await?)
@@ -148,5 +152,69 @@ impl QuestGeneratorRepo {
             .filter(progress::Column::QuestId.eq(quest_id))
             .all(&self.db)
             .await?)
+    }
+
+    pub async fn add_update_source(
+        &self,
+        payload: AddQuestUpdateSourcePayload,
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = quest::Entity::find_by_id(payload.quest_id)
+            .one(&self.db)
+            .await?
+        {
+            let mut update_sources = existing_model.update_sources.clone();
+            update_sources.sources.push(QuestUpdateSource {
+                source: payload.source,
+                variables: payload.variables,
+                comment: payload.comment,
+            });
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.update_sources = Set(update_sources);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn update_update_source(
+        &self,
+        payload: UpdateQuestUpdateSourcePayload,
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = quest::Entity::find_by_id(payload.quest_id)
+            .one(&self.db)
+            .await?
+        {
+            let mut update_sources = existing_model.update_sources.clone();
+            if let Some(target) = update_sources
+                .sources
+                .iter_mut()
+                .find(|item| item.source == payload.source)
+            {
+                target.variables = payload.variables;
+                target.comment = payload.comment;
+            }
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.update_sources = Set(update_sources);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn delete_update_source(
+        &self,
+        payload: DeleteQuestUpdateSourcePayload,
+    ) -> Result<(), EditorToolsError> {
+        if let Some(existing_model) = quest::Entity::find_by_id(payload.quest_id)
+            .one(&self.db)
+            .await?
+        {
+            let mut update_sources = existing_model.update_sources.clone();
+            update_sources
+                .sources
+                .retain(|item| item.source != payload.source);
+            let mut model_to_update = existing_model.into_active_model();
+            model_to_update.update_sources = Set(update_sources);
+            model_to_update.update(&self.db).await?;
+        }
+        Ok(())
     }
 }

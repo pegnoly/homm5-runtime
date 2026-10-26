@@ -17,7 +17,7 @@ import { useDisclosure } from "@mantine/hooks"
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useState } from "react";
-import { useQuests, useQuestsActions } from "../store";
+import { QuestGeneratorStore } from "../store";
 import { useMutation } from "@tanstack/react-query";
 import { QuestGeneratorApi } from "../api";
 
@@ -30,8 +30,8 @@ export type CreateQuestPayload = {
 function QuestCreator() {
     const [opened, {open, close}] = useDisclosure(false);
 
-    const actions = useQuestsActions();
-    const quests = useQuests();
+    const actions = QuestGeneratorStore.useActions();
+    const quests = QuestGeneratorStore.useQuests();
 
     const [name, setName] = useState<string | undefined>(undefined);
     const [scriptName, setScriptName] = useState<string | undefined>(undefined);
