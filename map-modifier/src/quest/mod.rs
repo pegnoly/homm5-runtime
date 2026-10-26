@@ -162,12 +162,12 @@ impl QuestCreationRequest {
         let result = format!("
 ---@enum {}UpdateSource
 {}UpdateSource = {{
-    {}
+{}
 }}
 ", &p_name,
 &p_name,
 self.update_sources.sources.iter().enumerate()
-                     .map(|(index, source)| format!("{} = {},{}", &source.source, index + 1,
+                     .map(|(index, source)| format!("\t{} = {},{}", &source.source, index + 1,
                                                     if source.comment.is_empty() {
                                                         String::new()
                                                     } else {
@@ -188,7 +188,7 @@ self.update_sources.sources.iter().enumerate()
 ---@field source {}UpdateSource
 {}
 ", &p_name, &p_name, self.update_sources.sources.iter().flat_map(|v| &v.variables)
-.map(|v| format!("---@field {} {}", &v.name.to_case(Case::Snake).to_lowercase(), &v.variable_type.to_string().to_lowercase()))
+.map(|v| format!("---@field {}? {}", &v.name.to_case(Case::Snake).to_lowercase(), &v.variable_type.to_string().to_lowercase()))
 .collect_vec().join("\n"));
         Ok(result)
     }

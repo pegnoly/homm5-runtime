@@ -22,7 +22,7 @@ function RuntimeRunner () {
             radius={0}
             bg="cyan"
             onClick={runGame}
-        >Run game</Button>
+        >Запустить игру</Button>
     </>
     )
 }

@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
-import { useCommonActions, useCurrentMapId } from "../../../stores/common";
+import { useCommonActions, useCurrentMapId } from "@/stores/common.ts";
 import { Select, Text } from "@mantine/core";
 import styles from '../styles.module.css'
 
@@ -36,7 +36,7 @@ function MapSelector() {
 
     return (
     <div className={styles.map_selector}>
-        <Text style={{fontFamily: 'cursive', fontWeight: 'bold', fontSize: 17}}>Current map:  </Text>
+        <Text style={{fontFamily: 'cursive', fontWeight: 'bold', fontSize: 17}}>Текущая карта:  </Text>
         <Select 
             value={currentMapId?.toString()}
             onChange={(value) => selectMap(parseInt(value!))}

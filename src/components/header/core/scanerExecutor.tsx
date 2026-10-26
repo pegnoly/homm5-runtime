@@ -19,7 +19,7 @@ function ScanerExecutor() {
             bg="grape"
             disabled={scanStage != WorkStage.Inactive} 
             onClick={executeScan}
-        >Scan files</Button>
+        >Сканировать файлы</Button>
     </>
     )
 }
