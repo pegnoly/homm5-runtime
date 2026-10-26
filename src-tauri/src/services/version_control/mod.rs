@@ -159,10 +159,10 @@ impl VersionControlService {
 
         let profile = app_manager.current_profile_data.read().await;
         let sheet_data = profile.global_sheets.get(&VersionControlSimpleType::Commits).unwrap();
-        for collaborator in &profile.collaborators {
-            self.google_api.append_to_sheet(&sheet_data.spreadsheet_id, collaborator, commit.clone().into()).await
-                .map_err(|e| Error::GoogleApi(Box::new(e)))?;
-        }
+        // for collaborator in &profile.collaborators {
+        //     self.google_api.append_to_sheet(&sheet_data.spreadsheet_id, collaborator, commit.clone().into()).await
+        //         .map_err(|e| Error::GoogleApi(Box::new(e)))?;
+        // }
 
         Ok(())
     }
@@ -173,7 +173,7 @@ impl VersionControlService {
         let commits_sheet_model = profile.global_sheets.get(&VersionControlSimpleType::Commits).unwrap();
         let commits_data = self.google_api.read_all_rows(
             &commits_sheet_model.spreadsheet_id,
-            &global_config.author,
+            "", // &global_config.author,
             "C"
         ).await.map_err(|e| Error::GoogleApi(Box::new(e)))?;
 
@@ -233,7 +233,9 @@ impl VersionControlService {
         let profile = app_manager.current_profile_data.read().await;
         let commits_sheet_model = profile.global_sheets.get(&VersionControlSimpleType::Commits).unwrap();
         self.google_api
-            .clear_all_rows(&commits_sheet_model.spreadsheet_id, &global_config.author, "C")
+            .clear_all_rows(&commits_sheet_model.spreadsheet_id,
+                            "", //&global_config.author,
+                            "C")
             .await
             .map_err(|e| Error::GoogleApi(Box::new(e)))?;
         Ok(())
@@ -255,7 +257,7 @@ pub async fn sync_data_with_sheets(
     let base_config = app_manager.base_config.read().await;
     let mut commit = VersionControlCommit {
         created_at: Utc::now(),
-        author: base_config.author.clone(),
+        author: "".to_string(),  //base_config.author.clone(),
         content: vec![],
     };
 

@@ -17,7 +17,6 @@ pub struct ProfileConfig {
     pub game_path: PathBuf,
     pub map_path: PathBuf,
     pub texts_path: PathBuf,
-    pub collaborators: Vec<String>,
     pub repackers: HashMap<String, RepackerPathsData>,
     pub maps: Vec<Map>,
     pub global_sheets: HashMap<VersionControlSimpleType, SheetEntity>,
