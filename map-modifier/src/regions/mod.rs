@@ -38,7 +38,7 @@ impl RegionModifier {
             }
             lua_code += &format!("\t{} = \"{}\",\n", name, region);
         }
-        lua_code.push_str("}\n\n");
+        lua_code.push_str("}\n\n__end_import()");
         lua_code
     }
 }
