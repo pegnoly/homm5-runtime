@@ -1,7 +1,8 @@
-import { ButtonGroup } from '@mantine/core';
+import {Button, ButtonGroup} from '@mantine/core';
 import RuntimeRunner from './runtimeRunner';
 import ScanerExecutor from './scanerExecutor';
 import styles from '../styles.module.css'
+import {invoke} from "@tauri-apps/api/core";
 // import { invoke } from '@tauri-apps/api/core';
 // import {GetCurrentTimestamp, TimelineMessage} from "@/components/timeline/types.ts";
 // import {EditorTimelineStore} from "@/components/timeline/store.ts";
@@ -35,6 +36,9 @@ function HeaderCore() {
         <ButtonGroup orientation='vertical'>
             <RuntimeRunner/>
             <ScanerExecutor/>
+            <Button radius={0} onClick={() => invoke("apply_modifications")}>
+                Модифицировать map.xdb
+            </Button>
             {/*<Button*/}
             {/*    style={{fontSize: 10}}*/}
             {/*    radius={0}*/}

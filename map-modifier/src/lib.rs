@@ -7,6 +7,7 @@ use editor_tools::prelude::ReserveHeroCreatorRepo;
 use homm5_types::{art::AdvMapArtifact, building::AdvMapBuilding, creature::AdvMapMonster, hero::AdvMapHero, player::PlayerID};
 pub use homm5_types::{common::FileRef, quest::{Objectives, Quest, QuestList}, Homm5Type};
 use monsters::MonstersModifier;
+use regions::RegionModifier;
 use quick_xml::{events::{BytesDecl, BytesEnd, BytesStart, Event}, Reader, Writer};
 use serde::{Deserialize, Serialize};
 use crate::error::MapModifierError;
@@ -16,6 +17,7 @@ pub mod reserve_heroes;
 pub mod artifacts;
 pub mod buildings;
 pub mod monsters;
+pub mod regions;
 pub mod error;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -61,6 +63,7 @@ pub struct ModifiersQueue<'a> {
     buildings_modifier: BuildingsModifier<'a>,
     artifacts_modifier: ArtifactsModifier<'a>,
     monsters_modifier: MonstersModifier,
+    regions_modifier: RegionModifier,
 }
 
 impl<'a> ModifiersQueue<'a> {
@@ -75,7 +78,8 @@ impl<'a> ModifiersQueue<'a> {
             secondary_quests: vec![], 
             buildings_modifier: BuildingsModifier::new(buildings_data, banks_data), 
             artifacts_modifier: ArtifactsModifier::new(artifacts_data),
-            monsters_modifier: MonstersModifier::new()
+            monsters_modifier: MonstersModifier::new(),
+            regions_modifier: RegionModifier::new()
         }
     }
 
@@ -128,6 +132,12 @@ impl<'a> ModifiersQueue<'a> {
                             let text = reader.read_text(end.name()).unwrap().to_string();
                             let mut objectives: ObjectivesInfo = quick_xml::de::from_str(&format!("<Objectives>{}</Objectives>", &text)).unwrap();
                             self.apply_quests(&mut writer, &mut objectives).await;
+                        },
+                        "regions" => {
+                            let end = e.to_end().into_owned();
+                            let text = reader.read_text(end.name()).unwrap().to_string();
+                            let mut regions: homm5_types::region::Regions = quick_xml::de::from_str(&format!("<regions>{}</regions>", &text)).unwrap();
+                            self.regions_modifier.modify(&mut regions, &mut writer);
                         },
                         "ReserveHeroes" => {
                             players_count += 1;
@@ -183,12 +193,15 @@ impl<'a> ModifiersQueue<'a> {
         let buildinds_lua_data = self.buildings_modifier.convert_to_lua();
         let artifacts_lua_data = self.artifacts_modifier.convert_to_lua();
         let monsters_lua_data = self.monsters_modifier.convert_to_lua();
+        let regions_lua_data = self.regions_modifier.convert_to_lua();
         let mut buildings_lua_file = std::fs::File::create(map.data_path.join("buildings_generated_data.lua")).unwrap();
         let mut artifacts_lua_file = std::fs::File::create(map.data_path.join("artifacts_generated_data.lua")).unwrap();
         let mut monsters_lua_file = std::fs::File::create(map.data_path.join("monsters_generated_data.lua")).unwrap();
+        let mut regions_lua_file = std::fs::File::create(map.data_path.join("regions_generated_data.lua")).unwrap();
         buildings_lua_file.write_all(buildinds_lua_data.as_bytes()).unwrap();
         artifacts_lua_file.write_all(artifacts_lua_data.as_bytes()).unwrap();
         monsters_lua_file.write_all(monsters_lua_data.as_bytes()).unwrap();
+        regions_lua_file.write_all(regions_lua_data.as_bytes()).unwrap();
     }
 
 
