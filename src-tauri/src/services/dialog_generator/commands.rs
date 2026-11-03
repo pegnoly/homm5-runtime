@@ -203,6 +203,17 @@ pub async fn generate_dialog(
         let speakers = dialog_generator_repo
             .get_speakers_by_ids(dialog.speakers_ids.ids)
             .await?;
+
+        for speaker in &speakers {
+            if let Some(name) = &speaker.name_override {
+                let mut file = std::fs::File::create(profile.texts_path.join(format!("Text/Speakers/{}.txt", speaker.id)))?;
+                file.write_all(&[255, 254])?;
+                for utf16 in name.encode_utf16() {
+                    file.write_all(&(bincode::serialize(&utf16).unwrap()))?;
+                }
+            }
+        }
+
         let variants = dialog_generator_repo
             .get_all_variants_for_dialog(dialog_id)
             .await?;
@@ -268,10 +279,16 @@ pub async fn generate_dialog(
                 .iter()
                 .filter_map(|s| {
                     Some(format!(
-                        "[{}] = {{color = \"{}\", type = {}}}",
+                        "[{}] = {{color = \"{}\", type = {}, inner_id = {}, has_override = {}}}",
                         speaker_lua_key(s)?,
                         s.color,
-                        speaker_type_constant(&s.speaker_type)
+                        speaker_type_constant(&s.speaker_type),
+                        s.id,
+                        if s.name_override.is_some() {
+                            "1"
+                        } else {
+                            "nil"
+                        }
                     ))
                 })
                 .collect_vec()
