@@ -1,33 +1,13 @@
+use sea_orm::FromJsonQueryResult;
 use sea_orm::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 
-#[derive(
-    Debug,
-    DeriveActiveEnum,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    Eq,
-    Clone,
-    Serialize,
-    Deserialize,
-    Display,
-)]
-#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
 pub enum SpeakerType {
-    #[sea_orm(string_value = "SPEAKER_TYPE_NO_SPEAKER")]
-    #[serde(rename = "SPEAKER_TYPE_NO_SPEAKER")]
-    #[strum(to_string = "SPEAKER_TYPE_NO_SPEAKER")]
     NoSpeaker,
-    #[sea_orm(string_value = "SPEAKER_TYPE_HERO")]
-    #[serde(rename = "SPEAKER_TYPE_HERO")]
-    #[strum(to_string = "SPEAKER_TYPE_HERO")]
-    Hero,
-    #[sea_orm(string_value = "SPEAKER_TYPE_CREATURE")]
-    #[serde(rename = "SPEAKER_TYPE_CREATURE")]
-    #[strum(to_string = "SPEAKER_TYPE_CREATURE")]
-    Creature,
+    Hero(String),
+    Creature(i32),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
@@ -35,8 +15,7 @@ pub enum SpeakerType {
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub name: String,
-    pub script_name: String,
+    pub name_override: Option<String>,
     pub color: String,
     pub speaker_type: SpeakerType,
     pub local_to_map: Option<i32>

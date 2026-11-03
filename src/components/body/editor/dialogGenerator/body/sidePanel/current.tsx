@@ -2,6 +2,7 @@ import {MultiSelect, Select, Text} from "@mantine/core";
 import {
     DialogGeneratorStore
 } from "@/components/body/editor/dialogGenerator/store.ts";
+import {getSpeakerDisplayName} from "@/components/body/editor/dialogGenerator/types.ts";
 
 function DialogStepCurrent() {
     const currentSpeakers = DialogGeneratorStore.useCurrentVariantSpeakers();
@@ -30,7 +31,7 @@ function DialogStepCurrent() {
                 value={currentSpeakers.ids.map(s => s.toString())}
                 onChange={(value) => selectSpeakers(value.map(s => parseInt(s)))}
                 data={availableSpeakers?.filter(s => dialogSpeakers?.includes(s.id)).map(s => ({
-                    value: s.id.toString(), label: s.name
+                    value: s.id.toString(), label: getSpeakerDisplayName(s)
                 }))}
             />
             <Select

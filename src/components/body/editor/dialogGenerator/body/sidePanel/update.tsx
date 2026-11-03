@@ -4,6 +4,7 @@ import {useState} from "react";
 import {useMutation} from "@tanstack/react-query";
 import {DialogGeneratorApi} from "@/components/body/editor/dialogGenerator/api.ts";
 import {DialogGeneratorStore} from "@/components/body/editor/dialogGenerator/store.ts";
+import {getSpeakerDisplayName} from "@/components/body/editor/dialogGenerator/types.ts";
 
 export type UpdateLabelsPayload = {
     dialogId: number,
@@ -73,7 +74,7 @@ function DialogUpdater() {
                     placeholder="Имя персонажа"
                     value={selectedSpeaker?.toString()}
                     data={speakers?.filter(s => !currentDialogSpeakers?.includes(s.id)).map(s => ({
-                        value: s.id.toString(), label: s.name
+                        value: s.id.toString(), label: getSpeakerDisplayName(s)
                     }))}
                     onChange={(value) => setSelectedSpeaker(parseInt(value!))}
                 />

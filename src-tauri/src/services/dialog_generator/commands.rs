@@ -80,21 +80,46 @@ pub async fn create_new_dialog(
 #[tauri::command]
 pub async fn create_speaker(
     dialog_generator_repo: State<'_, DialogGeneratorRepo>,
-    name: String,
-    script_name: String,
+    name_override: Option<String>,
     color: String,
     speaker_type: SpeakerType,
     local_to_map: Option<i32>,
 ) -> Result<SpeakerModel, Error> {
     Ok(dialog_generator_repo
         .create_speaker(CreateSpeakerPayload {
-            name,
-            script_name,
+            name_override,
             color,
             speaker_type,
             local_to_map,
         })
         .await?)
+}
+
+fn speaker_script_id(speaker: &SpeakerModel) -> Option<String> {
+    match &speaker.speaker_type {
+        SpeakerType::NoSpeaker => None,
+        SpeakerType::Hero(name) => Some(name.clone()),
+        SpeakerType::Creature(id) => Some(id.to_string()),
+    }
+}
+
+fn speaker_lua_key(speaker: &SpeakerModel) -> Option<String> {
+    match &speaker.speaker_type {
+        SpeakerType::NoSpeaker => None,
+        SpeakerType::Hero(name) => Some(format!(
+            "\"{}\"",
+            name.replace('\\', "\\\\").replace('"', "\\\"")
+        )),
+        SpeakerType::Creature(id) => Some(id.to_string()),
+    }
+}
+
+fn speaker_type_constant(speaker_type: &SpeakerType) -> &'static str {
+    match speaker_type {
+        SpeakerType::NoSpeaker => "SPEAKER_TYPE_NO_SPEAKER",
+        SpeakerType::Hero(_) => "SPEAKER_TYPE_HERO",
+        SpeakerType::Creature(_) => "SPEAKER_TYPE_CREATURE",
+    }
 }
 
 #[tauri::command]
@@ -196,6 +221,10 @@ pub async fn generate_dialog(
         script += &format!("\tsteps_count = {},\n\tcurrent_step = 1,\n", steps_count);
 
         let mut steps: HashMap<i32, DialogStepModel> = HashMap::new();
+        let speaker_script_ids: HashMap<i32, String> = speakers
+            .iter()
+            .filter_map(|speaker| speaker_script_id(speaker).map(|id| (speaker.id, id)))
+            .collect();
 
         for variant in &variants {
             let file_name = format!("{}_{}.txt", &variant.step, &variant.label);
@@ -221,14 +250,7 @@ pub async fn generate_dialog(
                             .speaker_ids
                             .ids
                             .iter()
-                            .map(|s| {
-                                speakers
-                                    .iter()
-                                    .find(|sp| sp.id == *s)
-                                    .unwrap()
-                                    .script_name
-                                    .as_str()
-                            })
+                            .filter_map(|s| speaker_script_ids.get(s).map(String::as_str))
                             .collect(),
                         labels: vec![&variant.label],
                     },
@@ -238,23 +260,19 @@ pub async fn generate_dialog(
 
         script += &format!(
             "\tsteps = {{{}}},\n",
-            steps.values().map(|v| v.to_string()).join(", ")
+            steps.iter().map(|(index, step)| format!("[{}] = {}", *index + 1, step)).join(", ")
         );
         script += &format!(
             "\tspeakers_data = {{{}}}\n",
             speakers
                 .iter()
-                .map(|s| {
-                    format!(
+                .filter_map(|s| {
+                    Some(format!(
                         "[{}] = {{color = \"{}\", type = {}}}",
-                        if s.speaker_type == SpeakerType::Hero {
-                            format!("\"{}\"", &s.script_name)
-                        } else {
-                            s.script_name.clone()
-                        },
+                        speaker_lua_key(s)?,
                         s.color,
-                        s.speaker_type
-                    )
+                        speaker_type_constant(&s.speaker_type)
+                    ))
                 })
                 .collect_vec()
                 .join(", ")

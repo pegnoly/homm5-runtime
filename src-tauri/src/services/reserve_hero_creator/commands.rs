@@ -16,6 +16,13 @@ pub async fn load_heroes_data(
 }
 
 #[tauri::command]
+pub async fn load_all_heroes_data(
+    scaner_repo: State<'_, ScanerService>,
+) -> Result<Vec<HeroDBModel>, Error> {
+    Ok(scaner_repo.get_all_heroes_models().await?)
+}
+
+#[tauri::command]
 pub async fn load_base_skills(
     scaner_repo: State<'_, ScanerService>,
 ) -> Result<Vec<SkillDBModel>, Error> {

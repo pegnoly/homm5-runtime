@@ -49,11 +49,16 @@ export type AbilityModel = {
 }
 
 export type Editable = {
-    name: string
+    name_txt: string,
+    name: string,
+    bio_txt: string,
+    bio: string
 }
 
 export type HeroModel = {
     id: string,
+    script_name: string,
+    town: TownType,
     editable: Editable
 }
 

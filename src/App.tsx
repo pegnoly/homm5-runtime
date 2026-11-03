@@ -1,4 +1,4 @@
-import useGameDataStore, { AbilityModel, ArtifactModel, CreatureModel, SpellModel } from "./stores/GameDataStore";
+import useGameDataStore, { AbilityModel, ArtifactModel, CreatureModel, HeroModel, SpellModel } from "./stores/GameDataStore";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect } from "react";
 import { useShallow } from "zustand/shallow";
@@ -6,8 +6,8 @@ import Header from "./components/header";
 import Body from "./components/body";
 
 function App() {
-    const [setArtifacts, setCreatures, setAbilities, setSpells] = useGameDataStore(useShallow((state) => [
-        state.load_artifacts, state.load_creatures, state.load_abilities, state.load_spells
+    const [setArtifacts, setCreatures, setAbilities, setSpells, setHeroes] = useGameDataStore(useShallow((state) => [
+        state.load_artifacts, state.load_creatures, state.load_abilities, state.load_spells, state.load_heroes
     ]));
 
     useEffect(() => {
@@ -16,6 +16,7 @@ function App() {
         loadCreatureModels();
         loadAbilityModels();
         loadSpellModels();
+        loadHeroModels();
     }, [])
 
     const loadArtifactModels = async () => {
@@ -36,6 +37,11 @@ function App() {
     const loadSpellModels = async () => {
         await invoke<SpellModel[]>("load_spells_models")
             .then((values) => setSpells(values));
+    }
+
+    const loadHeroModels = async () => {
+        await invoke<HeroModel[]>("load_all_heroes_data")
+            .then((values) => setHeroes(values));
     }
 
     // const pullDataFromSheets = async () => {

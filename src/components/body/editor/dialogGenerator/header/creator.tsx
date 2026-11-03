@@ -1,5 +1,5 @@
 import { Button, Group, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, ModalRoot, ModalTitle, MultiSelect, Stack, Text, TextInput, Tooltip } from "@mantine/core";
-import { Dialog } from "../types";
+import { Dialog, getSpeakerDisplayName } from "../types";
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
 import { IconPick } from "@tabler/icons-react";
@@ -89,7 +89,7 @@ function DialogCreator(params: {
                         value={speakers.map(s => s.toString())}
                         onChange={(value) => setSpeakers(value.map(v => parseInt(v)))}
                         data={availableSpeakers!.map(speaker => ({
-                            value: speaker.id.toString(), label: speaker.name
+                            value: speaker.id.toString(), label: getSpeakerDisplayName(speaker)
                         }))}
                     />
                     <Group justify="end">

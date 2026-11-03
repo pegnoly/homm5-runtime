@@ -193,6 +193,7 @@ pub async fn run() -> Result<(), Error> {
             // services::creature_generator::commands::load_session,
             //
             services::reserve_hero_creator::commands::load_heroes_data,
+            services::reserve_hero_creator::commands::load_all_heroes_data,
             services::reserve_hero_creator::commands::load_heroes,
             services::reserve_hero_creator::commands::init_new_hero,
             services::reserve_hero_creator::commands::load_base_skills,

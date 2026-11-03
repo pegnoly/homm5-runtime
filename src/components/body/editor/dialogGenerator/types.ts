@@ -20,15 +20,30 @@ export type Dialog = {
     labels: Labels
 }
 
-export enum SpeakerType {
-    Hero = "SPEAKER_TYPE_HERO",
-    Creature = "SPEAKER_TYPE_CREATURE"
-}
+export type SpeakerType =
+    | "NoSpeaker"
+    | { Hero: string }
+    | { Creature: number }
 
 export type Speaker = {
     id: number,
-    name: string,
-    color: string
+    name_override: string | null,
+    color: string,
+    speaker_type: SpeakerType,
+    local_to_map: number | null
+}
+
+export function getSpeakerDisplayName(speaker: Speaker): string {
+    if (speaker.name_override) {
+        return speaker.name_override;
+    }
+    if (speaker.speaker_type === "NoSpeaker") {
+        return "Без персонажа";
+    }
+    if ("Hero" in speaker.speaker_type) {
+        return speaker.speaker_type.Hero;
+    }
+    return `Существо #${speaker.speaker_type.Creature}`;
 }
 
 export type VariantSpeakerIds = {

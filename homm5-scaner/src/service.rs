@@ -159,6 +159,10 @@ impl ScanerService {
         Ok(heroes)
     }
 
+    pub async fn get_all_heroes_models(&self) -> Result<Vec<HeroDBModel>, ScanerError> {
+        Ok(HeroDBEntity::find().all(&self.db).await?)
+    }
+
     pub async fn get_artifact_models(&self, request: GetArtifactsRequest<'_>) -> Result<Vec<ArtifactDBModel>, ScanerError> {
         let condition = Condition::all()
             .add_option(match request {

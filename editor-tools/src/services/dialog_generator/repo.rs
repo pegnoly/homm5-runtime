@@ -71,8 +71,7 @@ impl DialogGeneratorRepo {
         payload: CreateSpeakerPayload,
     ) -> Result<SpeakerModel, EditorToolsError> {
         let model_to_insert = speaker::ActiveModel {
-            name: Set(payload.name),
-            script_name: Set(payload.script_name),
+            name_override: Set(payload.name_override),
             color: Set(payload.color),
             speaker_type: Set(payload.speaker_type),
             local_to_map: Set(payload.local_to_map),

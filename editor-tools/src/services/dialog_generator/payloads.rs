@@ -9,8 +9,7 @@ pub struct CreateDialogPayload {
 }
 
 pub struct CreateSpeakerPayload {
-    pub name: String,
-    pub script_name: String,
+    pub name_override: Option<String>,
     pub color: String,
     pub speaker_type: SpeakerType,
     pub local_to_map: Option<i32>
